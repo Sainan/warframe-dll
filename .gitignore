@@ -1,0 +1,6 @@
+int/
+*.asi
+*.dll
+*.exp
+*.lib
+*.pdb

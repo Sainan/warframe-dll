@@ -1,0 +1,5 @@
+name dwmapi
+dynamic
++*.cpp
+require ../Soup/soup
+arg -O3
