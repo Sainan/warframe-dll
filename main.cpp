@@ -1,3 +1,4 @@
+#define SERVER "localhost"
 #define LOGGING false
 
 #if LOGGING
@@ -29,10 +30,10 @@ static bool parse_url_detour(const char* in, ParsedUrl* out)
 #if LOGGING
 	std::cout << "parse_url " << in << std::endl;
 #endif
-	in = "https://localhost/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
+	in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
 	if (reinterpret_cast<decltype(&parse_url_detour)>(parse_url_hook.original)(in, out))
 	{
-		//strcpy(out->host, "localhost");
+		//strcpy(out->host, SERVER);
 		return true;
 	}
 	return false;
@@ -45,7 +46,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 #if LOGGING
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, "localhost", port, allowDOH, a5);
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, SERVER, port, allowDOH, a5);
 }
 
 static DetourHook ssl_verify_internal_hook;
