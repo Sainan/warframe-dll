@@ -1,4 +1,4 @@
-#define SERVER "localhost"
+//#define FORCED_SERVER "localhost"
 #define LOGGING false
 #define PRIVATE true
 
@@ -12,7 +12,16 @@
 #include <pattern_macros.hpp>
 #include <Uri.hpp>
 
+#ifndef FORCED_SERVER
+#include <json.hpp>
+#include <string.hpp>
+#endif
+
 using namespace soup;
+
+#ifndef FORCED_SERVER
+static UniquePtr<JsonNode> config;
+#endif
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -56,7 +65,13 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 		std::cout << "host_3 = " << host_3 << std::endl;
 	}
 #endif
-	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, SERVER, port, nullptr, nullptr);
+
+#ifdef FORCED_SERVER
+	const char* server_host = FORCED_SERVER;
+#else
+	const char* server_host = config->asObj().at("server_host").asStr().value.c_str();
+#endif
+	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host, port, nullptr, nullptr);
 }
 
 struct GameHttpRequestData
@@ -94,7 +109,11 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 	memcpy(bak, data, sizeof(bak));
 
 	Uri uri((const char*)data->getUrl());
-	uri.host = SERVER;
+#ifdef FORCED_SERVER
+	uri.host = FORCED_SERVER;
+#else
+	uri.host = config->asObj().at("server_host").asStr().value;
+#endif
 	std::string str = uri.toString();
 	data->setUrl(str.c_str());
 
@@ -112,11 +131,22 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 #if LOGGING
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
-	if (strcmp(hostname, SERVER) != 0)
+
+#ifdef FORCED_SERVER
+	if (strcmp(hostname, FORCED_SERVER) != 0)
+#else
+	if (config->asObj().at("server_host").asStr().value != hostname)
+#endif
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, SERVER, port, allowDOH, a5);
+
+#ifdef FORCED_SERVER
+	const char* server_host = FORCED_SERVER;
+#else
+	const char* server_host = config->asObj().at("server_host").asStr().value.c_str();
+#endif
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host, port, allowDOH, a5);
 }
 #endif
 
@@ -171,6 +201,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			freopen_s(&f, "CONOUT$", "w", stderr);
 			freopen_s(&f, "CONOUT$", "w", stdout);
 		}
+#endif
+
+#ifndef FORCED_SERVER
+		if (!std::filesystem::exists("client_config.json"))
+		{
+			string::toFile("client_config.json",
+				"{" "\n"
+				"\t" "\"server_host\": \"localhost\"" "\n"
+				"}"
+			);
+		}
+		config = json::decode(string::fromFile("client_config.json"));
 #endif
 
 		{
