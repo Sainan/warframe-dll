@@ -2,9 +2,7 @@
 #define LOGGING false
 #define PRIVATE true
 
-#if LOGGING
 #include <iostream>
-#endif
 
 #include <DetourHook.hpp>
 #include <Module.hpp>
@@ -18,6 +16,8 @@
 #endif
 
 using namespace soup;
+
+static bool console_attached = false;
 
 #ifndef FORCED_SERVER
 static UniquePtr<JsonNode> config;
@@ -103,6 +103,14 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 {
 #if LOGGING
 	std::cout << "game_http_request for " << (const char*)data->getUrl() << std::endl;
+#else
+	if (console_attached)
+	{
+		console_attached = false;
+		const auto conWnd = GetConsoleWindow();
+		FreeConsole();
+		PostMessage(conWnd, WM_CLOSE, 0, 0);
+	}
 #endif
 
 	char bak[sizeof(GameHttpRequestData)];
@@ -193,7 +201,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	{
 		DisableThreadLibraryCalls(hmod);
 
-#if LOGGING
+#if true
 		AllocConsole();
 		{
 			FILE* f;
@@ -201,6 +209,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			freopen_s(&f, "CONOUT$", "w", stderr);
 			freopen_s(&f, "CONOUT$", "w", stdout);
 		}
+		console_attached = true;
 #endif
 
 #ifndef FORCED_SERVER
@@ -213,6 +222,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			);
 		}
 		config = json::decode(string::fromFile("client_config.json"));
+#endif
+
+#if !LOGGING
+	#ifdef FORCED_SERVER
+		std::cout << "Redirecting requests to " FORCED_SERVER << std::endl;
+	#else
+		std::cout << "Redirecting requests to " << config->asObj().at("server_host").asStr().value << std::endl;
+	#endif
 #endif
 
 		{
