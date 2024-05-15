@@ -1,5 +1,6 @@
 #define SERVER "localhost"
 #define LOGGING false
+#define PRIVATE true
 
 #if LOGGING
 #include <iostream>
@@ -9,6 +10,7 @@
 #include <Module.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
+#include <Uri.hpp>
 
 using namespace soup;
 
@@ -57,6 +59,52 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, SERVER, port, nullptr, nullptr);
 }
 
+struct GameHttpRequestData
+{
+	union {
+		char data[16];
+		char* ptr;
+	} url;
+
+	char* getUrl()
+	{
+		if (url.data[15] == -1)
+		{
+			return url.ptr;
+		}
+		return url.data;
+	}
+
+	void setUrl(const char* new_url)
+	{
+		url.ptr = (char*)new_url;
+		url.data[15] = -1;
+	}
+};
+
+static DetourHook game_http_request_hook;
+
+static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void* a3)
+{
+#if LOGGING
+	std::cout << "game_http_request for " << (const char*)data->getUrl() << std::endl;
+#endif
+
+	char bak[sizeof(GameHttpRequestData)];
+	memcpy(bak, data, sizeof(bak));
+
+	Uri uri((const char*)data->getUrl());
+	uri.host = SERVER;
+	std::string str = uri.toString();
+	data->setUrl(str.c_str());
+
+	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, data, a3);
+
+	memcpy(data, bak, sizeof(bak));
+	return ret;
+}
+
+#if PRIVATE
 static DetourHook Curl_resolv_hook;
 
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
@@ -64,8 +112,13 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 #if LOGGING
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
+	if (strcmp(hostname, SERVER) != 0)
+	{
+		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
+	}
 	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, SERVER, port, allowDOH, a5);
 }
+#endif
 
 static DetourHook ssl_verify_internal_hook;
 
@@ -155,6 +208,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
+			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 D9 48 81 EC A0 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 80 7A 0F FF");
+			auto game_http_request = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "game_http_request = " << game_http_request << std::endl;
+#endif
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
+			game_http_request_hook.target = game_http_request;
+			game_http_request_hook.create();
+			game_http_request_hook.enable();
+		}
+
+#if PRIVATE
+		{
 			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
 			auto Curl_resolv = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
 #if LOGGING
@@ -165,6 +231,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			Curl_resolv_hook.create();
 			Curl_resolv_hook.enable();
 		}
+#endif
 
 		{
 			SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 48 83 EC 30 33 ED");
