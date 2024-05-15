@@ -17,7 +17,7 @@ static FARPROC og_DwmGetCompositionTimingInfo;
 
 extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetCompositionTimingInfo(); }
 
-struct ParsedUrl
+/*struct ParsedUrl
 {
 	char pad[16];
 	char host[256];
@@ -30,13 +30,31 @@ static bool parse_url_detour(const char* in, ParsedUrl* out)
 #if LOGGING
 	std::cout << "parse_url " << in << std::endl;
 #endif
-	in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
+	//in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
 	if (reinterpret_cast<decltype(&parse_url_detour)>(parse_url_hook.original)(in, out))
 	{
 		//strcpy(out->host, SERVER);
 		return true;
 	}
 	return false;
+}*/
+
+static DetourHook winhttp_connect_hook;
+
+static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
+{
+#if LOGGING
+	std::cout << "winhttp_connect for " << host_1 << ", port " << port << std::endl;
+	if (host_2 && *host_2)
+	{
+		std::cout << "host_2 = " << host_2 << std::endl;
+	}
+	if (host_3 && *host_3)
+	{
+		std::cout << "host_3 = " << host_3 << std::endl;
+	}
+#endif
+	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, SERVER, port, nullptr, nullptr);
 }
 
 static DetourHook Curl_resolv_hook;
@@ -112,7 +130,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, "DwmGetCompositionTimingInfo");
 		}
 
-		{
+		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
 			auto parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
@@ -122,6 +140,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			parse_url_hook.target = parse_url;
 			parse_url_hook.create();
 			parse_url_hook.enable();
+		}*/
+
+		{
+			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00 44 0F");
+			auto winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
+#endif
+			winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
+			winhttp_connect_hook.target = winhttp_connect;
+			winhttp_connect_hook.create();
+			winhttp_connect_hook.enable();
 		}
 
 		{
