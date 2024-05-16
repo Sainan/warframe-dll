@@ -1,5 +1,5 @@
 #define LOGGING false
-#define PRIVATE true
+#define PRIVATE false
 
 #include <iostream>
 
