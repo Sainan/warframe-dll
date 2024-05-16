@@ -6,6 +6,7 @@
 #include <DetourHook.hpp>
 #include <json.hpp>
 #include <Module.hpp>
+#include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <string.hpp>
@@ -15,7 +16,7 @@ using namespace soup;
 
 static bool console_attached = false;
 
-static UniquePtr<JsonNode> config;
+static std::string server_host;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -60,8 +61,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	}
 #endif
 
-	const char* server_host = config->asObj().at("server_host").asStr().value.c_str();
-	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host, port, nullptr, nullptr);
+	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
 
 struct GameHttpRequestData
@@ -107,7 +107,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 	memcpy(bak, data, sizeof(bak));
 
 	Uri uri((const char*)data->getUrl());
-	uri.host = config->asObj().at("server_host").asStr().value;
+	uri.host = server_host;
 	std::string str = uri.toString();
 	data->setUrl(str.c_str());
 
@@ -126,13 +126,12 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-	if (config->asObj().at("server_host").asStr().value != hostname)
+	if (server_host != hostname)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
 
-	const char* server_host = config->asObj().at("server_host").asStr().value.c_str();
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host, port, allowDOH, a5);
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host.c_str(), port, allowDOH, a5);
 }
 #endif
 
@@ -183,25 +182,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		AllocConsole();
 		{
 			FILE* f;
-			freopen_s(&f, "CONIN$", "r", stdin);
-			freopen_s(&f, "CONOUT$", "w", stderr);
-			freopen_s(&f, "CONOUT$", "w", stdout);
+			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
+			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
+			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
 		}
 		console_attached = true;
 #endif
 
-		if (!std::filesystem::exists("client_config.json"))
 		{
-			string::toFile("client_config.json",
-				"{" "\n"
-				"\t" "\"server_host\": \"localhost\"" "\n"
-				"}"
-			);
+			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("client_config.json").str()));
+			if (!config || !config->isObj())
+			{
+				config = soup::make_unique<JsonObject>();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("server_host")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("server_host"), ObfusString("localhost").str());
+			}
+			server_host = config->reinterpretAsObj().at(ObfusString("server_host")).asStr().value;
+
+			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
-		config = json::decode(string::fromFile("client_config.json"));
 
 #if !LOGGING
-		std::cout << "Redirecting requests to " << config->asObj().at("server_host").asStr().value << std::endl;
+		std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
 #endif
 
 		{
@@ -211,7 +220,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "og_lib = " << (void*)og_lib << std::endl;
 #endif
-			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, "DwmGetCompositionTimingInfo");
+			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
 		}
 
 		/*{
