@@ -17,6 +17,8 @@ using namespace soup;
 static bool console_attached = false;
 
 static std::string server_host;
+static uint16_t http_port;
+static uint16_t https_port;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -60,6 +62,15 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 		std::cout << "host_3 = " << host_3 << std::endl;
 	}
 #endif
+
+	if (port == 80)
+	{
+		port = http_port;
+	}
+	else
+	{
+		port = https_port;
+	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
@@ -108,6 +119,20 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 
 	Uri uri((const char*)data->getUrl());
 	uri.host = server_host;
+	if (uri.scheme.size() == 4) // "http"
+	{
+		if (http_port != 80)
+		{
+			uri.port = http_port;
+		}
+	}
+	else
+	{
+		if (https_port != 443)
+		{
+			uri.port = https_port;
+		}
+	}
 	std::string str = uri.toString();
 	data->setUrl(str.c_str());
 
@@ -205,6 +230,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("server_host"), ObfusString("localhost").str());
 			}
 			server_host = config->reinterpretAsObj().at(ObfusString("server_host")).asStr().value;
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("http_port"), 80);
+			}
+			http_port = config->reinterpretAsObj().at(ObfusString("http_port")).asInt();
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("https_port"), 443);
+			}
+			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).asInt();
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
