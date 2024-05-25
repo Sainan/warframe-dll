@@ -74,6 +74,9 @@ union GameString
 	}
 };
 
+static bool* got_required_args = nullptr;
+static GameString* cluster = nullptr;
+
 static DetourHook winhttp_connect_hook;
 
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
@@ -97,6 +100,14 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	else
 	{
 		port = https_port;
+	}
+
+	// Allow game to start by just double-clicking the exe; only need to emulate -cluster as that is the only required argument.
+	if (got_required_args != nullptr && *got_required_args == false && cluster != nullptr)
+	{
+		*got_required_args = true;
+		ObfusString str("public"); // "public", "test", and "dev" are acceptable. The latter two enable some more logging.
+		cluster->setShortData(str.c_str());
 	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
@@ -372,6 +383,30 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			int_rsa_verify_hook.create();
 			int_rsa_verify_hook.enable();
 		}*/
+
+		{
+			SIG_INST("44 38 25 ? ? ? ? 75 ? E8");
+			auto must_run_from_launcher_cond = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "must_run_from_launcher_cond = " << must_run_from_launcher_cond.as<void*>() << std::endl;
+#endif
+			if (must_run_from_launcher_cond)
+			{
+				got_required_args = must_run_from_launcher_cond.add(3).rip().as<bool*>();
+			}
+		}
+
+		{
+			SIG_INST("48 8D 15 ? ? ? ? 4C 8B 15 ? ? ? ? 4C 8D 1D ? ? ? ? 41 80 F9 FF");
+			auto cluster_insn = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "cluster_insn = " << cluster_insn.as<void*>() << std::endl;
+#endif
+			if (cluster_insn)
+			{
+				cluster = cluster_insn.add(3).rip().as<GameString*>();
+			}
+		}
 	}
 	return TRUE;
 }
