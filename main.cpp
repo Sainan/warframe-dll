@@ -307,7 +307,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if PRIVATE
 		{
 			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
-			auto Curl_resolv = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
+			auto Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
@@ -320,7 +320,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 48 83 EC 30 33 ED");
-			auto ssl_verify_internal = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
+			auto ssl_verify_internal = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "ssl_verify_internal = " << ssl_verify_internal << std::endl;
 #endif
@@ -332,7 +332,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
-			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
+			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
 #endif
@@ -345,7 +345,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// This hook allows WorldSeed to be absent or just any value.
 		{
 			SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
-			auto verify_worldstate_integrity = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
+			auto verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
@@ -359,7 +359,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// This hook allows any WorldSeed be considered valid.
 		/*{
 			SIG_INST("48 89 5C 24 10 48 89 6C 24 18 56 41 54 41 55 41 56 41 57 48 83 EC 40 48 8B AC 24 A8 00 00 00");
-			auto int_rsa_verify = Module(nullptr).range.scan(Pattern(sig_inst)).as<void*>();
+			auto int_rsa_verify = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "int_rsa_verify = " << int_rsa_verify << std::endl;
 #endif
