@@ -94,6 +94,12 @@ union GameString
 		ptr = (char*)new_data;
 		data[15] = -1;
 	}
+
+	void setShortData(const char* new_data)
+	{
+		memset(data, 0, sizeof(data));
+		strcpy(data, new_data);
+	}
 };
 
 static DetourHook game_http_request_hook;
