@@ -75,35 +75,33 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
 
-struct GameHttpRequestData
+union GameString
 {
-	union {
-		char data[16];
-		char* ptr;
-	} url;
+	char data[16];
+	char* ptr;
 
-	char* getUrl()
+	char* getData()
 	{
-		if (url.data[15] == -1)
+		if (data[15] == -1)
 		{
-			return url.ptr;
+			return ptr;
 		}
-		return url.data;
+		return data;
 	}
 
-	void setUrl(const char* new_url)
+	void setData(const char* new_data)
 	{
-		url.ptr = (char*)new_url;
-		url.data[15] = -1;
+		ptr = (char*)new_data;
+		data[15] = -1;
 	}
 };
 
 static DetourHook game_http_request_hook;
 
-static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void* a3)
+static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 {
 #if LOGGING
-	std::cout << "game_http_request for " << (const char*)data->getUrl() << std::endl;
+	std::cout << "game_http_request for " << (const char*)url->getData() << std::endl;
 #else
 	if (console_attached)
 	{
@@ -114,10 +112,10 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 	}
 #endif
 
-	char bak[sizeof(GameHttpRequestData)];
-	memcpy(bak, data, sizeof(bak));
+	char bak[sizeof(GameString)];
+	memcpy(bak, url, sizeof(bak));
 
-	Uri uri((const char*)data->getUrl());
+	Uri uri((const char*)url->getData());
 	uri.host = server_host;
 	if (uri.scheme.size() == 4) // "http"
 	{
@@ -134,11 +132,11 @@ static void* game_http_request_detour(void* a1, GameHttpRequestData* data, void*
 		}
 	}
 	std::string str = uri.toString();
-	data->setUrl(str.c_str());
+	url->setData(str.c_str());
 
-	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, data, a3);
+	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, url, a3);
 
-	memcpy(data, bak, sizeof(bak));
+	memcpy(url, bak, sizeof(bak));
 	return ret;
 }
 
