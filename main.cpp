@@ -47,6 +47,33 @@ static bool parse_url_detour(const char* in, ParsedUrl* out)
 	return false;
 }*/
 
+union GameString
+{
+	char data[16];
+	char* ptr;
+
+	char* getData()
+	{
+		if (data[15] == -1)
+		{
+			return ptr;
+		}
+		return data;
+	}
+
+	void setData(const char* new_data)
+	{
+		ptr = (char*)new_data;
+		data[15] = -1;
+	}
+
+	void setShortData(const char* new_data)
+	{
+		memset(data, 0, sizeof(data));
+		strcpy(data, new_data);
+	}
+};
+
 static DetourHook winhttp_connect_hook;
 
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
@@ -74,33 +101,6 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
-
-union GameString
-{
-	char data[16];
-	char* ptr;
-
-	char* getData()
-	{
-		if (data[15] == -1)
-		{
-			return ptr;
-		}
-		return data;
-	}
-
-	void setData(const char* new_data)
-	{
-		ptr = (char*)new_data;
-		data[15] = -1;
-	}
-
-	void setShortData(const char* new_data)
-	{
-		memset(data, 0, sizeof(data));
-		strcpy(data, new_data);
-	}
-};
 
 static DetourHook game_http_request_hook;
 
