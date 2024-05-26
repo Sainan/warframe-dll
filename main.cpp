@@ -19,6 +19,7 @@ static bool console_attached = false;
 static std::string server_host;
 static uint16_t http_port;
 static uint16_t https_port;
+static std::string fallback_cluster;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -106,7 +107,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	if (got_required_args != nullptr && *got_required_args == false && cluster != nullptr)
 	{
 		*got_required_args = true;
-		ObfusString str("public"); // "public", "test", and "dev" are acceptable. The latter two enable some more logging.
+		auto str = fallback_cluster.substr(0, 15);
 		cluster->setShortData(str.c_str());
 	}
 
@@ -265,6 +266,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("https_port"), 443);
 			}
 			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).asInt();
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
+			}
+			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).asStr().value;
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
