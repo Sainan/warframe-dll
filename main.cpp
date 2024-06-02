@@ -5,6 +5,7 @@
 
 #include <DetourHook.hpp>
 #include <json.hpp>
+#include <memGuard.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
@@ -230,6 +231,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		console_attached = true;
 #endif
 
+		std::string fallback_language;
 		{
 			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("client_config.json").str()));
 			if (!config || !config->isObj())
@@ -276,6 +278,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
 			}
 			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).asStr().value;
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("fallback_language"), ObfusString("en").str());
+			}
+			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).asStr().value.substr(0, 2);
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
@@ -415,6 +427,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (cluster_insn)
 			{
 				cluster = cluster_insn.add(3).rip().as<GameString*>();
+			}
+		}
+
+		{
+			SIG_INST("48 8B 15 ? ? ? ? 49 C7 C0 FF FF FF FF 0F 1F 84 00 00 00 00 00 49 FF C0 42 80 3C 02 00");
+			auto default_language = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "default_language = " << default_language.as<void*>() << std::endl;
+#endif
+			if (default_language)
+			{
+				default_language = *default_language.add(3).rip().as<void**>();
+				memGuard::setAllowedAccess(default_language.as<void*>(), 2, memGuard::ACC_READ | memGuard::ACC_WRITE);
+				strcpy(default_language.as<char*>(), fallback_language.c_str());
 			}
 		}
 	}
