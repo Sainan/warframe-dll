@@ -379,7 +379,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
 			verify_worldstate_integrity_hook.create();
 			verify_worldstate_integrity_hook.enable();
-
 		}
 
 		// This hook allows any WorldSeed be considered valid.
