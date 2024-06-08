@@ -5,12 +5,12 @@
 
 #include <DetourHook.hpp>
 #include <json.hpp>
-#include <memGuard.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <string.hpp>
+#include <structing.hpp>
 #include <Uri.hpp>
 
 using namespace soup;
@@ -20,6 +20,8 @@ static bool console_attached = false;
 static std::string server_host;
 static uint16_t http_port;
 static uint16_t https_port;
+static std::string fallback_language;
+static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
 
 static HMODULE og_lib;
@@ -72,12 +74,20 @@ union GameString
 	void setShortData(const char* new_data)
 	{
 		memset(data, 0, sizeof(data));
-		strcpy(data, new_data);
+		strncpy(data, new_data, sizeof(data) - 1);
 	}
 };
 
-static bool* got_required_args = nullptr;
-static GameString* cluster = nullptr;
+struct Arguments
+{
+	PAD(0, 0x171) bool got_graphicsDriver;
+	PAD(0x171 + 1, 0x178) GameString graphicsDriver;
+	PAD(0x178 + sizeof(GameString), 0x194) bool got_language;
+	PAD(0x194 + 1, 0x198) GameString language;
+	PAD(0x198 + sizeof(GameString), 0x1A8) bool got_cluster;
+	PAD(0x1A8 + 1, 0x1B0) GameString cluster;
+};
+static_assert(sizeof(Arguments) == 0x1B0 + sizeof(GameString));
 
 static DetourHook winhttp_connect_hook;
 
@@ -102,14 +112,6 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	else
 	{
 		port = https_port;
-	}
-
-	// Allow game to start by just double-clicking the exe; only need to emulate -cluster as that is the only required argument.
-	if (got_required_args != nullptr && *got_required_args == false && cluster != nullptr)
-	{
-		*got_required_args = true;
-		auto str = fallback_cluster.substr(0, 15);
-		cluster->setShortData(str.c_str());
 	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
@@ -214,6 +216,28 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 	return 1;
 }*/
 
+static DetourHook parse_arguments_hook;
+
+static void parse_arguments_detour(Arguments* arguments, GameString* str, void* a3)
+{
+	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(arguments, str, a3);
+	if (!arguments->got_language)
+	{
+		arguments->got_language = true;
+		arguments->language.setShortData(fallback_language.c_str());
+	}
+	if (!arguments->got_graphicsDriver)
+	{
+		arguments->got_graphicsDriver = true;
+		arguments->graphicsDriver.setShortData(fallback_graphicsDriver.c_str());
+	}
+	if (!arguments->got_cluster)
+	{
+		arguments->got_cluster = true;
+		arguments->cluster.setShortData(fallback_cluster.c_str());
+	}
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -231,7 +255,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		console_attached = true;
 #endif
 
-		std::string fallback_language;
 		{
 			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("client_config.json").str()));
 			if (!config || !config->isObj())
@@ -269,6 +292,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).asInt();
 
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("fallback_language"), ObfusString("en").str());
+			}
+			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).asStr().value;
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("fallback_graphicsDriver"), ObfusString("dx11").str());
+			}
+			fallback_graphicsDriver = config->reinterpretAsObj().at(ObfusString("fallback_graphicsDriver")).asStr().value;
+
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it == config->reinterpretAsObj().end() || !it->second->isStr())
 			{
 				if (it != config->reinterpretAsObj().end())
@@ -278,16 +321,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
 			}
 			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).asStr().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it == config->reinterpretAsObj().end() || !it->second->isStr())
-			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("fallback_language"), ObfusString("en").str());
-			}
-			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).asStr().value.substr(0, 2);
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
@@ -407,40 +440,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("44 38 25 ? ? ? ? 75 ? E8");
-			auto must_run_from_launcher_cond = Module(nullptr).range.scan(sig_inst);
+			SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC E8 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 49 89 5B 20");
+			auto parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "must_run_from_launcher_cond = " << must_run_from_launcher_cond.as<void*>() << std::endl;
+			std::cout << "parse_arguments = " << parse_arguments << std::endl;
 #endif
-			if (must_run_from_launcher_cond)
+			if (parse_arguments)
 			{
-				got_required_args = must_run_from_launcher_cond.add(3).rip().as<bool*>();
-			}
-		}
-
-		{
-			SIG_INST("48 8D 15 ? ? ? ? 4C 8B 15 ? ? ? ? 4C 8D 1D ? ? ? ? 41 80 F9 FF");
-			auto cluster_insn = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "cluster_insn = " << cluster_insn.as<void*>() << std::endl;
-#endif
-			if (cluster_insn)
-			{
-				cluster = cluster_insn.add(3).rip().as<GameString*>();
-			}
-		}
-
-		{
-			SIG_INST("48 8B 15 ? ? ? ? 49 C7 C0 FF FF FF FF 0F 1F 84 00 00 00 00 00 49 FF C0 42 80 3C 02 00");
-			auto default_language = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "default_language = " << default_language.as<void*>() << std::endl;
-#endif
-			if (default_language)
-			{
-				default_language = *default_language.add(3).rip().as<void**>();
-				memGuard::setAllowedAccess(default_language.as<void*>(), 2, memGuard::ACC_READ | memGuard::ACC_WRITE);
-				strcpy(default_language.as<char*>(), fallback_language.c_str());
+				parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour);
+				parse_arguments_hook.target = parse_arguments;
+				parse_arguments_hook.create();
+				parse_arguments_hook.enable();
 			}
 		}
 	}
