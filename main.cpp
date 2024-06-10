@@ -453,6 +453,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				parse_arguments_hook.enable();
 			}
 		}
+
+#if false
+		{
+			SIG_INST("48 03 0D ? ? ? ? 48 89 8F");
+			auto worldstate_update_interval_insn = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "worldstate_update_interval_insn = " << worldstate_update_interval_insn.as<void*>() << std::endl;
+#endif
+			if (worldstate_update_interval_insn)
+			{
+				*worldstate_update_interval_insn.add(3).rip().as<uint64_t*>() = 1; // default: 300
+			}
+		}
+#endif
 	}
 	return TRUE;
 }
