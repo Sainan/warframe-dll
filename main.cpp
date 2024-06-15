@@ -1,10 +1,13 @@
 #define LOGGING false
 #define PRIVATE false
 
+#define DISABLE_XP_BASED_LEVEL_CAPPING true
+
 #include <iostream>
 
 #include <DetourHook.hpp>
 #include <json.hpp>
+#include <memGuard.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
@@ -16,6 +19,7 @@
 using namespace soup;
 
 static bool console_attached = false;
+static bool disabled_xp_based_level_cap = false;
 
 static std::string server_host;
 static uint16_t http_port;
@@ -152,6 +156,14 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 			uri.port = https_port;
 		}
 	}
+#if DISABLE_XP_BASED_LEVEL_CAPPING
+	if (uri.path == ObfusString("/api/inventory.php").str()
+		&& disabled_xp_based_level_cap
+		)
+	{
+		uri.query += ObfusString("&xpBasedLevelCapDisabled=1").str();
+	}
+#endif
 	std::string str = uri.toString();
 	url->setData(str.c_str());
 
@@ -464,6 +476,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (worldstate_update_interval_insn)
 			{
 				*worldstate_update_interval_insn.add(3).rip().as<uint64_t*>() = 1; // default: 300
+			}
+		}
+#endif
+
+#if DISABLE_XP_BASED_LEVEL_CAPPING
+		{
+			SIG_INST("73 43 B2 05");
+			auto xp_based_level_jnb = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "xp_based_level_jnb = " << xp_based_level_jnb.as<void*>() << std::endl;
+#endif
+			if (xp_based_level_jnb)
+			{
+				memGuard::setAllowedAccess(xp_based_level_jnb.as<void*>(), 1, memGuard::ACC_RWX);
+				*xp_based_level_jnb.as<uint8_t*>() = 0xEB; // jnb -> jmp
+				disabled_xp_based_level_cap = true;
 			}
 		}
 #endif
