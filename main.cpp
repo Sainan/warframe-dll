@@ -542,6 +542,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			SquadSetCountdownTimer_hook.create();
 			SquadSetCountdownTimer_hook.enable();
 		}
+
+		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
+		/*{
+			SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
+			auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+			memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
+			insn[0] = 0x31;
+			insn[1] = 0xc0;
+			insn[2] = 0x90;
+			insn[3] = 0x90;
+			insn[4] = 0x90;
+		}*/
 	}
 	return TRUE;
 }
