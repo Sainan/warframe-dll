@@ -27,6 +27,7 @@ static uint16_t https_port;
 static std::string fallback_language;
 static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
+static float mission_start_time;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -250,6 +251,18 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	}
 }
 
+static DetourHook SquadSetCountdownTimer_hook;
+
+static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
+{
+	//std::cout << "SquadSetCountdownTimer(" << seconds << ")" << std::endl;
+	if (seconds == 5.9f)
+	{
+		seconds = mission_start_time;
+	}
+	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -333,6 +346,28 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
 			}
 			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).reinterpretAsStr().value;
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("mission_start_time")); it == config->reinterpretAsObj().end() || !it->second->isFloat())
+			{
+				std::optional<int64_t> int_value;
+				if (it->second->isInt())
+				{
+					int_value = it->second->reinterpretAsInt().value;
+				}
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				if (int_value.has_value())
+				{
+					config->reinterpretAsObj().add(ObfusString("mission_start_time"), static_cast<double>(int_value.value()));
+				}
+				else
+				{
+					config->reinterpretAsObj().add(ObfusString("mission_start_time"), 5.9);
+				}
+			}
+			mission_start_time = config->reinterpretAsObj().at(ObfusString("mission_start_time")).reinterpretAsFloat().value;
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
@@ -495,6 +530,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 #endif
+
+		{
+			SIG_INST("48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
+			auto SquadSetCountdownTimer = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
+#endif
+			SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
+			SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
+			SquadSetCountdownTimer_hook.create();
+			SquadSetCountdownTimer_hook.enable();
+		}
 	}
 	return TRUE;
 }
