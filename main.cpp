@@ -282,7 +282,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("server_host"), ObfusString("localhost").str());
 			}
-			server_host = config->reinterpretAsObj().at(ObfusString("server_host")).asStr().value;
+			server_host = config->reinterpretAsObj().at(ObfusString("server_host")).reinterpretAsStr().value;
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
 			{
@@ -292,7 +292,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("http_port"), 80);
 			}
-			http_port = config->reinterpretAsObj().at(ObfusString("http_port")).asInt();
+			http_port = config->reinterpretAsObj().at(ObfusString("http_port")).reinterpretAsInt();
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
 			{
@@ -302,7 +302,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("https_port"), 443);
 			}
-			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).asInt();
+			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).reinterpretAsInt();
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it == config->reinterpretAsObj().end() || !it->second->isStr())
 			{
@@ -312,7 +312,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("fallback_language"), ObfusString("en").str());
 			}
-			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).asStr().value;
+			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).reinterpretAsStr().value;
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it == config->reinterpretAsObj().end() || !it->second->isStr())
 			{
@@ -322,7 +322,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("fallback_graphicsDriver"), ObfusString("dx11").str());
 			}
-			fallback_graphicsDriver = config->reinterpretAsObj().at(ObfusString("fallback_graphicsDriver")).asStr().value;
+			fallback_graphicsDriver = config->reinterpretAsObj().at(ObfusString("fallback_graphicsDriver")).reinterpretAsStr().value;
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it == config->reinterpretAsObj().end() || !it->second->isStr())
 			{
@@ -332,7 +332,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
 			}
-			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).asStr().value;
+			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).reinterpretAsStr().value;
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
