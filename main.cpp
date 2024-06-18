@@ -351,12 +351,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("mission_start_time")); it == config->reinterpretAsObj().end() || !it->second->isFloat())
 			{
 				std::optional<int64_t> int_value;
-				if (it->second->isInt())
-				{
-					int_value = it->second->reinterpretAsInt().value;
-				}
 				if (it != config->reinterpretAsObj().end())
 				{
+					if (it->second->isInt())
+					{
+						int_value = it->second->reinterpretAsInt().value;
+					}
 					config->reinterpretAsObj().erase(it);
 				}
 				if (int_value.has_value())
