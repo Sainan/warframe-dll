@@ -405,6 +405,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
 #endif
+			if (!winhttp_connect)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
 			winhttp_connect_hook.target = winhttp_connect;
 			winhttp_connect_hook.create();
@@ -417,6 +422,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
 #endif
+			if (!game_http_request_caller)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			auto game_http_request = game_http_request_caller.add(5).rip().as<void*>();
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
 			game_http_request_hook.target = game_http_request;
@@ -431,6 +441,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
+			if (!Curl_resolv)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			Curl_resolv_hook.detour = reinterpret_cast<void*>(&Curl_resolv_detour);
 			Curl_resolv_hook.target = Curl_resolv;
 			Curl_resolv_hook.create();
@@ -444,6 +459,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
 #endif
+			if (!ssl_verify_internal_caller)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
 			ssl_verify_internal_hook.target = ssl_verify_internal;
@@ -457,6 +477,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
 #endif
+			if (!Curl_ossl_verifyhost)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
 			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
 			Curl_ossl_verifyhost_hook.create();
@@ -470,6 +495,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
+			if (!verify_worldstate_integrity)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
 			verify_worldstate_integrity_hook.create();
@@ -502,6 +532,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				parse_arguments_hook.create();
 				parse_arguments_hook.enable();
 			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
 		}
 
 #if false
@@ -531,6 +565,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				*xp_based_level_jnb.as<uint8_t*>() = 0xEB; // jnb -> jmp
 				disabled_xp_based_level_cap = true;
 			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
 		}
 #endif
 
@@ -546,6 +584,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
 				SquadSetCountdownTimer_hook.create();
 				SquadSetCountdownTimer_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
 
