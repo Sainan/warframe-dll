@@ -411,11 +411,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 D9 48 81 EC A0 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 80 7A 0F FF");
-			auto game_http_request = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
+			auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "game_http_request = " << game_http_request << std::endl;
+			std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
 #endif
+			auto game_http_request = game_http_request_caller.add(5).rip().as<void*>();
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
 			game_http_request_hook.target = game_http_request;
 			game_http_request_hook.create();
@@ -437,11 +438,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 48 83 EC 30 33 ED");
-			auto ssl_verify_internal = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("49 8B D4 48 8B CB E8 ? ? ? ? 85 C0 7F");
+			auto ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "ssl_verify_internal = " << ssl_verify_internal << std::endl;
+			std::cout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
 #endif
+			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
 			ssl_verify_internal_hook.target = ssl_verify_internal;
 			ssl_verify_internal_hook.create();
@@ -487,7 +489,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC E8 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 49 89 5B 20");
+			SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 89 5B 20");
 			auto parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "parse_arguments = " << parse_arguments << std::endl;
