@@ -539,10 +539,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
 #endif
-			SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
-			SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
-			SquadSetCountdownTimer_hook.create();
-			SquadSetCountdownTimer_hook.enable();
+			if (SquadSetCountdownTimer)
+			{
+				SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
+				SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
+				SquadSetCountdownTimer_hook.create();
+				SquadSetCountdownTimer_hook.enable();
+			}
 		}
 
 		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
