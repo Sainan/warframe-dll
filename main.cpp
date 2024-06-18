@@ -271,6 +271,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if true
 		AllocConsole();
+		SetConsoleTitleA("OpenWF Bootstrapper");
 		{
 			FILE* f;
 			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
