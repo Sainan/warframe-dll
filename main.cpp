@@ -12,6 +12,7 @@
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
+#include <Process.hpp>
 #include <string.hpp>
 #include <structing.hpp>
 #include <Uri.hpp>
@@ -268,6 +269,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(hmod);
+
+		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
+		{
+			MessageBoxA(0, "Please only put the dwmapi.dll in your Warframe installation folder.", "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			return FALSE;
+		}
 
 #if true
 		AllocConsole();
