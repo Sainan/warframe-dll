@@ -282,6 +282,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
+			std::wstring path(_wgetenv(L"windir"));
+			path.append(LR"(\System32\dwmapi.dll)");
+			og_lib = LoadLibraryW(path.c_str());
+#if LOGGING
+			std::cout << "og_lib = " << (void*)og_lib << std::endl;
+#endif
+			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
+		}
+
+		{
 			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("client_config.json").str()));
 			if (!config || !config->isObj())
 			{
@@ -376,16 +386,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if !LOGGING
 		std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
 #endif
-
-		{
-			std::wstring path(_wgetenv(L"windir"));
-			path.append(LR"(\System32\dwmapi.dll)");
-			og_lib = LoadLibraryW(path.c_str());
-#if LOGGING
-			std::cout << "og_lib = " << (void*)og_lib << std::endl;
-#endif
-			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
-		}
 
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
