@@ -28,7 +28,7 @@ static uint16_t https_port;
 static std::string fallback_language;
 static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
-static float mission_start_time;
+static bool skip_mission_start_timer;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -257,9 +257,9 @@ static DetourHook SquadSetCountdownTimer_hook;
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
 	//std::cout << "SquadSetCountdownTimer(" << seconds << ")" << std::endl;
-	if (seconds == 5.9f)
+	if (skip_mission_start_timer && seconds == 5.9f)
 	{
-		seconds = mission_start_time;
+		seconds = 0.0f;
 	}
 	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
 }
@@ -365,27 +365,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).reinterpretAsStr().value;
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("mission_start_time")); it == config->reinterpretAsObj().end() || !it->second->isFloat())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("mission_start_time")); it != config->reinterpretAsObj().end())
 			{
-				std::optional<int64_t> int_value;
+				config->reinterpretAsObj().erase(it);
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("skip_mission_start_timer")); it == config->reinterpretAsObj().end() || !it->second->isBool())
+			{
 				if (it != config->reinterpretAsObj().end())
 				{
-					if (it->second->isInt())
-					{
-						int_value = it->second->reinterpretAsInt().value;
-					}
 					config->reinterpretAsObj().erase(it);
 				}
-				if (int_value.has_value())
-				{
-					config->reinterpretAsObj().add(ObfusString("mission_start_time"), static_cast<double>(int_value.value()));
-				}
-				else
-				{
-					config->reinterpretAsObj().add(ObfusString("mission_start_time"), 5.9);
-				}
+				config->reinterpretAsObj().add(ObfusString("skip_mission_start_timer"), false);
 			}
-			mission_start_time = config->reinterpretAsObj().at(ObfusString("mission_start_time")).reinterpretAsFloat().value;
+			skip_mission_start_timer = config->reinterpretAsObj().at(ObfusString("skip_mission_start_timer")).reinterpretAsBool().value;
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
