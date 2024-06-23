@@ -96,6 +96,7 @@ struct Arguments
 static_assert(sizeof(Arguments) == 0x1B0 + sizeof(GameString));
 
 static DetourHook winhttp_connect_hook;
+static int num_winhttp_connect_calls = 0;
 
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
 {
@@ -118,6 +119,11 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	else
 	{
 		port = https_port;
+	}
+
+	if (++num_winhttp_connect_calls == 3)
+	{
+		std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
 	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
