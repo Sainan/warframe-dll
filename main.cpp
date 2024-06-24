@@ -6,6 +6,8 @@
 #include <iostream>
 
 #include <DetourHook.hpp>
+#include <HttpRequest.hpp>
+#include <joaat.hpp>
 #include <json.hpp>
 #include <memGuard.hpp>
 #include <Module.hpp>
@@ -13,8 +15,11 @@
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
+#include <Server.hpp>
+#include <ServerWebService.hpp>
 #include <string.hpp>
 #include <structing.hpp>
+#include <Thread.hpp>
 #include <Uri.hpp>
 
 using namespace soup;
@@ -274,6 +279,8 @@ static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 	}
 	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
 }
+
+static Thread server_thrd;
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
@@ -613,6 +620,33 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			insn[3] = 0x90;
 			insn[4] = 0x90;
 		}*/
+
+		server_thrd.start([](Capture&&)
+		{
+			Server serv;
+			ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
+			{
+				auto arr = string::explode(req.path, '?');
+				switch (soup::joaat::hash(arr.at(0)))
+				{
+				default:
+					ServerWebService::send404(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
+					if (arr.size() > 1)
+					{
+						skip_mission_start_timer = (arr[1].size() == 4);
+					}
+					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
+					break;
+				}
+			});
+			if (serv.bind(61558, &srv))
+			{
+				serv.run();
+			}
+		});
 	}
 	return TRUE;
 }
