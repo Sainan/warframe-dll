@@ -34,6 +34,7 @@ static std::string fallback_language;
 static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
 static bool skip_mission_start_timer;
+static float fov_override = 0.0f;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -278,6 +279,18 @@ static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 		seconds = 0.0f;
 	}
 	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
+}
+
+static DetourHook PostProcessInfo_getFov_hook;
+
+static float PostProcessInfo_getFov_detour(uintptr_t a1)
+{
+	if (fov_override != 0.0f)
+	{
+		*reinterpret_cast<float*>(a1 + 2184) = fov_override;
+		return fov_override;
+	}
+	return *reinterpret_cast<float*>(a1 + 2184);
 }
 
 static Thread server_thrd;
@@ -621,6 +634,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			insn[4] = 0x90;
 		}*/
 
+		{
+			SIG_INST("F3 0F 10 81 ? ? ? ? C3 CC CC CC CC CC CC CC 48 8B 81 ? ? ? ? 48 8B 00 C3 CC CC CC CC CC 48 8D 81 ? ? ? ? C3 CC CC CC CC CC CC CC CC 48 8B 81 ? ? ? ? 48 8B 00");
+			auto PostProcessInfo_getFov = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "PostProcessInfo_getFov = " << PostProcessInfo_getFov << std::endl;
+#endif
+			if (PostProcessInfo_getFov)
+			{
+				PostProcessInfo_getFov_hook.detour = reinterpret_cast<void*>(&PostProcessInfo_getFov_detour);
+				PostProcessInfo_getFov_hook.target = PostProcessInfo_getFov;
+				PostProcessInfo_getFov_hook.create();
+				PostProcessInfo_getFov_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		server_thrd.start([](Capture&&)
 		{
 			Server serv;
@@ -633,12 +665,34 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					ServerWebService::send404(s);
 					break;
 
+				case soup::joaat::compileTimeHash("/"):
+					ServerWebService::sendHtml(s, ObfusString(R"EOC(<p>FOV Override (0 = disabled): <input id="fov-override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+<script>
+	document.getElementById("fov-override").oninput = function()
+	{
+		fetch("http://localhost:61558/fov_override?" + this.value);
+	}
+</script>)EOC"));
+					break;
+
+				case soup::joaat::compileTimeHash("/ping"):
+					ServerWebService::sendText(s, ObfusString("pong"));
+					break;
+
 				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
 					if (arr.size() > 1)
 					{
 						skip_mission_start_timer = (arr[1].size() == 4);
 					}
 					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
+					break;
+
+				case soup::joaat::compileTimeHash("/fov_override"):
+					if (arr.size() > 1)
+					{
+						fov_override = static_cast<float>(string::toInt<int64_t>(arr[1]).value()) / 10000.0f;
+					}
+					ServerWebService::sendText(s, std::to_string(fov_override));
 					break;
 				}
 			});
