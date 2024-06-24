@@ -123,7 +123,12 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 	if (++num_winhttp_connect_calls == 3)
 	{
-		std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
+#if PRIVATE
+		if (strcmp(host_1, "origin.warframe.com") == 0)
+#endif
+		{
+			std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
+		}
 	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
