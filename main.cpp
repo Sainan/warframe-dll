@@ -716,7 +716,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					break;
 
 				case soup::joaat::compileTimeHash("/"):
-					ServerWebService::sendHtml(s, ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+					{
+						std::string html;
+#if PRIVATE
+						html = string::fromFile("index.html");
+						if (html.empty())
+#endif
+						{
+							html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
 	<p>FOV Override (0 = disabled): <input id="fov-override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<script>
 		document.getElementById("fov-override").oninput = function()
@@ -724,7 +731,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			fetch("http://localhost:61558/fov_override?" + this.value);
 		}
 	</script>
-</body>)EOC"));
+</body>)EOC").str();
+						}
+						ServerWebService::sendHtml(s, html);
+					}
 					break;
 
 				case soup::joaat::compileTimeHash("/ping"):
