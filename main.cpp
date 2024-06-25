@@ -298,6 +298,20 @@ static Thread server_thrd;
 static bool prohibit_skip_mission_start_timer = false;
 static bool prohibit_fov_override = false;
 
+static void save_config()
+{
+	JsonObject config;
+	config.add(ObfusString("server_host"), server_host);
+	config.add(ObfusString("http_port"), http_port);
+	config.add(ObfusString("https_port"), https_port);
+	config.add(ObfusString("fallback_language"), fallback_language);
+	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
+	config.add(ObfusString("fallback_cluster"), fallback_cluster);
+	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	config.add(ObfusString("fov_override"), fov_override);
+	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -339,93 +353,79 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config = soup::make_unique<JsonObject>();
 			}
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("server_host")); it == config->reinterpretAsObj().end() || !it->second->isStr())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("server_host")); it != config->reinterpretAsObj().end() && it->second->isStr())
 			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("server_host"), ObfusString("localhost").str());
+				server_host = it->second->reinterpretAsStr().value;
 			}
-			server_host = config->reinterpretAsObj().at(ObfusString("server_host")).reinterpretAsStr().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
+			else
 			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("http_port"), 80);
-			}
-			http_port = config->reinterpretAsObj().at(ObfusString("http_port")).reinterpretAsInt();
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it == config->reinterpretAsObj().end() || !it->second->isInt())
-			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("https_port"), 443);
-			}
-			https_port = config->reinterpretAsObj().at(ObfusString("https_port")).reinterpretAsInt();
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it == config->reinterpretAsObj().end() || !it->second->isStr())
-			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("fallback_language"), ObfusString("en").str());
-			}
-			fallback_language = config->reinterpretAsObj().at(ObfusString("fallback_language")).reinterpretAsStr().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it == config->reinterpretAsObj().end() || !it->second->isStr())
-			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("fallback_graphicsDriver"), ObfusString("dx11").str());
-			}
-			fallback_graphicsDriver = config->reinterpretAsObj().at(ObfusString("fallback_graphicsDriver")).reinterpretAsStr().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it == config->reinterpretAsObj().end() || !it->second->isStr())
-			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("fallback_cluster"), ObfusString("public").str());
-			}
-			fallback_cluster = config->reinterpretAsObj().at(ObfusString("fallback_cluster")).reinterpretAsStr().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("mission_start_time")); it != config->reinterpretAsObj().end())
-			{
-				config->reinterpretAsObj().erase(it);
+				server_host = ObfusString("localhost").str();
 			}
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("skip_mission_start_timer")); it == config->reinterpretAsObj().end() || !it->second->isBool())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
 			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("skip_mission_start_timer"), false);
+				http_port = it->second->reinterpretAsInt().value;
 			}
-			skip_mission_start_timer = config->reinterpretAsObj().at(ObfusString("skip_mission_start_timer")).reinterpretAsBool().value;
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it == config->reinterpretAsObj().end() || !it->second->isFloat())
+			else
 			{
-				if (it != config->reinterpretAsObj().end())
-				{
-					config->reinterpretAsObj().erase(it);
-				}
-				config->reinterpretAsObj().add(ObfusString("fov_override"), 0.0f);
+				http_port = 80;
 			}
-			fov_override = static_cast<float>(config->reinterpretAsObj().at(ObfusString("fov_override")).reinterpretAsFloat().value);
 
-			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
+			{
+				https_port = it->second->reinterpretAsInt().value;
+			}
+			else
+			{
+				https_port = 443;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				fallback_language = it->second->reinterpretAsStr().value;
+			}
+			else
+			{
+				fallback_language = ObfusString("en").str();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				fallback_graphicsDriver = it->second->reinterpretAsStr().value;
+			}
+			else
+			{
+				fallback_graphicsDriver = ObfusString("dx11").str();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				fallback_cluster = it->second->reinterpretAsStr().value;
+			}
+			else
+			{
+				fallback_cluster = ObfusString("public").str();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("skip_mission_start_timer")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				skip_mission_start_timer = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				skip_mission_start_timer = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it != config->reinterpretAsObj().end() && it->second->isFloat())
+			{
+				fov_override = it->second->reinterpretAsFloat().value;
+			}
+			else
+			{
+				fov_override = 0.0f;
+			}
 		}
+		save_config();
 
 #if !LOGGING
 		std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
