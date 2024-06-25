@@ -1,6 +1,7 @@
 #define LOGGING false
 #define PRIVATE false
 
+#define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 
 #include <iostream>
@@ -294,6 +295,8 @@ static float PostProcessInfo_getFov_detour(uintptr_t a1)
 }
 
 static Thread server_thrd;
+static bool prohibit_skip_mission_start_timer = false;
+static bool prohibit_fov_override = false;
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
@@ -665,6 +668,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		server_thrd.start([](Capture&&)
 		{
+#if ASK_SERVER_FOR_TUNABLES
+			{
+				HttpRequest hr(server_host, ObfusString("/custom/tunables.json"));
+				hr.port = http_port;
+				hr.use_tls = false;
+				if (auto res = hr.execute())
+				{
+					if (auto jr = json::decode(res->body); jr && jr->isObj())
+					{
+						if (jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str()))
+						{
+							prohibit_skip_mission_start_timer = true;
+							skip_mission_start_timer = false;
+							std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
+						}
+						if (jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str()))
+						{
+							prohibit_fov_override = true;
+							fov_override = 0.0f;
+							std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
+						}
+					}
+				}
+			}
+#endif
+
 			Server serv;
 			ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 			{
@@ -692,7 +721,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					break;
 
 				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
-					if (arr.size() > 1)
+					if (arr.size() > 1
+						&& !prohibit_skip_mission_start_timer
+						)
 					{
 						skip_mission_start_timer = (arr[1].size() == 4);
 					}
@@ -700,7 +731,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					break;
 
 				case soup::joaat::compileTimeHash("/fov_override"):
-					if (arr.size() > 1)
+					if (arr.size() > 1
+						&& !prohibit_fov_override
+						)
 					{
 						fov_override = static_cast<float>(string::toInt<int64_t>(arr[1]).value()) / 10000.0f;
 					}
