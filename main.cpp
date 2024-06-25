@@ -34,7 +34,7 @@ static std::string fallback_language;
 static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
 static bool skip_mission_start_timer;
-static float fov_override = 0.0f;
+static float fov_override;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -410,6 +410,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				config->reinterpretAsObj().add(ObfusString("skip_mission_start_timer"), false);
 			}
 			skip_mission_start_timer = config->reinterpretAsObj().at(ObfusString("skip_mission_start_timer")).reinterpretAsBool().value;
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it == config->reinterpretAsObj().end() || !it->second->isFloat())
+			{
+				if (it != config->reinterpretAsObj().end())
+				{
+					config->reinterpretAsObj().erase(it);
+				}
+				config->reinterpretAsObj().add(ObfusString("fov_override"), 0.0f);
+			}
+			fov_override = static_cast<float>(config->reinterpretAsObj().at(ObfusString("fov_override")).reinterpretAsFloat().value);
 
 			string::toFile(ObfusString("client_config.json").str(), config->reinterpretAsObj().encodePretty());
 		}
