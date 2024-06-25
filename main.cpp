@@ -416,9 +416,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				skip_mission_start_timer = false;
 			}
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it != config->reinterpretAsObj().end() && it->second->isFloat())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it != config->reinterpretAsObj().end())
 			{
-				fov_override = it->second->reinterpretAsFloat().value;
+				if (it->second->isFloat())
+				{
+					fov_override = it->second->reinterpretAsFloat().value;
+				}
+				else if (it->second->isInt())
+				{
+					fov_override = it->second->reinterpretAsInt().value;
+				}
+				else
+				{
+					fov_override = 0.0f;
+				}
 			}
 			else
 			{
