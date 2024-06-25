@@ -666,13 +666,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					break;
 
 				case soup::joaat::compileTimeHash("/"):
-					ServerWebService::sendHtml(s, ObfusString(R"EOC(<p>FOV Override (0 = disabled): <input id="fov-override" type="range" min="0" value="0" max="2260000" step="10000"></p>
-<script>
-	document.getElementById("fov-override").oninput = function()
-	{
-		fetch("http://localhost:61558/fov_override?" + this.value);
-	}
-</script>)EOC"));
+					ServerWebService::sendHtml(s, ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+	<p>FOV Override (0 = disabled): <input id="fov-override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<script>
+		document.getElementById("fov-override").oninput = function()
+		{
+			fetch("http://localhost:61558/fov_override?" + this.value);
+		}
+	</script>
+</body>)EOC"));
 					break;
 
 				case soup::joaat::compileTimeHash("/ping"):
