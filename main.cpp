@@ -724,12 +724,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 						{
 							html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
-	<p>FOV Override (0 = disabled): <input id="fov-override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
+	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<script>
-		fetch("http://localhost:61558/fov_override").then(res => res.text()).then(res => {
-			document.getElementById("fov-override").value = parseFloat(res) * 10000;
+		fetch("http://localhost:61558/skip_mission_start_timer").then(res => res.text()).then(res => {
+			document.getElementById("skip_mission_start_timer").checked = (res == "1");
 		});
-		document.getElementById("fov-override").oninput = function () {
+		document.getElementById("skip_mission_start_timer").onchange = function() {
+			fetch("http://localhost:61558/skip_mission_start_timer?" + this.checked);
+		};
+
+		fetch("http://localhost:61558/fov_override").then(res => res.text()).then(res => {
+			document.getElementById("fov_override").value = parseFloat(res) * 10000;
+		});
+		document.getElementById("fov_override").oninput = function () {
 			fetch("http://localhost:61558/fov_override?" + this.value);
 		};
 	</script>
