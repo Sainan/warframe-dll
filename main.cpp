@@ -726,6 +726,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						)
 					{
 						skip_mission_start_timer = (arr[1].size() == 4);
+						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
 					break;
@@ -736,6 +737,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						)
 					{
 						fov_override = static_cast<float>(string::toInt<int64_t>(arr[1]).value()) / 10000.0f;
+						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(fov_override));
 					break;
