@@ -36,6 +36,7 @@ static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
 static bool skip_mission_start_timer;
 static float fov_override;
+static bool enable_http_interface;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -309,6 +310,7 @@ static void save_config()
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("fov_override"), fov_override);
+	config.add(ObfusString("enable_http_interface"), enable_http_interface);
 	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
 }
 
@@ -434,6 +436,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				fov_override = 0.0f;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("enable_http_interface")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				enable_http_interface = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				enable_http_interface = true;
 			}
 		}
 		save_config();
@@ -704,6 +715,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 			}
 #endif
+
+			if (!enable_http_interface)
+			{
+				return;
+			}
 
 			Server serv;
 			ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
