@@ -870,6 +870,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<p>High Damage Numbers Patch: <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<button id="save_config">Save changes to client_config.json</button>
 	<script>
 		fetch("http://localhost:61558/high_damage_numbers_patch").then(res => res.text()).then(res => {
 			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
@@ -891,6 +892,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		document.getElementById("fov_override").oninput = function () {
 			fetch("http://localhost:61558/fov_override?" + this.value);
 		};
+
+		document.getElementById("save_config").onclick = function () {
+			fetch("http://localhost:61558/save_config");
+		};
 	</script>
 </body>)EOC").str();
 						}
@@ -902,13 +907,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					ServerWebService::sendText(s, ObfusString("pong"));
 					break;
 
+				case soup::joaat::compileTimeHash("/save_config"):
+					save_config();
+					ServerWebService::sendText(s, ObfusString("ok"));
+					break;
+
 				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
 					if (arr.size() > 1
 						&& !prohibit_skip_mission_start_timer
 						)
 					{
 						skip_mission_start_timer = (arr[1].size() == 4);
-						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
 					break;
@@ -919,7 +928,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						)
 					{
 						fov_override = static_cast<float>(string::toInt<int64_t>(arr[1]).value()) / 10000.0f;
-						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(fov_override));
 					break;
@@ -936,7 +944,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							disable_dmg_number_patch();
 						}
-						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
 					break;
