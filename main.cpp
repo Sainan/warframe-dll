@@ -34,6 +34,7 @@ static uint16_t https_port;
 static std::string fallback_language;
 static std::string fallback_graphicsDriver;
 static std::string fallback_cluster;
+static bool high_damage_numbers_patch;
 static bool skip_mission_start_timer;
 static float fov_override;
 static bool enable_http_interface;
@@ -306,6 +307,45 @@ static float PostProcessInfo_getFov_detour(uintptr_t a1)
 }
 
 
+static void* dmg_number_patch_addr;
+static uint8_t dmg_number_trampoline[] = {
+	0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+	0x41, 0xff, 0xe2, // jmp r10
+};
+static uint8_t dmg_number_og_bytes[sizeof(dmg_number_trampoline)];
+
+static void enable_dmg_number_patch()
+{
+	memGuard::setAllowedAccess(dmg_number_patch_addr, sizeof(dmg_number_trampoline), memGuard::ACC_RWX);
+	memcpy(dmg_number_patch_addr, dmg_number_trampoline, sizeof(dmg_number_trampoline));
+}
+
+static void disable_dmg_number_patch()
+{
+	memcpy(dmg_number_patch_addr, dmg_number_og_bytes, sizeof(dmg_number_og_bytes));
+}
+
+static float last_dmg = 0.0f;
+
+static float get_dmg_to_display(int dmg_int)
+{
+#if LOGGING
+	std::cout << "get_dmg_to_display: " << dmg_int << " -> " << last_dmg << std::endl;
+#endif
+	return last_dmg;
+}
+
+static DetourHook get_total_damage_hook;
+
+static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned __int8 a4, float *a5, float *a6)
+{
+	float ret = reinterpret_cast<decltype(&get_total_damage_detour)>(get_total_damage_hook.original)(a1, a2, a3, a4, a5, a6);
+	last_dmg = ret;
+	//ret = FLT_MAX;
+	return ret;
+}
+
+
 static Thread server_thrd;
 static bool prohibit_skip_mission_start_timer = false;
 static bool prohibit_fov_override = false;
@@ -319,6 +359,7 @@ static void save_config()
 	config.add(ObfusString("fallback_language"), fallback_language);
 	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
+	config.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("enable_http_interface"), enable_http_interface);
@@ -418,6 +459,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				fallback_cluster = ObfusString("public").str();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("high_damage_numbers_patch")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				high_damage_numbers_patch = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				high_damage_numbers_patch = true;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("skip_mission_start_timer")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -668,6 +718,72 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 A8 FE FF FF 48 81 EC 20 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98");
+			auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		std::cout << "get_total_damage = " << get_total_damage << std::endl;
+#endif
+			if (get_total_damage)
+			{
+				get_total_damage_hook.detour = reinterpret_cast<void*>(&get_total_damage_detour);
+				get_total_damage_hook.target = get_total_damage;
+				get_total_damage_hook.create();
+				get_total_damage_hook.enable();
+			}
+		}
+
+		{
+			SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
+			auto addr = Module(nullptr).range.scan(sig_inst);
+			dmg_number_patch_addr = addr.as<void*>();
+#if LOGGING
+			std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr << std::endl;
+#endif
+			if (get_total_damage_hook.target && addr)
+			{
+				uint8_t detour_bytes[] = {
+					// prepare call
+					/*  0 */ 0x44, 0x89, 0xE1, // mov ecx, r12d
+					/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+
+					/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
+
+					// compact numbers on
+					/* 15 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
+
+					// compact numbers off
+					/* 34 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
+				};
+				static_assert(sizeof(detour_bytes) == 50 + 3);
+				*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
+				*(void**)(detour_bytes + 21 + 2) = addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
+				*(void**)(detour_bytes + 40 + 2) = addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
+
+				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
+				memcpy(detour, detour_bytes, sizeof(detour_bytes));
+
+				*(void**)(dmg_number_trampoline + 2) = detour;
+
+				memcpy(dmg_number_og_bytes, dmg_number_patch_addr, sizeof(dmg_number_trampoline));
+
+				if (high_damage_numbers_patch)
+				{
+					enable_dmg_number_patch();
+				}
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
 		/*{
 			SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
@@ -751,9 +867,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 						{
 							html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+	<p>High Damage Numbers Patch: <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<script>
+		fetch("http://localhost:61558/high_damage_numbers_patch").then(res => res.text()).then(res => {
+			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
+		});
+		document.getElementById("high_damage_numbers_patch").onchange = function() {
+			fetch("http://localhost:61558/high_damage_numbers_patch?" + this.checked);
+		};
+
 		fetch("http://localhost:61558/skip_mission_start_timer").then(res => res.text()).then(res => {
 			document.getElementById("skip_mission_start_timer").checked = (res == "1");
 		});
@@ -798,6 +922,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						save_config();
 					}
 					ServerWebService::sendText(s, std::to_string(fov_override));
+					break;
+
+				case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
+					if (arr.size() > 1)
+					{
+						high_damage_numbers_patch = (arr[1].size() == 4);
+						if (high_damage_numbers_patch)
+						{
+							enable_dmg_number_patch();
+						}
+						else
+						{
+							disable_dmg_number_patch();
+						}
+						save_config();
+					}
+					ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
 					break;
 				}
 			});
