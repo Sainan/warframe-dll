@@ -103,6 +103,7 @@ struct Arguments
 };
 static_assert(sizeof(Arguments) == 0x1B0 + sizeof(GameString));
 
+
 static DetourHook winhttp_connect_hook;
 static int num_winhttp_connect_calls = 0;
 
@@ -141,6 +142,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
+
 
 static DetourHook game_http_request_hook;
 
@@ -194,6 +196,7 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 	return ret;
 }
 
+
 #if PRIVATE
 static DetourHook Curl_resolv_hook;
 
@@ -212,6 +215,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 }
 #endif
 
+
 static DetourHook ssl_verify_internal_hook;
 
 static int64_t ssl_verify_internal_detour(void* a1, void* a2)
@@ -219,6 +223,7 @@ static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 	//std::cout << "ssl_verify_internal called" << std::endl;
 	return 1; // "Verify success"
 }
+
 
 static DetourHook Curl_ossl_verifyhost_hook;
 
@@ -229,12 +234,14 @@ static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
 	return 0;
 }
 
+
 static DetourHook verify_worldstate_integrity_hook;
 
 static bool verify_worldstate_integrity_detour()
 {
 	return true;
 }
+
 
 /*static DetourHook int_rsa_verify_hook;
 
@@ -248,6 +255,7 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 	}
 	return 1;
 }*/
+
 
 static DetourHook parse_arguments_hook;
 
@@ -271,6 +279,7 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	}
 }
 
+
 static DetourHook SquadSetCountdownTimer_hook;
 
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
@@ -283,6 +292,7 @@ static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
 }
 
+
 static DetourHook PostProcessInfo_getFov_hook;
 
 static float PostProcessInfo_getFov_detour(uintptr_t a1)
@@ -294,6 +304,7 @@ static float PostProcessInfo_getFov_detour(uintptr_t a1)
 	}
 	return *reinterpret_cast<float*>(a1 + 2184);
 }
+
 
 static Thread server_thrd;
 static bool prohibit_skip_mission_start_timer = false;
