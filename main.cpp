@@ -329,10 +329,11 @@ static float last_dmg = 0.0f;
 
 static float get_dmg_to_display(int dmg_int)
 {
+	float dmg_number = (dmg_int < 0 ? last_dmg : static_cast<float>(dmg_int));
 #if LOGGING
-	std::cout << "get_dmg_to_display: " << dmg_int << " -> " << last_dmg << std::endl;
+	std::cout << "get_dmg_to_display: " << dmg_int << " -> " << dmg_number << std::endl;
 #endif
-	return last_dmg;
+	return dmg_number;
 }
 
 static DetourHook get_total_damage_hook;
@@ -340,7 +341,11 @@ static DetourHook get_total_damage_hook;
 static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned __int8 a4, float *a5, float *a6)
 {
 	float ret = reinterpret_cast<decltype(&get_total_damage_detour)>(get_total_damage_hook.original)(a1, a2, a3, a4, a5, a6);
-	last_dmg = ret;
+	//std::cout << "get_total_damage: " << ret << std::endl;
+	if (ret != 0.0f)
+	{
+		last_dmg = ret;
+	}
 	//ret = FLT_MAX;
 	return ret;
 }
