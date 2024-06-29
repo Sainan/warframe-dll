@@ -1,3 +1,5 @@
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.4.1"
+
 #define LOGGING false
 #define PRIVATE false
 
@@ -379,13 +381,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
 		{
-			MessageBoxA(0, "Please only put the dwmapi.dll in your Warframe installation folder.", "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+			MessageBoxA(0, "Please only put the dwmapi.dll in your Warframe installation folder.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 
 #if true
 		AllocConsole();
-		SetConsoleTitleA("OpenWF Bootstrapper");
+		SetConsoleTitleA(BOOTSTRAPPER_TITLE);
 		{
 			FILE* f;
 			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
@@ -540,7 +542,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!winhttp_connect)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
 			winhttp_connect_hook.target = winhttp_connect;
@@ -557,7 +559,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!game_http_request_caller)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			auto game_http_request = game_http_request_caller.add(5).rip().as<void*>();
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
@@ -576,7 +578,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!Curl_resolv)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			Curl_resolv_hook.detour = reinterpret_cast<void*>(&Curl_resolv_detour);
 			Curl_resolv_hook.target = Curl_resolv;
@@ -594,7 +596,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!ssl_verify_internal_caller)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
@@ -612,7 +614,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!Curl_ossl_verifyhost)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
 			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
@@ -630,7 +632,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!verify_worldstate_integrity)
 			{
 				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), "OpenWF Bootstrapper", MB_OK | MB_ICONERROR);
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
