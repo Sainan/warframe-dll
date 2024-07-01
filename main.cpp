@@ -343,7 +343,9 @@ static DetourHook get_total_damage_hook;
 static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned __int8 a4, float *a5, float *a6)
 {
 	float ret = reinterpret_cast<decltype(&get_total_damage_detour)>(get_total_damage_hook.original)(a1, a2, a3, a4, a5, a6);
-	//std::cout << "get_total_damage: " << ret << std::endl;
+#if LOGGING
+	std::cout << "get_total_damage: " << ret << std::endl;
+#endif
 	if (ret != 0.0f)
 	{
 		last_dmg = ret;
