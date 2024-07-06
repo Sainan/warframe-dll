@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.4.1"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.0"
 
 #define LOGGING false
 #define PRIVATE false
@@ -40,6 +40,7 @@ static bool high_damage_numbers_patch;
 static bool skip_mission_start_timer;
 static float fov_override;
 static bool enable_http_interface;
+static bool disable_nrs_connection;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -372,6 +373,7 @@ static void save_config()
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("enable_http_interface"), enable_http_interface);
+	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
 	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
 }
 
@@ -515,6 +517,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				enable_http_interface = true;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_nrs_connection")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				disable_nrs_connection = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				disable_nrs_connection = true;
 			}
 		}
 		save_config();
@@ -817,6 +828,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				PostProcessInfo_getFov_hook.target = PostProcessInfo_getFov;
 				PostProcessInfo_getFov_hook.create();
 				PostProcessInfo_getFov_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		if (disable_nrs_connection)
+		{
+			SIG_INST("0F 85 4A 20 00 00");
+			auto nrs_jnz = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "nrs_jnz = " << nrs_jnz.as<void*>() << std::endl;
+#endif
+			if (nrs_jnz)
+			{
+				memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
+				nrs_jnz.as<uint8_t*>()[0] = 0x90;
+				nrs_jnz.as<uint8_t*>()[1] = 0xE9;
 			}
 			else
 			{
