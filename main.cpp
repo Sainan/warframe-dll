@@ -701,7 +701,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (worldstate_update_interval_insn)
 			{
-				*worldstate_update_interval_insn.add(3).rip().as<uint64_t*>() = 1; // default: 300
+				*worldstate_update_interval_insn.add(3).rip().as<uint64_t*>() = 0; // default: 300
 			}
 		}
 #endif
