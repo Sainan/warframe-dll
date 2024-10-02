@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.0"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.1"
 
 #define LOGGING false
 #define PRIVATE false
@@ -98,14 +98,19 @@ union GameString
 
 struct Arguments
 {
-	PAD(0, 0x171) bool got_graphicsDriver;
-	PAD(0x171 + 1, 0x178) GameString graphicsDriver;
-	PAD(0x178 + sizeof(GameString), 0x194) bool got_language;
-	PAD(0x194 + 1, 0x198) GameString language;
-	PAD(0x198 + sizeof(GameString), 0x1A8) bool got_cluster;
-	PAD(0x1A8 + 1, 0x1B0) GameString cluster;
+	PAD(0, 0x189) bool got_graphicsDriver;
+	PAD(0x189 + 1, 0x190) GameString graphicsDriver;
+	PAD(0x190 + sizeof(GameString), 0x1AC) bool got_language;
+	PAD(0x1AC + 1, 0x1B0) GameString language;
+	PAD(0x1B0 + sizeof(GameString), 0x1C0) bool got_cluster;
+	PAD(0x1C0 + 1, 0x1C8) GameString cluster;
 };
-static_assert(sizeof(Arguments) == 0x1B0 + sizeof(GameString));
+static_assert(offsetof(Arguments, got_graphicsDriver) == 0x189);
+static_assert(offsetof(Arguments, graphicsDriver) == 0x190);
+static_assert(offsetof(Arguments, got_language) == 0x1AC);
+static_assert(offsetof(Arguments, language) == 0x1B0);
+static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
+static_assert(offsetof(Arguments, cluster) == 0x1C8);
 
 
 static DetourHook winhttp_connect_hook;
@@ -583,7 +588,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if PRIVATE
 		{
-			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
+			//SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
+			SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
 			auto Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
@@ -619,7 +625,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
+			//SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
+			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 F9");
 			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
@@ -739,7 +746,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 A8 FE FF FF 48 81 EC 20 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98");
+			//SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 A8 FE FF FF 48 81 EC 20 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98");
+			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 B8 FE FF FF 48 81 EC 10 02 00 00");
 			auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		std::cout << "get_total_damage = " << get_total_damage << std::endl;
