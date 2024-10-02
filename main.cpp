@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.1"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.2"
 
 #define LOGGING false
 #define PRIVATE false
@@ -626,7 +626,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			//SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
-			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 F9");
+			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05");
 			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
