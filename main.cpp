@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.2"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.3"
 
 #define LOGGING false
 #define PRIVATE false
@@ -845,7 +845,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (disable_nrs_connection)
 		{
-			SIG_INST("0F 85 4A 20 00 00");
+			//SIG_INST("0F 85 4A 20 00 00");
+			SIG_INST("0F 85 ? ? ? ? 48 89 9C 24 ? ? ? ? 4C 89 BC 24 ? ? ? ? E8");
 			auto nrs_jnz = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 			std::cout << "nrs_jnz = " << nrs_jnz.as<void*>() << std::endl;
