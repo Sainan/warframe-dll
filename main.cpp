@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.3"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.4"
 
 #define LOGGING false
 #define PRIVATE false
@@ -308,10 +308,11 @@ static float PostProcessInfo_getFov_detour(uintptr_t a1)
 {
 	if (fov_override != 0.0f)
 	{
-		*reinterpret_cast<float*>(a1 + 2184) = fov_override;
+		// 0x888 seems to be cam rot pitch
+		*reinterpret_cast<float*>(a1 + 0x898) = fov_override;
 		return fov_override;
 	}
-	return *reinterpret_cast<float*>(a1 + 2184);
+	return *reinterpret_cast<float*>(a1 + 0x898);
 }
 
 
