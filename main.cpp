@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.4"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.5"
 
 #define LOGGING false
 #define PRIVATE false
@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+#include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
 #include <joaat.hpp>
@@ -289,7 +290,7 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 }
 
 
-static DetourHook SquadSetCountdownTimer_hook;
+static CompactDetourHook SquadSetCountdownTimer_hook;
 
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
@@ -728,7 +729,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			SIG_INST("48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
+			//SIG_INST("48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
+			SIG_INST("48 89 5C 24 10 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
 			auto SquadSetCountdownTimer = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
@@ -737,6 +739,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
 				SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
+				SquadSetCountdownTimer_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
+#if LOGGING
+				std::cout << "SquadSetCountdownTimer_hook.code_cave = " << SquadSetCountdownTimer_hook.code_cave << std::endl;
+#endif
 				SquadSetCountdownTimer_hook.create();
 				SquadSetCountdownTimer_hook.enable();
 			}
@@ -747,8 +753,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			//SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 A8 FE FF FF 48 81 EC 20 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98");
-			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 B8 FE FF FF 48 81 EC 10 02 00 00");
+			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? FE FF FF 48 81 EC ? 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 98 68 FF FF FF 44 0F 29 A0 58 FF FF FF 44 0F 29 A8 48 FF FF FF 44 0F 29 B0 38 FF FF FF 44 0F 29 B8 28 FF FF FF");
 			auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		std::cout << "get_total_damage = " << get_total_damage << std::endl;
