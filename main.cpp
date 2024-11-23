@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-#include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
 #include <joaat.hpp>
@@ -290,7 +289,7 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 }
 
 
-static CompactDetourHook SquadSetCountdownTimer_hook;
+static DetourHook SquadSetCountdownTimer_hook;
 
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
@@ -739,10 +738,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
 				SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
-				SquadSetCountdownTimer_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
-#if LOGGING
-				std::cout << "SquadSetCountdownTimer_hook.code_cave = " << SquadSetCountdownTimer_hook.code_cave << std::endl;
-#endif
 				SquadSetCountdownTimer_hook.create();
 				SquadSetCountdownTimer_hook.enable();
 			}
