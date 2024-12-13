@@ -976,7 +976,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						&& !prohibit_fov_override
 						)
 					{
-						fov_override = static_cast<float>(string::toInt<int64_t>(arr[1]).value()) / 10000.0f;
+						fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
 					}
 					ServerWebService::sendText(s, std::to_string(fov_override));
 					break;
