@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.5"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.5.6"
 
 #define LOGGING false
 #define PRIVATE false
@@ -553,7 +553,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00 44 0F");
+			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00")
 			auto winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
@@ -826,7 +826,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("F3 0F 10 81 ? ? ? ? C3 CC CC CC CC CC CC CC 48 8B 81 ? ? ? ? 48 8B 00 C3 CC CC CC CC CC 48 8D 81 ? ? ? ? C3 CC CC CC CC CC CC CC CC 48 8B 81 ? ? ? ? 48 8B 00");
+			// Search for string "PostProcessInfo", vftable is below that, function is at offset 0x260
+			SIG_INST("F3 0F 10 81 98 08 00 00 C3");
 			auto PostProcessInfo_getFov = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "PostProcessInfo_getFov = " << PostProcessInfo_getFov << std::endl;
