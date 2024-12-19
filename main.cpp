@@ -119,7 +119,6 @@ static_assert(offsetof(Arguments, cluster) == 0x1C8);
 
 
 static DetourHook winhttp_connect_hook;
-static int num_winhttp_connect_calls = 0;
 
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
 {
@@ -144,34 +143,27 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 		port = https_port;
 	}
 
-	if (++num_winhttp_connect_calls == 3)
-	{
-#if PRIVATE
-		if (strcmp(host_1, "origin.warframe.com") == 0)
-#endif
-		{
-			std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
-		}
-	}
-
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
 }
 
 
 static DetourHook winhttp_new_request_hook;
+static int num_cache_requests = 0;
 
 static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path, bool a5)
 {
 #if LOGGING
 	std::cout << "winhttp_new_request: path = " << path << std::endl;
 #endif
-#if PROVIDE_VERSION_INFO
-	if (build_label)
+	ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w");
+	if (strstr(path, cache_sub.c_str()) != nullptr)
 	{
-		ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w");
-		if (strstr(path, cache_sub.c_str()) != nullptr
-			&& strchr(path, '?') == nullptr
-			)
+		if (++num_cache_requests == 3)
+		{
+			std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
+		}
+#if PROVIDE_VERSION_INFO
+		if (build_label && strchr(path, '?') == nullptr)
 		{
 			auto i = strlen(path);
 			{
@@ -185,8 +177,8 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 			}
 			path[i] = '\0';
 		}
-	}
 #endif
+	}
 	return reinterpret_cast<decltype(&winhttp_new_request_detour)>(winhttp_new_request_hook.original)(a1, a2, a3, path, a5);
 }
 
