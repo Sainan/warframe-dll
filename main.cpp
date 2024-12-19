@@ -5,6 +5,7 @@
 
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
+#define PROVIDE_VERSION_INFO true
 
 #include <iostream>
 
@@ -29,8 +30,10 @@ using namespace soup;
 
 static bool console_attached = false;
 static bool disabled_xp_based_level_cap = false;
+#if PROVIDE_VERSION_INFO
 static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
 static const char* build_hash = nullptr;
+#endif
 
 static std::string server_host;
 static uint16_t http_port;
@@ -162,6 +165,7 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 #if LOGGING
 	std::cout << "winhttp_new_request: path = " << path << std::endl;
 #endif
+#if PROVIDE_VERSION_INFO
 	if (build_label)
 	{
 		ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w");
@@ -182,6 +186,7 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 			path[i] = '\0';
 		}
 	}
+#endif
 	return reinterpret_cast<decltype(&winhttp_new_request_detour)>(winhttp_new_request_hook.original)(a1, a2, a3, path, a5);
 }
 
@@ -221,20 +226,20 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 			uri.port = https_port;
 		}
 	}
-#if DISABLE_XP_BASED_LEVEL_CAPPING
 	if (uri.path == ObfusString("/api/inventory.php").str())
 	{
+#if DISABLE_XP_BASED_LEVEL_CAPPING
 		if (disabled_xp_based_level_cap)
 		{
 			uri.query.append(ObfusString("&xpBasedLevelCapDisabled=1").str());
 		}
-	}
-	else
 #endif
-	if (uri.path == ObfusString("/api/login.php").str()
+	}
+	else if (uri.path == ObfusString("/api/login.php").str()
 		|| uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos
 		)
 	{
+#if PROVIDE_VERSION_INFO
 		if (build_label && build_hash)
 		{
 			if (!uri.query.empty())
@@ -246,6 +251,7 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 			uri.query.push_back('/');
 			uri.query.append(build_hash);
 		}
+#endif
 	}
 	std::string str = uri.toString();
 	url->setData(str.c_str());
@@ -413,6 +419,7 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 }
 
 
+#if PROVIDE_VERSION_INFO
 static DetourHook ReadCacheManifest_hook;
 
 static bool ReadCacheManifest_detour(uintptr_t a1)
@@ -424,6 +431,7 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 #endif
 	return ret;
 }
+#endif
 
 
 static Thread server_thrd;
@@ -652,6 +660,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if PROVIDE_VERSION_INFO
 		{
 			SIG_INST("4C 8D 05 ? ? ? ? 4C 8B CB 48 8D 0D");
 			auto pBuildLabel = Module(nullptr).range.scan(sig_inst);
@@ -667,6 +676,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+#endif
 
 		{
 			SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
@@ -964,6 +974,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if PROVIDE_VERSION_INFO
 		{
 			SIG_INST("4C 8B DC 55 53 41 56 49 8D 6B A8 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4");
 			auto ReadCacheManifest = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -982,6 +993,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+#endif
 
 		server_thrd.start([](Capture&&)
 		{
