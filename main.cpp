@@ -30,6 +30,7 @@ using namespace soup;
 static bool console_attached = false;
 static bool disabled_xp_based_level_cap = false;
 static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
+static const char* build_hash = nullptr;
 
 static std::string server_host;
 static uint16_t http_port;
@@ -221,13 +222,31 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 		}
 	}
 #if DISABLE_XP_BASED_LEVEL_CAPPING
-	if (uri.path == ObfusString("/api/inventory.php").str()
-		&& disabled_xp_based_level_cap
+	if (uri.path == ObfusString("/api/inventory.php").str())
+	{
+		if (disabled_xp_based_level_cap)
+		{
+			uri.query.append(ObfusString("&xpBasedLevelCapDisabled=1").str());
+		}
+	}
+	else
+#endif
+	if (uri.path == ObfusString("/api/login.php").str()
+		|| uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos
 		)
 	{
-		uri.query += ObfusString("&xpBasedLevelCapDisabled=1").str();
+		if (build_label && build_hash)
+		{
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
+			uri.query.append(ObfusString("buildLabel=").str());
+			uri.query.append(build_label, 16);
+			uri.query.push_back('/');
+			uri.query.append(build_hash);
+		}
 	}
-#endif
 	std::string str = uri.toString();
 	url->setData(str.c_str());
 
@@ -390,6 +409,19 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 		last_dmg = ret;
 	}
 	//ret = FLT_MAX;
+	return ret;
+}
+
+
+static DetourHook ReadCacheManifest_hook;
+
+static bool ReadCacheManifest_detour(uintptr_t a1)
+{
+	bool ret = reinterpret_cast<decltype(&ReadCacheManifest_detour)>(ReadCacheManifest_hook.original)(a1);
+	build_hash = reinterpret_cast<GameString*>(a1 + 0x1F0)->getData();
+#if LOGGING
+	std::cout << "cache manifest hash: " << build_hash << std::endl;
+#endif
 	return ret;
 }
 
@@ -925,6 +957,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
 				nrs_jnz.as<uint8_t*>()[0] = 0x90;
 				nrs_jnz.as<uint8_t*>()[1] = 0xE9;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("4C 8B DC 55 53 41 56 49 8D 6B A8 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4");
+			auto ReadCacheManifest = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "ReadCacheManifest = " << ReadCacheManifest << std::endl;
+#endif
+			if (ReadCacheManifest)
+			{
+				ReadCacheManifest_hook.detour = reinterpret_cast<void*>(&ReadCacheManifest_detour);
+				ReadCacheManifest_hook.target = ReadCacheManifest;
+				ReadCacheManifest_hook.create();
+				ReadCacheManifest_hook.enable();
 			}
 			else
 			{
