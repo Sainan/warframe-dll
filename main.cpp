@@ -352,11 +352,64 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
+static bool prohibit_skip_mission_start_timer = false;
+static bool prohibit_fov_override = false;
+
+static void on_got_server_host()
+{
+#if !LOGGING
+	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
+#endif
+#if ASK_SERVER_FOR_TUNABLES
+	Thread thrd([](Capture&&)
+	{
+		HttpRequest hr(server_host, ObfusString("/custom/tunables.json"));
+		hr.port = http_port;
+		hr.use_tls = false;
+		if (auto res = hr.execute())
+		{
+			if (auto jr = json::decode(res->body); jr && jr->isObj())
+			{
+				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str()))
+				{
+					prohibit_skip_mission_start_timer = true;
+					skip_mission_start_timer = false;
+					std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
+				}
+				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str()))
+				{
+					prohibit_fov_override = true;
+					fov_override = 0.0f;
+					std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
+				}
+			}
+		}
+	});
+	thrd.detach();
+#endif
+}
+
+
 static DetourHook parse_arguments_hook;
+static bool processed_args = false;
 
 static void parse_arguments_detour(Arguments* arguments, GameString* str, void* a3)
 {
 	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(arguments, str, a3);
+
+	if (!processed_args)
+	{
+		processed_args = true;
+		for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
+		{
+			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+			{
+				server_host = arg.substr(15);
+			}
+		}
+		on_got_server_host();
+	}
+
 	if (!arguments->got_language)
 	{
 		arguments->got_language = true;
@@ -464,10 +517,6 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 }
 #endif
 
-
-static Thread server_thrd;
-static bool prohibit_skip_mission_start_timer = false;
-static bool prohibit_fov_override = false;
 
 static void save_config()
 {
@@ -638,10 +687,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 		save_config();
-
-#if !LOGGING
-		std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
-#endif
 
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
@@ -829,6 +874,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
+				on_got_server_host();
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
@@ -1026,58 +1072,29 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-		server_thrd.start([](Capture&&)
+		if (enable_http_interface)
 		{
-#if ASK_SERVER_FOR_TUNABLES
+			Thread thrd([](Capture&&)
 			{
-				HttpRequest hr(server_host, ObfusString("/custom/tunables.json"));
-				hr.port = http_port;
-				hr.use_tls = false;
-				if (auto res = hr.execute())
+				Server serv;
+				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 				{
-					if (auto jr = json::decode(res->body); jr && jr->isObj())
+					auto arr = string::explode(req.path, '?');
+					switch (soup::joaat::hash(arr.at(0)))
 					{
-						if (jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str()))
+					default:
+						ServerWebService::send404(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/"):
 						{
-							prohibit_skip_mission_start_timer = true;
-							skip_mission_start_timer = false;
-							std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
-						}
-						if (jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str()))
-						{
-							prohibit_fov_override = true;
-							fov_override = 0.0f;
-							std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
-						}
-					}
-				}
-			}
-#endif
-
-			if (!enable_http_interface)
-			{
-				return;
-			}
-
-			Server serv;
-			ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
-			{
-				auto arr = string::explode(req.path, '?');
-				switch (soup::joaat::hash(arr.at(0)))
-				{
-				default:
-					ServerWebService::send404(s);
-					break;
-
-				case soup::joaat::compileTimeHash("/"):
-					{
-						std::string html;
+							std::string html;
 #if PRIVATE
-						html = string::fromFile("index.html");
-						if (html.empty())
+							html = string::fromFile("index.html");
+							if (html.empty())
 #endif
-						{
-							html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+							{
+								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
 	<p>High Damage Numbers Patch: <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
@@ -1109,62 +1126,64 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		};
 	</script>
 </body>)EOC").str();
+							}
+							ServerWebService::sendHtml(s, html);
 						}
-						ServerWebService::sendHtml(s, html);
-					}
-					break;
+						break;
 
-				case soup::joaat::compileTimeHash("/ping"):
-					ServerWebService::sendText(s, ObfusString("pong"));
-					break;
+					case soup::joaat::compileTimeHash("/ping"):
+						ServerWebService::sendText(s, ObfusString("pong"));
+						break;
 
-				case soup::joaat::compileTimeHash("/save_config"):
-					save_config();
-					ServerWebService::sendText(s, ObfusString("ok"));
-					break;
+					case soup::joaat::compileTimeHash("/save_config"):
+						save_config();
+						ServerWebService::sendText(s, ObfusString("ok"));
+						break;
 
-				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
-					if (arr.size() > 1
-						&& !prohibit_skip_mission_start_timer
-						)
-					{
-						skip_mission_start_timer = (arr[1].size() == 4);
-					}
-					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
-					break;
-
-				case soup::joaat::compileTimeHash("/fov_override"):
-					if (arr.size() > 1
-						&& !prohibit_fov_override
-						)
-					{
-						fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
-					}
-					ServerWebService::sendText(s, std::to_string(fov_override));
-					break;
-
-				case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
-					if (arr.size() > 1)
-					{
-						high_damage_numbers_patch = (arr[1].size() == 4);
-						if (high_damage_numbers_patch)
+					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
+						if (arr.size() > 1
+							&& !prohibit_skip_mission_start_timer
+							)
 						{
-							enable_dmg_number_patch();
+							skip_mission_start_timer = (arr[1].size() == 4);
 						}
-						else
+						ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
+						break;
+
+					case soup::joaat::compileTimeHash("/fov_override"):
+						if (arr.size() > 1
+							&& !prohibit_fov_override
+							)
 						{
-							disable_dmg_number_patch();
+							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
 						}
+						ServerWebService::sendText(s, std::to_string(fov_override));
+						break;
+
+					case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
+						if (arr.size() > 1)
+						{
+							high_damage_numbers_patch = (arr[1].size() == 4);
+							if (high_damage_numbers_patch)
+							{
+								enable_dmg_number_patch();
+							}
+							else
+							{
+								disable_dmg_number_patch();
+							}
+						}
+						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
+						break;
 					}
-					ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
-					break;
+				});
+				if (serv.bind(61558, &srv))
+				{
+					serv.run();
 				}
 			});
-			if (serv.bind(61558, &srv))
-			{
-				serv.run();
-			}
-		});
+			thrd.detach();
+		}
 	}
 	return TRUE;
 }
