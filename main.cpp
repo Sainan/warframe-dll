@@ -34,6 +34,8 @@ static bool disabled_xp_based_level_cap = false;
 static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
 static const char* build_hash = nullptr;
 #endif
+static bool fallback_language_was_used = false;
+static bool fallback_graphicsDriver_was_used = false;
 
 static std::string server_host;
 static uint16_t http_port;
@@ -149,14 +151,15 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 static DetourHook winhttp_new_request_hook;
 static int num_cache_requests = 0;
+static bool showed_graphicsDriver_error = false;
+static bool showed_language_error = false;
 
 static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path, bool a5)
 {
 #if LOGGING
 	std::cout << "winhttp_new_request: path = " << path << std::endl;
 #endif
-	ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w");
-	if (strstr(path, cache_sub.c_str()) != nullptr)
+	if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); strstr(path, cache_sub.c_str()) != nullptr)
 	{
 		if (++num_cache_requests == 3)
 		{
@@ -178,6 +181,40 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 			path[i] = '\0';
 		}
 #endif
+	}
+	else if (ObfusString lang_sub("/0/B.Cache.Windows_"); strstr(path, lang_sub.c_str()) != nullptr)
+	{
+		if (!showed_language_error)
+		{
+			showed_language_error = true;
+			if (fallback_language_was_used)
+			{
+				ObfusString msg("The 'fallback_language' in your client_config.json does not seem to match your game files.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
+			else
+			{
+				ObfusString msg("The language that the game was supposed to launch with was not found in the game files.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
+		}
+	}
+	else if (ObfusString dx_sub("/0/B.Cache.Dx"); strstr(path, dx_sub.c_str()) != nullptr)
+	{
+		if (!showed_graphicsDriver_error)
+		{
+			showed_graphicsDriver_error = true;
+			if (fallback_graphicsDriver_was_used)
+			{
+				ObfusString msg("The 'fallback_graphicsDriver' in your client_config.json does not seem to match your game files.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
+			else
+			{
+				ObfusString msg("The graphicsDriver that the game was supposed to launch with was not found in the game files.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
+		}
 	}
 	return reinterpret_cast<decltype(&winhttp_new_request_detour)>(winhttp_new_request_hook.original)(a1, a2, a3, path, a5);
 }
@@ -324,11 +361,13 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	{
 		arguments->got_language = true;
 		arguments->language.setShortData(fallback_language.c_str());
+		fallback_language_was_used = true;
 	}
 	if (!arguments->got_graphicsDriver)
 	{
 		arguments->got_graphicsDriver = true;
 		arguments->graphicsDriver.setShortData(fallback_graphicsDriver.c_str());
+		fallback_graphicsDriver_was_used = true;
 	}
 	if (!arguments->got_cluster)
 	{
