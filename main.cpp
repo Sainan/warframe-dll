@@ -29,6 +29,7 @@ using namespace soup;
 
 static bool console_attached = false;
 static bool disabled_xp_based_level_cap = false;
+static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
 
 static std::string server_host;
 static uint16_t http_port;
@@ -150,6 +151,37 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, server_host.c_str(), port, nullptr, nullptr);
+}
+
+
+static DetourHook winhttp_new_request_hook;
+
+static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path, bool a5)
+{
+#if LOGGING
+	std::cout << "winhttp_new_request: path = " << path << std::endl;
+#endif
+	if (build_label)
+	{
+		ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w");
+		if (strstr(path, cache_sub.c_str()) != nullptr
+			&& strchr(path, '?') == nullptr
+			)
+		{
+			auto i = strlen(path);
+			{
+				ObfusString app("?version=");
+				memcpy(&path[i], app.c_str(), app.size());
+				i += app.size();
+			}
+			{
+				memcpy(&path[i], build_label, 16);
+				i += 16;
+			}
+			path[i] = '\0';
+		}
+	}
+	return reinterpret_cast<decltype(&winhttp_new_request_detour)>(winhttp_new_request_hook.original)(a1, a2, a3, path, a5);
 }
 
 
@@ -553,7 +585,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00")
+			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00");
 			auto winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
@@ -567,6 +599,41 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			winhttp_connect_hook.target = winhttp_connect;
 			winhttp_connect_hook.create();
 			winhttp_connect_hook.enable();
+		}
+
+		{
+			SIG_INST("40 55 56 57 41 56 41 57 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 ? ? ? ? ? 33 ED");
+			auto winhttp_new_request = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "winhttp_new_request = " << winhttp_new_request << std::endl;
+#endif
+			if (winhttp_new_request)
+			{
+				winhttp_new_request_hook.detour = reinterpret_cast<void*>(&winhttp_new_request_detour);
+				winhttp_new_request_hook.target = winhttp_new_request;
+				winhttp_new_request_hook.create();
+				winhttp_new_request_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("4C 8D 05 ? ? ? ? 4C 8B CB 48 8D 0D");
+			auto pBuildLabel = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "pBuildLabel = " << pBuildLabel.as<void*>() << std::endl;
+#endif
+			if (pBuildLabel)
+			{
+				build_label = pBuildLabel.add(13).rip().as<const char*>();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
 		}
 
 		{
