@@ -226,14 +226,6 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 {
 #if LOGGING
 	std::cout << "game_http_request for " << (const char*)url->getData() << std::endl;
-#else
-	if (console_attached)
-	{
-		console_attached = false;
-		const auto conWnd = GetConsoleWindow();
-		FreeConsole();
-		PostMessage(conWnd, WM_CLOSE, 0, 0);
-	}
 #endif
 
 	char bak[sizeof(GameString)];
@@ -264,17 +256,32 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 		}
 #endif
 	}
-	else if (uri.path == ObfusString("/api/login.php").str()
-		|| uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos
-		)
+	else if (uri.path == ObfusString("/api/login.php").str())
+	{
+#if !LOGGING
+		if (console_attached)
+		{
+			console_attached = false;
+			const auto conWnd = GetConsoleWindow();
+			FreeConsole();
+			PostMessage(conWnd, WM_CLOSE, 0, 0);
+		}
+#endif
+#if PROVIDE_VERSION_INFO
+		if (build_label && build_hash)
+		{
+			uri.query.append(ObfusString("&buildLabel=").str());
+			uri.query.append(build_label, 16);
+			uri.query.push_back('/');
+			uri.query.append(build_hash);
+		}
+#endif
+	}
+	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
 		if (build_label && build_hash)
 		{
-			if (!uri.query.empty())
-			{
-				uri.query.push_back('&');
-			}
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
