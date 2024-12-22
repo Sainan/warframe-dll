@@ -373,13 +373,11 @@ static void on_got_server_host()
 				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str()))
 				{
 					prohibit_skip_mission_start_timer = true;
-					skip_mission_start_timer = false;
 					std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
 				}
 				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str()))
 				{
 					prohibit_fov_override = true;
-					fov_override = 0.0f;
 					std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
 				}
 			}
@@ -439,7 +437,7 @@ static DetourHook SquadSetCountdownTimer_hook;
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
 	//std::cout << "SquadSetCountdownTimer(" << seconds << ")" << std::endl;
-	if (skip_mission_start_timer && seconds == 5.9f)
+	if (skip_mission_start_timer && !prohibit_skip_mission_start_timer && seconds == 5.9f)
 	{
 		seconds = 0.0f;
 	}
@@ -451,7 +449,7 @@ static DetourHook PostProcessInfo_getFov_hook;
 
 static float PostProcessInfo_getFov_detour(uintptr_t a1)
 {
-	if (fov_override != 0.0f)
+	if (fov_override != 0.0f && !prohibit_fov_override)
 	{
 		// 0x888 seems to be cam rot pitch
 		*reinterpret_cast<float*>(a1 + 0x898) = fov_override;
@@ -1145,9 +1143,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
-						if (arr.size() > 1
-							&& !prohibit_skip_mission_start_timer
-							)
+						if (arr.size() > 1)
 						{
 							skip_mission_start_timer = (arr[1].size() == 4);
 						}
@@ -1155,9 +1151,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/fov_override"):
-						if (arr.size() > 1
-							&& !prohibit_fov_override
-							)
+						if (arr.size() > 1)
 						{
 							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
 						}
