@@ -15,12 +15,14 @@
 #include <json.hpp>
 #include <memGuard.hpp>
 #include <Module.hpp>
+#include <netConfig.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
 #include <Server.hpp>
 #include <ServerWebService.hpp>
+#include <Socket.hpp>
 #include <string.hpp>
 #include <structing.hpp>
 #include <Thread.hpp>
@@ -36,6 +38,7 @@ static const char* build_hash = nullptr;
 #endif
 static bool fallback_language_was_used = false;
 static bool fallback_graphicsDriver_was_used = false;
+static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 
 static std::string server_host;
 static uint16_t http_port;
@@ -277,6 +280,10 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 		}
 #endif
 	}
+	else if (uri.path == ObfusString("/api/inbox.php").str())
+	{
+		auth_query = uri.query;
+	}
 	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
@@ -371,23 +378,26 @@ static void on_got_server_host()
 	Thread thrd([](Capture&&)
 	{
 		HttpRequest hr(server_host, ObfusString("/custom/tunables.json"));
-		hr.port = http_port;
-		hr.use_tls = false;
+		hr.port = https_port;
+		hr.use_tls = true;
+		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
+
+		UniquePtr<JsonNode> jr;
 		if (auto res = hr.execute())
 		{
-			if (auto jr = json::decode(res->body); jr && jr->isObj())
-			{
-				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str()))
-				{
-					prohibit_skip_mission_start_timer = true;
-					std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
-				}
-				if (jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str()))
-				{
-					prohibit_fov_override = true;
-					std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
-				}
-			}
+			jr = json::decode(res->body);
+		}
+
+		prohibit_skip_mission_start_timer = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str());
+		prohibit_fov_override = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str());
+
+		if (prohibit_skip_mission_start_timer)
+		{
+			std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
+		}
+		if (prohibit_fov_override)
+		{
+			std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
 		}
 	});
 	thrd.detach();
@@ -544,6 +554,19 @@ static void save_config()
 	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
 }
 
+static void attach_console()
+{
+	AllocConsole();
+	SetConsoleTitleA(BOOTSTRAPPER_TITLE);
+	{
+		FILE* f;
+		freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
+		freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
+		freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
+	}
+	console_attached = true;
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -556,17 +579,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			return FALSE;
 		}
 
-#if true
-		AllocConsole();
-		SetConsoleTitleA(BOOTSTRAPPER_TITLE);
-		{
-			FILE* f;
-			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
-			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
-			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
-		}
-		console_attached = true;
-#endif
+		attach_console();
 
 		{
 			std::wstring path(_wgetenv(L"windir"));
@@ -1179,6 +1192,34 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 						}
 						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
+						break;
+
+					case soup::joaat::compileTimeHash("/server_host"):
+						if (arr.size() > 1
+							&& server_host != arr[1]
+							)
+						{
+							if (!auth_query.empty())
+							{
+								Thread thrd([](Capture&& cap)
+								{
+									HttpRequest hr(cap.get<std::string>(), ObfusString("/api/logout.php?").str() + auth_query);
+									hr.port = https_port;
+									hr.use_tls = true;
+									netConfig::get().certchain_validator = &Socket::certchain_validator_none;
+									SOUP_UNUSED(hr.execute());
+								}, std::move(server_host));
+								thrd.detach();
+							}
+
+							server_host = arr[1];
+							if (!console_attached)
+							{
+								attach_console();
+							}
+							on_got_server_host();
+						}
+						ServerWebService::sendText(s, server_host);
 						break;
 					}
 				});
