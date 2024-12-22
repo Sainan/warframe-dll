@@ -395,6 +395,10 @@ static bool processed_args = false;
 
 static void parse_arguments_detour(Arguments* arguments, GameString* str, void* a3)
 {
+#if LOGGING
+	std::cout << "parse_arguments: " << str->getData() << std::endl;
+#endif
+
 	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(arguments, str, a3);
 
 	if (!processed_args)
