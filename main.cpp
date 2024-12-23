@@ -1118,11 +1118,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 							{
 								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+	<p>Server Host: <input id="server_host" type="text" /> <button id="server_host_submit">Change</button></p>
 	<p>High Damage Numbers Patch: <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<script>
+		fetch("http://localhost:61558/server_host").then(res => res.text()).then(res => {
+			document.getElementById("server_host").value = res;
+		});
+		document.getElementById("server_host_submit").onclick = function() {
+			fetch("http://localhost:61558/server_host?" + document.getElementById("server_host").value);
+		};
+
 		fetch("http://localhost:61558/high_damage_numbers_patch").then(res => res.text()).then(res => {
 			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
 		});
