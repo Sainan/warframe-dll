@@ -162,6 +162,7 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 #if LOGGING
 	std::cout << "winhttp_new_request: path = " << path << std::endl;
 #endif
+	char buff[1024];
 	if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); strstr(path, cache_sub.c_str()) != nullptr)
 	{
 		if (++num_cache_requests == 3)
@@ -169,9 +170,11 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 			std::cout << ObfusString("The game may fail to start as the server is unresponsive. Retrying.") << std::endl;
 		}
 #if PROVIDE_VERSION_INFO
-		if (build_label && strchr(path, '?') == nullptr)
+		if (build_label)
 		{
 			auto i = strlen(path);
+			memcpy(buff, path, i);
+			path = buff;
 			{
 				ObfusString app("?version=");
 				memcpy(&path[i], app.c_str(), app.size());
