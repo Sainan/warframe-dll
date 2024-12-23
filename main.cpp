@@ -374,9 +374,7 @@ static bool prohibit_fov_override = false;
 
 static void on_got_server_host()
 {
-#if !LOGGING
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
-#endif
 #if ASK_SERVER_FOR_TUNABLES
 	Thread thrd([](Capture&&)
 	{
