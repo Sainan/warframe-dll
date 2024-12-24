@@ -28,6 +28,8 @@
 #include <Thread.hpp>
 #include <Uri.hpp>
 
+#include "whirlpool.hpp"
+
 using namespace soup;
 
 static bool console_attached = false;
@@ -38,6 +40,7 @@ static const char* build_hash = nullptr;
 #endif
 static bool fallback_language_was_used = false;
 static bool fallback_graphicsDriver_was_used = false;
+static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 
 static std::string server_host;
@@ -51,6 +54,9 @@ static bool skip_mission_start_timer;
 static float fov_override;
 static bool enable_http_interface;
 static bool disable_nrs_connection;
+static bool autologin;
+static std::string autologin_email;
+static std::string autologin_password;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -276,14 +282,13 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 {
 #if LOGGING
 	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
-	if (request->body.getSize() != 0)
+	/*if (request->body.getSize() != 0)
 	{
 		std::cout << request->body.getData() << std::endl;
-	}
+	}*/
 #endif
 
-	char bak[sizeof(GameString)];
-	memcpy(bak, &request->url, sizeof(bak));
+	std::string body_buf;
 
 	Uri uri((const char*)request->url.getData());
 	uri.host = server_host;
@@ -321,6 +326,30 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 			PostMessage(conWnd, WM_CLOSE, 0, 0);
 		}
 #endif
+		if (autologin && !did_auto_login)
+		{
+			did_auto_login = true;
+			if (auto jr = json::decode(request->body.getData()); jr && jr->isObj())
+			{
+				if (auto it = jr->reinterpretAsObj().findIt(ObfusString("email").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
+				{
+					it->second->reinterpretAsStr().value = autologin_email;
+				}
+				if (auto it = jr->reinterpretAsObj().findIt(ObfusString("password").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
+				{
+					it->second->reinterpretAsStr().value = autologin_password;
+				}
+				if (auto it = jr->reinterpretAsObj().findIt(ObfusString("kick").str()); it != jr->reinterpretAsObj().end())
+				{
+					// For some reason, ThemedMainMenu.lua sets the kick=true when dispatching login for "Client.AutoLogin".
+					// However, as far as I can tell, this does not get persisted in any way, so I assume it's just something they do to ensure this is only used in their dev environment.
+					// With "Steam.AutoLogin", we'd see kick=false as expected, but feels a bit more hacky.
+					jr->reinterpretAsObj().erase(it);
+				}
+				body_buf = jr->encode();
+				request->body.setUnownedData(body_buf.data(), body_buf.size());
+			}
+		}
 #if PRIVATE
 		if (strstr(request->body.getData(), "\"kick\"") != nullptr)
 		{
@@ -359,12 +388,19 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 		MessageBoxA(0, "ANTI-CHEAT TRIGGERED", "ANTI-CHEAT TRIGGERED", 0);
 	}*/
 #endif
-	std::string str = uri.toString();
-	request->url.setUnownedData(str.data(), str.size());
+	std::string url_buf = uri.toString();
+	request->url.setUnownedData(url_buf.data(), url_buf.size());
 
 	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, request, a3);
 
-	memcpy(&request->url, bak, sizeof(bak));
+#if LOGGING
+	// This now contains the response
+	/*if (request->body.getSize() != 0)
+	{
+		std::cout << request->body.getData() << std::endl;
+	}*/
+#endif
+
 	return ret;
 }
 
@@ -598,6 +634,83 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 #endif
 
 
+union lua_Value
+{
+	uintptr_t as_uintptr;
+	bool as_bool;
+};
+
+enum lua_Type
+{
+	LUA_BOOL = 1,
+	LUA_STRING = 5,
+};
+
+struct lua_TValue
+{
+	/* 0x00 */ lua_Value value;
+	PAD(0x08, 0x0C) uint8_t type;
+
+	[[nodiscard]] const char* getString() const noexcept
+	{
+		return reinterpret_cast<const char*>(value.as_uintptr + 0x18);
+	}
+};
+static_assert(sizeof(lua_TValue) == 0x10);
+
+struct lua_State
+{
+	PAD(0, 0x08) lua_TValue* outtop;
+	/* 0x10 */ lua_TValue* intop;
+};
+static_assert(sizeof(lua_State) == 0x18);
+
+/*static DetourHook get_config_bool_hook;
+
+static int get_config_bool_detour(lua_State* L)
+{
+	SOUP_IF_LIKELY (L->intop[1].type == LUA_STRING)
+	{
+		ObfusString str("Steam.AutoLogin");
+		if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
+		{
+#if LOGGING
+			std::cout << "Reporting Steam.AutoLogin as true" << std::endl;
+#endif
+			L->outtop[-1].value.as_bool = true;
+			L->outtop[-1].type = LUA_BOOL;
+			get_config_bool_hook.disable();
+			return 1;
+		}
+	}
+
+	return reinterpret_cast<decltype(&get_config_bool_detour)>(get_config_bool_hook.original)(L);
+}*/
+
+
+static DetourHook get_config_bool_vfunc_hook;
+
+static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallback)
+{
+	SOUP_IF_LIKELY (name)
+	{
+		ObfusString str("Client.AutoLogin");
+		SOUP_IF_UNLIKELY (strcmp(name, str.c_str()) == 0)
+		{
+			if (!did_auto_login)
+			{
+#if LOGGING
+				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
+#endif
+				return true;
+			}
+		}
+	}
+
+	return reinterpret_cast<decltype(&get_config_bool_vfunc_detour)>(get_config_bool_vfunc_hook.original)(a1, name, fallback);
+}
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -612,6 +725,9 @@ static void save_config()
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("enable_http_interface"), enable_http_interface);
 	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
+	config.add(ObfusString("autologin"), autologin);
+	config.add(ObfusString("autologin_email"), autologin_email);
+	config.add(ObfusString("autologin_password"), autologin_password);
 	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
 }
 
@@ -627,6 +743,8 @@ static void attach_console()
 	}
 	console_attached = true;
 }
+
+#define CONFIG_LOADED_ONLY_ONCE true
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
@@ -767,6 +885,46 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				disable_nrs_connection = true;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				autologin = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				autologin = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_email")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				autologin_email = it->second->reinterpretAsStr().value;
+			}
+			else
+			{
+#if !CONFIG_LOADED_ONLY_ONCE
+				autologin_email.clear();
+#endif
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_password")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				autologin_password = it->second->reinterpretAsStr().value;
+				if (!autologin_password.empty() && autologin_password.size() != 128)
+				{
+					whirlpool_ctx ctx;
+					unsigned char result[64];
+					rhash_whirlpool_init(&ctx);
+					rhash_whirlpool_update(&ctx, (const unsigned char*)autologin_password.data(), autologin_password.size());
+					rhash_whirlpool_final(&ctx, result);
+					autologin_password = string::bin2hexLower((const char*)result, 64);
+				}
+			}
+			else
+			{
+#if !CONFIG_LOADED_ONLY_ONCE
+				autologin_password.clear();
+#endif
 			}
 		}
 		save_config();
@@ -1147,6 +1305,87 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				ReadCacheManifest_hook.target = ReadCacheManifest;
 				ReadCacheManifest_hook.create();
 				ReadCacheManifest_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
+
+		/*{
+			SIG_INST("4C 8B 89 10 03 00 00 48 8B CE 41 FF D1");
+			auto get_config_bool = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "get_config_bool = " << get_config_bool.as<void*>() << std::endl;
+#endif
+			if (get_config_bool)
+			{
+				if (autologin)
+				{
+					get_config_bool = get_config_bool.sub(0x0000000140F40B8C - 0x0000000140F40B20);
+
+					get_config_bool_hook.detour = reinterpret_cast<void*>(&get_config_bool_detour);
+					get_config_bool_hook.target = get_config_bool.as<void*>();
+					get_config_bool_hook.create();
+					get_config_bool_hook.enable();
+				}
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}*/
+
+		{
+			SIG_INST("40 55 56 41 56 48 83 EC 30 41 0F B6 E8");
+			auto get_config_bool_vfunc = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "get_config_bool_vfunc = " << get_config_bool_vfunc << std::endl;
+#endif
+			if (get_config_bool_vfunc)
+			{
+				if (autologin)
+				{
+					get_config_bool_vfunc_hook.detour = reinterpret_cast<void*>(&get_config_bool_vfunc_detour);
+					get_config_bool_vfunc_hook.target = get_config_bool_vfunc;
+					get_config_bool_vfunc_hook.create();
+					get_config_bool_vfunc_hook.enable();
+				}
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+#if false
+		// Enable Steam Login by making the Lua scripts think Steam is initialised
+		{
+			SIG_INST("FC C6 D4 49");
+			auto lua_SteamService_IsInitialized_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_SteamService_IsInitialized_hash = " << lua_SteamService_IsInitialized_hash.as<void*>() << std::endl;
+#endif
+			if (lua_SteamService_IsInitialized_hash)
+			{
+				auto lua_SteamService_IsInitialized = *lua_SteamService_IsInitialized_hash.add(8).as<void**>();
+#if LOGGING
+				std::cout << "lua_SteamService_IsInitialized = " << lua_SteamService_IsInitialized << std::endl;
+#endif
+				auto SteamService_IsInitialized_call = Pointer(lua_SteamService_IsInitialized).add(0x00000001404F582E - 0x00000001404F5820).as<uint8_t*>();
+
+				if (autologin)
+				{
+					const uint8_t patch[5] = {
+						0xb0, 0x01, // mov al, 1
+						0x90, // nop
+						0x90, // nop
+						0x90, // nop
+					};
+					memGuard::setAllowedAccess(SteamService_IsInitialized_call, sizeof(patch), memGuard::ACC_RWX);
+					memcpy(SteamService_IsInitialized_call, patch, sizeof(patch));
+				}
 			}
 			else
 			{
