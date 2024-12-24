@@ -467,6 +467,7 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 
 static bool prohibit_skip_mission_start_timer = false;
 static bool prohibit_fov_override = false;
+static bool prohibit_freecam = false;
 
 static void on_got_server_host()
 {
@@ -487,6 +488,7 @@ static void on_got_server_host()
 
 		prohibit_skip_mission_start_timer = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str());
 		prohibit_fov_override = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str());
+		prohibit_freecam = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_freecam").str());
 
 		if (prohibit_skip_mission_start_timer)
 		{
@@ -495,6 +497,10 @@ static void on_got_server_host()
 		if (prohibit_fov_override)
 		{
 			std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
+		}
+		if (prohibit_freecam)
+		{
+			std::cout << ObfusString("Note: freecam is prohibited on this server.") << std::endl;
 		}
 	});
 	thrd.detach();
@@ -708,6 +714,80 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 	}
 
 	return reinterpret_cast<decltype(&get_config_bool_vfunc_detour)>(get_config_bool_vfunc_hook.original)(a1, name, fallback);
+}
+
+
+struct UnkControlsArg
+{
+};
+
+struct Avatar
+{
+	struct Vftable
+	{
+		PAD(0, 0x610) void(*disableJumping)(Avatar*, UnkControlsArg*);
+		/* 0x618 */ void(*enableJumping)(Avatar*, UnkControlsArg*);
+	};
+
+	/* 0x00 */ Vftable* vftable;
+	PAD(0x08, 0x48) float mov_dir_x;
+	/* 0x4C */ float mov_dir_y;
+	/* 0x50 */ float mov_dir_z;
+	PAD(0x54, 0x70) float pos_x; // Updating this position only takes effect while crouching.
+	/* 0x74 */ float pos_y;
+	/* 0x78 */ float pos_z;
+	PAD(0x7C, 0xA0) float rot_x;
+	/* 0xA4 */ float rot_y;
+	/* 0xA8 */ float rot_z;
+	PAD(0xAC, 0xD0) float body_pos_x;
+	/* 0xD4 */ float body_pos_y;
+	/* 0xD8 */ float body_pos_z;
+	PAD(0x0DC, 0x0F0) float vel_x;
+	/* 0xF4 */ float vel_y;
+	/* 0xF8 */ float vel_z;
+	PAD(0x0FC, 0x100) float pos2_x;
+	/* 0x104 */ float pos2_y;
+	/* 0x108 */ float pos2_z;
+	PAD(0x10C, 0x110) float vis_x;
+	/* 0x114 */ float vis_y;
+	/* 0x118 */ float vis_z;
+	PAD(0x11C, 0x504) float head_pos_x;
+	/* 0x508 */ float head_pos_y;
+	/* 0x50C */ float head_pos_z;
+	PAD(0x510, 0x511) bool followed_by_camera;
+	PAD(0x512, 0x6A0) bool render_above_everything;
+};
+static_assert(offsetof(Avatar, followed_by_camera) == 0x511);
+
+struct Player
+{
+	PAD(0x000, 0x038) GameString name;
+	PAD(0x048, 0x068) GameString name_with_platform_suffix;
+	PAD(0x078, 0x090) GameString clan_name;
+	PAD(0x0A0, 0x148) Avatar** avatar;
+	PAD(0x150, 0x158) bool controlling_camera;
+	PAD(0x159, 0x1A0) GameString mm_value;
+	PAD(0x1B0, 0x1C0) GameString account_id;
+	PAD(0x1D0, 0x13E0) UnkControlsArg unk_controls_arg;
+
+	[[nodiscard]] Avatar* getAvatar() const noexcept { return *avatar; }
+};
+static_assert(offsetof(Player, controlling_camera) == 0x158);
+
+static DetourHook calculate_spawn_position_hook;
+static Player* local_player = nullptr;
+
+static void* calculate_spawn_position_detour(void* a1, void* a2, void* a3, void* a4, void* a5, Player* player)
+{
+	if (player)
+	{
+		local_player = player;
+#if LOGGING
+		std::cout << "local_player = " << local_player << std::endl;
+#endif
+	}
+	
+	return reinterpret_cast<decltype(&calculate_spawn_position_detour)>(calculate_spawn_position_hook.original)(a1, a2, a3, a4, a5, player);
 }
 
 
@@ -1394,6 +1474,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		{
+			SIG_INST("40 55 53 56 57 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? B8 ? ? ? ? E8 ? ? ? ? 48 2B E0 0F 29 BC 24");
+			auto calculate_spawn_position = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "calculate_spawn_position = " << calculate_spawn_position << std::endl;
+#endif
+			if (calculate_spawn_position)
+			{
+				calculate_spawn_position_hook.detour = reinterpret_cast<void*>(&calculate_spawn_position_detour);
+				calculate_spawn_position_hook.target = calculate_spawn_position;
+				calculate_spawn_position_hook.create();
+				calculate_spawn_position_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		if (enable_http_interface)
 		{
 			Thread thrd([](Capture&&)
@@ -1422,6 +1521,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
+	<hr>
+	<p>Camera Type: <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
 	<script>
 		fetch("http://localhost:61558/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
@@ -1447,12 +1548,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		fetch("http://localhost:61558/fov_override").then(res => res.text()).then(res => {
 			document.getElementById("fov_override").value = parseFloat(res) * 10000;
 		});
-		document.getElementById("fov_override").oninput = function () {
+		document.getElementById("fov_override").oninput = function() {
 			fetch("http://localhost:61558/fov_override?" + this.value);
 		};
 
-		document.getElementById("save_config").onclick = function () {
+		document.getElementById("save_config").onclick = function() {
 			fetch("http://localhost:61558/save_config");
+		};
+
+		document.getElementById("camtype").onchange = function() {
+			fetch("http://localhost:61558/" + this.value);
 		};
 	</script>
 </body>)EOC").str();
@@ -1528,6 +1633,33 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							on_got_server_host();
 						}
 						ServerWebService::sendText(s, server_host);
+						break;
+
+					case soup::joaat::compileTimeHash("/freecam"):
+						if (local_player && !prohibit_freecam)
+						{
+							local_player->controlling_camera = true;
+							local_player->getAvatar()->followed_by_camera = false;
+						}
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/lockcam"):
+						if (local_player && !prohibit_freecam)
+						{
+							local_player->controlling_camera = false;
+							local_player->getAvatar()->followed_by_camera = false;
+						}
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/gamecam"):
+						if (local_player && !prohibit_freecam)
+						{
+							local_player->controlling_camera = false;
+							local_player->getAvatar()->followed_by_camera = true;
+						}
+						ServerWebService::send204(s);
 						break;
 					}
 				});
