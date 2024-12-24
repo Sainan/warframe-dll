@@ -108,12 +108,19 @@ union GameString
 
 struct Arguments
 {
-	PAD(0, 0x189) bool got_graphicsDriver;
-	PAD(0x189 + 1, 0x190) GameString graphicsDriver;
+	PAD(0, 0x04) bool silent;
+	PAD(0x05, 0x18) bool client;
+	PAD(0x19, 0x140) bool got_debugSession;
+	/* 0x148 */ GameString debugSession;
+	/* 0x158 */ bool got_clientType;
+	/* 0x160 */ GameString clientType;
+	PAD(0x160 + sizeof(GameString), 0x189) bool got_graphicsDriver;
+	/* 0x190 */ GameString graphicsDriver;
 	PAD(0x190 + sizeof(GameString), 0x1AC) bool got_language;
-	PAD(0x1AC + 1, 0x1B0) GameString language;
+	/* 0x1B0 */ GameString language;
 	PAD(0x1B0 + sizeof(GameString), 0x1C0) bool got_cluster;
-	PAD(0x1C0 + 1, 0x1C8) GameString cluster;
+	/* 0x1C8 */ GameString cluster;
+	/* 0x1D8 */ GameString relaunch;
 };
 static_assert(offsetof(Arguments, got_graphicsDriver) == 0x189);
 static_assert(offsetof(Arguments, graphicsDriver) == 0x190);
@@ -121,6 +128,7 @@ static_assert(offsetof(Arguments, got_language) == 0x1AC);
 static_assert(offsetof(Arguments, language) == 0x1B0);
 static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
 static_assert(offsetof(Arguments, cluster) == 0x1C8);
+static_assert(offsetof(Arguments, relaunch) == 0x1D8);
 
 
 static DetourHook winhttp_connect_hook;
