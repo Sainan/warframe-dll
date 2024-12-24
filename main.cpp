@@ -265,16 +265,27 @@ static void* winhttp_new_request_detour(void* a1, void* a2, void* a3, char* path
 
 static DetourHook game_http_request_hook;
 
-static void* game_http_request_detour(void* a1, GameString* url, void* a3)
+struct GameHttpRequest
+{
+	/* 0x00 */ GameString url;
+	PAD(0x10, 0x38) GameString body;
+};
+static_assert(offsetof(GameHttpRequest, body) == 0x38);
+
+static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* a3)
 {
 #if LOGGING
-	std::cout << "game_http_request for " << (const char*)url->getData() << std::endl;
+	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
+	if (request->body.getSize() != 0)
+	{
+		std::cout << request->body.getData() << std::endl;
+	}
 #endif
 
 	char bak[sizeof(GameString)];
-	memcpy(bak, url, sizeof(bak));
+	memcpy(bak, &request->url, sizeof(bak));
 
-	Uri uri((const char*)url->getData());
+	Uri uri((const char*)request->url.getData());
 	uri.host = server_host;
 	if (uri.scheme.size() == 4) // "http"
 	{
@@ -310,6 +321,12 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 			PostMessage(conWnd, WM_CLOSE, 0, 0);
 		}
 #endif
+#if PRIVATE
+		if (strstr(request->body.getData(), "\"kick\"") != nullptr)
+		{
+			MessageBoxA(0, "ANTI-CHEAT TRIGGERED", "ANTI-CHEAT TRIGGERED", 0);
+		}
+#endif
 #if PROVIDE_VERSION_INFO
 		if (build_label && build_hash)
 		{
@@ -336,12 +353,18 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 		}
 #endif
 	}
+#if PRIVATE
+	/*else if (uri.path == "/api/heartbeat.php")
+	{
+		MessageBoxA(0, "ANTI-CHEAT TRIGGERED", "ANTI-CHEAT TRIGGERED", 0);
+	}*/
+#endif
 	std::string str = uri.toString();
-	url->setUnownedData(str.data(), str.size());
+	request->url.setUnownedData(str.data(), str.size());
 
-	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, url, a3);
+	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, request, a3);
 
-	memcpy(url, bak, sizeof(bak));
+	memcpy(&request->url, bak, sizeof(bak));
 	return ret;
 }
 
