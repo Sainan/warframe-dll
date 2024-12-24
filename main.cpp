@@ -81,30 +81,59 @@ static bool parse_url_detour(const char* in, ParsedUrl* out)
 
 union GameString
 {
-	char data[16];
-	char* ptr;
-
-	char* getData()
+	struct
 	{
-		if (data[15] == -1)
+		char data[15];
+		uint8_t inv_len;
+	} shrt;
+	struct
+	{
+		char* ptr;
+		uint64_t metadata;
+	} lng;
+
+	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
+	//[[nodiscard]] bool willFreeData() const noexcept { return isLong() && (lng.metadata & 0xFFFFFFF0000000ull) != 0xFFFFFFF0000000ull; }
+	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
+	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? (lng.metadata & 0xFFFFFFF) : (sizeof(shrt.data) - shrt.inv_len); }
+
+	void setUnownedData(const char* data, size_t len) noexcept
+	{
+		if (len > sizeof(shrt.data))
 		{
-			return ptr;
+			lng.ptr = (char*)data;
+			lng.metadata = 0xFF'FFFFFFF'0000000ull | (len & 0xFFFFFFF);
 		}
-		return data;
+		else
+		{
+			memcpy(shrt.data, data, len);
+			shrt.data[len] = 0;
+			shrt.inv_len = sizeof(shrt.data) - len;
+		}
 	}
 
-	void setData(const char* new_data)
+	void setShortData(const char* data, size_t len) noexcept
 	{
-		ptr = (char*)new_data;
-		data[15] = -1;
+		if (len > sizeof(shrt.data))
+		{
+			len = sizeof(shrt.data);
+		}
+		strncpy(shrt.data, data, sizeof(shrt.data));
+		shrt.inv_len = sizeof(shrt.data) - len;
 	}
 
-	void setShortData(const char* new_data)
+	void setShortData(const std::string& str) noexcept
 	{
-		memset(data, 0, sizeof(data));
-		strncpy(data, new_data, sizeof(data) - 1);
+		return setShortData(str.data(), str.size());
+	}
+
+	void clear() noexcept
+	{
+		shrt.data[0] = '\0';
+		shrt.inv_len = sizeof(shrt.data);
 	}
 };
+static_assert(sizeof(GameString) == 0x10);
 
 struct Arguments
 {
@@ -308,7 +337,7 @@ static void* game_http_request_detour(void* a1, GameString* url, void* a3)
 #endif
 	}
 	std::string str = uri.toString();
-	url->setData(str.c_str());
+	url->setUnownedData(str.data(), str.size());
 
 	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, url, a3);
 
@@ -441,19 +470,19 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	if (!arguments->got_language)
 	{
 		arguments->got_language = true;
-		arguments->language.setShortData(fallback_language.c_str());
+		arguments->language.setShortData(fallback_language);
 		fallback_language_was_used = true;
 	}
 	if (!arguments->got_graphicsDriver)
 	{
 		arguments->got_graphicsDriver = true;
-		arguments->graphicsDriver.setShortData(fallback_graphicsDriver.c_str());
+		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
 		fallback_graphicsDriver_was_used = true;
 	}
 	if (!arguments->got_cluster)
 	{
 		arguments->got_cluster = true;
-		arguments->cluster.setShortData(fallback_cluster.c_str());
+		arguments->cluster.setShortData(fallback_cluster);
 	}
 }
 
