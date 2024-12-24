@@ -507,6 +507,19 @@ static void on_got_server_host()
 #endif
 }
 
+static void do_logout()
+{
+	if (!auth_query.empty())
+	{
+		HttpRequest hr(server_host, ObfusString("/api/logout.php?").str() + auth_query);
+		hr.port = https_port;
+		hr.use_tls = true;
+		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
+		SOUP_UNUSED(hr.execute());
+		auth_query.clear();
+	}
+}
+
 
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
@@ -1607,24 +1620,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
 						break;
 
+					case soup::joaat::compileTimeHash("/logout"):
+						do_logout();
+						ServerWebService::send204(s);
+						break;
+
 					case soup::joaat::compileTimeHash("/server_host"):
 						if (arr.size() > 1
 							&& server_host != arr[1]
 							)
 						{
-							if (!auth_query.empty())
-							{
-								Thread thrd([](Capture&& cap)
-								{
-									HttpRequest hr(cap.get<std::string>(), ObfusString("/api/logout.php?").str() + auth_query);
-									hr.port = https_port;
-									hr.use_tls = true;
-									netConfig::get().certchain_validator = &Socket::certchain_validator_none;
-									SOUP_UNUSED(hr.execute());
-								}, std::move(server_host));
-								thrd.detach();
-							}
-
+							do_logout();
 							server_host = arr[1];
 							if (!console_attached)
 							{
