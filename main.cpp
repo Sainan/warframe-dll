@@ -405,7 +405,6 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 }
 
 
-#if PRIVATE
 static DetourHook Curl_resolv_hook;
 
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
@@ -414,14 +413,15 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
+#if PRIVATE
 	if (server_host != hostname)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
+#endif
 
 	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host.c_str(), port, allowDOH, a5);
 }
-#endif
 
 
 static DetourHook ssl_verify_internal_hook;
@@ -1106,7 +1106,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			game_http_request_hook.enable();
 		}
 
-#if PRIVATE
 		{
 			//SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
 			SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
@@ -1124,7 +1123,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			Curl_resolv_hook.create();
 			Curl_resolv_hook.enable();
 		}
-#endif
 
 		{
 			SIG_INST("49 8B D4 48 8B CB E8 ? ? ? ? 85 C0 7F");
