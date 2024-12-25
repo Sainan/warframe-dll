@@ -473,6 +473,11 @@ static bool prohibit_freecam = false;
 static void on_got_server_host()
 {
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
+	if (autologin && !did_auto_login)
+	{
+		std::cout << ObfusString("Will automatically log in") << std::endl;
+	}
+
 #if ASK_SERVER_FOR_TUNABLES
 	Thread thrd([](Capture&&)
 	{
