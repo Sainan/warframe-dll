@@ -1535,40 +1535,40 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<hr>
 	<p>Camera Type: <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
 	<script>
-		fetch("http://localhost:61558/server_host").then(res => res.text()).then(res => {
+		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
 		});
 		document.getElementById("server_host_submit").onclick = function() {
-			fetch("http://localhost:61558/server_host?" + document.getElementById("server_host").value);
+			fetch("/server_host?" + document.getElementById("server_host").value);
 		};
 
-		fetch("http://localhost:61558/high_damage_numbers_patch").then(res => res.text()).then(res => {
+		fetch("/high_damage_numbers_patch").then(res => res.text()).then(res => {
 			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
 		});
 		document.getElementById("high_damage_numbers_patch").onchange = function() {
-			fetch("http://localhost:61558/high_damage_numbers_patch?" + this.checked);
+			fetch("/high_damage_numbers_patch?" + this.checked);
 		};
 
-		fetch("http://localhost:61558/skip_mission_start_timer").then(res => res.text()).then(res => {
+		fetch("/skip_mission_start_timer").then(res => res.text()).then(res => {
 			document.getElementById("skip_mission_start_timer").checked = (res == "1");
 		});
 		document.getElementById("skip_mission_start_timer").onchange = function() {
-			fetch("http://localhost:61558/skip_mission_start_timer?" + this.checked);
+			fetch("/skip_mission_start_timer?" + this.checked);
 		};
 
-		fetch("http://localhost:61558/fov_override").then(res => res.text()).then(res => {
+		fetch("/fov_override").then(res => res.text()).then(res => {
 			document.getElementById("fov_override").value = parseFloat(res) * 10000;
 		});
 		document.getElementById("fov_override").oninput = function() {
-			fetch("http://localhost:61558/fov_override?" + this.value);
+			fetch("/fov_override?" + this.value);
 		};
 
 		document.getElementById("save_config").onclick = function() {
-			fetch("http://localhost:61558/save_config");
+			fetch("/save_config");
 		};
 
 		document.getElementById("camtype").onchange = function() {
-			fetch("http://localhost:61558/" + this.value);
+			fetch("/" + this.value);
 		};
 	</script>
 </body>)EOC").str();
