@@ -1527,7 +1527,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 							{
 								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
-	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button></p>
+	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
@@ -1540,6 +1540,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		});
 		document.getElementById("server_host_submit").onclick = function() {
 			fetch("/server_host?" + document.getElementById("server_host").value);
+		};
+		document.getElementById("logout").onclick = function() {
+			fetch("/logout");
 		};
 
 		fetch("/high_damage_numbers_patch").then(res => res.text()).then(res => {
