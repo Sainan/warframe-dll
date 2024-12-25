@@ -469,6 +469,7 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 static bool prohibit_skip_mission_start_timer = false;
 static bool prohibit_fov_override = false;
 static bool prohibit_freecam = false;
+static bool prohibit_teleport = false;
 
 static void on_got_server_host()
 {
@@ -495,6 +496,7 @@ static void on_got_server_host()
 		prohibit_skip_mission_start_timer = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str());
 		prohibit_fov_override = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str());
 		prohibit_freecam = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_freecam").str());
+		prohibit_teleport = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_teleport").str());
 
 		if (prohibit_skip_mission_start_timer)
 		{
@@ -507,6 +509,10 @@ static void on_got_server_host()
 		if (prohibit_freecam)
 		{
 			std::cout << ObfusString("Note: freecam is prohibited on this server.") << std::endl;
+		}
+		if (prohibit_teleport)
+		{
+			std::cout << ObfusString("Note: teleport is prohibited on this server.") << std::endl;
 		}
 	});
 	thrd.detach();
@@ -1778,7 +1784,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						// Vania Mall: Closet behind Arthur: -15,-6.5,13
 						// Vania Mall: Cutscene Room: -19,-6.5,14
 					case soup::joaat::compileTimeHash("/pos"):
-						if (local_player)
+						if (local_player && !prohibit_teleport)
 						{
 							if (arr.size() > 1)
 							{
