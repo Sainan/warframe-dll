@@ -909,6 +909,22 @@ static void attach_console()
 
 #define CONFIG_LOADED_ONLY_ONCE true
 
+[[nodiscard]] static bool is_valid_whirlpool_hex_digest(const std::string& str) noexcept
+{
+	if (str.size() != 128)
+	{
+		return false;
+	}
+	for (const auto c : str)
+	{
+		if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -1073,7 +1089,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_password")); it != config->reinterpretAsObj().end() && it->second->isStr())
 			{
 				autologin_password = it->second->reinterpretAsStr().value;
-				if (!autologin_password.empty() && autologin_password.size() != 128)
+				if (!autologin_password.empty() && !is_valid_whirlpool_hex_digest(autologin_password))
 				{
 					whirlpool_ctx ctx;
 					unsigned char result[64];
