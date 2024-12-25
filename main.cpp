@@ -1527,13 +1527,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 							{
 								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
-	<p>Server Host: <input id="server_host" type="text" /> <button id="server_host_submit">Change</button></p>
-	<p>High Damage Numbers Patch: <input id="high_damage_numbers_patch" type="checkbox" /></p>
-	<p>Skip Mission Start Timer: <input id="skip_mission_start_timer" type="checkbox" /></p>
-	<p>FOV Override (0 = disabled): <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button></p>
+	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
+	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
+	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
-	<p>Camera Type: <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
+	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
