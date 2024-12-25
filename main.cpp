@@ -125,7 +125,8 @@ union GameString
 		{
 			len = sizeof(shrt.data);
 		}
-		strncpy(shrt.data, data, sizeof(shrt.data));
+		memcpy(shrt.data, data, len);
+		shrt.data[len] = 0;
 		shrt.inv_len = sizeof(shrt.data) - len;
 	}
 
