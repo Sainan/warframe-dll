@@ -1604,7 +1604,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
-	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
+	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
 	<p><label for="poll-pos">Position:</label> <input id="poll-pos" type="checkbox" /> <input style="display:none" id="last-pos" type="text" onclick="this.select()" /></p>
 	<p><button id="tp-submit">Teleport To</button> <input id="tp-target" type="text" onclick="this.select()" /> <span id="tp-status"></span></p>
 	<script>
