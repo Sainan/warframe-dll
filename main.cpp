@@ -7,6 +7,7 @@
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
 
+#include <cstdlib>
 #include <iostream>
 
 #include <DetourHook.hpp>
@@ -804,6 +805,64 @@ static void* calculate_spawn_position_detour(void* a1, void* a2, void* a3, void*
 }
 
 
+static Thread tp_thrd;
+static float tp_target_x;
+static float tp_target_y;
+static float tp_target_z;
+
+static void teleport(float x, float y, float z)
+{
+	tp_target_x = x;
+	tp_target_y = y;
+	tp_target_z = z;
+#if LOGGING
+	std::cout << "[teleport] target set to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " confirmed" << std::endl;
+#endif
+	if (!tp_thrd.isRunning())
+	{
+		tp_thrd.start([](Capture&&)
+		{
+#if LOGGING
+			std::cout << "[teleport] thread started" << std::endl;
+#endif
+			size_t ticks_remaining = -1;
+			while (--ticks_remaining != 0)
+			{
+				if (DWORD pid; GetWindowThreadProcessId(GetForegroundWindow(), &pid), pid == GetCurrentProcessId())
+				{
+					if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+					{
+#if LOGGING
+						if (ticks_remaining > 100)
+						{
+							std::cout << "[teleport] teleport to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " confirmed" << std::endl;
+						}
+#endif
+						auto avatar = local_player->getAvatar();
+						local_player->controlling_camera = false;
+						avatar->pos_x = tp_target_x;
+						avatar->pos_y = tp_target_y;
+						avatar->pos_z = tp_target_z;
+						ticks_remaining = 100;
+					}
+					else if (ticks_remaining > 100 && (GetAsyncKeyState(VK_SHIFT) & 0x8000))
+					{
+#if LOGGING
+						std::cout << "[teleport] teleport to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " canelled" << std::endl;
+#endif
+						break;
+					}
+				}
+				Sleep(1);
+			}
+#if LOGGING
+			std::cout << "[teleport] thread stopped" << std::endl;
+#endif
+		});
+	}
+}
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -1526,7 +1585,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (html.empty())
 #endif
 							{
-								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+								html = ObfusString(R"EOC(<style>input[type="text"]{width:200px}</style>
+<body style="background:#000;color:#fff;">
 	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
@@ -1534,6 +1594,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
 	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="lockcam">Locked In Place</option><option value="freecam">Freecam</option></select></p>
+	<p><label for="poll-pos">Position:</label> <input id="poll-pos" type="checkbox" /> <input style="display:none" id="last-pos" type="text" onclick="this.select()" /></p>
+	<p><button id="tp-submit">Teleport To</button> <input id="tp-target" type="text" onclick="this.select()" /> <span id="tp-status"></span></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
@@ -1572,6 +1634,45 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		document.getElementById("camtype").onchange = function() {
 			fetch("/" + this.value);
+		};
+
+		function pollPos() {
+			fetch("/pos").then(res => res.text()).then(res => {
+				document.getElementById("last-pos").value = res;
+				if (document.getElementById("poll-pos").checked) {
+					pollPos();
+				}
+			});
+		}
+		document.getElementById("poll-pos").onchange = function() {
+			if (this.checked) {
+				document.getElementById("last-pos").style.display = "";
+				pollPos();
+			}
+			else {
+				document.getElementById("last-pos").style.display = "none";
+			}
+		};
+
+		let following_tp = false;
+		function followTp() {
+			following_tp = true;
+			fetch("/tp_status").then(res => res.text()).then(res => {
+				if (res == "1") {
+					followTp();
+				} else {
+					document.getElementById("tp-status").innerHTML = "";
+					following_tp = false;
+				}
+			});
+		}
+		document.getElementById("tp-submit").onclick = function() {
+			fetch("/pos?" + document.getElementById("tp-target").value).then(res => res.text()).then(res => {
+					document.getElementById("tp-status").textContent = res;
+				if (!following_tp) {
+					followTp();
+				}
+			});
 		};
 	</script>
 </body>)EOC").str();
@@ -1667,6 +1768,49 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							local_player->getAvatar()->followed_by_camera = true;
 						}
 						ServerWebService::send204(s);
+						break;
+
+						// Vania Mall: Closet behind Arthur: -15,-6.5,13
+						// Vania Mall: Cutscene Room: -19,-6.5,14
+					case soup::joaat::compileTimeHash("/pos"):
+						if (local_player)
+						{
+							if (arr.size() > 1)
+							{
+								auto pos_arr = string::explode(arr[1], ',');
+								if (pos_arr.size() == 3)
+								{
+									teleport(
+										strtof(pos_arr[0].c_str(), nullptr),
+										strtof(pos_arr[1].c_str(), nullptr),
+										strtof(pos_arr[2].c_str(), nullptr)
+									);
+									ServerWebService::sendText(s, ObfusString("Teleport initated. In-game: Press [Ctrl] to confirm or [Shift] to cancel."));
+								}
+								else
+								{
+									ServerWebService::send400(s);
+								}
+							}
+							else
+							{
+								auto avatar = local_player->getAvatar();
+								std::string pos_str = std::to_string(avatar->pos_x);
+								pos_str.push_back(',');
+								pos_str.append(std::to_string(avatar->pos_y));
+								pos_str.push_back(',');
+								pos_str.append(std::to_string(avatar->pos_z));
+								ServerWebService::sendText(s, std::move(pos_str));
+							}
+						}
+						else
+						{
+							ServerWebService::send500(s);
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/tp_status"):
+						ServerWebService::sendText(s, std::to_string(tp_thrd.isRunning()));
 						break;
 					}
 				});
