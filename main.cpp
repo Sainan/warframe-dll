@@ -817,6 +817,81 @@ static void* calculate_spawn_position_detour(void* a1, void* a2, void* a3, void*
 }
 
 
+template <typename T>
+struct LinkedList
+{
+	struct Entry
+	{
+		PAD(0, 0x10) void** unk;
+		/* 0x18 */ Entry* _next;
+
+		[[nodiscard]] T* getNext() noexcept
+		{
+			if (*_next->unk && _next != this)
+			{
+				return static_cast<T*>(_next);
+			}
+			return nullptr;
+		}
+	};
+	static_assert(sizeof(Entry) == 0x20);
+
+	uintptr_t _head;
+	int unk1;
+	int unk2;
+
+	[[nodiscard]] T* getHead() noexcept
+	{
+		auto node = reinterpret_cast<Entry*>(_head - 0x10);
+		if (*node->unk)
+		{
+			return static_cast<T*>(node);
+		}
+		return nullptr;
+	}
+};
+
+enum MarkerType : uint8_t
+{
+	HUD_OBJECTIVE = 3, // (Diamond icon)
+	HUD_TARGET1 = 9, // Exterminate
+	HUD_LIFE_SUPPORT = 12,
+	HUD_ELEVATOR = 14, // Typically only shows when nearby (without distance indicator)
+	HUD_TARGET2 = 29, // Capture Target, Disruption Demolyst
+	HUD_SPY_A = 40,
+	HUD_SPY_B = 41,
+	HUD_SPY_C = 42,
+	HUD_WAYPOINT_1 = 49,
+	HUD_FOCUS = 65,
+	HUD_EXTRACT = 75,
+	HUD_DISRUPTION = 79, // All keys & conduits seem to use this
+};
+
+struct Marker : public LinkedList<Marker>::Entry
+{
+	PAD(0x20, 0x4C) float world_x;
+	/* 0x50 */ float world_y;
+	/* 0x54 */ float world_z;
+	PAD(0x58, 0x80) const char* label;
+	PAD(0x88, 0xB0) MarkerType type;
+	PAD(0xB1, 0xD0) int distance;
+};
+
+struct Hud
+{
+	PAD(0, 0xB80) LinkedList<Marker>** markers;
+};
+
+static DetourHook update_hud_hook;
+static LinkedList<Marker>* markers = nullptr;
+
+static bool update_hud_detour(Hud* hud, void* a2, void* a3, float a4)
+{
+	markers = *hud->markers;
+	return reinterpret_cast<decltype(&update_hud_detour)>(update_hud_hook.original)(hud, a2, a3, a4);
+}
+
+
 static Thread tp_thrd;
 static float tp_target_x;
 static float tp_target_y;
@@ -1591,6 +1666,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			SIG_INST("40 55 53 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC E0 0E 00 00");
+			auto update_hud = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "update_hud = " << update_hud << std::endl;
+#endif
+			if (update_hud)
+			{
+				update_hud_hook.detour = reinterpret_cast<void*>(&update_hud_detour);
+				update_hud_hook.target = update_hud;
+				update_hud_hook.create();
+				update_hud_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		if (enable_http_interface)
 		{
 			Thread thrd([](Capture&&)
@@ -1613,8 +1707,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (html.empty())
 #endif
 							{
-								html = ObfusString(R"EOC(<style>input[type="text"]{width:200px}</style>
-<body style="background:#000;color:#fff;">
+								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+	<div id="disconnected" style="display:none">
+		<p>Connection to DLL lost. Attempting to reestablish...</p>
+		<hr>
+	</div>
 	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
@@ -1622,8 +1719,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
 	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
-	<p><label for="poll-pos">Position:</label> <input id="poll-pos" type="checkbox" /> <input style="display:none" id="last-pos" type="text" onclick="this.select()" /></p>
-	<p><button id="tp-submit">Teleport To</button> <input id="tp-target" type="text" onclick="this.select()" /> <span id="tp-status"></span></p>
+	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
+	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /> <span id="tp-status"></span></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
@@ -1664,43 +1761,73 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			fetch("/" + this.value);
 		};
 
-		function pollPos() {
-			fetch("/pos").then(res => res.text()).then(res => {
-				document.getElementById("last-pos").value = res;
-				if (document.getElementById("poll-pos").checked) {
-					pollPos();
-				}
-			});
-		}
-		document.getElementById("poll-pos").onchange = function() {
-			if (this.checked) {
-				document.getElementById("last-pos").style.display = "";
-				pollPos();
-			}
-			else {
-				document.getElementById("last-pos").style.display = "none";
-			}
+		const marker_types = {
+			"3": "Objective",
+			"9": "Target",
+			"12": "Life Support",
+			"29": "Target",
+			"40": "A",
+			"41": "B",
+			"42": "C",
+			"49": "Waypoint",
+			"65": "Focus",
+			"75": "Extraction",
 		};
 
-		let following_tp = false;
-		function followTp() {
-			following_tp = true;
-			fetch("/tp_status").then(res => res.text()).then(res => {
-				if (res == "1") {
-					followTp();
-				} else {
-					document.getElementById("tp-status").innerHTML = "";
-					following_tp = false;
-				}
-			});
+		function onMarkersChange() {
+			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
 		}
-		document.getElementById("tp-submit").onclick = function() {
-			fetch("/pos?" + document.getElementById("tp-target").value).then(res => res.text()).then(res => {
-					document.getElementById("tp-status").textContent = res;
-				if (!following_tp) {
-					followTp();
+
+		function pollStatus() {
+			fetch("/status").then(res => res.json()).then(res => {
+				document.getElementById("disconnected").style.display = "none";
+				if (res.camtype) {
+					document.getElementById("camtype").value = res.camtype;
 				}
-			});
+				document.getElementById("pos").value = res.pos ?? "";
+				document.getElementById("tp-status").textContent = res.tping ? "Teleport initated. In-game: Press [Ctrl] to confirm or [Shift] to cancel." : "";
+
+				const marker_set = {};
+				for (const marker of res.markers) {
+					if (marker.type != 14) {
+						const name = (marker.type in marker_types ? marker_types[marker.type] : "Marker") + " in " + marker.dist + "m";
+						const pos = marker.x + "," + marker.y + "," + marker.z;
+						const slug = marker.type == 49 ? "wp" : pos;
+						marker_set[slug] = true;
+						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
+						if (!option) {
+							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
+							option.setAttribute("data-slug", slug);
+						}
+						if (option.value != pos) {
+							option.value = pos;
+						}
+						if (option.textContent != name) {
+							option.textContent = name;
+						}
+					}
+				}
+				for (const child of document.getElementById("tp-target").children) {
+					if (child.value != "Custom" && !(child.getAttribute("data-slug") in marker_set)) {
+						document.getElementById("tp-target").removeChild(child);
+						onMarkersChange();
+					}
+				}
+			}).catch((e) => {
+				console.error(e);
+				document.getElementById("disconnected").style.display = "";
+			}).finally(pollStatus);
+		}
+		pollStatus();
+
+		document.getElementById("tp-target").onchange = onMarkersChange;
+
+		document.getElementById("tp-submit").onclick = function() {
+			let pos = document.getElementById("tp-target").value;
+			if (pos == "Custom") {
+				pos = document.getElementById("tp-pos").value
+			}
+			fetch("/teleport?" + pos);
 		};
 	</script>
 </body>)EOC").str();
@@ -1715,7 +1842,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					case soup::joaat::compileTimeHash("/save_config"):
 						save_config();
-						ServerWebService::sendText(s, ObfusString("ok"));
+						ServerWebService::send204(s);
 						break;
 
 					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
@@ -1800,35 +1927,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 						// Vania Mall: Closet behind Arthur: -15,-6.5,13
 						// Vania Mall: Cutscene Room: -19,-6.5,14
-					case soup::joaat::compileTimeHash("/pos"):
+					case soup::joaat::compileTimeHash("/teleport"):
 						if (local_player && !prohibit_teleport)
 						{
+							std::vector<std::string> pos_arr;
 							if (arr.size() > 1)
 							{
-								auto pos_arr = string::explode(arr[1], ',');
-								if (pos_arr.size() == 3)
-								{
-									teleport(
-										strtof(pos_arr[0].c_str(), nullptr),
-										strtof(pos_arr[1].c_str(), nullptr),
-										strtof(pos_arr[2].c_str(), nullptr)
-									);
-									ServerWebService::sendText(s, ObfusString("Teleport initated. In-game: Press [Ctrl] to confirm or [Shift] to cancel."));
-								}
-								else
-								{
-									ServerWebService::send400(s);
-								}
+								pos_arr = string::explode(arr[1], ',');
+							}
+							if (pos_arr.size() == 3)
+							{
+								teleport(
+									strtof(pos_arr[0].c_str(), nullptr),
+									strtof(pos_arr[1].c_str(), nullptr),
+									strtof(pos_arr[2].c_str(), nullptr)
+								);
+								ServerWebService::send204(s);
 							}
 							else
 							{
-								auto avatar = local_player->getAvatar();
-								std::string pos_str = std::to_string(avatar->pos_x);
-								pos_str.push_back(',');
-								pos_str.append(std::to_string(avatar->pos_y));
-								pos_str.push_back(',');
-								pos_str.append(std::to_string(avatar->pos_z));
-								ServerWebService::sendText(s, std::move(pos_str));
+								ServerWebService::send400(s);
 							}
 						}
 						else
@@ -1837,8 +1955,79 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-					case soup::joaat::compileTimeHash("/tp_status"):
-						ServerWebService::sendText(s, std::to_string(tp_thrd.isRunning()));
+					case soup::joaat::compileTimeHash("/status"):
+						{
+							JsonObject obj;
+							if (local_player)
+							{
+								std::string camtype = ObfusString("gamecam").str();
+								std::string pos_str;
+								__try
+								{
+									if (auto avatar = local_player->getAvatar())
+									{
+										if (!avatar->followed_by_camera)
+										{
+											camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
+										}
+										pos_str = std::to_string(avatar->pos_x);
+										pos_str.push_back(',');
+										pos_str.append(std::to_string(avatar->pos_y));
+										pos_str.push_back(',');
+										pos_str.append(std::to_string(avatar->pos_z));
+									}
+								}
+								__except (EXCEPTION_EXECUTE_HANDLER)
+								{
+#if LOGGING
+									std::cout << "Exception while reading from player or avatar" << std::endl;
+									local_player = nullptr; // Could maybe do better by zeroing this when it says "Clearing gRegion [...]"
+#endif
+								}
+								obj.add(ObfusString("camtype"), std::move(camtype));
+								obj.add(ObfusString("pos"), std::move(pos_str));
+							}
+							obj.add(ObfusString("tping"), tp_thrd.isRunning());
+							auto arr = soup::make_unique<JsonArray>();
+							if (markers)
+							{
+								Marker* marker = nullptr;
+								__try
+								{
+									marker = markers->getHead();
+								}
+								__except (EXCEPTION_EXECUTE_HANDLER)
+								{
+#if LOGGING
+									std::cout << "Exception while fetching marker head" << std::endl;
+#endif
+									markers = nullptr;
+								}
+								while (marker != nullptr)
+								{
+									auto marker_obj = soup::make_unique<JsonObject>();
+									__try
+									{
+										marker_obj->add(ObfusString("type").str(), (int)marker->type);
+										marker_obj->add(ObfusString("x").str(), marker->world_x);
+										marker_obj->add(ObfusString("y").str(), marker->world_y);
+										marker_obj->add(ObfusString("z").str(), marker->world_z);
+										marker_obj->add(ObfusString("dist").str(), marker->distance);
+										marker = marker->getNext();
+									}
+									__except (EXCEPTION_EXECUTE_HANDLER)
+									{
+#if LOGGING
+										std::cout << "Exception while reading marker" << std::endl;
+#endif
+										markers = nullptr;
+									}
+									arr->children.emplace_back(std::move(marker_obj));
+								}
+							}
+							obj.add(ObfusString("markers"), std::move(arr));
+							ServerWebService::sendText(s, obj.encodePretty());
+						}
 						break;
 					}
 				});
