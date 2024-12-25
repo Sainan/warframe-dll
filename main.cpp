@@ -828,7 +828,7 @@ static void teleport(float x, float y, float z)
 	tp_target_y = y;
 	tp_target_z = z;
 #if LOGGING
-	std::cout << "[teleport] target set to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " confirmed" << std::endl;
+	std::cout << "[teleport] target set to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << std::endl;
 #endif
 	if (!tp_thrd.isRunning())
 	{
