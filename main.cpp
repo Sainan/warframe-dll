@@ -919,18 +919,18 @@ static void teleport(float x, float y, float z)
 				{
 					if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
 					{
-#if LOGGING
 						if (ticks_remaining > 100)
 						{
+#if LOGGING
 							std::cout << "[teleport] teleport to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " confirmed" << std::endl;
-						}
 #endif
+							ticks_remaining = 100;
+						}
 						auto avatar = local_player->getAvatar();
 						local_player->controlling_camera = false;
 						avatar->pos_x = tp_target_x;
 						avatar->pos_y = tp_target_y;
 						avatar->pos_z = tp_target_z;
-						ticks_remaining = 100;
 					}
 					else if (ticks_remaining > 100 && (GetAsyncKeyState(VK_SHIFT) & 0x8000))
 					{
