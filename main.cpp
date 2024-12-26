@@ -63,9 +63,6 @@ static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
 extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetCompositionTimingInfo(); }
 
-using BaseEntity_SetPosition_t = void(*)(void*, float[3]);
-static BaseEntity_SetPosition_t BaseEntity_SetPosition = nullptr;
-
 /*struct ParsedUrl
 {
 	char pad[16];
@@ -745,23 +742,13 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 }
 
 
-struct UnkControlsArg
+struct BaseEntity
 {
-};
-
-struct Avatar
-{
-	struct Vftable
-	{
-		PAD(0, 0x610) void(*disableJumping)(Avatar*, UnkControlsArg*);
-		/* 0x618 */ void(*enableJumping)(Avatar*, UnkControlsArg*);
-	};
-
-	/* 0x00 */ Vftable* vftable;
+	/* 0x00 */ void* vftable;
 	PAD(0x08, 0x48) float mov_dir_x;
 	/* 0x4C */ float mov_dir_y;
 	/* 0x50 */ float mov_dir_z;
-	PAD(0x54, 0x70) float pos_x; // Updating this position only takes effect while crouching.
+	PAD(0x54, 0x70) float pos_x;
 	/* 0x74 */ float pos_y;
 	/* 0x78 */ float pos_z;
 	PAD(0x7C, 0xA0) float rot_x;
@@ -779,7 +766,24 @@ struct Avatar
 	PAD(0x10C, 0x110) float vis_x;
 	/* 0x114 */ float vis_y;
 	/* 0x118 */ float vis_z;
-	PAD(0x11C, 0x500) float head_pos_x;
+};
+
+using BaseEntity_SetPosition_t = void(*)(BaseEntity*, float[3]);
+static BaseEntity_SetPosition_t BaseEntity_SetPosition = nullptr;
+
+struct UnkControlsArg
+{
+};
+
+struct Avatar : public BaseEntity
+{
+	struct Vftable
+	{
+		PAD(0, 0x610) void(*disableJumping)(Avatar*, UnkControlsArg*);
+		/* 0x618 */ void(*enableJumping)(Avatar*, UnkControlsArg*);
+	};
+
+	INIT_PAD(BaseEntity, 0x500) float head_pos_x;
 	/* 0x504 */ float head_pos_y;
 	/* 0x508 */ float head_pos_z;
 	PAD(0x50C, 0x511) bool followed_by_camera;
@@ -803,20 +807,41 @@ struct Player
 };
 static_assert(offsetof(Player, controlling_camera) == 0x158);
 
-static DetourHook calculate_spawn_position_hook;
-static Player* local_player = nullptr;
-
-static void* calculate_spawn_position_detour(void* a1, void* a2, void* a3, void* a4, void* a5, Player* player)
+struct Camera : public BaseEntity
 {
-	if (player)
+};
+
+struct RegionMgr
+{
+	struct Vftable
 	{
-		local_player = player;
+		PAD(0x000, 0x3B0) Camera*(*GetGameCamera)(RegionMgr*);
+		PAD(0x3B8, 0x3F8) Player*(*GetLocalPlayer)(RegionMgr*);
+		/* 0x400 */ Avatar*(*GetLocalPlayerAvatar)(RegionMgr*);
+	};
+
+	Vftable* vftable;
+	PAD(0x008, 0x208) Player*** local_player;
+	PAD(0x210, 0x2C8) Camera** game_camera;
+};
+
+static DetourHook set_lua_global_hook;
+static RegionMgr* regionmgr = nullptr;
+
+static void* set_lua_global_detour(void *a1, void ***a2, const char *name)
+{
+	if (a2 && *a2)
+	{
 #if LOGGING
-		std::cout << "local_player = " << local_player << std::endl;
+		std::cout << "set_lua_global: " << name << " = " << **a2 << std::endl;
 #endif
+
+		if (soup::joaat::hash(name) == soup::joaat::compileTimeHash("gRegion"))
+		{
+			regionmgr = static_cast<RegionMgr*>(**a2);
+		}
 	}
-	
-	return reinterpret_cast<decltype(&calculate_spawn_position_detour)>(calculate_spawn_position_hook.original)(a1, a2, a3, a4, a5, player);
+	return reinterpret_cast<decltype(&set_lua_global_detour)>(set_lua_global_hook.original)(a1, a2, name);
 }
 
 
@@ -1593,17 +1618,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			SIG_INST("40 55 53 56 57 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? B8 ? ? ? ? E8 ? ? ? ? 48 2B E0 0F 29 BC 24");
-			auto calculate_spawn_position = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("40 53 56 57 48 83 EC 20 48 83 79 20 00 49 8B F8");
+			auto set_lua_global = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "calculate_spawn_position = " << calculate_spawn_position << std::endl;
+			std::cout << "set_lua_global = " << set_lua_global << std::endl;
 #endif
-			if (calculate_spawn_position)
+			if (set_lua_global)
 			{
-				calculate_spawn_position_hook.detour = reinterpret_cast<void*>(&calculate_spawn_position_detour);
-				calculate_spawn_position_hook.target = calculate_spawn_position;
-				calculate_spawn_position_hook.create();
-				calculate_spawn_position_hook.enable();
+				set_lua_global_hook.detour = reinterpret_cast<void*>(&set_lua_global_detour);
+				set_lua_global_hook.target = set_lua_global;
+				set_lua_global_hook.create();
+				set_lua_global_hook.enable();
 			}
 			else
 			{
@@ -1855,28 +1880,37 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/freecam"):
-						if (local_player && !prohibit_freecam)
+						if (regionmgr && !prohibit_freecam)
 						{
-							local_player->controlling_camera = true;
-							local_player->getAvatar()->followed_by_camera = false;
+							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							{
+								local_player->controlling_camera = true;
+								local_player->getAvatar()->followed_by_camera = false;
+							}
 						}
 						ServerWebService::send204(s);
 						break;
 
 					case soup::joaat::compileTimeHash("/lockcam"):
-						if (local_player && !prohibit_freecam)
+						if (regionmgr && !prohibit_freecam)
 						{
-							local_player->controlling_camera = false;
-							local_player->getAvatar()->followed_by_camera = false;
+							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							{
+								local_player->controlling_camera = false;
+								local_player->getAvatar()->followed_by_camera = false;
+							}
 						}
 						ServerWebService::send204(s);
 						break;
 
 					case soup::joaat::compileTimeHash("/gamecam"):
-						if (local_player && !prohibit_freecam)
+						if (regionmgr && !prohibit_freecam)
 						{
-							local_player->controlling_camera = false;
-							local_player->getAvatar()->followed_by_camera = true;
+							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							{
+								local_player->controlling_camera = false;
+								local_player->getAvatar()->followed_by_camera = true;
+							}
 						}
 						ServerWebService::send204(s);
 						break;
@@ -1884,7 +1918,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						// Vania Mall: Closet behind Arthur: -15,-6.5,13
 						// Vania Mall: Cutscene Room: -19,-6.5,14
 					case soup::joaat::compileTimeHash("/teleport"):
-						if (BaseEntity_SetPosition && local_player && !prohibit_teleport)
+						if (BaseEntity_SetPosition && regionmgr && !prohibit_teleport)
 						{
 							std::vector<std::string> pos_arr;
 							if (arr.size() > 1)
@@ -1898,7 +1932,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									strtof(pos_arr[1].c_str(), nullptr),
 									strtof(pos_arr[2].c_str(), nullptr)
 								};
-								BaseEntity_SetPosition(local_player->getAvatar(), pos);
+								BaseEntity_SetPosition(regionmgr->vftable->GetLocalPlayerAvatar(regionmgr), pos);
 								ServerWebService::send204(s);
 							}
 							else
@@ -1915,34 +1949,28 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/status"):
 						{
 							JsonObject obj;
-							if (local_player)
+							if (regionmgr)
 							{
-								std::string camtype = ObfusString("gamecam").str();
-								std::string pos_str;
-								__try
+								if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
 								{
 									if (auto avatar = local_player->getAvatar())
 									{
+										std::string camtype = ObfusString("gamecam").str();
 										if (!avatar->followed_by_camera)
 										{
 											camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
 										}
+										obj.add(ObfusString("camtype"), std::move(camtype));
+
+										std::string pos_str;
 										pos_str = std::to_string(avatar->pos_x);
 										pos_str.push_back(',');
 										pos_str.append(std::to_string(avatar->pos_y));
 										pos_str.push_back(',');
 										pos_str.append(std::to_string(avatar->pos_z));
+										obj.add(ObfusString("pos"), std::move(pos_str));
 									}
 								}
-								__except (EXCEPTION_EXECUTE_HANDLER)
-								{
-#if LOGGING
-									std::cout << "Exception while reading from player or avatar" << std::endl;
-									local_player = nullptr; // Could maybe do better by zeroing this when it says "Clearing gRegion [...]"
-#endif
-								}
-								obj.add(ObfusString("camtype"), std::move(camtype));
-								obj.add(ObfusString("pos"), std::move(pos_str));
 							}
 							auto arr = soup::make_unique<JsonArray>();
 							if (markers)
