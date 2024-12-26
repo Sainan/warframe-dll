@@ -777,10 +777,11 @@ struct Avatar
 	PAD(0x10C, 0x110) float vis_x;
 	/* 0x114 */ float vis_y;
 	/* 0x118 */ float vis_z;
-	PAD(0x11C, 0x504) float head_pos_x;
-	/* 0x508 */ float head_pos_y;
-	/* 0x50C */ float head_pos_z;
-	PAD(0x510, 0x511) bool followed_by_camera;
+	PAD(0x11C, 0x500) float head_pos_x;
+	/* 0x504 */ float head_pos_y;
+	/* 0x508 */ float head_pos_z;
+	PAD(0x50C, 0x511) bool followed_by_camera;
+	PAD(0x512, 0x679) uint8_t movement_flags; // 2 = sprinting, 4 = crouching, 5 = sliding
 	PAD(0x512, 0x6A0) bool render_above_everything;
 };
 static_assert(offsetof(Avatar, followed_by_camera) == 0x511);
