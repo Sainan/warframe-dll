@@ -61,8 +61,10 @@ static std::string autologin_password;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
-
 extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetCompositionTimingInfo(); }
+
+using BaseEntity_SetPosition_t = void(*)(void*, float[3]);
+static BaseEntity_SetPosition_t BaseEntity_SetPosition = nullptr;
 
 /*struct ParsedUrl
 {
@@ -893,64 +895,6 @@ static bool update_hud_detour(Hud* hud, void* a2, void* a3, float a4)
 }
 
 
-static Thread tp_thrd;
-static float tp_target_x;
-static float tp_target_y;
-static float tp_target_z;
-
-static void teleport(float x, float y, float z)
-{
-	tp_target_x = x;
-	tp_target_y = y;
-	tp_target_z = z;
-#if LOGGING
-	std::cout << "[teleport] target set to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << std::endl;
-#endif
-	if (!tp_thrd.isRunning())
-	{
-		tp_thrd.start([](Capture&&)
-		{
-#if LOGGING
-			std::cout << "[teleport] thread started" << std::endl;
-#endif
-			size_t ticks_remaining = -1;
-			while (--ticks_remaining != 0)
-			{
-				if (DWORD pid; GetWindowThreadProcessId(GetForegroundWindow(), &pid), pid == GetCurrentProcessId())
-				{
-					if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
-					{
-						if (ticks_remaining > 100)
-						{
-#if LOGGING
-							std::cout << "[teleport] teleport to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " confirmed" << std::endl;
-#endif
-							ticks_remaining = 100;
-						}
-						auto avatar = local_player->getAvatar();
-						local_player->controlling_camera = false;
-						avatar->pos_x = tp_target_x;
-						avatar->pos_y = tp_target_y;
-						avatar->pos_z = tp_target_z;
-					}
-					else if (ticks_remaining > 100 && (GetAsyncKeyState(VK_SHIFT) & 0x8000))
-					{
-#if LOGGING
-						std::cout << "[teleport] teleport to " << tp_target_x << ", " << tp_target_y << ", " << tp_target_z << " canelled" << std::endl;
-#endif
-						break;
-					}
-				}
-				Sleep(1);
-			}
-#if LOGGING
-			std::cout << "[teleport] thread stopped" << std::endl;
-#endif
-		});
-	}
-}
-
-
 static void save_config()
 {
 	JsonObject config;
@@ -1668,6 +1612,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
+			SIG_INST("40 53 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 70 48 8B 81 E0 01 00 00");
+			BaseEntity_SetPosition = Module(nullptr).range.scan(sig_inst).as<BaseEntity_SetPosition_t>();
+#if LOGGING
+			std::cout << "BaseEntity_SetPosition = " << (void*)BaseEntity_SetPosition << std::endl;
+#endif
+			if (!BaseEntity_SetPosition)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
 			SIG_INST("40 55 53 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC E0 0E 00 00");
 			auto update_hud = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
@@ -1721,7 +1677,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<hr>
 	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
 	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
-	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /> <span id="tp-status"></span></p>
+	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
@@ -1786,7 +1742,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					document.getElementById("camtype").value = res.camtype;
 				}
 				document.getElementById("pos").value = res.pos ?? "";
-				document.getElementById("tp-status").textContent = res.tping ? "Teleport initated. In-game: Press [Ctrl] to confirm or [Shift] to cancel." : "";
 
 				const marker_set = {};
 				for (const marker of res.markers) {
@@ -1929,7 +1884,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						// Vania Mall: Closet behind Arthur: -15,-6.5,13
 						// Vania Mall: Cutscene Room: -19,-6.5,14
 					case soup::joaat::compileTimeHash("/teleport"):
-						if (local_player && !prohibit_teleport)
+						if (BaseEntity_SetPosition && local_player && !prohibit_teleport)
 						{
 							std::vector<std::string> pos_arr;
 							if (arr.size() > 1)
@@ -1938,11 +1893,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 							if (pos_arr.size() == 3)
 							{
-								teleport(
+								float pos[3] = {
 									strtof(pos_arr[0].c_str(), nullptr),
 									strtof(pos_arr[1].c_str(), nullptr),
 									strtof(pos_arr[2].c_str(), nullptr)
-								);
+								};
+								BaseEntity_SetPosition(local_player->getAvatar(), pos);
 								ServerWebService::send204(s);
 							}
 							else
@@ -1988,7 +1944,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								obj.add(ObfusString("camtype"), std::move(camtype));
 								obj.add(ObfusString("pos"), std::move(pos_str));
 							}
-							obj.add(ObfusString("tping"), tp_thrd.isRunning());
 							auto arr = soup::make_unique<JsonArray>();
 							if (markers)
 							{
