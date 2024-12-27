@@ -2,4 +2,5 @@ name dwmapi
 dynamic
 +*.cpp
 require ../Soup/soup
+require ../Pluto/src
 arg -O3

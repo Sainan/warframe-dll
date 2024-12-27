@@ -1,0 +1,360 @@
+--dummy,R"EOC(--[[OpenWF Script Runtime]]--
+
+class owfClassBase
+	function __construct(addr)
+		assert(addr ~= nil)
+		assert(addr ~= 0)
+		rawset(self, "addr", addr)
+	end
+end
+
+class ObjectType extends owfClassBase
+	function GetFullName()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("ObjectType", "GetFullName"))
+		return luau_get_string(1)
+	end
+
+	function GetParent()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("ObjectType", "GetParent"))
+		if addr := luau_get_pointer(1) then
+			return new ObjectType(addr)
+		end
+	end
+end
+
+class Object extends owfClassBase
+	function GetType()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Object", "GetType"))
+		if addr := luau_get_pointer(1) then
+			return new ObjectType(addr)
+		end
+	end
+
+	function GetFullName()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Object", "GetFullName"))
+		return luau_get_string(1)
+	end
+end
+
+class Player extends Object
+	function GetAvatar()
+		if avatar := player_get_avatar(self.addr) then
+			return new LotusAvatar(avatar)
+		end
+	end
+end
+
+class HumanPlayer extends Player
+	function ToggleFreeCamera()
+		-- Note: Not 100% identical to the real function
+		local b = player_get_controlling_camera(self.addr)
+		player_set_controlling_camera(self.addr, not b)
+		if avatar := self:GetAvatar() then
+			avatar:ControlCamera(b)
+		end
+	end
+
+	function isControllingCamera()
+		return player_get_controlling_camera(self.addr)
+	end
+end
+
+class BaseEntity extends Object end
+
+class Entity extends BaseEntity
+	function GetPosition()
+		return entity_get_pos(self.addr)
+	end
+
+	function SetPosition(x, y, z)
+		entity_set_pos(self.addr, x, y, z)
+	end
+
+	function GetHealth()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Entity", "GetHealth"))
+		return luau_get_number(1)
+	end
+
+	function SetHealth(health)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_int(health)
+		luau_end_call(luau_find_method("Entity", "SetHealth"))
+	end
+end
+
+class BaseAvatar extends Entity
+	function GetMaxHealth(b = true)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("BaseAvatar", "GetMaxHealth"))
+		return luau_get_number(2)
+	end
+
+	function SetMaxHealth(health, b = false)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_int(health)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("BaseAvatar", "SetMaxHealth"))
+	end
+
+	function Suicide()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("BaseAvatar", "Suicide"))
+	end
+
+	function DamageControl()
+		if addr := baseavatar_get_damage_controller(self.addr) then
+			return new DamageControllerBase(addr)
+		end
+	end
+
+	function InventoryControl()
+		if addr := baseavatar_get_inventory_controller(self.addr) then
+			local inventory = new LotusInventoryController(addr)
+			if not "NullInventoryController" in inventory:GetFullName() then
+				return new LotusInventoryController(addr)
+			end
+		end
+	end
+
+	function GiveItem(type, b)
+		luau_begin_call()
+		luau_push_string(type)
+		luau_end_call(mem_read_i64(scan_pattern("5E C2 EF 88 00 00 00 00") + 8))
+		local udType = luau_get_userdata(1)
+
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_userdata(udType)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("BaseAvatar", "GiveItem"))
+	end
+end
+
+class Avatar extends BaseAvatar
+	function ControlCamera(b)
+		-- Original function would write to EE.log but otherwise this is identical
+		avatar_set_followed_by_camera(self.addr, b)
+	end
+
+	function isFollowedByCamera()
+		return avatar_get_followed_by_camera(self.addr)
+	end
+end
+
+class LotusAvatar extends Avatar
+	function IsAvatarFriendly(other)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_object(other.addr)
+		luau_end_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"))
+		return luau_get_bool(2)
+	end
+end
+
+class DamageControllerBase extends Object
+	function GiveTemporaryImmunity(a, b)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_float(a)
+		luau_push_float(b)
+		luau_end_call(luau_find_method("DamageControllerBase", "GiveTemporaryImmunity"))
+	end
+
+	function HasTemporaryImmunity()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("DamageControllerBase", "HasTemporaryImmunity"))
+		return luau_get_bool(1)
+	end
+
+	function RemoveTemporaryImmunity()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("DamageControllerBase", "RemoveTemporaryImmunity"))
+	end
+end
+
+class InventoryControllerBase extends Object
+	function RemoveItem(slot, b)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_int(slot)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("InventoryControllerBase", "RemoveItem"))
+	end
+
+	function GetWeaponInHand(hand)
+		if weapon := inventory_get_weapon_in_hand(self.addr, hand) then
+			return new LotusWeapon(weapon)
+		end
+	end
+end
+
+class LotusInventoryController extends InventoryControllerBase
+	function GetActivePowerSuit()
+		if addr := inventory_get_active_powersuit(self.addr) then
+			return new PowerSuit(addr)
+		end
+	end
+
+	function DoItemDrop()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("LotusInventoryController", "DoItemDrop"))
+	end
+end
+
+class Item extends Object end
+class WeaponBase extends Item end
+
+class WeaponEx extends WeaponBase
+	function GetActiveImpactBehavior()
+		if addr := weaponex_get_active_impact_behavior(self.addr) then
+			return new WeaponImpactBehavior(addr)
+		end
+	end
+end
+
+class LotusWeapon extends WeaponEx
+	function GetXP()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("LotusWeapon", "GetXP"))
+		return luau_get_number(1)
+	end
+
+	function SetXP(xp)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_int(xp)
+		luau_end_call(luau_find_method("LotusWeapon", "SetXP"))
+	end
+end
+
+class WeaponImpactBehavior extends Object
+	function __index(name)
+		if Object[name] then
+			return Object[name]
+		end
+		switch name do
+			case "criticalHitChance":
+			case "criticalHitDamageMultiplier":
+			case "instantImpulse":
+				luau_begin_call()
+				luau_push_object(self.addr)
+				luau_end_call(luau_find_getter("WeaponImpactBehavior", name))
+				return luau_get_number(1)
+		end
+	end
+
+	function __newindex(name, value)
+		switch name do
+			case "criticalHitChance":
+			case "criticalHitDamageMultiplier":
+			case "instantImpulse":
+				luau_begin_call()
+				luau_push_object(self.addr)
+				luau_push_float(value)
+				luau_end_call(luau_find_setter("WeaponImpactBehavior", name))
+		end
+	end
+end
+WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
+
+class PowerSuit extends LotusWeapon
+end
+
+function Type(name)
+	return name
+end
+
+gRegion = {
+	function GetLocalPlayer()
+		if player := get_local_player() then
+			return new HumanPlayer(player)
+		end
+	end,
+	function GetLocalPlayerAvatar()
+		if player := get_local_player() then
+			if avatar := player_get_avatar(player) then
+				return new LotusAvatar(avatar)
+			end
+		end
+	end,
+	function GetGameCamera()
+		if camera := get_game_camera() then
+			return new Entity(camera)
+		end
+	end,
+	function GetAvatars()
+		luau_begin_call()
+		luau_push_object(get_regionmgr())
+		luau_end_call(luau_find_method("RegionMgrImpl", "GetAvatars"))
+		local t = {}
+		local i = 1
+		while ud := luau_get_table_userdata(1, i) do
+			t:insert(new LotusAvatar(mem_read_i64(mem_read_i64(mem_read_i64(ud + 0x18)))))
+			++i
+		end
+		return t
+	end,
+}
+
+gGameRules = {
+	function OpenMissionContinueDialog()
+		if new Object(get_gamerules()):GetFullName() == "LotusGameRules" then
+			luau_begin_call()
+			luau_push_object(get_gamerules())
+			luau_push_nil()
+			luau_end_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"))
+		end
+	end,
+}
+
+Engine = {
+	SLOT_1 = 0,
+	SLOT_2 = 1,
+	SLOT_3 = 2,
+	SLOT_4 = 3,
+	SLOT_5 = 4,
+	SLOT_6 = 5,
+	SLOT_7 = 6,
+	SLOT_8 = 7,
+	SLOT_9 = 8,
+	SLOT_10 = 9,
+	SLOT_11 = 10,
+	SLOT_12 = 11,
+	SLOT_13 = 12,
+	SLOT_14 = 13,
+	INVALID = 14,
+}
+
+return function(f)
+	coroutine.yield()
+	coroutine.yield = yield
+	xpcall(|| -> f(), function(e)
+		if e:sub(-14) == "Stop requested" then
+			print(e)
+		else
+			owf_force_console_active()
+			print(debug.traceback(e,2))
+		end
+	end)
+end
+
+--)EOC"_obfus

@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.6.2"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.7.0"
 
 #define LOGGING false
 #define PRIVATE false
@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
@@ -16,6 +17,7 @@
 #include <json.hpp>
 #include <memGuard.hpp>
 #include <Module.hpp>
+#include <Mutex.hpp>
 #include <netConfig.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
@@ -28,12 +30,20 @@
 #include <structing.hpp>
 #include <Thread.hpp>
 #include <Uri.hpp>
+#include <urlenc.hpp>
+
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+#include <lstate.h>
 
 #include "whirlpool.hpp"
 
 using namespace soup;
 
-static bool console_attached = false;
+#include "owf_console.hpp"
+#include "owf_luau.hpp"
+
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
 static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
@@ -319,12 +329,9 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
 #if !LOGGING
-		if (console_attached)
+		if (owfConsole::active)
 		{
-			console_attached = false;
-			const auto conWnd = GetConsoleWindow();
-			FreeConsole();
-			PostMessage(conWnd, WM_CLOSE, 0, 0);
+			owfConsole::deactivate();
 		}
 #endif
 		if (autologin && !did_auto_login)
@@ -470,6 +477,7 @@ static bool prohibit_skip_mission_start_timer = false;
 static bool prohibit_fov_override = false;
 static bool prohibit_freecam = false;
 static bool prohibit_teleport = false;
+static bool prohibit_scripts = false;
 
 static void on_got_server_host()
 {
@@ -497,22 +505,27 @@ static void on_got_server_host()
 		prohibit_fov_override = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str());
 		prohibit_freecam = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_freecam").str());
 		prohibit_teleport = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_teleport").str());
+		prohibit_scripts = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_scripts").str());
 
 		if (prohibit_skip_mission_start_timer)
 		{
-			std::cout << ObfusString("Note: skip_mission_start_timer is prohibited on this server.") << std::endl;
+			std::cout << ObfusString("Note: Skip Mission Start Timer is prohibited on this server.") << std::endl;
 		}
 		if (prohibit_fov_override)
 		{
-			std::cout << ObfusString("Note: fov_override is prohibited on this server.") << std::endl;
+			std::cout << ObfusString("Note: FOV Override is prohibited on this server.") << std::endl;
 		}
 		if (prohibit_freecam)
 		{
-			std::cout << ObfusString("Note: freecam is prohibited on this server.") << std::endl;
+			std::cout << ObfusString("Note: Freecam is prohibited on this server.") << std::endl;
 		}
 		if (prohibit_teleport)
 		{
-			std::cout << ObfusString("Note: teleport is prohibited on this server.") << std::endl;
+			std::cout << ObfusString("Note: Teleport is prohibited on this server.") << std::endl;
+		}
+		if (prohibit_scripts)
+		{
+			std::cout << ObfusString("Note: Scripts are prohibited on this server.") << std::endl;
 		}
 	});
 	thrd.detach();
@@ -665,42 +678,11 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 #endif
 
 
-union lua_Value
-{
-	uintptr_t as_uintptr;
-	bool as_bool;
-};
-
-enum lua_Type
-{
-	LUA_BOOL = 1,
-	LUA_STRING = 5,
-};
-
-struct lua_TValue
-{
-	/* 0x00 */ lua_Value value;
-	PAD(0x08, 0x0C) uint8_t type;
-
-	[[nodiscard]] const char* getString() const noexcept
-	{
-		return reinterpret_cast<const char*>(value.as_uintptr + 0x18);
-	}
-};
-static_assert(sizeof(lua_TValue) == 0x10);
-
-struct lua_State
-{
-	PAD(0, 0x08) lua_TValue* outtop;
-	/* 0x10 */ lua_TValue* intop;
-};
-static_assert(sizeof(lua_State) == 0x18);
-
 /*static DetourHook get_config_bool_hook;
 
-static int get_config_bool_detour(lua_State* L)
+static int get_config_bool_detour(luau_State* L)
 {
-	SOUP_IF_LIKELY (L->intop[1].type == LUA_STRING)
+	SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
 	{
 		ObfusString str("Steam.AutoLogin");
 		if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
@@ -742,10 +724,46 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 }
 
 
-struct BaseEntity
+struct Object
 {
 	/* 0x00 */ void* vftable;
-	PAD(0x08, 0x48) float mov_dir_x;
+	PAD(0x08, 0x10) Object** self_pointer;
+	PAD(0x18, 0x20);
+};
+
+struct WeaponEx : public Object
+{
+	struct Vftable
+	{
+		PAD(0x000, 0x970) Object*(*GetActiveImpactBehavior)(WeaponEx*, void*);
+	};
+
+	INIT_PAD(Object, 0x8A0) void* unk_impact_behavior_data;
+
+	Object* GetActiveImpactBehavior() { return reinterpret_cast<Vftable*>(vftable)->GetActiveImpactBehavior(this, unk_impact_behavior_data); }
+};
+
+struct LotusInventoryController : public Object
+{
+	struct Vftable
+	{
+		PAD(0x000, 0x250) void(*RemoveItem)(LotusInventoryController*, uint8_t slot, bool); // from BaseInventoryController
+		PAD(0x258, 0x2C8) Object*(*GetWeaponInHand)(LotusInventoryController*, uint32_t hand); // from BaseInventoryController
+		PAD(0x2D0, 0x8E0) Object*(*GetActivePowerSuit)(LotusInventoryController*);
+	};
+
+	void RemoveItem(uint8_t slot, bool b) { return reinterpret_cast<Vftable*>(vftable)->RemoveItem(this, slot, b); }
+	Object* GetWeaponInHand(uint32_t hand) { return reinterpret_cast<Vftable*>(vftable)->GetWeaponInHand(this, hand); }
+	Object* GetActivePowerSuit() { return reinterpret_cast<Vftable*>(vftable)->GetActivePowerSuit(this); }
+};
+
+struct BaseEntity : public Object
+{
+};
+
+struct Entity : public BaseEntity
+{
+	INIT_PAD(BaseEntity, 0x48) float mov_dir_x;
 	/* 0x4C */ float mov_dir_y;
 	/* 0x50 */ float mov_dir_z;
 	PAD(0x54, 0x70) float pos_x;
@@ -768,33 +786,48 @@ struct BaseEntity
 	/* 0x118 */ float vis_z;
 };
 
-using BaseEntity_SetPosition_t = void(*)(BaseEntity*, float[3]);
-static BaseEntity_SetPosition_t BaseEntity_SetPosition = nullptr;
+using Entity_SetPosition_t = void(*)(Entity*, float[3]);
+static Entity_SetPosition_t Entity_SetPosition = nullptr;
 
 struct UnkControlsArg
 {
 };
 
-struct Avatar : public BaseEntity
+struct BaseAvatar : public Entity
 {
 	struct Vftable
 	{
-		PAD(0, 0x610) void(*disableJumping)(Avatar*, UnkControlsArg*);
-		/* 0x618 */ void(*enableJumping)(Avatar*, UnkControlsArg*);
+		PAD(0, 0x610) void(*disableJumping)(BaseAvatar*, UnkControlsArg*);
+		/* 0x618 */ void(*enableJumping)(BaseAvatar*, UnkControlsArg*);
+		PAD(0x620, 0x8C8) Object*(*getDamageController)(BaseAvatar*);
+		PAD(0x8D0, 0x8F8) LotusInventoryController*(*getInventoryController)(BaseAvatar*);
+		PAD(0x900, 0xC40) void(*Suicide)(BaseAvatar*);
 	};
+	static_assert(sizeof(Vftable) == 0xC40 + 8);
 
-	INIT_PAD(BaseEntity, 0x500) float head_pos_x;
+	Object* getDamageController() { return reinterpret_cast<Vftable*>(vftable)->getDamageController(this); }
+	LotusInventoryController* getInventoryController() { return reinterpret_cast<Vftable*>(vftable)->getInventoryController(this); }
+};
+
+struct Avatar : public BaseAvatar
+{
+	INIT_PAD(BaseAvatar, 0x500) float head_pos_x;
 	/* 0x504 */ float head_pos_y;
 	/* 0x508 */ float head_pos_z;
 	PAD(0x50C, 0x511) bool followed_by_camera;
 	PAD(0x512, 0x679) uint8_t movement_flags; // 2 = sprinting, 4 = crouching, 5 = sliding
-	PAD(0x512, 0x6A0) bool render_above_everything;
+	PAD(0x67A, 0x6A0) bool render_above_everything;
 };
 static_assert(offsetof(Avatar, followed_by_camera) == 0x511);
 
-struct Player
+struct LotusAvatar : public Avatar
 {
-	PAD(0x000, 0x038) GameString name;
+	INIT_PAD(Avatar, 0x6D8) bool relationship_group; // if equal between two avatars, they are friendlies (IsAvatarFriendly; ee0bc178)
+};
+
+struct Player : public Object
+{
+	PAD(0x020, 0x038) GameString name;
 	PAD(0x048, 0x068) GameString name_with_platform_suffix;
 	PAD(0x078, 0x090) GameString clan_name;
 	PAD(0x0A0, 0x148) Avatar** avatar;
@@ -807,11 +840,16 @@ struct Player
 };
 static_assert(offsetof(Player, controlling_camera) == 0x158);
 
-struct Camera : public BaseEntity
+struct Camera : public Entity
 {
 };
 
-struct RegionMgr
+struct LotusGameRules : public Object
+{
+};
+
+// Most of what we access here is actually on RegionMgrImpl
+struct RegionMgr : public Object
 {
 	struct Vftable
 	{
@@ -820,15 +858,21 @@ struct RegionMgr
 		/* 0x400 */ Avatar*(*GetLocalPlayerAvatar)(RegionMgr*);
 	};
 
-	Vftable* vftable;
-	PAD(0x008, 0x208) Player*** local_player;
-	PAD(0x210, 0x2C8) Camera** game_camera;
+	Camera* GetGameCamera() { return reinterpret_cast<Vftable*>(vftable)->GetGameCamera(this); }
+	Player* GetLocalPlayer() { return reinterpret_cast<Vftable*>(vftable)->GetLocalPlayer(this); }
+	Avatar* GetLocalPlayerAvatar() { return reinterpret_cast<Vftable*>(vftable)->GetLocalPlayerAvatar(this); }
+
+	INIT_PAD(Object, 0x208) Player*** local_player;
+	PAD(0x210, 0x218) LotusGameRules** game_rules;
+	PAD(0x220, 0x2C8) Camera** game_camera;
 };
+static_assert(sizeof(RegionMgr) == 0x2C8 + 8);
 
 static DetourHook set_lua_global_hook;
 static RegionMgr* regionmgr = nullptr;
+//static LotusGameRules* gamerules;
 
-static void* set_lua_global_detour(void *a1, void ***a2, const char *name)
+static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 {
 	if (a2 && *a2)
 	{
@@ -836,14 +880,685 @@ static void* set_lua_global_detour(void *a1, void ***a2, const char *name)
 		std::cout << "set_lua_global: " << name << " = " << **a2 << std::endl;
 #endif
 
-		if (soup::joaat::hash(name) == soup::joaat::compileTimeHash("gRegion"))
+		switch (soup::joaat::hash(name))
 		{
+		case soup::joaat::compileTimeHash("gRegion"):
 			regionmgr = static_cast<RegionMgr*>(**a2);
+			break;
+
+		/*case soup::joaat::compileTimeHash("gGameRules"):
+			gamerules = static_cast<LotusGameRules*>(**a2);
+			break;*/
 		}
 	}
 	return reinterpret_cast<decltype(&set_lua_global_detour)>(set_lua_global_hook.original)(a1, a2, name);
 }
 
+
+/*using luau_newstate_t = luau_State*(*)(luau_Alloc f, void* ud, char);
+static luau_newstate_t luau_newstate = nullptr;*/
+
+using luau_pushstring_t = const char*(*)(luau_State*, const char*);
+static luau_pushstring_t luau_pushstring = nullptr;
+
+using luau_pushpointer_t = void*(*)(luau_State*, void*);
+static luau_pushpointer_t luau_pushpointer = nullptr;
+
+using luau_pushobject_t = Object*(*)(luau_State*, Object*);
+static luau_pushobject_t luau_pushobject = nullptr;
+
+using luau_gettable_t = int(*)(luau_State*, int idx);
+static luau_gettable_t luau_gettable = nullptr;
+
+static luau_State* luau_L = nullptr;
+//static Object*** luau_obj_buf[4];
+static std::string luau_error_msg;
+
+struct SwigMethod
+{
+	uint32_t hash;
+	luau_CFunction func;
+};
+static_assert(sizeof(SwigMethod) == 0x10);
+
+struct SwigAttribute
+{
+	uint32_t hash;
+	luau_CFunction getter;
+	luau_CFunction setter;
+};
+static_assert(sizeof(SwigAttribute) == 0x18);
+
+struct SwigTypeDesc
+{
+	/* 0x00 */ const char* name; // e.g. "Object"
+	PAD(0x08, 0x20) SwigMethod* methods;
+	/* 0x28 */ SwigAttribute* attributes;
+	PAD(0x30, 0x38) const char** parent_ptr_name; // e.g. "Object *"
+
+	luau_CFunction findMethod(uint32_t hash)
+	{
+		for (auto method = this->methods; method->hash != 0; ++method)
+		{
+			if (method->hash == hash)
+			{
+				return method->func;
+			}
+		}
+		return nullptr;
+	}
+
+	luau_CFunction findGetter(uint32_t hash)
+	{
+		for (auto attr = this->attributes; attr->hash != 0; ++attr)
+		{
+			if (attr->hash == hash)
+			{
+				return attr->getter;
+			}
+		}
+		return nullptr;
+	}
+
+	luau_CFunction findSetter(uint32_t hash)
+	{
+		for (auto attr = this->attributes; attr->hash != 0; ++attr)
+		{
+			if (attr->hash == hash)
+			{
+				return attr->setter;
+			}
+		}
+		return nullptr;
+	}
+};
+static_assert(sizeof(SwigTypeDesc) == 0x40);
+
+struct SwigTypeField
+{
+	/* 0x00 */ const char* field_name; // e.g. "_p_Object"
+	/* 0x08 */ const char* type_name; // e.g. "Object *"
+	PAD(0x10, 0x18) SwigTypeDesc* type_desc;
+};
+static_assert(sizeof(SwigTypeField) == 0x20);
+
+static std::unordered_map<uint32_t, SwigTypeDesc*> swig_types;
+
+static uint32_t wf_fnv_32(const char* str) noexcept
+{
+	uint32_t hash = 0xF42E1C3E; // They use this non-standard initial value
+	for (; *str; ++str)
+	{
+		hash ^= (uint8_t)*str;
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
+static void lua_pushpointer(lua_State* L, void* ptr)
+{
+	if (ptr != nullptr)
+	{
+		lua_pushinteger(L, reinterpret_cast<intptr_t>(ptr));
+	}
+	else
+	{
+		lua_pushnil(L);
+	}
+}
+
+static ObfusString runtime_script_name("OpenWF Script Runtime");
+
+struct owfScript
+{
+	const std::string path;
+	lua_State* main;
+	lua_State* coro = nullptr;
+	bool stop_requested = false;
+
+	owfScript(std::string&& _path)
+		: path(std::move(_path))
+	{
+		auto L = luaL_newstate();
+		this->main = L;
+		L->l_G->user_data = this;
+		luaL_openlibs(L);
+
+		/*lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto& output = *reinterpret_cast<std::string*>(L->l_G->user_data);
+			const int n = lua_gettop(L);
+			for (int i = 0; i++ != n; )
+			{
+				size_t len;
+				const char* str = luaL_tolstring(L, i, &len);
+				output.append(str, len);
+				output.push_back('\t');
+			}
+			if (!output.empty())
+			{
+				output.pop_back();
+			}
+			output.push_back('\n');
+			return 0;
+		});
+		{ ObfusString name("print"); lua_setglobal(L, name.c_str()); }*/
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			SOUP_IF_UNLIKELY (reinterpret_cast<owfScript*>(L->l_G->user_data)->stop_requested)
+			{
+				ObfusString err("Stop requested");
+				luaL_error(L, err.c_str());
+			}
+			lua_yield(L, 0);
+			return 0;
+		});
+		{ ObfusString name("yield"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			if (!owfConsole::active)
+			{
+				owfConsole::activate();
+			}
+			return 0;
+		});
+		{ ObfusString name("owf_force_console_active"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, regionmgr);
+			return 1;
+		});
+		{ ObfusString name("get_regionmgr"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, regionmgr ? *regionmgr->game_rules : nullptr);
+			return 1;
+		});
+		{ ObfusString name("get_gamerules"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, regionmgr ? regionmgr->GetLocalPlayer() : nullptr);
+			return 1;
+		});
+		{ ObfusString name("get_local_player"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, regionmgr ? regionmgr->GetGameCamera() : nullptr);
+			return 1;
+		});
+		{ ObfusString name("get_game_camera"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->getAvatar());
+			return 1;
+		});
+		{ ObfusString name("player_get_avatar"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushboolean(L, reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->controlling_camera);
+			return 1;
+		});
+		{ ObfusString name("player_get_controlling_camera"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->controlling_camera = lua_toboolean(L, 2);
+			return 0;
+		});
+		{ ObfusString name("player_set_controlling_camera"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto entity = reinterpret_cast<Entity*>(luaL_checkinteger(L, 1));
+			lua_pushnumber(L, entity->pos_x);
+			lua_pushnumber(L, entity->pos_y);
+			lua_pushnumber(L, entity->pos_z);
+			return 3;
+		});
+		{ ObfusString name("entity_get_pos"); lua_setglobal(L, name.c_str()); }
+
+		if (Entity_SetPosition)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				auto entity = reinterpret_cast<Entity*>(luaL_checkinteger(L, 1));
+				float pos[3];
+				pos[0] = static_cast<float>(luaL_checknumber(L, 2));
+				pos[1] = static_cast<float>(luaL_checknumber(L, 3));
+				pos[2] = static_cast<float>(luaL_checknumber(L, 4));
+				Entity_SetPosition(entity, pos);
+				return 3;
+			});
+			{ ObfusString name("entity_set_pos"); lua_setglobal(L, name.c_str()); }
+		}
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<BaseAvatar*>(luaL_checkinteger(L, 1))->getDamageController());
+			return 1;
+		});
+		{ ObfusString name("baseavatar_get_damage_controller"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<BaseAvatar*>(luaL_checkinteger(L, 1))->getInventoryController());
+			return 1;
+		});
+		{ ObfusString name("baseavatar_get_inventory_controller"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera = lua_toboolean(L, 2);
+			return 0;
+		});
+		{ ObfusString name("avatar_set_followed_by_camera"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushboolean(L, reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera);
+			return 1;
+		});
+		{ ObfusString name("avatar_get_followed_by_camera"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<LotusInventoryController*>(luaL_checkinteger(L, 1))->GetWeaponInHand(luaL_checkinteger(L, 2)));
+			return 1;
+		});
+		{ ObfusString name("inventory_get_weapon_in_hand"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<LotusInventoryController*>(luaL_checkinteger(L, 1))->GetActivePowerSuit());
+			return 1;
+		});
+		{ ObfusString name("inventory_get_active_powersuit"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, reinterpret_cast<WeaponEx*>(luaL_checkinteger(L, 1))->GetActiveImpactBehavior());
+			return 1;
+		});
+		{ ObfusString name("weaponex_get_active_impact_behavior"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			size_t len;
+			const char* str = luaL_checklstring(L, 1, &len);
+			lua_pushinteger(L, Module(nullptr).range.scan(Pattern(str, len)).as<uintptr_t>());
+			return 1;
+		});
+		{ ObfusString name("scan_pattern"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto ptr = reinterpret_cast<int32_t*>(luaL_checkinteger(L, 1));
+			if (!ptr)
+			{
+				ObfusString err("Unexpected nullptr");
+				luaL_error(L, err.c_str());
+			}
+			lua_pushinteger(L, *ptr);
+			return 1;
+		});
+		{ ObfusString name("mem_read_i32"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto ptr = reinterpret_cast<int64_t*>(luaL_checkinteger(L, 1));
+			if (!ptr)
+			{
+				ObfusString err("Unexpected nullptr");
+				luaL_error(L, err.c_str());
+			}
+			lua_pushinteger(L, *ptr);
+			return 1;
+		});
+		{ ObfusString name("mem_read_i64"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto ptr = reinterpret_cast<float*>(luaL_checkinteger(L, 1));
+			if (!ptr)
+			{
+				ObfusString err("Unexpected nullptr");
+				luaL_error(L, err.c_str());
+			}
+			lua_pushnumber(L, *ptr);
+			return 1;
+		});
+		{ ObfusString name("mem_read_f32"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop = luau_L->intop;
+			return 0;
+		});
+		{ ObfusString name("luau_begin_call"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->type = LUAU_NIL;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_nil"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->value.as_bool = lua_toboolean(L, 1);
+			luau_L->outtop->type = LUAU_BOOL;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_bool"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->value.as_float = static_cast<float>(luaL_checkinteger(L, 1));
+			luau_L->outtop->type = LUAU_NUMBER;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_int"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->value.as_float = static_cast<float>(luaL_checknumber(L, 1));
+			luau_L->outtop->type = LUAU_NUMBER;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_float"); lua_setglobal(L, name.c_str()); }
+
+		if (luau_pushstring)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				const char* str = luaL_checkstring(L, 1);
+				luau_pushstring(luau_L, str);
+				return 0;
+			});
+			{ ObfusString name("luau_push_string"); lua_setglobal(L, name.c_str()); }
+		}
+
+		if (luau_pushpointer)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				luau_pushpointer(luau_L, reinterpret_cast<void*>(luaL_checkinteger(L, 1)));
+				return 0;
+			});
+			{ ObfusString name("luau_push_pointer"); lua_setglobal(L, name.c_str()); }
+		}
+
+		if (luau_pushobject)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				auto obj = reinterpret_cast<Object*>(luaL_checkinteger(L, 1));
+				luau_pushobject(luau_L, obj);
+				/*luau_obj_buf[3] = &obj->self_pointer;
+				luau_L->outtop->value.as_uintptr = reinterpret_cast<uintptr_t>(&luau_obj_buf[0]);
+				luau_L->outtop->type = LUAU_USERDATA;
+				luau_L->outtop++;*/
+				/*if (***(void****)(luau_L->outtop[-1].value.as_uintptr + 0x18) != obj)
+				{
+					ObfusString err("invalid object");
+					luaL_error(L, err.c_str());
+				}*/
+				return 0;
+			});
+			{ ObfusString name("luau_push_object"); lua_setglobal(L, name.c_str()); }
+		}
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->value.as_uintptr = luaL_checkinteger(L, 1);
+			luau_L->outtop->type = LUAU_USERDATA;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_userdata"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			luau_L->outtop->value.as_uintptr = luaL_checkinteger(L, 1);
+			luau_L->outtop->type = LUAU_LIGHTUSERDATA;
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_lightuserdata"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto f = reinterpret_cast<luau_CFunction>(luaL_checkinteger(L, 1));
+			SOUP_IF_UNLIKELY (!f)
+			{
+				ObfusString err("Unexpected nullptr");
+				luaL_error(L, err.c_str());
+			}
+			luau_error_msg.clear();
+			__try
+			{
+				f(luau_L);
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER)
+			{
+				if (luau_error_msg.empty())
+				{
+					luau_error_msg = ObfusString("low-level exception").str();
+				}
+			}
+			SOUP_IF_UNLIKELY (!luau_error_msg.empty())
+			{
+				luaL_error(L, luau_error_msg.c_str());
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_end_call"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_BOOL)
+			{
+				lua_pushboolean(L, luau_L->intop[i].value.as_bool);
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_bool"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_NUMBER)
+			{
+				lua_pushnumber(L, luau_L->intop[i].value.as_float);
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_number"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_STRING)
+			{
+				lua_pushstring(L, luau_L->intop[i].getString());
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_string"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_USERDATA)
+			{
+				lua_pushinteger(L, luau_L->intop[i].value.as_uintptr);
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_userdata"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_USERDATA)
+			{
+				lua_pushpointer(L, *(void**)(luau_L->intop[i].value.as_uintptr + 0x18));
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_pointer"); lua_setglobal(L, name.c_str()); }
+
+		if (luau_gettable)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				const auto stk_idx = (unsigned int)luaL_checkinteger(L, 1);
+				if (luau_L->intop[stk_idx].type == LUAU_TABLE)
+				{
+					luau_L->outtop->value.as_float = static_cast<float>(luaL_checkinteger(L, 2));
+					luau_L->outtop->type = LUAU_NUMBER;
+					luau_L->outtop++;
+
+					if (luau_gettable(luau_L, stk_idx + 1) == LUAU_USERDATA)
+					{
+						luau_L->outtop--;
+						lua_pushinteger(L, luau_L->outtop->value.as_uintptr);
+						return 1;
+					}
+					luau_L->outtop--;
+				}
+				return 0;
+			});
+			{ ObfusString name("luau_get_table_userdata"); lua_setglobal(L, name.c_str()); }
+		}
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			void* res = nullptr;
+			if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+			{
+				res = reinterpret_cast<void*>(e->second->findMethod(wf_fnv_32(luaL_checkstring(L, 2))));
+			}
+			lua_pushpointer(L, res);
+			return 1;
+		});
+		{ ObfusString name("luau_find_method"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			void* res = nullptr;
+			if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+			{
+				res = reinterpret_cast<void*>(e->second->findGetter(wf_fnv_32(luaL_checkstring(L, 2))));
+			}
+			lua_pushpointer(L, res);
+			return 1;
+		});
+		{ ObfusString name("luau_find_getter"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			void* res = nullptr;
+			if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+			{
+				res = reinterpret_cast<void*>(e->second->findSetter(wf_fnv_32(luaL_checkstring(L, 2))));
+			}
+			lua_pushpointer(L, res);
+			return 1;
+		});
+		{ ObfusString name("luau_find_setter"); lua_setglobal(L, name.c_str()); }
+
+		std::string runtime;
+#if PRIVATE
+		runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
+		if (runtime.empty())
+#endif
+		{
+			using namespace soup::literals;
+			int dummy;
+			runtime = (
+				#include "runtime.pluto"
+			).str();
+		}
+
+		if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) == LUA_OK
+			&& lua_pcall(L, 0, 1, 0) == LUA_OK
+			&& luaL_loadfile(L, path.c_str()) == LUA_OK
+			)
+		{
+			coro = lua_newthread(L);
+			luaL_ref(L, LUA_REGISTRYINDEX);
+			lua_xmove(L, coro, 2);
+			int nresults;
+			if (lua_resume(coro, main, 1, &nresults) != LUA_YIELD)
+			{
+				std::cout << (lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on init").str()) << std::endl;
+				coro = nullptr;
+			}
+		}
+		else
+		{
+			if (!owfConsole::active)
+			{
+				owfConsole::activate();
+			}
+			std::cout << (lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error on init").str()) << std::endl;
+		}
+	}
+
+	bool tick()
+	{
+		int nresults;
+		int status = lua_resume(coro, main, 0, &nresults);
+		if (status == LUA_YIELD)
+		{
+			return true;
+		}
+		if (status != LUA_OK)
+		{
+			std::cout << (lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str()) << std::endl;
+		}
+		return false;
+	}
+
+	~owfScript()
+	{
+		lua_close(main);
+	}
+};
+
+static Mutex running_scripts_mtx;
+static std::vector<UniquePtr<owfScript>> running_scripts;
+
+static owfScript* get_script_by_path(const std::string& path)
+{
+	for (const auto& scr : running_scripts)
+	{
+		if (scr->path == path)
+		{
+			return scr.get();
+		}
+	}
+	return nullptr;
+}
 
 template <typename T>
 struct LinkedList
@@ -893,6 +1608,7 @@ enum MarkerType : uint8_t
 	HUD_FOCUS = 65,
 	HUD_EXTRACT = 75,
 	HUD_DISRUPTION = 79, // All keys & conduits seem to use this
+	HUD_REINFORCEMENT_BEACON = 86, // Orb Vallis
 };
 
 struct Marker : public LinkedList<Marker>::Entry
@@ -905,15 +1621,57 @@ struct Marker : public LinkedList<Marker>::Entry
 	PAD(0xB1, 0xD0) int distance;
 };
 
-struct Hud
+struct LotusHudStatus : public Object
 {
-	PAD(0, 0xB80) LinkedList<Marker>** markers;
+	INIT_PAD(Object, 0xB80) LinkedList<Marker>** markers;
 };
+
+static DetourHook lua_update_hud_hook;
+static int lua_update_hud_detour(luau_State* L)
+{
+	const auto og_outtop = L->outtop;
+	const auto og_intop = L->intop;
+	const auto og_lngjmp = L->global_state->error_longjump_data;
+	const auto og_panic = L->global_state->panic_func;
+
+	luau_L = L;
+	L->intop = L->outtop;
+	L->global_state->error_longjump_data = nullptr;
+	L->global_state->panic_func = [](luau_State* L, int)
+	{
+#if LOGGING
+		std::cout << "LuaU is panicking" << std::endl;
+#endif
+		luau_error_msg = L->outtop[-1].getString();
+		throw 0;
+	};
+	{
+		std::lock_guard mtx(running_scripts_mtx);
+		for (auto i = running_scripts.begin(); i != running_scripts.end(); )
+		{
+			if ((*i)->tick())
+			{
+				++i;
+			}
+			else
+			{
+				i = running_scripts.erase(i);
+			}
+		}
+	}
+
+	L->outtop = og_outtop;
+	L->intop = og_intop;
+	L->global_state->error_longjump_data = og_lngjmp;
+	L->global_state->panic_func = og_panic;
+
+	return reinterpret_cast<decltype(&lua_update_hud_detour)>(lua_update_hud_hook.original)(L);
+}
 
 static DetourHook update_hud_hook;
 static LinkedList<Marker>* markers = nullptr;
 
-static bool update_hud_detour(Hud* hud, void* a2, void* a3, float a4)
+static bool update_hud_detour(LotusHudStatus* hud, void* a2, void* a3, float a4)
 {
 	markers = *hud->markers;
 	return reinterpret_cast<decltype(&update_hud_detour)>(update_hud_hook.original)(hud, a2, a3, a4);
@@ -937,20 +1695,7 @@ static void save_config()
 	config.add(ObfusString("autologin"), autologin);
 	config.add(ObfusString("autologin_email"), autologin_email);
 	config.add(ObfusString("autologin_password"), autologin_password);
-	string::toFile(ObfusString("client_config.json").str(), config.encodePretty());
-}
-
-static void attach_console()
-{
-	AllocConsole();
-	SetConsoleTitleA(BOOTSTRAPPER_TITLE);
-	{
-		FILE* f;
-		freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
-		freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
-		freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
-	}
-	console_attached = true;
+	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
 
 #define CONFIG_LOADED_ONLY_ONCE true
@@ -983,7 +1728,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			return FALSE;
 		}
 
-		attach_console();
+		owfConsole::activate();
 
 		{
 			std::wstring path(_wgetenv(L"windir"));
@@ -995,8 +1740,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
 		}
 
+		std::filesystem::create_directory(ObfusString("OpenWF").str());
+		if (std::filesystem::exists(ObfusString("client_config.json").str()))
 		{
-			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("client_config.json").str()));
+			std::filesystem::rename(ObfusString("client_config.json").str(), ObfusString("OpenWF/client_config.json").str());
+		}
+		{
+			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("OpenWF/client_config.json").str()));
 			if (!config || !config->isObj())
 			{
 				config = soup::make_unique<JsonObject>();
@@ -1638,24 +2388,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			SIG_INST("40 53 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 70 48 8B 81 E0 01 00 00");
-			BaseEntity_SetPosition = Module(nullptr).range.scan(sig_inst).as<BaseEntity_SetPosition_t>();
+			Entity_SetPosition = Module(nullptr).range.scan(sig_inst).as<Entity_SetPosition_t>();
 #if LOGGING
-			std::cout << "BaseEntity_SetPosition = " << (void*)BaseEntity_SetPosition << std::endl;
+			std::cout << "Entity_SetPosition = " << (void*)Entity_SetPosition << std::endl;
 #endif
-			if (!BaseEntity_SetPosition)
+			if (!Entity_SetPosition)
 			{
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
 
 		{
-			SIG_INST("40 55 53 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC E0 0E 00 00");
-			auto update_hud = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("0F 28 D8 4C 8B C3 48 8B D7 48 8B CE E8");
+			auto lua_update_hud = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "update_hud = " << update_hud << std::endl;
+			std::cout << "lua_update_hud = " << lua_update_hud.as<void*>() << std::endl;
 #endif
-			if (update_hud)
+			if (lua_update_hud)
 			{
+				auto update_hud = lua_update_hud.add(13).rip().as<void*>();
+				lua_update_hud = lua_update_hud.sub(0x0000000141054F72 - 0x0000000141054F10);
+
+				lua_update_hud_hook.detour = reinterpret_cast<void*>(&lua_update_hud_detour);
+				lua_update_hud_hook.target = lua_update_hud.as<void*>();
+				lua_update_hud_hook.create();
+				lua_update_hud_hook.enable();
+
 				update_hud_hook.detour = reinterpret_cast<void*>(&update_hud_detour);
 				update_hud_hook.target = update_hud;
 				update_hud_hook.create();
@@ -1666,6 +2424,155 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+
+		/*{
+			SIG_INST("48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 48 81 EC ? ? ? ? 48 8B FA 41 8B E8 48 8B F1 41 B9");
+			luau_newstate = Module(nullptr).range.scan(sig_inst).as<luau_newstate_t>();
+#if LOGGING
+			std::cout << "luau_newstate = " << (void*)luau_newstate << std::endl;
+#endif
+			if (!luau_newstate)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}*/
+
+		{
+			SIG_INST("48 89 6C 24 18 56 48 83 EC 20 48 8B EA 48 8B F1 48 85 D2");
+			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
+#if LOGGING
+			std::cout << "luau_pushstring = " << (void*)luau_pushstring << std::endl;
+#endif
+			if (!luau_pushstring)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
+			luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
+#if LOGGING
+			std::cout << "luau_pushpointer = " << (void*)luau_pushpointer << std::endl;
+#endif
+			if (!luau_pushpointer)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
+			luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
+#if LOGGING
+			std::cout << "luau_pushobject = " << (void*)luau_pushobject << std::endl;
+#endif
+			if (!luau_pushobject)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
+			auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "luau_gettable_callsite = " << luau_gettable_callsite.as<void*>() << std::endl;
+#endif
+			if (luau_gettable_callsite)
+			{
+				luau_gettable = luau_gettable_callsite.add(9).rip().as<luau_gettable_t>();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB 02 33 FF E8 ? ? ? ? 48 8B C8");
+			Pointer res[20];
+			int nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+			for (int i = 0; i != nres; ++i)
+			{
+				auto type_arr = res[i].add(3).rip().as<SwigTypeField**>();
+				auto type_arr_end = res[i].add(29).rip().as<SwigTypeField**>();
+#if LOGGING
+				//std::cout << i << std::endl;
+				//std::cout << "type_arr = " << (void*)type_arr << std::endl;
+				//std::cout << "type_arr_end = " << (void*)type_arr_end << std::endl;
+				//std::cout << "type_arr_size = " << (type_arr_end - type_arr) << std::endl;
+#endif
+				for (auto entry = type_arr; entry != type_arr_end && *entry; ++entry)
+				{
+					if ((*entry)->type_desc)
+					{
+#if LOGGING
+						//std::cout << "\t- " << (*entry)->type_desc->name << std::endl;
+#endif
+						swig_types.emplace(soup::joaat::hash((*entry)->type_desc->name), (*entry)->type_desc);
+					}
+				}
+			}
+			if (nres == 0)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
+$version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
+Write-Host "Downloading OpenWF Bootstrapper v$version..."
+Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$version/dwmapi.dll" -OutFile "../dwmapi.dll")EOC").str());
+
+		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str());
+		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(local wf = Type("/Lotus/Types/Enemies/Stalker/StalkerSuit")
+gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
+gRegion:GetLocalPlayerAvatar():GiveItem(wf, true)
+gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(gGameRules:OpenMissionContinueDialog(nil))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), ObfusString(R"EOC(local was_in_freecam = false
+local x, y, z
+repeat
+    if avatar := gRegion:GetLocalPlayerAvatar() then
+        if avatar:isFollowedByCamera() then
+            if was_in_freecam then
+                was_in_freecam = false
+                avatar:SetPosition(x, y, z)
+            end
+        else
+            was_in_freecam = gRegion:GetLocalPlayer():isControllingCamera()
+            if was_in_freecam then
+                x, y, z = gRegion:GetGameCamera():GetPosition()
+            end
+        end
+    end
+until yield())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(repeat
+    if avatar := gRegion:GetLocalPlayerAvatar() then
+        avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
+    end
+until not pcall(yield)
+
+gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(local weapon = gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0)
+local impactBehavior = weapon:GetActiveImpactBehavior()
+impactBehavior.criticalHitChance = 10000
+impactBehavior.criticalHitDamageMultiplier = 10000)EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(repeat
+	local player = gRegion:GetLocalPlayerAvatar()
+	for gRegion:GetAvatars() as avatar do
+		if not avatar:IsAvatarFriendly(player) then
+			avatar:Suicide()
+		end
+	end
+until yield())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), ObfusString(R"EOC(repeat
+	for gRegion:GetAvatars() as avatar do
+		avatar:InventoryControl():DoItemDrop()
+	end
+until yield())EOC").str());
 
 		if (enable_http_interface)
 		{
@@ -1689,7 +2596,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (html.empty())
 #endif
 							{
-								html = ObfusString(R"EOC(<body style="background:#000;color:#fff;">
+								html = ObfusString(R"EOC(<style>
+	body{font-family:sans-serif;background:#000;filter:invert(1)}
+	textarea{width:100%;height:100px}
+</style>
+<body>
 	<div id="disconnected" style="display:none">
 		<p>Connection to DLL lost. Attempting to reestablish...</p>
 		<hr>
@@ -1703,6 +2614,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
 	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
 	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
+	<hr>
+	<div id="scripts-container"></div>
+	<hr>
+	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
@@ -1762,6 +2677,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		function pollStatus() {
 			fetch("/status").then(res => res.json()).then(res => {
+				document.getElementById("console").checked = res.console;
 				document.getElementById("disconnected").style.display = "none";
 				if (res.camtype) {
 					document.getElementById("camtype").value = res.camtype;
@@ -1794,6 +2710,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						onMarkersChange();
 					}
 				}
+
+				for (const script of document.getElementById("scripts-container").children) {
+					const path = script.children[1].getAttribute("data-path");
+					script.children[1].checked = res.running_scripts.find(x => x == path);
+				}
 			}).catch((e) => {
 				console.error(e);
 				document.getElementById("disconnected").style.display = "";
@@ -1810,6 +2731,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			fetch("/teleport?" + pos);
 		};
+
+		document.getElementById("console").onchange = function() {
+			fetch("/toggle_console");
+		};
+
+		fetch("/scripts").then(res => res.json()).then(res => {
+			res.forEach(script => {
+				const p = document.createElement("p");
+				const label = document.createElement("label");
+				label.setAttribute("for", script);
+				label.textContent = script + ": ";
+				p.appendChild(label);
+				const input = document.createElement("input");
+				input.id = script;
+				input.type = "checkbox";
+				input.setAttribute("data-path", "OpenWF\\scripts\\" + script);
+				input.onchange = function() {
+					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
+				};
+				p.appendChild(input);
+				document.getElementById("scripts-container").appendChild(p);
+			});
+		});
+
+		/*document.getElementById("run_script").onclick = function() {
+			fetch("/run_script?" + encodeURIComponent(document.getElementById("script").value)).then(res => res.text()).then(res => {
+				document.getElementById("script-output").value = res;
+			});
+		};*/
 	</script>
 </body>)EOC").str();
 							}
@@ -1870,9 +2820,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							do_logout();
 							server_host = arr[1];
-							if (!console_attached)
+							if (!owfConsole::active)
 							{
-								attach_console();
+								owfConsole::activate();
 							}
 							on_got_server_host();
 						}
@@ -1882,7 +2832,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/freecam"):
 						if (regionmgr && !prohibit_freecam)
 						{
-							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = true;
 								local_player->getAvatar()->followed_by_camera = false;
@@ -1894,7 +2844,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/lockcam"):
 						if (regionmgr && !prohibit_freecam)
 						{
-							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = false;
 								local_player->getAvatar()->followed_by_camera = false;
@@ -1906,7 +2856,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/gamecam"):
 						if (regionmgr && !prohibit_freecam)
 						{
-							if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = false;
 								local_player->getAvatar()->followed_by_camera = true;
@@ -1918,7 +2868,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						// Vania Mall: Closet behind Arthur: -15,-6.5,13
 						// Vania Mall: Cutscene Room: -19,-6.5,14
 					case soup::joaat::compileTimeHash("/teleport"):
-						if (BaseEntity_SetPosition && regionmgr && !prohibit_teleport)
+						if (Entity_SetPosition && regionmgr && !prohibit_teleport)
 						{
 							std::vector<std::string> pos_arr;
 							if (arr.size() > 1)
@@ -1932,7 +2882,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									strtof(pos_arr[1].c_str(), nullptr),
 									strtof(pos_arr[2].c_str(), nullptr)
 								};
-								BaseEntity_SetPosition(regionmgr->vftable->GetLocalPlayerAvatar(regionmgr), pos);
+								Entity_SetPosition(regionmgr->GetLocalPlayerAvatar(), pos);
 								ServerWebService::send204(s);
 							}
 							else
@@ -1949,9 +2899,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/status"):
 						{
 							JsonObject obj;
+							obj.add(ObfusString("console"), owfConsole::active);
 							if (regionmgr)
 							{
-								if (auto local_player = regionmgr->vftable->GetLocalPlayer(regionmgr))
+								if (auto local_player = regionmgr->GetLocalPlayer())
 								{
 									if (auto avatar = local_player->getAvatar())
 									{
@@ -1972,45 +2923,106 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									}
 								}
 							}
-							auto arr = soup::make_unique<JsonArray>();
-							if (markers)
 							{
-								Marker* marker = nullptr;
-								__try
+								auto arr = soup::make_unique<JsonArray>();
+								if (markers)
 								{
-									marker = markers->getHead();
-								}
-								__except (EXCEPTION_EXECUTE_HANDLER)
-								{
-#if LOGGING
-									std::cout << "Exception while fetching marker head" << std::endl;
-#endif
-									markers = nullptr;
-								}
-								while (marker != nullptr)
-								{
-									auto marker_obj = soup::make_unique<JsonObject>();
+									Marker* marker = nullptr;
 									__try
 									{
-										marker_obj->add(ObfusString("type").str(), (int)marker->type);
-										marker_obj->add(ObfusString("x").str(), marker->world_x);
-										marker_obj->add(ObfusString("y").str(), marker->world_y);
-										marker_obj->add(ObfusString("z").str(), marker->world_z);
-										marker_obj->add(ObfusString("dist").str(), marker->distance);
-										marker = marker->getNext();
+										marker = markers->getHead();
 									}
 									__except (EXCEPTION_EXECUTE_HANDLER)
 									{
 #if LOGGING
-										std::cout << "Exception while reading marker" << std::endl;
+										std::cout << "Exception while fetching marker head" << std::endl;
 #endif
 										markers = nullptr;
 									}
-									arr->children.emplace_back(std::move(marker_obj));
+									while (marker != nullptr)
+									{
+										auto marker_obj = soup::make_unique<JsonObject>();
+										__try
+										{
+											marker_obj->add(ObfusString("type").str(), (int)marker->type);
+											marker_obj->add(ObfusString("x").str(), marker->world_x);
+											marker_obj->add(ObfusString("y").str(), marker->world_y);
+											marker_obj->add(ObfusString("z").str(), marker->world_z);
+											marker_obj->add(ObfusString("dist").str(), marker->distance);
+											marker = marker->getNext();
+										}
+										__except (EXCEPTION_EXECUTE_HANDLER)
+										{
+#if LOGGING
+											std::cout << "Exception while reading marker" << std::endl;
+#endif
+											markers = nullptr;
+										}
+										arr->children.emplace_back(std::move(marker_obj));
+									}
+								}
+								obj.add(ObfusString("markers"), std::move(arr));
+							}
+							{
+								std::lock_guard lock(running_scripts_mtx);
+								auto arr = soup::make_unique<JsonArray>();
+								for (const auto& scr : running_scripts)
+								{
+									arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->path)));
+								}
+								obj.add(ObfusString("running_scripts"), std::move(arr));
+							}
+							ServerWebService::sendText(s, obj.encodePretty());
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/toggle_console"):
+						if (owfConsole::active)
+						{
+							owfConsole::deactivate();
+						}
+						else
+						{
+							owfConsole::activate();
+						}
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/scripts"):
+						{
+							JsonArray arr;
+							for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
+							{
+								if (std::filesystem::is_regular_file(file))
+								{
+									arr.children.emplace_back(soup::make_unique<JsonString>(string::fixType(file.path().u8string()).substr(15)));
 								}
 							}
-							obj.add(ObfusString("markers"), std::move(arr));
-							ServerWebService::sendText(s, obj.encodePretty());
+							ServerWebService::sendText(s, arr.encodePretty());
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/start_script"):
+						if (!prohibit_scripts)
+						{
+							auto scr = soup::make_unique<owfScript>(urlenc::decode(arr[1]));
+							if (scr->coro)
+							{
+								std::lock_guard lock(running_scripts_mtx);
+								running_scripts.emplace_back(std::move(scr));
+							}
+							ServerWebService::send204(s);
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/stop_script"):
+						{
+							std::lock_guard lock(running_scripts_mtx);
+							if (auto scr = get_script_by_path(urlenc::decode(arr[1])))
+							{
+								scr->stop_requested = true;
+							}
+							ServerWebService::send204(s);
 						}
 						break;
 					}
