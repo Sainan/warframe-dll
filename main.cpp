@@ -68,6 +68,7 @@ static bool disable_nrs_connection;
 static bool autologin;
 static std::string autologin_email;
 static std::string autologin_password;
+static std::vector<std::string> auto_start_scripts;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -1604,15 +1605,18 @@ struct owfScript
 
 	bool tick()
 	{
-		int nresults;
-		int status = lua_resume(coro, main, 0, &nresults);
-		if (status == LUA_YIELD)
+		if (!prohibit_scripts)
 		{
-			return true;
-		}
-		if (status != LUA_OK)
-		{
-			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
+			int nresults;
+			int status = lua_resume(coro, main, 0, &nresults);
+			if (status == LUA_YIELD)
+			{
+				return true;
+			}
+			if (status != LUA_OK)
+			{
+				owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
+			}
 		}
 		return false;
 	}
@@ -1625,6 +1629,16 @@ struct owfScript
 
 static Mutex running_scripts_mtx;
 static std::vector<UniquePtr<owfScript>> running_scripts;
+
+static void start_script(std::string&& path)
+{
+	auto scr = soup::make_unique<owfScript>(std::move(path));
+	if (scr->coro)
+	{
+		std::lock_guard lock(running_scripts_mtx);
+		running_scripts.emplace_back(std::move(scr));
+	}
+}
 
 static owfScript* get_script_by_path(const std::string& path)
 {
@@ -1773,6 +1787,14 @@ static void save_config()
 	config.add(ObfusString("autologin"), autologin);
 	config.add(ObfusString("autologin_email"), autologin_email);
 	config.add(ObfusString("autologin_password"), autologin_password);
+	{
+		auto arr = soup::make_unique<JsonArray>();
+		for (const auto& path : auto_start_scripts)
+		{
+			arr->children.emplace_back(soup::make_unique<JsonString>(path));
+		}
+		config.add(ObfusString("auto_start_scripts"), std::move(arr));
+	}
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
 
@@ -1977,6 +1999,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 #if !CONFIG_LOADED_ONLY_ONCE
 				autologin_password.clear();
+#endif
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("auto_start_scripts")); it != config->reinterpretAsObj().end() && it->second->isArr())
+			{
+				for (const auto& node : it->second->reinterpretAsArr().children)
+				{
+					if (node->isStr())
+					{
+						auto_start_scripts.emplace_back(node->reinterpretAsStr());
+					}
+				}
+			}
+			else
+			{
+#if !CONFIG_LOADED_ONLY_ONCE
+				auto_start_scripts.clear();
 #endif
 			}
 		}
@@ -2685,6 +2724,15 @@ until yield())EOC").str());
 	end
 until yield())EOC").str());
 
+		if (!auto_start_scripts.empty())
+		{
+			ObfusString base_path("OpenWF/scripts/");
+			for (const auto& path : auto_start_scripts)
+			{
+				start_script(base_path.str() + path);
+			}
+		}
+
 		if (enable_http_interface)
 		{
 			Thread thrd([](Capture&&)
@@ -2857,6 +2905,7 @@ until yield())EOC").str());
 
 		fetch("/scripts").then(res => res.json()).then(res => {
 			res.forEach(script => {
+				script = script.split("\\").join("/");
 				const p = document.createElement("p");
 				const label = document.createElement("label");
 				label.setAttribute("for", script);
@@ -2865,7 +2914,7 @@ until yield())EOC").str());
 				const input = document.createElement("input");
 				input.id = script;
 				input.type = "checkbox";
-				input.setAttribute("data-path", "OpenWF\\scripts\\" + script);
+				input.setAttribute("data-path", "OpenWF/scripts/" + script);
 				input.onchange = function() {
 					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
 				};
@@ -2873,12 +2922,6 @@ until yield())EOC").str());
 				document.getElementById("scripts-container").appendChild(p);
 			});
 		});
-
-		/*document.getElementById("run_script").onclick = function() {
-			fetch("/run_script?" + encodeURIComponent(document.getElementById("script").value)).then(res => res.text()).then(res => {
-				document.getElementById("script-output").value = res;
-			});
-		};*/
 	</script>
 </body>)EOC").str();
 							}
@@ -3130,12 +3173,7 @@ until yield())EOC").str());
 					case soup::joaat::compileTimeHash("/start_script"):
 						if (!prohibit_scripts)
 						{
-							auto scr = soup::make_unique<owfScript>(urlenc::decode(arr[1]));
-							if (scr->coro)
-							{
-								std::lock_guard lock(running_scripts_mtx);
-								running_scripts.emplace_back(std::move(scr));
-							}
+							start_script(urlenc::decode(arr[1]));
 							ServerWebService::send204(s);
 						}
 						break;
