@@ -347,13 +347,6 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 				{
 					it->second->reinterpretAsStr().value = autologin_password;
 				}
-				if (auto it = jr->reinterpretAsObj().findIt(ObfusString("kick").str()); it != jr->reinterpretAsObj().end())
-				{
-					// For some reason, ThemedMainMenu.lua sets the kick=true when dispatching login for "Client.AutoLogin".
-					// However, as far as I can tell, this does not get persisted in any way, so I assume it's just something they do to ensure this is only used in their dev environment.
-					// With "Steam.AutoLogin", we'd see kick=false as expected, but feels a bit more hacky.
-					jr->reinterpretAsObj().erase(it);
-				}
 				body_buf = jr->encode();
 				request->body.setUnownedData(body_buf.data(), body_buf.size());
 			}
@@ -707,13 +700,13 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 {
 	SOUP_IF_LIKELY (name)
 	{
-		ObfusString str("Client.AutoLogin");
+		ObfusString str("Steam.AutoLogin");
 		SOUP_IF_UNLIKELY (strcmp(name, str.c_str()) == 0)
 		{
 			if (!did_auto_login)
 			{
 #if LOGGING
-				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
+				std::cout << "Reporting Steam.AutoLogin as true" << std::endl;
 #endif
 				return true;
 			}
@@ -721,6 +714,21 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 	}
 
 	return reinterpret_cast<decltype(&get_config_bool_vfunc_detour)>(get_config_bool_vfunc_hook.original)(a1, name, fallback);
+}
+
+
+static void* lua_SteamService_IsInitialized_og;
+
+static int lua_SteamService_IsInitialized_detour(luau_State* L)
+{
+	if (!did_auto_login)
+	{
+#if LOGGING
+		//std::cout << "Making lua_SteamService_IsInitialized return true" << std::endl;
+#endif
+		return true;
+	}
+	return reinterpret_cast<decltype(&lua_SteamService_IsInitialized_detour)>(lua_SteamService_IsInitialized_og)(L);
 }
 
 
@@ -2332,8 +2340,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-#if false
-		// Enable Steam Login by making the Lua scripts think Steam is initialised
 		{
 			SIG_INST("FC C6 D4 49");
 			auto lua_SteamService_IsInitialized_hash = Module(nullptr).range.scan(sig_inst);
@@ -2342,22 +2348,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (lua_SteamService_IsInitialized_hash)
 			{
-				auto lua_SteamService_IsInitialized = *lua_SteamService_IsInitialized_hash.add(8).as<void**>();
+				auto lua_SteamService_IsInitialized_fp = lua_SteamService_IsInitialized_hash.add(8).as<void**>();
 #if LOGGING
-				std::cout << "lua_SteamService_IsInitialized = " << lua_SteamService_IsInitialized << std::endl;
+				std::cout << "lua_SteamService_IsInitialized = " << *lua_SteamService_IsInitialized_fp << std::endl;
 #endif
-				auto SteamService_IsInitialized_call = Pointer(lua_SteamService_IsInitialized).add(0x00000001404F582E - 0x00000001404F5820).as<uint8_t*>();
-
 				if (autologin)
 				{
-					const uint8_t patch[5] = {
-						0xb0, 0x01, // mov al, 1
-						0x90, // nop
-						0x90, // nop
-						0x90, // nop
-					};
-					memGuard::setAllowedAccess(SteamService_IsInitialized_call, sizeof(patch), memGuard::ACC_RWX);
-					memcpy(SteamService_IsInitialized_call, patch, sizeof(patch));
+					memGuard::setAllowedAccess(lua_SteamService_IsInitialized_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+					lua_SteamService_IsInitialized_og = *lua_SteamService_IsInitialized_fp;
+					*lua_SteamService_IsInitialized_fp = reinterpret_cast<void*>(&lua_SteamService_IsInitialized_detour);
 				}
 			}
 			else
@@ -2365,7 +2364,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
-#endif
 
 		{
 			SIG_INST("40 53 56 57 48 83 EC 20 48 83 79 20 00 49 8B F8");
