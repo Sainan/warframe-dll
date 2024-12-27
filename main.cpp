@@ -1024,12 +1024,29 @@ static void lua_pushpointer(lua_State* L, void* ptr)
 
 static ObfusString runtime_script_name("OpenWF Script Runtime");
 
+static Mutex script_log_mtx;
+static std::string script_log;
+
 struct owfScript
 {
 	const std::string path;
 	lua_State* main;
 	lua_State* coro = nullptr;
 	bool stop_requested = false;
+
+	static void logNl(const std::string& msg)
+	{
+		std::cout << msg << std::endl;
+		std::lock_guard lock(script_log_mtx);
+		script_log.append(msg).push_back('\n');
+	}
+
+	static void log(const std::string& msg)
+	{
+		std::cout << msg;
+		std::lock_guard lock(script_log_mtx);
+		script_log.append(msg);
+	}
 
 	owfScript(std::string&& _path)
 		: path(std::move(_path))
@@ -1039,25 +1056,47 @@ struct owfScript
 		L->l_G->user_data = this;
 		luaL_openlibs(L);
 
-		/*lua_pushcfunction(L, [](lua_State* L) -> int
+		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			auto& output = *reinterpret_cast<std::string*>(L->l_G->user_data);
+			std::string msg;
 			const int n = lua_gettop(L);
 			for (int i = 0; i++ != n; )
 			{
 				size_t len;
 				const char* str = luaL_tolstring(L, i, &len);
-				output.append(str, len);
-				output.push_back('\t');
+				msg.append(str, len);
+				msg.push_back('\t');
 			}
-			if (!output.empty())
+			if (!msg.empty())
 			{
-				output.pop_back();
+				msg.pop_back();
 			}
-			output.push_back('\n');
+			owfScript::logNl(msg);
 			return 0;
 		});
-		{ ObfusString name("print"); lua_setglobal(L, name.c_str()); }*/
+		{ ObfusString name("print"); lua_setglobal(L, name.c_str()); }
+
+		{ ObfusString name("io"); lua_getglobal(L, name.c_str()); }
+		{ ObfusString name("write"); lua_pushlstring(L, name.data(), name.size()); }
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			std::string msg;
+			const int n = lua_gettop(L);
+			for (int i = 0; i++ != n; )
+			{
+				size_t len;
+				const char* str = luaL_tolstring(L, i, &len);
+				msg.append(str, len);
+				msg.push_back('\t');
+			}
+			if (!msg.empty())
+			{
+				msg.pop_back();
+			}
+			owfScript::log(msg);
+			return 0;
+		});
+		lua_settable(L, -3);
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
@@ -1070,16 +1109,6 @@ struct owfScript
 			return 0;
 		});
 		{ ObfusString name("yield"); lua_setglobal(L, name.c_str()); }
-
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
-			if (!owfConsole::active)
-			{
-				owfConsole::activate();
-			}
-			return 0;
-		});
-		{ ObfusString name("owf_force_console_active"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
@@ -1563,17 +1592,13 @@ struct owfScript
 			int nresults;
 			if (lua_resume(coro, main, 1, &nresults) != LUA_YIELD)
 			{
-				std::cout << (lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on init").str()) << std::endl;
+				owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on init").str());
 				coro = nullptr;
 			}
 		}
 		else
 		{
-			if (!owfConsole::active)
-			{
-				owfConsole::activate();
-			}
-			std::cout << (lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error on init").str()) << std::endl;
+			owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error on init").str());
 		}
 	}
 
@@ -1587,7 +1612,7 @@ struct owfScript
 		}
 		if (status != LUA_OK)
 		{
-			std::cout << (lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str()) << std::endl;
+			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
 		}
 		return false;
 	}
@@ -2576,6 +2601,8 @@ gRegion:GetLocalPlayerAvatar():GiveItem(wf, true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(if gGameRules instanceof LotusGameRules then
 	gGameRules:OpenMissionContinueDialog(nil)
+else
+	print("Not available in the current mission")
 end)EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(local was_down = false
 repeat
@@ -2642,7 +2669,8 @@ gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").s
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(local weapon = gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0)
 local impactBehavior = weapon:GetActiveImpactBehavior()
 impactBehavior.criticalHitChance = 10000
-impactBehavior.criticalHitDamageMultiplier = 10000)EOC").str());
+impactBehavior.criticalHitDamageMultiplier = 10000
+print("Your damage has been increased!"))EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(repeat
 	local player = gRegion:GetLocalPlayerAvatar()
 	for gRegion:GetAvatars() as avatar do
@@ -2679,10 +2707,7 @@ until yield())EOC").str());
 							if (html.empty())
 #endif
 							{
-								html = ObfusString(R"EOC(<style>
-	body{font-family:sans-serif;background:#000;filter:invert(1)}
-	textarea{width:100%;height:100px}
-</style>
+								html = ObfusString(R"EOC(<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
 <body>
 	<div id="disconnected" style="display:none">
 		<p>Connection to DLL lost. Attempting to reestablish...</p>
@@ -2699,7 +2724,7 @@ until yield())EOC").str());
 	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
 	<hr>
 	<div id="scripts-container"></div>
-	<hr>
+	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
 	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
@@ -2758,8 +2783,9 @@ until yield())EOC").str());
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
 		}
 
+		let script_log = "";
 		function pollStatus() {
-			fetch("/status").then(res => res.json()).then(res => {
+			fetch("/status?" + script_log.length).then(res => res.json()).then(res => {
 				document.getElementById("console").checked = res.console;
 				document.getElementById("disconnected").style.display = "none";
 				if (res.camtype) {
@@ -2798,9 +2824,19 @@ until yield())EOC").str());
 					const path = script.children[1].getAttribute("data-path");
 					script.children[1].checked = res.running_scripts.find(x => x == path);
 				}
+
+				if (res.script_log_sub)
+				{
+					script_log += res.script_log_sub;
+					const log = document.getElementById("script_log");
+					log.textContent = script_log;
+					log.scrollTop = log.scrollHeight;
+				}
 			}).catch((e) => {
 				console.error(e);
 				document.getElementById("disconnected").style.display = "";
+				script_log = "";
+				document.getElementById("script_log").textContent = "";
 			}).finally(pollStatus);
 		}
 		pollStatus();
@@ -3055,6 +3091,12 @@ until yield())EOC").str());
 								}
 								obj.add(ObfusString("running_scripts"), std::move(arr));
 							}
+							if (arr.size() > 1)
+							{
+								const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
+								std::lock_guard lock(script_log_mtx);
+								obj.add(ObfusString("script_log_sub"), script_log.substr(i));
+							}
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
 						break;
@@ -3107,6 +3149,10 @@ until yield())EOC").str());
 							}
 							ServerWebService::send204(s);
 						}
+						break;
+
+					case soup::joaat::compileTimeHash("/clear_script_log"):
+						script_log.clear();
 						break;
 					}
 				});

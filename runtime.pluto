@@ -422,7 +422,6 @@ return function(f)
 		if e:sub(-14) == "Stop requested" then
 			print(e)
 		else
-			owf_force_console_active()
 			print(debug.traceback(e,2))
 		end
 	end)
