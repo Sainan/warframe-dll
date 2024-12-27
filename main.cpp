@@ -2632,6 +2632,18 @@ $version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop
 Write-Host "Downloading OpenWF Bootstrapper v$version..."
 Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$version/dwmapi.dll" -OutFile "../dwmapi.dll")EOC").str());
 
+		{
+			std::string reference;
+			{
+				using namespace soup::literals;
+				int dummy;
+				reference = (
+					#include "OpenWF/Script API Reference.pluto"
+				).str();
+			}
+			soup::string::toFile(ObfusString("OpenWF/Script API Reference.pluto").str(), std::move(reference));
+		}
+
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str());
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(local wf = Type("/Lotus/Types/Enemies/Stalker/StalkerSuit")

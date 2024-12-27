@@ -1,0 +1,125 @@
+--dummy,R"EOC(-- Classes
+
+class owfClassBase
+	function __construct(public addr)
+
+class ObjectType extends owfClassBase
+	function GetFullName()
+	function GetParent()
+
+class Object extends owfClassBase
+	function GetType()
+	function GetFullName()
+
+class Player extends Object
+	function GetAvatar()
+
+class HumanPlayer extends Player
+	function ToggleFreeCamera()
+	function isControllingCamera()
+	function setControllingCamera(b)
+
+class BaseEntity extends Object
+
+class Entity extends BaseEntity
+	function GetPosition()
+	function SetPosition(pos)
+	function GetHealth()
+	function SetHealth(health)
+
+class BaseAvatar extends Entity
+	function GetMaxHealth(b = true)
+	function SetMaxHealth(health, b = false)
+	function Suicide()
+	function DamageControl()
+	function InventoryControl()
+	function InputControl()
+	function GiveItem(type, b)
+
+class Avatar extends BaseAvatar
+	function ControlCamera(b)
+	function isFollowedByCamera()
+
+class LotusAvatar extends Avatar
+	function IsAvatarFriendly(other)
+
+class DamageControllerBase extends Object
+	function GiveTemporaryImmunity(a, b)
+	function HasTemporaryImmunity()
+	function RemoveTemporaryImmunity()
+
+class InventoryControllerBase extends Object
+	function RemoveItem(slot, b)
+	function GetWeaponInHand(hand)
+
+class LotusInventoryController extends InventoryControllerBase
+	function GetActivePowerSuit()
+	function DoItemDrop()
+
+class Item extends Object
+
+class WeaponBase extends Item
+
+class WeaponEx extends WeaponBase
+	function GetActiveImpactBehavior()
+
+class LotusWeapon extends WeaponEx
+	function GetXP()
+	function SetXP(xp)
+
+class WeaponImpactBehavior extends Object
+	criticalHitChance
+	criticalHitDamageMultiplier
+	instantImpulse
+
+class PowerSuit extends LotusWeapon
+	function SetEnergy(value)
+	function SetMaxEnergy(value)
+	function GetUnmodifiedMaxEnergy()
+	function GetCurEnergy()
+	function GetMaxEnergy()
+
+class InputControllerBase extends Object
+
+class InputController extends InputControllerBase
+	function SetStopMovement(b)
+
+class LotusGameRules extends Object
+	function OpenMissionContinueDialog()
+
+-- Global functions
+
+function yield()
+function owf_is_key_down()
+function Type(name)
+
+-- Global variables
+
+gRegion
+	function GetLocalPlayer()
+	function GetLocalPlayerAvatar()
+	function GetGameCamera()
+	function GetGameRules()
+	function GetAvatars()
+
+gGameRules
+
+Engine = {
+	SLOT_1 = 0,
+	SLOT_2 = 1,
+	SLOT_3 = 2,
+	SLOT_4 = 3,
+	SLOT_5 = 4,
+	SLOT_6 = 5,
+	SLOT_7 = 6,
+	SLOT_8 = 7,
+	SLOT_9 = 8,
+	SLOT_10 = 9,
+	SLOT_11 = 10,
+	SLOT_12 = 11,
+	SLOT_13 = 12,
+	SLOT_14 = 13,
+	INVALID = 14,
+}
+
+--)EOC"_obfus
