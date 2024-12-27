@@ -808,7 +808,8 @@ struct BaseAvatar : public Entity
 		PAD(0, 0x610) void(*disableJumping)(BaseAvatar*, UnkControlsArg*);
 		/* 0x618 */ void(*enableJumping)(BaseAvatar*, UnkControlsArg*);
 		PAD(0x620, 0x8C8) Object*(*getDamageController)(BaseAvatar*);
-		PAD(0x8D0, 0x8F8) LotusInventoryController*(*getInventoryController)(BaseAvatar*);
+		PAD(0x8D0, 0x8E8) Object*(*getInputController)(BaseAvatar*);
+		PAD(0x8F0, 0x8F8) LotusInventoryController*(*getInventoryController)(BaseAvatar*);
 		PAD(0x900, 0xC40) void(*Suicide)(BaseAvatar*);
 	};
 	static_assert(sizeof(Vftable) == 0xC40 + 8);
@@ -1073,6 +1074,32 @@ struct owfScript
 			return 0;
 		});
 		{ ObfusString name("owf_force_console_active"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			if (DWORD pid; GetWindowThreadProcessId(GetForegroundWindow(), &pid), pid == GetCurrentProcessId())
+			{
+				int vk = 0;
+				if (lua_type(L, 1) == LUA_TSTRING)
+				{
+					vk = (int)*luaL_checkstring(L, 1);
+				}
+				if ((vk < 'A' || vk > 'Z')
+					&& (vk < '0' || vk > '9')
+					&& vk != ' '
+					)
+				{
+					vk = (int)luaL_checkinteger(L, 1);
+				}
+				lua_pushboolean(L, (GetAsyncKeyState(vk) & 0x8000) != 0);
+			}
+			else
+			{
+				lua_pushboolean(L, false);
+			}
+			return 1;
+		});
+		{ ObfusString name("owf_is_key_down"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
@@ -1433,6 +1460,18 @@ struct owfScript
 			return 0;
 		});
 		{ ObfusString name("luau_get_pointer"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto i = (int)luaL_checkinteger(L, 1);
+			if (luau_L->intop[i].type == LUAU_USERDATA)
+			{
+				lua_pushpointer(L, ***(void****)(luau_L->intop[i].value.as_uintptr + 0x18));
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_object"); lua_setglobal(L, name.c_str()); }
 
 		if (luau_gettable)
 		{
@@ -2530,6 +2569,28 @@ gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true
 gRegion:GetLocalPlayerAvatar():GiveItem(wf, true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(gGameRules:OpenMissionContinueDialog(nil))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(local was_down = false
+repeat
+	if owf_is_key_down('K') then
+		if not was_down then
+			was_down = true
+			if gRegion:GetLocalPlayerAvatar():isFollowedByCamera() then
+				print("Normal -> Freecam")
+				gRegion:GetLocalPlayer():setControllingCamera(true)
+				gRegion:GetLocalPlayerAvatar():ControlCamera(false)
+			elseif gRegion:GetLocalPlayer():isControllingCamera() then
+				print("Freecam -> Locked In Place")
+				gRegion:GetLocalPlayer():setControllingCamera(false)
+			else
+				print("Locked In Place -> Normal")
+				gRegion:GetLocalPlayer():setControllingCamera(false)
+				gRegion:GetLocalPlayerAvatar():ControlCamera(true)
+			end
+		end
+	else
+		was_down = false
+	end
+until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), ObfusString(R"EOC(local was_in_freecam = false
 local x, y, z
 repeat

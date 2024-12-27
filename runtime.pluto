@@ -54,16 +54,17 @@ end
 
 class HumanPlayer extends Player
 	function ToggleFreeCamera()
-		-- Note: Not 100% identical to the real function
-		local b = player_get_controlling_camera(self.addr)
-		player_set_controlling_camera(self.addr, not b)
-		if avatar := self:GetAvatar() then
-			avatar:ControlCamera(b)
-		end
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("HumanPlayer", "ToggleFreeCamera"))
 	end
 
 	function isControllingCamera()
 		return player_get_controlling_camera(self.addr)
+	end
+
+	function setControllingCamera(b)
+		player_set_controlling_camera(self.addr, b)
 	end
 end
 
@@ -128,6 +129,15 @@ class BaseAvatar extends Entity
 			if not "NullInventoryController" in inventory:GetFullName() then
 				return new LotusInventoryController(addr)
 			end
+		end
+	end
+
+	function InputControl()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("BaseAvatar", "InputControl"))
+		if addr := luau_get_object(1) do
+			return new InputController(addr)
 		end
 	end
 
@@ -277,6 +287,17 @@ end
 WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
 
 class PowerSuit extends LotusWeapon
+end
+
+class InputControllerBase extends Object end
+
+class InputController extends InputControllerBase
+	function SetStopMovement(b)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("InputController", "SetStopMovement"))
+	end
 end
 
 function Type(name)

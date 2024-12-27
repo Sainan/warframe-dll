@@ -3,7 +3,7 @@
 union luau_Value
 {
 	uintptr_t as_uintptr;
-	bool as_bool;
+	int as_bool;
 	float as_float;
 };
 
