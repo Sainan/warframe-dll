@@ -2592,21 +2592,37 @@ repeat
 	end
 until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), ObfusString(R"EOC(local was_in_freecam = false
-local x, y, z
+local last_pos
 repeat
     if avatar := gRegion:GetLocalPlayerAvatar() then
         if avatar:isFollowedByCamera() then
             if was_in_freecam then
                 was_in_freecam = false
-                avatar:SetPosition(x, y, z)
+                avatar:SetPosition(last_pos)
             end
         else
             was_in_freecam = gRegion:GetLocalPlayer():isControllingCamera()
             if was_in_freecam then
-                x, y, z = gRegion:GetGameCamera():GetPosition()
+                last_pos = gRegion:GetGameCamera():GetPosition()
             end
         end
     end
+until yield())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC($define VK_SHIFT = 0x10
+$define VK_CONTROL = 0x11
+$define VK_SPACE = 0x20
+
+local Y_STEP <const> = new Vector3(0, 0.1, 0)
+
+repeat
+	if gRegion:GetLocalPlayer():isControllingCamera() then
+		if owf_is_key_down(VK_SHIFT) then
+			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP)
+		end
+		if owf_is_key_down(VK_CONTROL) or owf_is_key_down(VK_SPACE) then
+			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() - Y_STEP)
+		end
+	end
 until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(repeat
     if avatar := gRegion:GetLocalPlayerAvatar() then

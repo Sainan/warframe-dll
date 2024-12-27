@@ -1,5 +1,7 @@
 --dummy,R"EOC(--[[OpenWF Script Runtime]]--
 
+Vector3 = require "pluto:vector3"
+
 class owfClassBase
 	function __construct(addr)
 		assert(addr ~= nil)
@@ -72,11 +74,11 @@ class BaseEntity extends Object end
 
 class Entity extends BaseEntity
 	function GetPosition()
-		return entity_get_pos(self.addr)
+		return new Vector3(entity_get_pos(self.addr))
 	end
 
-	function SetPosition(x, y, z)
-		entity_set_pos(self.addr, x, y, z)
+	function SetPosition(pos)
+		entity_set_pos(self.addr, pos.x, pos.y, pos.z)
 	end
 
 	function GetHealth()
