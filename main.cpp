@@ -2686,17 +2686,20 @@ until yield())EOC").str());
 $define VK_CONTROL = 0x11
 $define VK_SPACE = 0x20
 
-local Y_STEP <const> = new Vector3(0, 0.1, 0)
+local Y_STEP <const> = new Vector3(0, 0.01, 0)
 
+local t = os.millis()
 repeat
+	local delta = os.millis() - t
 	if gRegion:GetLocalPlayer():isControllingCamera() then
 		if owf_is_key_down(VK_SHIFT) then
-			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP)
+			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP * delta)
 		end
 		if owf_is_key_down(VK_CONTROL) or owf_is_key_down(VK_SPACE) then
-			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() - Y_STEP)
+			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() - Y_STEP * delta)
 		end
 	end
+	t = os.millis()
 until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(repeat
     if avatar := gRegion:GetLocalPlayerAvatar() then
