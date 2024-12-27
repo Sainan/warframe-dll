@@ -289,6 +289,40 @@ end
 WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
 
 class PowerSuit extends LotusWeapon
+	function SetEnergy(value)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_float(value)
+		luau_end_call(luau_find_method("PowerSuit", "SetEnergy"))
+	end
+
+	function SetMaxEnergy(value)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_float(value)
+		luau_end_call(luau_find_method("PowerSuit", "SetMaxEnergy"))
+	end
+
+	function GetUnmodifiedMaxEnergy()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"))
+		return luau_get_number(1)
+	end
+
+	function GetCurEnergy()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("PowerSuit", "GetCurEnergy"))
+		return luau_get_number(1)
+	end
+
+	function GetMaxEnergy()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("PowerSuit", "GetMaxEnergy"))
+		return luau_get_number(1)
+	end
 end
 
 class InputControllerBase extends Object end
