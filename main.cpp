@@ -2574,7 +2574,9 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
 gRegion:GetLocalPlayerAvatar():GiveItem(wf, true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(gGameRules:OpenMissionContinueDialog(nil))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(if gGameRules instanceof LotusGameRules then
+	gGameRules:OpenMissionContinueDialog(nil)
+end)EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(local was_down = false
 repeat
 	if owf_is_key_down('K') then

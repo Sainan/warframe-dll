@@ -302,6 +302,15 @@ class InputController extends InputControllerBase
 	end
 end
 
+class LotusGameRules extends Object
+	function OpenMissionContinueDialog()
+		luau_begin_call()
+		luau_push_object(get_gamerules())
+		luau_push_nil()
+		luau_end_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"))
+	end
+end
+
 function Type(name)
 	return name
 end
@@ -324,6 +333,13 @@ gRegion = {
 			return new Entity(camera)
 		end
 	end,
+	function GetGameRules()
+		local obj = new Object(get_gamerules())
+		if obj:GetFullName() == "LotusGameRules" then
+			return new LotusGameRules(obj.addr)
+		end
+		return obj
+	end,
 	function GetAvatars()
 		luau_begin_call()
 		luau_push_object(get_regionmgr())
@@ -338,16 +354,14 @@ gRegion = {
 	end,
 }
 
-gGameRules = {
-	function OpenMissionContinueDialog()
-		if new Object(get_gamerules()):GetFullName() == "LotusGameRules" then
-			luau_begin_call()
-			luau_push_object(get_gamerules())
-			luau_push_nil()
-			luau_end_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"))
+setmetatable(_G, {
+	function __index(name)
+		if name == "gGameRules" then
+			return gRegion:GetGameRules()
 		end
-	end,
-}
+		return rawget(self, name)
+	end
+})
 
 Engine = {
 	SLOT_1 = 0,
