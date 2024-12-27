@@ -732,10 +732,16 @@ static int lua_SteamService_IsInitialized_detour(luau_State* L)
 }
 
 
+struct ObjectType
+{
+	PAD(0, 0x2C) uint32_t unk_name_hash; // 1454702781 for LotusDangerRoomGameRules
+};
+
 struct Object
 {
 	/* 0x00 */ void* vftable;
-	PAD(0x08, 0x10) Object** self_pointer;
+	/* 0x08 */ ObjectType* type;
+	/* 0x10 */ Object** self_pointer;
 	PAD(0x18, 0x20);
 };
 
