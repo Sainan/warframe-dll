@@ -2734,7 +2734,9 @@ print("Your damage has been increased!"))EOC").str());
 until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), ObfusString(R"EOC(repeat
 	for gRegion:GetAvatars() as avatar do
-		avatar:InventoryControl():DoItemDrop()
+		if inventory := avatar:InventoryControl() then
+			inventory:DoItemDrop()
+		end
 	end
 until yield())EOC").str());
 
