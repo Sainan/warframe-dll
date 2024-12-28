@@ -18,6 +18,10 @@ class Object extends owfClassBase
 
 class Player extends Object
 	function GetAvatar()
+	function GetPlayerName()
+	function GetClanName()
+	function GetPlayerAccountIDString()
+	function GetPlayerMatchMakingString()
 
 class HumanPlayer extends Player
 	function ToggleFreeCamera()

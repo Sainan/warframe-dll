@@ -67,6 +67,34 @@ class Player extends Object
 			return new LotusAvatar(avatar)
 		end
 	end
+
+	function GetPlayerName()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Player", "GetPlayerName"))
+		return luau_get_string(1)
+	end
+
+	function GetClanName()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Player", "GetClanName"))
+		return luau_get_string(1)
+	end
+
+	function GetPlayerAccountIDString()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Player", "GetPlayerAccountIDString"))
+		return luau_get_string(1)
+	end
+
+	function GetPlayerMatchMakingString()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Player", "GetPlayerMatchMakingString"))
+		return luau_get_string(1)
+	end
 end
 
 class HumanPlayer extends Player
