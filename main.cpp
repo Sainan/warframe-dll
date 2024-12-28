@@ -948,7 +948,8 @@ static_assert(sizeof(SwigAttribute) == 0x18);
 struct SwigTypeDesc
 {
 	/* 0x00 */ const char* name; // e.g. "Object"
-	PAD(0x08, 0x20) SwigMethod* methods;
+	PAD(0x08, 0x10) luau_CFunction ctor;
+	PAD(0x18, 0x20) SwigMethod* methods;
 	/* 0x28 */ SwigAttribute* attributes;
 	PAD(0x30, 0x38) const char** parent_ptr_name; // e.g. "Object *"
 
@@ -1532,6 +1533,18 @@ struct owfScript
 			});
 			{ ObfusString name("luau_get_table_userdata"); lua_setglobal(L, name.c_str()); }
 		}
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			void* res = nullptr;
+			if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+			{
+				res = reinterpret_cast<void*>(e->second->ctor);
+			}
+			lua_pushpointer(L, res);
+			return 1;
+		});
+		{ ObfusString name("luau_find_ctor"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
