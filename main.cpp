@@ -2646,9 +2646,8 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str());
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(local wf = Type("/Lotus/Types/Enemies/Stalker/StalkerSuit")
-gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
-gRegion:GetLocalPlayerAvatar():GiveItem(wf, true)
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
+gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(if gGameRules instanceof LotusGameRules then
 	gGameRules:OpenMissionContinueDialog(nil)
