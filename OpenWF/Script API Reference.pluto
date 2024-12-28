@@ -1,14 +1,19 @@
 --dummy,R"EOC(-- Classes
 
+Vector3 = require "pluto:vector3"
+Rotation = require "pluto:vector3"
+
 class owfClassBase
 	function __construct(public addr)
 
 class ObjectType extends owfClassBase
+	function GetName()
 	function GetFullName()
 	function GetParent()
 
 class Object extends owfClassBase
 	function GetType()
+	function GetName()
 	function GetFullName()
 
 class Player extends Object
@@ -24,8 +29,11 @@ class BaseEntity extends Object
 class Entity extends BaseEntity
 	function GetPosition()
 	function SetPosition(pos)
+	function GetRotation()
 	function GetHealth()
 	function SetHealth(health)
+	function GetDrawOnTop()
+	function SetDrawOnTop(b)
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)

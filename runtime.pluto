@@ -1,6 +1,7 @@
 --dummy,R"EOC(--[[OpenWF Script Runtime]]--
 
 Vector3 = require "pluto:vector3"
+Rotation = Vector3
 
 class owfClassBase
 	function __construct(addr)
@@ -11,6 +12,13 @@ class owfClassBase
 end
 
 class ObjectType extends owfClassBase
+	function GetName()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("ObjectType", "GetName"))
+		return luau_get_string(1)
+	end
+
 	function GetFullName()
 		luau_begin_call()
 		luau_push_pointer(self.addr)
@@ -36,6 +44,13 @@ class Object extends owfClassBase
 		if addr := luau_get_pointer(1) then
 			return new ObjectType(addr)
 		end
+	end
+
+	function GetName()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Object", "GetName"))
+		return luau_get_string(1)
 	end
 
 	function GetFullName()
@@ -81,6 +96,14 @@ class Entity extends BaseEntity
 		entity_set_pos(self.addr, pos.x, pos.y, pos.z)
 	end
 
+	function GetRotation()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Entity", "GetRotation"))
+		local ud = luau_get_userdata(1)
+		return new Rotation(mem_read_f32(ud + 0x10), mem_read_f32(ud + 0x14), mem_read_f32(ud + 0x18))
+	end
+
 	function GetHealth()
 		luau_begin_call()
 		luau_push_object(self.addr)
@@ -93,6 +116,20 @@ class Entity extends BaseEntity
 		luau_push_object(self.addr)
 		luau_push_int(health)
 		luau_end_call(luau_find_method("Entity", "SetHealth"))
+	end
+
+	function GetDrawOnTop()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Entity", "GetDrawOnTop"))
+		return luau_get_bool(1)
+	end
+
+	function SetDrawOnTop(b)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("Entity", "SetDrawOnTop"))
 	end
 end
 
