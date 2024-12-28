@@ -2694,8 +2694,7 @@ repeat
         end
     end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC($define VK_SHIFT = 0x10
-$define VK_CONTROL = 0x11
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC($define VK_CONTROL = 0x11
 $define VK_SPACE = 0x20
 
 local Y_STEP <const> = new Vector3(0, 0.01, 0)
@@ -2704,7 +2703,7 @@ local t = os.millis()
 repeat
 	local delta = os.millis() - t
 	if gRegion:GetLocalPlayer():isControllingCamera() then
-		if owf_is_key_down(VK_SHIFT) or owf_is_key_down(VK_SPACE) then
+		if owf_is_key_down(VK_SPACE) then
 			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP * delta)
 		end
 		if owf_is_key_down(VK_CONTROL) then
