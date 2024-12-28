@@ -2697,7 +2697,7 @@ until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC($define VK_CONTROL = 0x11
 $define VK_SPACE = 0x20
 
-local Y_STEP <const> = new Vector3(0, 0.01, 0)
+local Y_STEP <const> = Vector3(0, 0.01, 0)
 
 local t = os.millis()
 repeat
