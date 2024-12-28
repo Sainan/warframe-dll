@@ -3226,6 +3226,10 @@ until yield())EOC").str());
 				{
 					serv.run();
 				}
+				else
+				{
+					std::cout << ObfusString("Failed to bind TCP/61558. HTTP interface will be unavailable.").str() << std::endl;
+				}
 			});
 			thrd.detach();
 		}
