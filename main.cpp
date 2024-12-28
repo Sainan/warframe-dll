@@ -2704,10 +2704,10 @@ local t = os.millis()
 repeat
 	local delta = os.millis() - t
 	if gRegion:GetLocalPlayer():isControllingCamera() then
-		if owf_is_key_down(VK_SHIFT) then
+		if owf_is_key_down(VK_SHIFT) or owf_is_key_down(VK_SPACE) then
 			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP * delta)
 		end
-		if owf_is_key_down(VK_CONTROL) or owf_is_key_down(VK_SPACE) then
+		if owf_is_key_down(VK_CONTROL) then
 			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() - Y_STEP * delta)
 		end
 	end
