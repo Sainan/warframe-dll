@@ -2847,9 +2847,9 @@ until yield())EOC").str());
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
 		}
 
-		let script_log = "";
+		let script_log_len = 0;
 		function pollStatus() {
-			fetch("/status?" + script_log.length).then(res => res.json()).then(res => {
+			fetch("/status?" + script_log_len).then(res => res.json()).then(res => {
 				document.getElementById("console").checked = res.console;
 				document.getElementById("disconnected").style.display = "none";
 				if (res.camtype) {
@@ -2889,18 +2889,17 @@ until yield())EOC").str());
 					script.children[1].checked = res.running_scripts.find(x => x == path);
 				}
 
-				if (res.script_log_sub)
-				{
-					script_log += res.script_log_sub;
+				if (res.script_log_sub) {
 					const log = document.getElementById("script_log");
-					log.textContent = script_log;
+					log.textContent += res.script_log_sub;
 					log.scrollTop = log.scrollHeight;
+					script_log_len = res.script_log_len;
 				}
 			}).catch((e) => {
 				console.error(e);
 				document.getElementById("disconnected").style.display = "";
-				script_log = "";
 				document.getElementById("script_log").textContent = "";
+				script_log_len = 0;
 			}).finally(pollStatus);
 		}
 		pollStatus();
@@ -3155,6 +3154,7 @@ until yield())EOC").str());
 								const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
 								std::lock_guard lock(script_log_mtx);
 								obj.add(ObfusString("script_log_sub"), script_log.substr(i));
+								obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 							}
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
