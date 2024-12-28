@@ -102,7 +102,7 @@ class LotusGameRules extends Object
 -- Global functions
 
 function yield()
-function owf_is_key_down()
+function owf_is_key_down(vk)
 function Type(name)
 
 -- Global variables
