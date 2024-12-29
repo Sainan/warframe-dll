@@ -509,6 +509,13 @@ Engine = {
 	INVALID = 14,
 }
 
+coroutine.sleep = function(ms)
+	local t = os.millis() + ms
+	repeat
+		yield()
+	until t <= os.millis()
+end
+
 return function(f)
 	coroutine.yield()
 	coroutine.yield = yield
