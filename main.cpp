@@ -1842,6 +1842,17 @@ static void save_config()
 	return true;
 }
 
+static bool check_ec(const std::error_code& ec)
+{
+	if (ec)
+	{
+		ObfusString msg("Filesystem error. It's likely your anti-virus is interfering; please ensure the game folder excluded from it.");
+		MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+		return false;
+	}
+	return true;
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -1866,10 +1877,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
 		}
 
-		std::filesystem::create_directory(ObfusString("OpenWF").str());
+		std::error_code ec{};
+		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
+		SOUP_RETHROW_FALSE(check_ec(ec));
 		if (std::filesystem::exists(ObfusString("client_config.json").str()))
 		{
-			std::filesystem::rename(ObfusString("client_config.json").str(), ObfusString("OpenWF/client_config.json").str());
+			std::filesystem::rename(ObfusString("client_config.json").str(), ObfusString("OpenWF/client_config.json").str(), ec);
+			SOUP_RETHROW_FALSE(check_ec(ec));
 		}
 		{
 			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("OpenWF/client_config.json").str()));
@@ -2670,8 +2684,8 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 			soup::string::toFile(ObfusString("OpenWF/Script API Reference.pluto").str(), std::move(reference));
 		}
 
-		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str());
-		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str());
+		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
+		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
 gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
