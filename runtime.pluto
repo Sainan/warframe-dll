@@ -409,8 +409,37 @@ class LotusGameRules extends Object
 	end
 end
 
+class OpenLevelArgs
+	private level
+
+	function SetLevel(level)
+		self.level = level
+	end
+
+	function pushToLuau()
+		luau_begin_call()
+		luau_end_call(luau_find_ctor("OpenLevelArgs"))
+
+		luau_begin_call()
+		luau_push_value(-1)
+		luau_push_string(self.level)
+		luau_end_call(luau_find_method("OpenLevelArgs", "SetLevel"))
+	end
+end
+setmetatable(OpenLevelArgs, { __call = || -> new OpenLevelArgs() })
+
 function Type(name)
 	return name
+end
+
+function OpenLevel(args)
+	args:pushToLuau()
+
+	luau_begin_call()
+	luau_push_value(-1)
+	luau_end_call(mem_read_i64(scan_pattern("FC 1D 0A 4E 00 00 00 00") + 8))
+
+	luau_pop()
 end
 
 gRegion = {

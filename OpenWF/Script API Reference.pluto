@@ -99,11 +99,15 @@ class InputController extends InputControllerBase
 class LotusGameRules extends Object
 	function OpenMissionContinueDialog()
 
+class OpenLevelArgs
+	function SetLevel(level)
+
 -- Global functions
 
 function yield()
 function owf_is_key_down(vk)
 function Type(name)
+function OpenLevel(args)
 
 -- Global variables
 
