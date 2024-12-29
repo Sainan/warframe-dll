@@ -47,6 +47,11 @@ struct luau_State
 	/* 0x10 */ luau_TValue* intop;
 	/* 0x18 */ luau_GlobalState* global_state;
 	PAD(0x20, 0x90);
+
+	luau_TValue* getValue(int idx)
+	{
+		return idx < 0 ? &outtop[idx] : &intop[idx - 1];
+	}
 };
 static_assert(sizeof(luau_State) == 0x90);
 

@@ -16,21 +16,21 @@ class ObjectType extends owfClassBase
 		luau_begin_call()
 		luau_push_pointer(self.addr)
 		luau_end_call(luau_find_method("ObjectType", "GetName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetFullName()
 		luau_begin_call()
 		luau_push_pointer(self.addr)
 		luau_end_call(luau_find_method("ObjectType", "GetFullName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetParent()
 		luau_begin_call()
 		luau_push_pointer(self.addr)
 		luau_end_call(luau_find_method("ObjectType", "GetParent"))
-		if addr := luau_get_pointer(1) then
+		if addr := luau_pop_pointer() then
 			return new ObjectType(addr)
 		end
 	end
@@ -41,7 +41,7 @@ class Object extends owfClassBase
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Object", "GetType"))
-		if addr := luau_get_pointer(1) then
+		if addr := luau_pop_pointer() then
 			return new ObjectType(addr)
 		end
 	end
@@ -50,14 +50,14 @@ class Object extends owfClassBase
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Object", "GetName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetFullName()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Object", "GetFullName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 end
 
@@ -72,28 +72,28 @@ class Player extends Object
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Player", "GetPlayerName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetClanName()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Player", "GetClanName"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetPlayerAccountIDString()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Player", "GetPlayerAccountIDString"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 
 	function GetPlayerMatchMakingString()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Player", "GetPlayerMatchMakingString"))
-		return luau_get_string(1)
+		return luau_pop_string()
 	end
 end
 
@@ -128,7 +128,7 @@ class Entity extends BaseEntity
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Entity", "GetRotation"))
-		local ud = luau_get_userdata(1)
+		local ud = luau_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x10), mem_read_f32(ud + 0x14), mem_read_f32(ud + 0x18))
 	end
 
@@ -136,7 +136,7 @@ class Entity extends BaseEntity
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Entity", "GetHealth"))
-		return luau_get_number(1)
+		return luau_pop_number()
 	end
 
 	function SetHealth(health)
@@ -150,7 +150,7 @@ class Entity extends BaseEntity
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("Entity", "GetDrawOnTop"))
-		return luau_get_bool(1)
+		return luau_pop_bool()
 	end
 
 	function SetDrawOnTop(b)
@@ -167,7 +167,7 @@ class BaseAvatar extends Entity
 		luau_push_object(self.addr)
 		luau_push_bool(b)
 		luau_end_call(luau_find_method("BaseAvatar", "GetMaxHealth"))
-		return luau_get_number(2)
+		return luau_pop_number()
 	end
 
 	function SetMaxHealth(health, b = false)
@@ -203,7 +203,7 @@ class BaseAvatar extends Entity
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("BaseAvatar", "InputControl"))
-		if addr := luau_get_object(1) do
+		if addr := luau_pop_object() do
 			return new InputController(addr)
 		end
 	end
@@ -212,13 +212,12 @@ class BaseAvatar extends Entity
 		luau_begin_call()
 		luau_push_string(type)
 		luau_end_call(mem_read_i64(scan_pattern("5E C2 EF 88 00 00 00 00") + 8))
-		local udType = luau_get_userdata(1)
 
 		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_push_userdata(udType)
+		luau_push_value(-2)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("BaseAvatar", "GiveItem"))
+		luau_pop(luau_end_call(luau_find_method("BaseAvatar", "GiveItem")) + 1)
 	end
 end
 
@@ -239,7 +238,7 @@ class LotusAvatar extends Avatar
 		luau_push_object(self.addr)
 		luau_push_object(other.addr)
 		luau_end_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"))
-		return luau_get_bool(2)
+		return luau_pop_bool()
 	end
 end
 
@@ -256,7 +255,7 @@ class DamageControllerBase extends Object
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("DamageControllerBase", "HasTemporaryImmunity"))
-		return luau_get_bool(1)
+		return luau_pop_bool()
 	end
 
 	function RemoveTemporaryImmunity()
@@ -292,7 +291,7 @@ class LotusInventoryController extends InventoryControllerBase
 	function DoItemDrop()
 		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("LotusInventoryController", "DoItemDrop"))
+		luau_pop(luau_end_call(luau_find_method("LotusInventoryController", "DoItemDrop")))
 	end
 end
 
@@ -312,7 +311,7 @@ class LotusWeapon extends WeaponEx
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("LotusWeapon", "GetXP"))
-		return luau_get_number(1)
+		return luau_pop_number()
 	end
 
 	function SetXP(xp)
@@ -335,7 +334,7 @@ class WeaponImpactBehavior extends Object
 				luau_begin_call()
 				luau_push_object(self.addr)
 				luau_end_call(luau_find_getter("WeaponImpactBehavior", name))
-				return luau_get_number(1)
+				return luau_pop_number()
 		end
 	end
 
@@ -372,21 +371,21 @@ class PowerSuit extends LotusWeapon
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"))
-		return luau_get_number(1)
+		return luau_pop_number()
 	end
 
 	function GetCurEnergy()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("PowerSuit", "GetCurEnergy"))
-		return luau_get_number(1)
+		return luau_pop_number()
 	end
 
 	function GetMaxEnergy()
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("PowerSuit", "GetMaxEnergy"))
-		return luau_get_number(1)
+		return luau_pop_number()
 	end
 end
 
@@ -445,10 +444,11 @@ gRegion = {
 		luau_end_call(luau_find_method("RegionMgrImpl", "GetAvatars"))
 		local t = {}
 		local i = 1
-		while ud := luau_get_table_userdata(1, i) do
+		while ud := (luau_push_int(i) and nil) or (luau_gettable(-2) and nil) or luau_pop_userdata() do
 			t:insert(new LotusAvatar(mem_read_i64(mem_read_i64(mem_read_i64(ud + 0x18)))))
 			++i
 		end
+		luau_pop(2)
 		return t
 	end,
 }

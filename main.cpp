@@ -1311,7 +1311,7 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			luau_L->outtop = luau_L->intop;
+			luau_L->intop = luau_L->outtop;
 			return 0;
 		});
 		{ ObfusString name("luau_begin_call"); lua_setglobal(L, name.c_str()); }
@@ -1412,16 +1412,27 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
+			*luau_L->outtop = *luau_L->getValue(luaL_checkinteger(L, 1));
+			luau_L->outtop++;
+			return 0;
+		});
+		{ ObfusString name("luau_push_value"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
 			const auto f = reinterpret_cast<luau_CFunction>(luaL_checkinteger(L, 1));
 			SOUP_IF_UNLIKELY (!f)
 			{
 				ObfusString err("Unexpected nullptr");
 				luaL_error(L, err.c_str());
 			}
+			int nargs = luau_L->outtop - luau_L->intop;
+			int nresults;
+
 			luau_error_msg.clear();
 			__try
 			{
-				f(luau_L);
+				nresults = f(luau_L);
 			}
 			__except (EXCEPTION_EXECUTE_HANDLER)
 			{
@@ -1434,104 +1445,101 @@ struct owfScript
 			{
 				luaL_error(L, luau_error_msg.c_str());
 			}
-			return 0;
+
+			if (nargs != 0)
+			{
+				for (int i = 0; i != nresults; ++i)
+				{
+					luau_L->intop[i] = luau_L->intop[i + nargs];
+				}
+			}
+			luau_L->outtop = luau_L->intop + nresults;
+			lua_pushinteger(L, nresults);
+			return 1;
 		});
 		{ ObfusString name("luau_end_call"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_BOOL)
-			{
-				lua_pushboolean(L, luau_L->intop[i].value.as_bool);
-				return 1;
-			}
+			luau_L->outtop -= luaL_optinteger(L, 1, 1);
 			return 0;
 		});
-		{ ObfusString name("luau_get_bool"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_NUMBER)
+			if (luau_L->outtop[-1].type == LUAU_BOOL)
 			{
-				lua_pushnumber(L, luau_L->intop[i].value.as_float);
+				lua_pushboolean(L, (--luau_L->outtop)->value.as_bool);
 				return 1;
 			}
 			return 0;
 		});
-		{ ObfusString name("luau_get_number"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop_bool"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_STRING)
+			if (luau_L->outtop[-1].type == LUAU_NUMBER)
 			{
-				lua_pushstring(L, luau_L->intop[i].getString());
+				lua_pushnumber(L, (--luau_L->outtop)->value.as_float);
 				return 1;
 			}
 			return 0;
 		});
-		{ ObfusString name("luau_get_string"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop_number"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_USERDATA)
+			if (luau_L->outtop[-1].type == LUAU_STRING)
 			{
-				lua_pushinteger(L, luau_L->intop[i].value.as_uintptr);
+				lua_pushstring(L, (--luau_L->outtop)->getString());
 				return 1;
 			}
 			return 0;
 		});
-		{ ObfusString name("luau_get_userdata"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop_string"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_USERDATA)
+			if (luau_L->outtop[-1].type == LUAU_USERDATA)
 			{
-				lua_pushpointer(L, *(void**)(luau_L->intop[i].value.as_uintptr + 0x18));
+				lua_pushinteger(L, (--luau_L->outtop)->value.as_uintptr);
 				return 1;
 			}
 			return 0;
 		});
-		{ ObfusString name("luau_get_pointer"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop_userdata"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto i = (int)luaL_checkinteger(L, 1);
-			if (luau_L->intop[i].type == LUAU_USERDATA)
+			if (luau_L->outtop[-1].type == LUAU_USERDATA)
 			{
-				lua_pushpointer(L, ***(void****)(luau_L->intop[i].value.as_uintptr + 0x18));
+				lua_pushpointer(L, *(void**)((--luau_L->outtop)->value.as_uintptr + 0x18));
 				return 1;
 			}
 			return 0;
 		});
-		{ ObfusString name("luau_get_object"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_pop_pointer"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			if (luau_L->outtop[-1].type == LUAU_USERDATA)
+			{
+				lua_pushpointer(L, ***(void****)((--luau_L->outtop)->value.as_uintptr + 0x18));
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_pop_object"); lua_setglobal(L, name.c_str()); }
 
 		if (luau_gettable)
 		{
 			lua_pushcfunction(L, [](lua_State* L) -> int
 			{
-				const auto stk_idx = (unsigned int)luaL_checkinteger(L, 1);
-				if (luau_L->intop[stk_idx].type == LUAU_TABLE)
-				{
-					luau_L->outtop->value.as_float = static_cast<float>(luaL_checkinteger(L, 2));
-					luau_L->outtop->type = LUAU_NUMBER;
-					luau_L->outtop++;
-
-					if (luau_gettable(luau_L, stk_idx + 1) == LUAU_USERDATA)
-					{
-						luau_L->outtop--;
-						lua_pushinteger(L, luau_L->outtop->value.as_uintptr);
-						return 1;
-					}
-					luau_L->outtop--;
-				}
+				luau_gettable(luau_L, luaL_checkinteger(L, 1));
 				return 0;
 			});
-			{ ObfusString name("luau_get_table_userdata"); lua_setglobal(L, name.c_str()); }
+			{ ObfusString name("luau_gettable"); lua_setglobal(L, name.c_str()); }
 		}
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1740,14 +1748,13 @@ static int lua_update_hud_detour(luau_State* L)
 	const auto og_panic = L->global_state->panic_func;
 
 	luau_L = L;
-	L->intop = L->outtop;
 	L->global_state->error_longjump_data = nullptr;
 	L->global_state->panic_func = [](luau_State* L, int)
 	{
 #if LOGGING
 		std::cout << "LuaU is panicking" << std::endl;
 #endif
-		luau_error_msg = L->outtop[-1].getString();
+		luau_error_msg = (--L->outtop)->getString();
 		throw 0;
 	};
 	{
@@ -1765,6 +1772,12 @@ static int lua_update_hud_detour(luau_State* L)
 		}
 	}
 
+#if LOGGING
+	if (L->outtop != og_outtop)
+	{
+		std::cout << "Not all values were popped from LuaU stack" << std::endl;
+	}
+#endif
 	L->outtop = og_outtop;
 	L->intop = og_intop;
 	L->global_state->error_longjump_data = og_lngjmp;
