@@ -38,6 +38,8 @@ class Entity extends BaseEntity
 	function SetHealth(health)
 	function GetDrawOnTop()
 	function SetDrawOnTop(b)
+	function GetMeshScale()
+	function SetMeshScale(f)
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)
@@ -47,6 +49,7 @@ class BaseAvatar extends Entity
 	function InventoryControl()
 	function InputControl()
 	function GiveItem(type, b)
+	function MotionControl()
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)
@@ -98,6 +101,10 @@ class InputController extends InputControllerBase
 
 class LotusGameRules extends Object
 	function OpenMissionContinueDialog()
+
+class MotionControllerBase
+	function GetSpeedMultiplier()
+	function SetSpeedMultiplier(f)
 
 class OpenLevelArgs
 	function SetLevel(level)

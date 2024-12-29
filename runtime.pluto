@@ -159,6 +159,20 @@ class Entity extends BaseEntity
 		luau_push_bool(b)
 		luau_end_call(luau_find_method("Entity", "SetDrawOnTop"))
 	end
+
+	function GetMeshScale()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Entity", "GetMeshScale"))
+		return luau_pop_number()
+	end
+
+	function SetMeshScale(f)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_float(f)
+		luau_end_call(luau_find_method("Entity", "SetMeshScale"))
+	end
 end
 
 class BaseAvatar extends Entity
@@ -218,6 +232,15 @@ class BaseAvatar extends Entity
 		luau_push_value(-2)
 		luau_push_bool(b)
 		luau_pop(luau_end_call(luau_find_method("BaseAvatar", "GiveItem")) + 1)
+	end
+
+	function MotionControl()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("BaseAvatar", "MotionControl"))
+		if addr := luau_pop_object() do
+			return new MotionControllerBase(addr)
+		end
 	end
 end
 
@@ -406,6 +429,22 @@ class LotusGameRules extends Object
 		luau_push_object(get_gamerules())
 		luau_push_nil()
 		luau_end_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"))
+	end
+end
+
+class MotionControllerBase extends Object
+	function GetSpeedMultiplier()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("MotionControllerBase", "GetSpeedMultiplier"))
+		return luau_pop_number()
+	end
+
+	function SetSpeedMultiplier(f)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_float(f)
+		luau_end_call(luau_find_method("MotionControllerBase", "SetSpeedMultiplier"))
 	end
 end
 
