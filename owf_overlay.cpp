@@ -1,0 +1,132 @@
+#include "owf_overlay.hpp"
+
+//#include <iostream>
+
+#include <ObfusString.hpp>
+#include <RenderTarget.hpp>
+#include <Rgb.hpp>
+#include <Thread.hpp>
+#include <Window.hpp>
+
+using namespace soup;
+
+#include "owf_config.hpp"
+
+static HWND s_game_hwnd = 0;
+static Window w;
+static bool s_prelogin = true;
+
+bool owfOverlay::isInited()
+{
+	return s_game_hwnd != 0;
+}
+
+void owfOverlay::init()
+{
+	const auto game_pid = GetCurrentProcessId();
+	EnumWindows([](HWND hwnd, LPARAM lparam) -> BOOL
+	{
+		if (IsWindow(hwnd)
+			&& Window(hwnd).getOwnerPid() == static_cast<DWORD>(lparam)
+			&& hwnd != GetConsoleWindow()
+			)
+		{
+			s_game_hwnd = hwnd;
+			/*char buf[100];
+			GetWindowText(hwnd, buf, 100);
+			std::cout << buf << std::endl;*/
+			return FALSE;
+		}
+		return TRUE;
+	}, static_cast<LPARAM>(game_pid));
+
+	if (s_game_hwnd != 0)
+	{
+		Thread t([](Capture&&)
+		{
+			while (!IsWindowVisible(s_game_hwnd))
+			{
+				Sleep(100);
+			}
+
+			//std::cout << "Creating our window..." << std::endl;
+			const auto [width, height] = Window(s_game_hwnd).getSize();
+			w = Window::create(ObfusString("OpenWF Overlay"), width, height);
+			w.setDrawFunc([](Window w, RenderTarget& rt)
+			{
+				rt.fill(Rgb::MAGENTA);
+
+				if (s_prelogin)
+				{
+					ObfusString brand("OpenWF");
+					rt.drawText(10 + 2, 10 + 2, brand, RasterFont::simple8(), Rgb::BLACK, 2);
+					rt.drawText(10, 10, brand, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 2);
+
+					std::string at;
+					at.push_back('@');
+					at.push_back(' ');
+					at.append(server_host);
+					rt.drawText(88 + 1, 18 + 1, at, RasterFont::simple8(), Rgb::BLACK, 1);
+					rt.drawText(88, 18, at, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+				}
+
+				{
+					std::lock_guard lock(owfOverlay::mtx);
+					if (!owfOverlay::data.empty())
+					{
+						for (const auto& _item : owfOverlay::data)
+						{
+							switch (_item->type)
+							{
+							case DrawItem::RECT:
+								{
+									auto& item = static_cast<const owfOverlay::Rect&>(*_item);
+									rt.drawRect(item.x, item.y, item.width, item.height, Rgb{ item.r, item.g, item.b });
+								}
+								break;
+
+							case DrawItem::TEXT:
+								{
+									auto& item = static_cast<const owfOverlay::Text&>(*_item);
+									rt.drawText(item.x, item.y, item.text, *item.font, Rgb{ item.r, item.g, item.b }, item.scale);
+								}
+								break;
+							}
+						}
+					}
+				}
+			});
+			w.setInvisibleColour(Rgb::MAGENTA);
+			w.setTopmost(true);
+			w.setClickThrough(true);
+			w.hideFromTaskbar();
+			{
+				Thread t([](Capture&&)
+				{
+					for (; IsWindow(s_game_hwnd); Sleep(100))
+					{
+						const auto [x, y] = Window(s_game_hwnd).getPos();
+						w.setPos(x, y);
+						const auto [width, height] = Window(s_game_hwnd).getSize();
+						w.setSize(width, height);
+						w.setTopmost(GetForegroundWindow() == s_game_hwnd);
+					}
+				});
+				t.detach();
+			}
+			w.runMessageLoop();
+		});
+		t.detach();
+	}
+}
+
+void owfOverlay::setPrelogin(bool prelogin)
+{
+	s_prelogin = prelogin;
+	w.redraw();
+}
+
+void owfOverlay::redraw()
+{
+	w.redraw();
+}

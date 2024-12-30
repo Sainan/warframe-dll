@@ -41,8 +41,10 @@
 
 using namespace soup;
 
+#include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_luau.hpp"
+#include "owf_overlay.hpp"
 
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
@@ -53,22 +55,6 @@ static bool fallback_language_was_used = false;
 static bool fallback_graphicsDriver_was_used = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
-
-static std::string server_host;
-static uint16_t http_port;
-static uint16_t https_port;
-static std::string fallback_language;
-static std::string fallback_graphicsDriver;
-static std::string fallback_cluster;
-static bool high_damage_numbers_patch;
-static bool skip_mission_start_timer;
-static float fov_override;
-static bool enable_http_interface;
-static bool disable_nrs_connection;
-static bool autologin;
-static std::string autologin_email;
-static std::string autologin_password;
-static std::vector<std::string> auto_start_scripts;
 
 static HMODULE og_lib;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -335,6 +321,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 			owfConsole::deactivate();
 		}
 #endif
+		owfOverlay::setPrelogin(false);
 		if (autologin && !did_auto_login)
 		{
 			did_auto_login = true;
@@ -900,6 +887,10 @@ static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 		{
 		case soup::joaat::compileTimeHash("gRegion"):
 			regionmgr = static_cast<RegionMgr*>(**a2);
+			if (!owfOverlay::isInited())
+			{
+				owfOverlay::init();
+			}
 			break;
 
 		/*case soup::joaat::compileTimeHash("gGameRules"):
@@ -1586,6 +1577,51 @@ struct owfScript
 			return 1;
 		});
 		{ ObfusString name("luau_find_setter"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushinteger(L, owfOverlay::addRect(
+				luaL_checkinteger(L, 1),
+				luaL_checkinteger(L, 2),
+				luaL_checkinteger(L, 3),
+				luaL_checkinteger(L, 4),
+				luaL_checkinteger(L, 5),
+				luaL_checkinteger(L, 6),
+				luaL_checkinteger(L, 7)
+			));
+			return 1;
+		});
+		{ ObfusString name("owf_overlay_add_rect"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushinteger(L, owfOverlay::addText(
+				luaL_checkinteger(L, 1),
+				luaL_checkinteger(L, 2),
+				pluto_checkstring(L, 3),
+				luaL_checkinteger(L, 4) == 5 ? &RasterFont::simple5() : &RasterFont::simple8(),
+				luaL_checkinteger(L, 5),
+				luaL_checkinteger(L, 6),
+				luaL_checkinteger(L, 7),
+				luaL_optinteger(L, 8, 1)
+			));
+			return 1;
+		});
+		{ ObfusString name("owf_overlay_add_text"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			owfOverlay::remove(luaL_checkinteger(L, 1));
+			return 0;
+		});
+		{ ObfusString name("owf_overlay_remove"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			owfOverlay::redraw();
+			return 0;
+		});
+		{ ObfusString name("owf_overlay_update"); lua_setglobal(L, name.c_str()); }
 
 		std::string runtime;
 #if PRIVATE
@@ -2776,6 +2812,15 @@ until yield())EOC").str());
 		end
 	end
 until yield())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), ObfusString(R"EOC(local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0, 2)
+local text = owf_overlay_add_text(10, 10, "OpenWF", OWF_FONT_SIMPLE8, 90, 253, 123, 2)
+owf_overlay_update()
+
+while pcall(yield) do end
+
+owf_overlay_remove(shadow)
+owf_overlay_remove(text)
+owf_overlay_update())EOC").str());
 
 		if (!auto_start_scripts.empty())
 		{
@@ -3039,6 +3084,7 @@ until yield())EOC").str());
 							{
 								owfConsole::activate();
 							}
+							owfOverlay::setPrelogin(false);
 							on_got_server_host();
 						}
 						ServerWebService::sendText(s, server_host);
