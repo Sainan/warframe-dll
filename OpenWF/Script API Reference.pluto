@@ -106,6 +106,10 @@ class MotionControllerBase
 	function GetSpeedMultiplier()
 	function SetSpeedMultiplier(f)
 
+class EngineNpcMgr extends Object
+
+class NpcManager extends EngineNpcMgr
+
 class OpenLevelArgs
 	function SetLevel(level)
 
@@ -131,6 +135,7 @@ gRegion
 	function GetGameCamera()
 	function GetGameRules()
 	function GetAvatars()
+	function GetNpcMgr()
 
 gGameRules
 

@@ -452,6 +452,15 @@ class MotionControllerBase extends Object
 	end
 end
 
+class EngineNpcMgr extends Object end
+class NpcManager extends EngineNpcMgr
+	function PauseAllAgents()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("NpcManager", "PauseAllAgents"))
+	end
+end
+
 class OpenLevelArgs
 	private level
 
@@ -517,6 +526,12 @@ gRegion = {
 		end
 		luau_pop(2)
 		return t
+	end,
+	function GetNpcMgr()
+		luau_begin_call()
+		luau_push_object(get_regionmgr())
+		luau_end_call(luau_find_method("RegionMgrImpl", "GetNpcMgr"))
+		return new NpcManager(luau_pop_object())
 	end,
 }
 
