@@ -1708,9 +1708,10 @@ enum MarkerType : uint8_t
 {
 	HUD_OBJECTIVE = 3, // (Diamond icon)
 	HUD_TARGET1 = 9, // Exterminate
-	HUD_LIFE_SUPPORT = 12,
+	HUD_LIFE_SUPPORT_CAPSULE = 12,
 	HUD_ELEVATOR = 14, // Typically only shows when nearby (without distance indicator)
 	HUD_TARGET2 = 29, // Capture Target, Disruption Demolyst
+	HUD_LIFE_SUPPORT_PICKUP = 31,
 	HUD_SPY_A = 40,
 	HUD_SPY_B = 41,
 	HUD_SPY_C = 42,
@@ -2869,8 +2870,9 @@ until yield())EOC").str());
 		const marker_types = {
 			"3": "Objective",
 			"9": "Target",
-			"12": "Life Support",
+			"12": "Life Support Capsule",
 			"29": "Target",
+			"31": "Life Support Pickup",
 			"40": "A",
 			"41": "B",
 			"42": "C",
