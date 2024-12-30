@@ -11,6 +11,12 @@ class owfClassBase
 	end
 end
 
+luau_begin_call = luau_stktrk_begin
+
+function luau_end_call(f)
+	luau_call(f, luau_stktrk_end())
+end
+
 class ObjectType extends owfClassBase
 	function GetName()
 		luau_begin_call()
@@ -223,15 +229,13 @@ class BaseAvatar extends Entity
 	end
 
 	function GiveItem(type, b)
-		luau_begin_call()
-		luau_push_string(type)
-		luau_end_call(mem_read_i64(scan_pattern("5E C2 EF 88 00 00 00 00") + 8))
-
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_push_value(-2)
+		do
+			luau_push_string(type)
+			luau_call(mem_read_i64(scan_pattern("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
 		luau_push_bool(b)
-		luau_pop(luau_end_call(luau_find_method("BaseAvatar", "GiveItem")) + 1)
+		luau_pop(luau_call(luau_find_method("BaseAvatar", "GiveItem"), 3))
 	end
 
 	function MotionControl()
@@ -473,12 +477,7 @@ end
 
 function OpenLevel(args)
 	args:pushToLuau()
-
-	luau_begin_call()
-	luau_push_value(-1)
-	luau_end_call(mem_read_i64(scan_pattern("FC 1D 0A 4E 00 00 00 00") + 8))
-
-	luau_pop()
+	luau_call(mem_read_i64(scan_pattern("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
 
 gRegion = {

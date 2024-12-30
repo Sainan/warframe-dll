@@ -1308,7 +1308,14 @@ struct owfScript
 			luau_L->intop = luau_L->outtop;
 			return 0;
 		});
-		{ ObfusString name("luau_begin_call"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_stktrk_begin"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushinteger(L, luau_L->outtop - luau_L->intop);
+			return 1;
+		});
+		{ ObfusString name("luau_stktrk_end"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
@@ -1415,9 +1422,10 @@ struct owfScript
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
 			const auto f = lua_checkpointer<luau_CFunction>(L, 1);
-			int nargs = luau_L->outtop - luau_L->intop;
-			int nresults;
+			const auto nargs = (int)luaL_checkinteger(L, 2);
 
+			luau_L->intop = luau_L->outtop - nargs;
+			int nresults;
 			luau_error_msg.clear();
 			__try
 			{
@@ -1446,7 +1454,7 @@ struct owfScript
 			lua_pushinteger(L, nresults);
 			return 1;
 		});
-		{ ObfusString name("luau_end_call"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("luau_call"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
