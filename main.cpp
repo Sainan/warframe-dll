@@ -1024,6 +1024,18 @@ static void lua_pushpointer(lua_State* L, void* ptr)
 	}
 }
 
+template <typename T>
+static T lua_checkpointer(lua_State* L, int i)
+{
+	auto ptr = reinterpret_cast<T>(luaL_checkinteger(L, 1));
+	if (!ptr)
+	{
+		ObfusString err("Unexpected nullptr");
+		luaL_error(L, err.c_str());
+	}
+	return ptr;
+}
+
 static ObfusString runtime_script_name("OpenWF Script Runtime");
 
 static Mutex script_log_mtx;
@@ -1272,39 +1284,21 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			auto ptr = reinterpret_cast<int32_t*>(luaL_checkinteger(L, 1));
-			if (!ptr)
-			{
-				ObfusString err("Unexpected nullptr");
-				luaL_error(L, err.c_str());
-			}
-			lua_pushinteger(L, *ptr);
+			lua_pushinteger(L, *lua_checkpointer<int32_t*>(L, 1));
 			return 1;
 		});
 		{ ObfusString name("mem_read_i32"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			auto ptr = reinterpret_cast<int64_t*>(luaL_checkinteger(L, 1));
-			if (!ptr)
-			{
-				ObfusString err("Unexpected nullptr");
-				luaL_error(L, err.c_str());
-			}
-			lua_pushinteger(L, *ptr);
+			lua_pushinteger(L, *lua_checkpointer<int64_t*>(L, 1));
 			return 1;
 		});
 		{ ObfusString name("mem_read_i64"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			auto ptr = reinterpret_cast<float*>(luaL_checkinteger(L, 1));
-			if (!ptr)
-			{
-				ObfusString err("Unexpected nullptr");
-				luaL_error(L, err.c_str());
-			}
-			lua_pushnumber(L, *ptr);
+			lua_pushnumber(L, *lua_checkpointer<float*>(L, 1));
 			return 1;
 		});
 		{ ObfusString name("mem_read_f32"); lua_setglobal(L, name.c_str()); }
@@ -1420,12 +1414,7 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			const auto f = reinterpret_cast<luau_CFunction>(luaL_checkinteger(L, 1));
-			SOUP_IF_UNLIKELY (!f)
-			{
-				ObfusString err("Unexpected nullptr");
-				luaL_error(L, err.c_str());
-			}
+			const auto f = lua_checkpointer<luau_CFunction>(L, 1);
 			int nargs = luau_L->outtop - luau_L->intop;
 			int nresults;
 
