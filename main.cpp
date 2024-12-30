@@ -1280,7 +1280,7 @@ struct owfScript
 			lua_pushinteger(L, Module(nullptr).range.scan(Pattern(str, len)).as<uintptr_t>());
 			return 1;
 		});
-		{ ObfusString name("scan_pattern"); lua_setglobal(L, name.c_str()); }
+		{ ObfusString name("mem_scan_exe"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{

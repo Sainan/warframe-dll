@@ -111,10 +111,17 @@ class OpenLevelArgs
 
 -- Global functions
 
-function yield()
-function owf_is_key_down(vk)
 function Type(name)
 function OpenLevel(args)
+
+-- OpenWF global functions
+
+function yield()
+function owf_is_key_down(vk)
+function mem_scan_exe(sig)
+function mem_read_i32(addr)
+function mem_read_i64(addr)
+function mem_read_f32(addr)
 
 -- Global variables
 

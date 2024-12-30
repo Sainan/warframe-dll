@@ -232,7 +232,7 @@ class BaseAvatar extends Entity
 		luau_push_object(self.addr)
 		do
 			luau_push_string(type)
-			luau_call(mem_read_i64(scan_pattern("5E C2 EF 88 00 00 00 00") + 8), 1)
+			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
 		luau_push_bool(b)
 		luau_pop(luau_call(luau_find_method("BaseAvatar", "GiveItem"), 3))
@@ -477,7 +477,7 @@ end
 
 function OpenLevel(args)
 	args:pushToLuau()
-	luau_call(mem_read_i64(scan_pattern("FC 1D 0A 4E 00 00 00 00") + 8), 1)
+	luau_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
 
 gRegion = {
