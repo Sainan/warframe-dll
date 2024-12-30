@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.7.0"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.7.1"
 
 #define LOGGING false
 #define PRIVATE false
