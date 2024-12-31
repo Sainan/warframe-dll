@@ -73,6 +73,7 @@ class LotusInventoryController extends InventoryControllerBase
 	function DoItemDrop()
 
 class Item extends Object
+	function GetAttachmentEntity(category, hand = 4)
 
 class WeaponBase extends Item
 

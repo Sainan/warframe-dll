@@ -329,7 +329,22 @@ class LotusInventoryController extends InventoryControllerBase
 	end
 end
 
-class Item extends Object end
+class Item extends Object
+	function GetAttachmentEntity(category, hand = 4)
+		-- restricting category to avoid access violations
+		if category == 0 or category == 1 then
+			luau_begin_call()
+			luau_push_object(self.addr)
+			luau_push_int(category)
+			luau_push_int(hand)
+			luau_end_call(luau_find_method("Item", "GetAttachmentEntity"))
+			if addr := luau_pop_object() then
+				return new Entity(addr)
+			end
+		end
+	end
+end
+
 class WeaponBase extends Item end
 
 class WeaponEx extends WeaponBase
