@@ -11,6 +11,7 @@
 #include <iostream>
 #include <mutex>
 
+#include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
 #include <joaat.hpp>
@@ -1859,6 +1860,17 @@ static GameString* get_profile_dir_detour(uintptr_t a1)
 }
 
 
+static CompactDetourHook lua_AvatarEntry_excludedFromSimulacrum_get_hook;
+
+static int lua_AvatarEntry_excludedFromSimulacrum_get_detour(luau_State* L)
+{
+	reinterpret_cast<luau_CFunction>(lua_AvatarEntry_excludedFromSimulacrum_get_hook.original)(L);
+	//std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get: " << L->outtop[-1].value.as_bool << std::endl;
+	L->outtop[-1].value.as_bool = L->outtop[-1].value.as_bool ? !simulacrum_blacklisted : !simulacrum_whitelisted;
+	return 1;
+}
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -1871,6 +1883,8 @@ static void save_config()
 	config.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("fov_override"), fov_override);
+	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 	config.add(ObfusString("enable_http_interface"), enable_http_interface);
 	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
 	config.add(ObfusString("autologin"), autologin);
@@ -2046,6 +2060,24 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				fov_override = 0.0f;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("simulacrum_blacklisted")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				simulacrum_blacklisted = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				simulacrum_blacklisted = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("simulacrum_whitelisted")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				simulacrum_whitelisted = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				simulacrum_whitelisted = true;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("enable_http_interface")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -2770,6 +2802,33 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			SIG_INST("1E 90 F4 FC 00 00 00 00");
+			auto excludedFromSimulacrum_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "excludedFromSimulacrum_hash = " << excludedFromSimulacrum_hash.as<void*>() << std::endl;
+#endif
+			if (excludedFromSimulacrum_hash)
+			{
+				auto lua_AvatarEntry_excludedFromSimulacrum_get = *excludedFromSimulacrum_hash.add(8).as<void**>();
+#if LOGGING
+				std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get = " << lua_AvatarEntry_excludedFromSimulacrum_get << std::endl;
+#endif
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.detour = reinterpret_cast<void*>(&lua_AvatarEntry_excludedFromSimulacrum_get_detour);
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.target = lua_AvatarEntry_excludedFromSimulacrum_get;
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
+#if LOGGING
+				std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = " << lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave << std::endl;
+#endif
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.create();
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
 $version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
 Write-Host "Downloading OpenWF Bootstrapper v$version..."
@@ -2927,6 +2986,8 @@ owf_overlay_update())EOC").str());
 	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
+	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
+	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
 	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
@@ -2960,6 +3021,20 @@ owf_overlay_update())EOC").str());
 		});
 		document.getElementById("skip_mission_start_timer").onchange = function() {
 			fetch("/skip_mission_start_timer?" + this.checked);
+		};
+
+		fetch("/simulacrum_blacklisted").then(res => res.text()).then(res => {
+			document.getElementById("simulacrum_blacklisted").checked = (res == "1");
+		});
+		document.getElementById("simulacrum_blacklisted").onchange = function() {
+			fetch("/simulacrum_blacklisted?" + this.checked);
+		};
+
+		fetch("/simulacrum_whitelisted").then(res => res.text()).then(res => {
+			document.getElementById("simulacrum_whitelisted").checked = (res == "1");
+		});
+		document.getElementById("simulacrum_whitelisted").onchange = function() {
+			fetch("/simulacrum_whitelisted?" + this.checked);
 		};
 
 		fetch("/fov_override").then(res => res.text()).then(res => {
@@ -3106,6 +3181,22 @@ owf_overlay_update())EOC").str());
 							skip_mission_start_timer = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
+						break;
+
+					case soup::joaat::compileTimeHash("/simulacrum_whitelisted"):
+						if (arr.size() > 1)
+						{
+							simulacrum_whitelisted = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(simulacrum_whitelisted));
+						break;
+
+					case soup::joaat::compileTimeHash("/simulacrum_blacklisted"):
+						if (arr.size() > 1)
+						{
+							simulacrum_blacklisted = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
 						break;
 
 					case soup::joaat::compileTimeHash("/fov_override"):
