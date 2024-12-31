@@ -2855,10 +2855,6 @@ owf_overlay_update())EOC").str());
 							{
 								html = ObfusString(R"EOC(<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
 <body>
-	<div id="disconnected" style="display:none">
-		<p>Connection to DLL lost. Attempting to reestablish...</p>
-		<hr>
-	</div>
 	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
@@ -2934,7 +2930,6 @@ owf_overlay_update())EOC").str());
 		function pollStatus() {
 			fetch("/status?" + script_log_len).then(res => res.json()).then(res => {
 				document.getElementById("console").checked = res.console;
-				document.getElementById("disconnected").style.display = "none";
 				if (res.camtype) {
 					document.getElementById("camtype").value = res.camtype;
 				}
@@ -2978,12 +2973,12 @@ owf_overlay_update())EOC").str());
 					log.scrollTop = log.scrollHeight;
 					script_log_len = res.script_log_len;
 				}
+
+				pollStatus();
 			}).catch((e) => {
 				console.error(e);
-				document.getElementById("disconnected").style.display = "";
-				document.getElementById("script_log").textContent = "";
-				script_log_len = 0;
-			}).finally(pollStatus);
+				document.body.innerHTML = `<p>Connection to DLL lost. <a href="/">Attempt to reconnect.</a></p>`;
+			});
 		}
 		pollStatus();
 
