@@ -1296,6 +1296,13 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
+			*lua_checkpointer<float*>(L, 1) = luaL_checknumber(L, 2);
+			return 0;
+		});
+		{ ObfusString name("mem_write_f32"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
 			luau_L->intop = luau_L->outtop;
 			return 0;
 		});
@@ -1497,6 +1504,17 @@ struct owfScript
 			return 0;
 		});
 		{ ObfusString name("luau_pop_userdata"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			if (luau_L->outtop[-1].type == LUAU_USERDATA)
+			{
+				lua_pushinteger(L, luau_L->outtop[-1].value.as_uintptr);
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("luau_get_userdata"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{

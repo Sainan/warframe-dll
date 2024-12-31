@@ -146,6 +146,7 @@ gRegion
 	function GetGameCamera()
 	function GetGameRules()
 	function GetAvatars()
+	function CreateEntity(type)
 	function GetNpcMgr()
 
 gGameRules
