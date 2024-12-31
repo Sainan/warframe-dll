@@ -23,6 +23,7 @@
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
+#include <ReplacementHook.hpp>
 #include <Server.hpp>
 #include <ServerWebService.hpp>
 #include <Socket.hpp>
@@ -413,7 +414,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 }
 
 
-static DetourHook ssl_verify_internal_hook;
+static ReplacementHook ssl_verify_internal_hook;
 
 static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 {
@@ -422,7 +423,7 @@ static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 }
 
 
-static DetourHook Curl_ossl_verifyhost_hook;
+static ReplacementHook Curl_ossl_verifyhost_hook;
 
 static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
 {
@@ -432,7 +433,7 @@ static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
 }
 
 
-static DetourHook verify_worldstate_integrity_hook;
+static ReplacementHook verify_worldstate_integrity_hook;
 
 static bool verify_worldstate_integrity_detour()
 {
@@ -584,7 +585,7 @@ static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 }
 
 
-static DetourHook PostProcessInfo_getFov_hook;
+static ReplacementHook PostProcessInfo_getFov_hook;
 
 static float PostProcessInfo_getFov_detour(uintptr_t a1)
 {
@@ -2229,7 +2230,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
 			ssl_verify_internal_hook.target = ssl_verify_internal;
-			ssl_verify_internal_hook.create();
+			//ssl_verify_internal_hook.create();
 			ssl_verify_internal_hook.enable();
 		}
 
@@ -2247,7 +2248,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
 			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
-			Curl_ossl_verifyhost_hook.create();
+			//Curl_ossl_verifyhost_hook.create();
 			Curl_ossl_verifyhost_hook.enable();
 		}
 
@@ -2265,7 +2266,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
-			verify_worldstate_integrity_hook.create();
+			//verify_worldstate_integrity_hook.create();
 			verify_worldstate_integrity_hook.enable();
 		}
 
@@ -2445,7 +2446,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				PostProcessInfo_getFov_hook.detour = reinterpret_cast<void*>(&PostProcessInfo_getFov_detour);
 				PostProcessInfo_getFov_hook.target = PostProcessInfo_getFov;
-				PostProcessInfo_getFov_hook.create();
+				//PostProcessInfo_getFov_hook.create();
 				PostProcessInfo_getFov_hook.enable();
 			}
 			else
