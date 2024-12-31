@@ -117,6 +117,7 @@ class Engine.OpenLevelArgs
 -- Global functions
 
 function Type(name)
+function Resource(name)
 function Engine.OpenLevel(args)
 
 -- OpenWF global functions
@@ -150,6 +151,9 @@ gRegion
 	function GetNpcMgr()
 
 gGameRules
+
+gFlashMgr
+	function ExecuteToolMenuCommand(resource)
 
 Engine.SLOT_1 = 0
 Engine.SLOT_2 = 1
