@@ -1849,6 +1849,16 @@ static bool update_hud_detour(LotusHudStatus* hud, void* a2, void* a3, float a4)
 }
 
 
+static ReplacementHook get_profile_dir_hook;
+
+static GameString* get_profile_dir_detour(uintptr_t a1)
+{
+	auto str = reinterpret_cast<GameString*>(a1 + 0x2A0);
+	str->setUnownedData(forced_profile_dir.data(), forced_profile_dir.size());
+	return str;
+}
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -1874,6 +1884,7 @@ static void save_config()
 		}
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
+	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
 
@@ -2109,6 +2120,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 #if !CONFIG_LOADED_ONLY_ONCE
 				auto_start_scripts.clear();
+#endif
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("forced_profile_dir")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				forced_profile_dir = it->second->reinterpretAsStr().value;
+				if (!forced_profile_dir.empty())
+				{
+					const auto path = std::filesystem::absolute(forced_profile_dir);
+					std::filesystem::create_directories(path);
+					forced_profile_dir = string::fixType(path.u8string());
+				}
+			}
+			else
+			{
+#if !CONFIG_LOADED_ONLY_ONCE
+				forced_profile_dir.clear();
 #endif
 			}
 		}
@@ -2715,6 +2743,28 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 			}
 			if (nres == 0)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 AF 02 00 00");
+			auto get_profile_dir = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "get_profile_dir = " << get_profile_dir << std::endl;
+#endif
+			if (get_profile_dir)
+			{
+				if (!forced_profile_dir.empty())
+				{
+					get_profile_dir_hook.detour = reinterpret_cast<void*>(&get_profile_dir_detour);
+					get_profile_dir_hook.target = get_profile_dir;
+					//get_profile_dir_hook.create();
+					get_profile_dir_hook.enable();
+				}
+			}
+			else
 			{
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
