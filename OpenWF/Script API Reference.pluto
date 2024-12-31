@@ -22,6 +22,7 @@ class Player extends Object
 	function GetClanName()
 	function GetPlayerAccountIDString()
 	function GetPlayerMatchMakingString()
+	function GetHudStatus()
 
 class HumanPlayer extends Player
 	function ToggleFreeCamera()
@@ -109,6 +110,23 @@ class MotionControllerBase
 class EngineNpcMgr extends Object
 
 class NpcManager extends EngineNpcMgr
+
+class HudStatus extends Object
+
+class LotusHudStatus extends HudStatus
+	function GetFlashMarkers()
+
+class FlashMarker extends owfClassBase
+	markerType
+	distanceToEye
+	pos
+	baseMarkerInfo
+	function ScreenX()
+	function ScreenY()
+	function ScreenZ()
+
+class BaseMarkerInfo
+	function SetMarkerType(i)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)

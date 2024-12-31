@@ -101,6 +101,13 @@ class Player extends Object
 		luau_end_call(luau_find_method("Player", "GetPlayerMatchMakingString"))
 		return luau_pop_string()
 	end
+
+	function GetHudStatus()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("Player", "GetHudStatus"))
+		return new LotusHudStatus(luau_pop_object())
+	end
 end
 
 class HumanPlayer extends Player
@@ -458,6 +465,90 @@ class NpcManager extends EngineNpcMgr
 		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("NpcManager", "PauseAllAgents"))
+	end
+end
+
+class HudStatus extends Object end
+class LotusHudStatus extends HudStatus
+	function GetFlashMarkers()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"))
+		local t = {}
+		local i = 1
+		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) and nil) or luau_pop_object() do
+			t:insert(new FlashMarker(obj))
+			++i
+		end
+		luau_pop(2)
+		return t
+	end
+end
+
+class FlashMarker extends owfClassBase
+	function ScreenX()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("FlashMarker", "ScreenX"))
+		return luau_pop_number()
+	end
+
+	function ScreenY()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("FlashMarker", "ScreenY"))
+		return luau_pop_number()
+	end
+
+	function ScreenZ()
+		luau_begin_call()
+		luau_push_pointer(self.addr)
+		luau_end_call(luau_find_method("FlashMarker", "ScreenZ"))
+		return luau_pop_number()
+	end
+
+	function __index(name)
+		if FlashMarker[name] then
+			return FlashMarker[name]
+		end
+		switch name do
+			case "markerType":
+				luau_begin_call()
+				luau_push_pointer(self.addr)
+				luau_end_call(luau_find_getter("FlashMarker", name))
+				return math.tointeger(luau_pop_number())
+
+			case "distanceToEye":
+				luau_begin_call()
+				luau_push_pointer(self.addr)
+				luau_end_call(luau_find_getter("FlashMarker", name))
+				return luau_pop_number()
+
+			case "pos":
+				do
+					luau_push_pointer(self.addr)
+					luau_call(luau_find_getter("FlashMarker", name), 1)
+					local addr = mem_read_i64(luau_pop_userdata() + 0x18)
+					return new Vector3(mem_read_f32(addr + 0x14), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x18))
+				end
+				break
+
+			case "baseMarkerInfo":
+				return new BaseMarkerInfo(self.addr)
+		end
+	end
+end
+FlashMarker.__parent = nil -- Hack so our __index is used
+
+class BaseMarkerInfo --extends Entity
+	function __construct(private owner)
+	end
+
+	function SetMarkerType(i)
+		luau_push_pointer(self.owner)
+		luau_call(luau_find_getter("FlashMarker", "baseMarkerInfo"), 1)
+		luau_push_int(i)
+		luau_call(luau_find_method("BaseMarkerInfo", "SetMarkerType"), 2)
 	end
 end
 
