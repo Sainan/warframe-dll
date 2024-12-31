@@ -2894,6 +2894,10 @@ repeat
 		was_down = false
 	end
 until yield())EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), ObfusString(R"EOC(local args = Engine.OpenLevelArgs()
+args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
+args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
+Engine.OpenLevel(args))EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), ObfusString(R"EOC(local was_in_freecam = false
 local last_pos
 repeat
