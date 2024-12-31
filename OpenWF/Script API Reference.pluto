@@ -112,6 +112,7 @@ class NpcManager extends EngineNpcMgr
 
 class OpenLevelArgs
 	function SetLevel(level)
+	function SetGameRules(gamerules)
 
 -- Global functions
 

@@ -463,9 +463,14 @@ end
 
 class OpenLevelArgs
 	private level
+	private gamerules
 
 	function SetLevel(level)
 		self.level = level
+	end
+
+	function SetGameRules(gamerules)
+		self.gamerules = gamerules
 	end
 
 	function pushToLuau()
@@ -476,6 +481,13 @@ class OpenLevelArgs
 		luau_push_value(-1)
 		luau_push_string(self.level)
 		luau_end_call(luau_find_method("OpenLevelArgs", "SetLevel"))
+
+		if self.gamerules then
+			luau_begin_call()
+			luau_push_value(-1)
+			luau_push_string(self.gamerules)
+			luau_end_call(luau_find_method("OpenLevelArgs", "SetGameRules"))
+		end
 	end
 end
 setmetatable(OpenLevelArgs, { __call = || -> new OpenLevelArgs() })
