@@ -461,7 +461,9 @@ class NpcManager extends EngineNpcMgr
 	end
 end
 
-class OpenLevelArgs
+Engine = {}
+
+class Engine.OpenLevelArgs
 	private level
 	private gamerules
 
@@ -490,16 +492,20 @@ class OpenLevelArgs
 		end
 	end
 end
-setmetatable(OpenLevelArgs, { __call = || -> new OpenLevelArgs() })
+setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
 
 function Type(name)
 	return name
 end
 
-function OpenLevel(args)
+function Engine.OpenLevel(args)
 	args:pushToLuau()
 	luau_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
+
+-- compatibility with older versions of OpenWF that had these incorrectly scoped
+OpenLevelArgs = Engine.OpenLevelArgs
+OpenLevel = Engine.OpenLevel
 
 gRegion = {
 	function GetLocalPlayer()
@@ -575,23 +581,21 @@ setmetatable(_G, {
 	end
 })
 
-Engine = {
-	SLOT_1 = 0,
-	SLOT_2 = 1,
-	SLOT_3 = 2,
-	SLOT_4 = 3,
-	SLOT_5 = 4,
-	SLOT_6 = 5,
-	SLOT_7 = 6,
-	SLOT_8 = 7,
-	SLOT_9 = 8,
-	SLOT_10 = 9,
-	SLOT_11 = 10,
-	SLOT_12 = 11,
-	SLOT_13 = 12,
-	SLOT_14 = 13,
-	INVALID = 14,
-}
+Engine.SLOT_1 = 0
+Engine.SLOT_2 = 1
+Engine.SLOT_3 = 2
+Engine.SLOT_4 = 3
+Engine.SLOT_5 = 4
+Engine.SLOT_6 = 5
+Engine.SLOT_7 = 6
+Engine.SLOT_8 = 7
+Engine.SLOT_9 = 8
+Engine.SLOT_10 = 9
+Engine.SLOT_11 = 10
+Engine.SLOT_12 = 11
+Engine.SLOT_13 = 12
+Engine.SLOT_14 = 13
+Engine.INVALID = 14
 
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
