@@ -149,9 +149,9 @@ struct Arguments
 	/* 0x160 */ GameString clientType;
 	PAD(0x160 + sizeof(GameString), 0x189) bool got_graphicsDriver;
 	/* 0x190 */ GameString graphicsDriver;
-	PAD(0x190 + sizeof(GameString), 0x1AC) bool got_language;
+	PAD(0x1A0, 0x1AC) bool got_language;
 	/* 0x1B0 */ GameString language;
-	PAD(0x1B0 + sizeof(GameString), 0x1C0) bool got_cluster;
+	/* 0x1C0 */ bool got_cluster;
 	/* 0x1C8 */ GameString cluster;
 	/* 0x1D8 */ GameString relaunch;
 };
