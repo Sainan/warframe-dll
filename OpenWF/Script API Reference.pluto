@@ -190,10 +190,10 @@ gFlashMgr
 Engine.SLOT_1 = 0
 Engine.SLOT_2 = 1
 Engine.SLOT_3 = 2
-Engine.SLOT_4 = 3
-Engine.SLOT_5 = 4
-Engine.SLOT_6 = 5
-Engine.SLOT_7 = 6
+Engine.SLOT_4 = 3 -- Warframe
+Engine.SLOT_5 = 4 -- Primary
+Engine.SLOT_6 = 5 -- Melee
+Engine.SLOT_7 = 6 -- Secondary
 Engine.SLOT_8 = 7
 Engine.SLOT_9 = 8
 Engine.SLOT_10 = 9
