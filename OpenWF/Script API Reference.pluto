@@ -111,6 +111,7 @@ class MotionControllerBase
 class EngineNpcMgr extends Object
 
 class NpcManager extends EngineNpcMgr
+	function PauseAllAgents()
 
 class HudStatus extends Object
 
