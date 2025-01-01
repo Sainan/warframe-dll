@@ -566,7 +566,7 @@ class FlashMarker extends owfClassBase
 					luau_push_pointer(self.addr)
 					luau_call(luau_find_getter("FlashMarker", name), 1)
 					local addr = mem_read_i64(luau_pop_userdata() + 0x18)
-					return new Vector3(mem_read_f32(addr + 0x14), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x18))
+					return new Vector3(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
 				end
 				break
 
