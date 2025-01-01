@@ -3160,10 +3160,10 @@ owf_overlay_update())EOC").str());
 		});
 		document.getElementById("pause_always_stops_time").onchange = function() {
 			if (this.checked) {
-				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true) if gGameRules:IsPauseMenuShowing() then gGameRules:RequestPause() end`));
+				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true)`));
 			}
 			else {
-				fetch("/start_script_inline?" + encodeURIComponent(`if gGameRules:IsPauseMenuShowing() then gGameRules:RequestUnpause() end set_pause_always_stops_time(false)`));
+				fetch("/start_script_inline?" + encodeURIComponent(`gGameRules:RequestUnpause() set_pause_always_stops_time(false)`));
 			}
 		};
 
