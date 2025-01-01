@@ -720,7 +720,10 @@ static int lua_SteamService_IsInitialized_detour(luau_State* L)
 #if LOGGING
 		//std::cout << "Making lua_SteamService_IsInitialized return true" << std::endl;
 #endif
-		return true;
+		L->outtop->value.as_bool = true;
+		L->outtop->type = LUAU_BOOL;
+		L->outtop++;
+		return 1;
 	}
 	return reinterpret_cast<decltype(&lua_SteamService_IsInitialized_detour)>(lua_SteamService_IsInitialized_og)(L);
 }
