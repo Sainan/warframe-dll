@@ -1045,7 +1045,7 @@ static std::string script_log;
 
 struct owfScript
 {
-	const std::string path;
+	std::string name;
 	lua_State* main;
 	lua_State* coro = nullptr;
 	bool stop_requested = false;
@@ -1064,8 +1064,7 @@ struct owfScript
 		script_log.append(msg);
 	}
 
-	owfScript(std::string&& _path)
-		: path(std::move(_path))
+	owfScript()
 	{
 		auto L = luaL_newstate();
 		this->main = L;
@@ -1671,26 +1670,58 @@ struct owfScript
 				#include "runtime.pluto"
 			).str();
 		}
-
-		if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) == LUA_OK
-			&& lua_pcall(L, 0, 1, 0) == LUA_OK
-			&& luaL_loadfile(L, path.c_str()) == LUA_OK
+		if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) != LUA_OK
+			|| lua_pcall(L, 0, 1, 0) != LUA_OK
 			)
 		{
-			coro = lua_newthread(L);
-			luaL_ref(L, LUA_REGISTRYINDEX);
-			lua_xmove(L, coro, 2);
+			owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error while loading runtime").str());
+		}
+	}
+
+	bool loadFile(std::string&& path)
+	{
+		this->name = std::move(path);
+		if (luaL_loadfile(main, this->name.c_str()) == LUA_OK)
+		{
+			coro = lua_newthread(main);
+			luaL_ref(main, LUA_REGISTRYINDEX);
+			lua_xmove(main, coro, 2);
 			int nresults;
-			if (lua_resume(coro, main, 1, &nresults) != LUA_YIELD)
+			if (lua_resume(coro, main, 1, &nresults) == LUA_YIELD)
 			{
-				owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on init").str());
-				coro = nullptr;
+				return true;
 			}
+			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on load").str());
+			coro = nullptr;
 		}
 		else
 		{
-			owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error on init").str());
+			owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error on load").str());
 		}
+		return false;
+	}
+
+	bool loadString(std::string&& code)
+	{
+		this->name = std::move(code);
+		if (luaL_loadbuffer(main, this->name.data(), this->name.size(), this->name.c_str()) == LUA_OK)
+		{
+			coro = lua_newthread(main);
+			luaL_ref(main, LUA_REGISTRYINDEX);
+			lua_xmove(main, coro, 2);
+			int nresults;
+			if (lua_resume(coro, main, 1, &nresults) == LUA_YIELD)
+			{
+				return true;
+			}
+			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on load").str());
+			coro = nullptr;
+		}
+		else
+		{
+			owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error on load").str());
+		}
+		return false;
 	}
 
 	bool tick()
@@ -1720,21 +1751,31 @@ struct owfScript
 static Mutex running_scripts_mtx;
 static std::vector<UniquePtr<owfScript>> running_scripts;
 
-static void start_script(std::string&& path)
+static void start_script_from_file(std::string&& path)
 {
-	auto scr = soup::make_unique<owfScript>(std::move(path));
-	if (scr->coro)
+	auto scr = soup::make_unique<owfScript>();
+	if (scr->loadFile(std::move(path)))
 	{
 		std::lock_guard lock(running_scripts_mtx);
 		running_scripts.emplace_back(std::move(scr));
 	}
 }
 
-static owfScript* get_script_by_path(const std::string& path)
+static void start_script_from_string(std::string&& code)
+{
+	auto scr = soup::make_unique<owfScript>();
+	if (scr->loadString(std::move(code)))
+	{
+		std::lock_guard lock(running_scripts_mtx);
+		running_scripts.emplace_back(std::move(scr));
+	}
+}
+
+static owfScript* get_script_by_name(const std::string& name)
 {
 	for (const auto& scr : running_scripts)
 	{
-		if (scr->path == path)
+		if (scr->name == name)
 		{
 			return scr.get();
 		}
@@ -2982,7 +3023,7 @@ owf_overlay_update())EOC").str());
 			ObfusString base_path("OpenWF/scripts/");
 			for (const auto& path : auto_start_scripts)
 			{
-				start_script(base_path.str() + path);
+				start_script_from_file(base_path.str() + path);
 			}
 		}
 
@@ -3411,7 +3452,7 @@ owf_overlay_update())EOC").str());
 								auto arr = soup::make_unique<JsonArray>();
 								for (const auto& scr : running_scripts)
 								{
-									arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->path)));
+									arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
 								}
 								obj.add(ObfusString("running_scripts"), std::move(arr));
 							}
@@ -3455,7 +3496,15 @@ owf_overlay_update())EOC").str());
 					case soup::joaat::compileTimeHash("/start_script"):
 						if (!prohibit_scripts)
 						{
-							start_script(urlenc::decode(arr[1]));
+							start_script_from_file(urlenc::decode(arr[1]));
+							ServerWebService::send204(s);
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/start_script_inline"):
+						if (!prohibit_scripts)
+						{
+							start_script_from_string(urlenc::decode(arr[1]));
 							ServerWebService::send204(s);
 						}
 						break;
@@ -3463,7 +3512,7 @@ owf_overlay_update())EOC").str());
 					case soup::joaat::compileTimeHash("/stop_script"):
 						{
 							std::lock_guard lock(running_scripts_mtx);
-							if (auto scr = get_script_by_path(urlenc::decode(arr[1])))
+							if (auto scr = get_script_by_name(urlenc::decode(arr[1])))
 							{
 								scr->stop_requested = true;
 							}
