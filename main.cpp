@@ -2864,6 +2864,13 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), ObfusString(R"EOC(repeat
+	for gRegion:GetLocalPlayer():GetHudStatus():GetFlashMarkers() as marker do
+		if marker.markerType == 49 and not marker.garbage then
+			gRegion:GetLocalPlayerAvatar():SetPosition(marker.pos)
+		end
+	end
+until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
 gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());

@@ -549,6 +549,12 @@ class FlashMarker extends owfClassBase
 			return FlashMarker[name]
 		end
 		switch name do
+			case "garbage":
+				luau_begin_call()
+				luau_push_pointer(self.addr)
+				luau_end_call(luau_find_getter("FlashMarker", name))
+				return luau_pop_bool()
+
 			case "markerType":
 				luau_begin_call()
 				luau_push_pointer(self.addr)

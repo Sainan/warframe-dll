@@ -125,6 +125,7 @@ class LotusHudStatus extends HudStatus
 	function GetFlashMarkers()
 
 class FlashMarker extends owfClassBase
+	garbage
 	markerType
 	distanceToEye
 	pos
