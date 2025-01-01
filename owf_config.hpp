@@ -15,6 +15,7 @@ inline bool skip_mission_start_timer;
 inline float fov_override;
 inline bool simulacrum_blacklisted;
 inline bool simulacrum_whitelisted;
+inline bool pause_always_stops_time;
 inline bool enable_http_interface;
 inline bool disable_nrs_connection;
 inline bool autologin;

@@ -1658,6 +1658,13 @@ struct owfScript
 		});
 		{ ObfusString name("owf_overlay_update"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			pause_always_stops_time = lua_toboolean(L, 1);
+			return 0;
+		});
+		{ ObfusString name("set_pause_always_stops_time"); lua_setglobal(L, name.c_str()); }
+
 		std::string runtime;
 #if PRIVATE
 		runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
@@ -1928,6 +1935,16 @@ static int lua_AvatarEntry_excludedFromSimulacrum_get_detour(luau_State* L)
 }
 
 
+static DetourHook is_pause_allowed_hook;
+
+static bool is_pause_allowed_detour(void* gamerules)
+{
+	return pause_always_stops_time
+		|| reinterpret_cast<decltype(&is_pause_allowed_detour)>(is_pause_allowed_hook.original)(gamerules)
+		;
+}
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -1942,6 +1959,7 @@ static void save_config()
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
 	config.add(ObfusString("enable_http_interface"), enable_http_interface);
 	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
 	config.add(ObfusString("autologin"), autologin);
@@ -2135,6 +2153,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				simulacrum_whitelisted = true;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("pause_always_stops_time")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				pause_always_stops_time = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				pause_always_stops_time = false;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("enable_http_interface")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -2886,6 +2913,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 48 8B D9 E8");
+			auto is_pause_allowed = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "is_pause_allowed = " << is_pause_allowed << std::endl;
+#endif
+			if (is_pause_allowed)
+			{
+				is_pause_allowed_hook.detour = reinterpret_cast<void*>(&is_pause_allowed_detour);
+				is_pause_allowed_hook.target = is_pause_allowed;
+				is_pause_allowed_hook.create();
+				is_pause_allowed_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
 $version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
 Write-Host "Downloading OpenWF Bootstrapper v$version..."
@@ -3056,6 +3102,7 @@ owf_overlay_update())EOC").str());
 	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
 	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
+	<p><label for="pause_always_stops_time">Pause Always Stops Time:</label> <input id="pause_always_stops_time" type="checkbox" /></p>
 	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
@@ -3103,6 +3150,18 @@ owf_overlay_update())EOC").str());
 		});
 		document.getElementById("simulacrum_whitelisted").onchange = function() {
 			fetch("/simulacrum_whitelisted?" + this.checked);
+		};
+
+		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {
+			document.getElementById("pause_always_stops_time").checked = (res == "1");
+		});
+		document.getElementById("pause_always_stops_time").onchange = function() {
+			if (this.checked) {
+				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true) if gGameRules:IsPauseMenuShowing() then gGameRules:RequestPause() end`));
+			}
+			else {
+				fetch("/start_script_inline?" + encodeURIComponent(`if gGameRules:IsPauseMenuShowing() then gGameRules:RequestUnpause() end set_pause_always_stops_time(false)`));
+			}
 		};
 
 		fetch("/fov_override").then(res => res.text()).then(res => {
@@ -3265,6 +3324,10 @@ owf_overlay_update())EOC").str());
 							simulacrum_blacklisted = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
+						break;
+
+					case soup::joaat::compileTimeHash("/pause_always_stops_time"):
+						ServerWebService::sendText(s, std::to_string(pause_always_stops_time));
 						break;
 
 					case soup::joaat::compileTimeHash("/fov_override"):
