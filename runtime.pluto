@@ -460,7 +460,21 @@ class InputController extends InputControllerBase
 	end
 end
 
-class GameRulesImpl extends Object
+class GameRules extends Object
+	function RequestPause()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("GameRules", "RequestPause"))
+	end
+
+	function RequestUnpause()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("GameRules", "RequestUnpause"))
+	end
+end
+
+class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
 		luau_begin_call()
 		luau_push_object(self.addr)

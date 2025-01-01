@@ -102,7 +102,11 @@ class InputControllerBase extends Object
 class InputController extends InputControllerBase
 	function SetStopMovement(b)
 
-class GameRulesImpl extends Object
+class GameRules extends Object
+	function RequestPause()
+	function RequestUnpause()
+
+class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
 
 class LotusBaseGameRules extends GameRulesImpl
