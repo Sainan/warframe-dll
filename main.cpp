@@ -3034,11 +3034,14 @@ until yield())EOC").str());
 until not pcall(yield)
 
 gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(local weapon = gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0)
-local impactBehavior = weapon:GetActiveImpactBehavior()
-impactBehavior.criticalHitChance = 10000
-impactBehavior.criticalHitDamageMultiplier = 10000
-print("Your damage has been increased!"))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(if weapon := gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0) then
+	local impactBehavior = weapon:GetActiveImpactBehavior()
+	impactBehavior.criticalHitChance = 10000
+	impactBehavior.criticalHitDamageMultiplier = 10000
+	print("Your weapon damage has been increased!")
+else
+	print("You don't seem to have a weapon in hand.")
+end)EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(repeat
 	local player = gRegion:GetLocalPlayerAvatar()
 	for gRegion:GetAvatars() as avatar do
