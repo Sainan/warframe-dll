@@ -15,6 +15,11 @@ using namespace soup;
 static HWND s_game_hwnd = 0;
 static Window w;
 static bool s_prelogin = true;
+static int s_x = -1;
+static int s_y = -1;
+static int s_w = -1;
+static int s_h = -1;
+static bool s_topmost = false;
 
 bool owfOverlay::isInited()
 {
@@ -106,10 +111,26 @@ void owfOverlay::init()
 					for (; IsWindow(s_game_hwnd); Sleep(100))
 					{
 						const auto [x, y] = Window(s_game_hwnd).getPos();
-						w.setPos(x, y);
 						const auto [width, height] = Window(s_game_hwnd).getSize();
-						w.setSize(width, height);
-						w.setTopmost(GetForegroundWindow() == s_game_hwnd);
+						const auto topmost = GetForegroundWindow() == s_game_hwnd;
+
+						if (s_x != x || s_y != y)
+						{
+							w.setPos(x, y);
+							s_x = x;
+							s_y = y;
+						}
+						if (s_w != width || s_h != height)
+						{
+							w.setSize(width, height);
+							s_w = width;
+							s_h = height;
+						}
+						if (s_topmost != topmost)
+						{
+							w.setTopmost(topmost);
+							s_topmost = topmost;
+						}
 					}
 				});
 				t.detach();
