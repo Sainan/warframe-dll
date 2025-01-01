@@ -10,6 +10,7 @@ class ObjectType extends owfClassBase
 	function GetName()
 	function GetFullName()
 	function GetParent()
+	function isNameInHierarchy(name)
 
 class Object extends owfClassBase
 	function GetType()
@@ -101,7 +102,12 @@ class InputControllerBase extends Object
 class InputController extends InputControllerBase
 	function SetStopMovement(b)
 
-class LotusGameRules extends Object
+class GameRulesImpl extends Object
+	function SetPauseDisabled(b)
+
+class LotusBaseGameRules extends GameRulesImpl
+
+class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
 
 class MotionControllerBase

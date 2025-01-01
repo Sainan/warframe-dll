@@ -40,6 +40,17 @@ class ObjectType extends owfClassBase
 			return new ObjectType(addr)
 		end
 	end
+
+	function isNameInHierarchy(name)
+		local type = self
+		repeat
+			if type:GetName() == name then
+				return true
+			end
+			type = type:GetParent()
+		until not type
+		return false
+	end
 end
 
 class Object extends owfClassBase
@@ -449,7 +460,18 @@ class InputController extends InputControllerBase
 	end
 end
 
-class LotusGameRules extends Object
+class GameRulesImpl extends Object
+	function SetPauseDisabled(b)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_bool(b)
+		luau_end_call(luau_find_method("GameRulesImpl", "SetPauseDisabled"))
+	end
+end
+
+class LotusBaseGameRules extends GameRulesImpl end
+
+class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
 		luau_begin_call()
 		luau_push_object(get_gamerules())
@@ -637,8 +659,12 @@ gRegion = {
 	end,
 	function GetGameRules()
 		local obj = new Object(get_gamerules())
-		if obj:GetFullName() == "LotusGameRules" then
+		local type = obj:GetType()
+		if type:isNameInHierarchy("LotusGameRules") then
 			return new LotusGameRules(obj.addr)
+		end
+		if type:isNameInHierarchy("GameRulesImpl") then
+			return new GameRulesImpl(obj.addr)
 		end
 		return obj
 	end,
