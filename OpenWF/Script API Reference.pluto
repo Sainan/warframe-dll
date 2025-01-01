@@ -103,6 +103,7 @@ class InputController extends InputControllerBase
 	function SetStopMovement(b)
 
 class GameRules extends Object
+	function IsPauseMenuShowing()
 	function RequestPause()
 	function RequestUnpause()
 

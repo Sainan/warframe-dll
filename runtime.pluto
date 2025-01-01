@@ -461,6 +461,13 @@ class InputController extends InputControllerBase
 end
 
 class GameRules extends Object
+	function IsPauseMenuShowing()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("GameRules", "IsPauseMenuShowing"))
+		return luau_pop_bool()
+	end
+
 	function RequestPause()
 		luau_begin_call()
 		luau_push_object(self.addr)
