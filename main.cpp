@@ -52,7 +52,7 @@ using namespace soup;
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
 static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
-static const char* build_hash = nullptr;
+static std::string build_hash;
 #endif
 static bool fallback_language_was_used = false;
 static bool fallback_graphicsDriver_was_used = false;
@@ -349,7 +349,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 		}
 #endif
 #if PROVIDE_VERSION_INFO
-		if (build_label && build_hash)
+		if (build_label && !build_hash.empty())
 		{
 			uri.query.append(ObfusString("&buildLabel=").str());
 			uri.query.append(build_label, 16);
@@ -365,7 +365,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
-		if (build_label && build_hash)
+		if (build_label && !build_hash.empty())
 		{
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
@@ -651,7 +651,7 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 }
 
 
-#if PROVIDE_VERSION_INFO
+#if PROVIDE_VERSION_INFO && false
 static DetourHook ReadCacheManifest_hook;
 
 static bool ReadCacheManifest_detour(uintptr_t a1)
@@ -664,6 +664,54 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 	return ret;
 }
 #endif
+
+
+static DetourHook write_to_log_file_hook;
+static ObfusString log_sep("]: ");
+static std::string active_input_filter;
+
+static void write_to_log_file_detour(void* a1, const char* data, size_t size)
+{
+	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, size);
+	//std::cout << std::string(data, size);
+	SOUP_IF_LIKELY (size > 15)
+	{
+		SOUP_IF_LIKELY (auto message = strstr(data + 15, log_sep.c_str()))
+		{
+			message += log_sep.size();
+			size -= (message - data);
+
+			if (size > 20)
+			{
+				switch (soup::joaat::hashRange(message, 20))
+				{
+#if PROVIDE_VERSION_INFO
+				case soup::joaat::compileTimeHash("Cache manifest hash "):
+					if (size == 43)
+					{
+						build_hash = std::string(message + 20, 22);
+					}
+					break;
+#endif
+
+				case soup::joaat::compileTimeHash("InitMapping for all "): // "InitMapping for all devices with bindings ... and filter ..."
+					if (size > 42)
+					{
+						ObfusString sep(" and filter ");
+						if (auto filter = strstr(message + 42, sep.c_str()))
+						{
+							filter += 12;
+							size -= (filter - message);
+							size -= 1; // '\n'
+							active_input_filter = std::string(filter, size);
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+}
 
 
 /*static DetourHook get_config_bool_hook;
@@ -1756,6 +1804,13 @@ struct owfScript
 		});
 		{ ObfusString name("owf_next_event"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			pluto_pushstring(L, active_input_filter);
+			return 1;
+		});
+		{ ObfusString name("get_active_input_filter"); lua_setglobal(L, name.c_str()); }
+
 		std::string runtime;
 #if PRIVATE
 		runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
@@ -2781,7 +2836,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-#if PROVIDE_VERSION_INFO
+#if PROVIDE_VERSION_INFO && false
 		{
 			SIG_INST("4C 8B DC 55 53 41 56 49 8D 6B A8 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4");
 			auto ReadCacheManifest = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2801,6 +2856,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 #endif
+
+		{
+			SIG_INST("4C 89 44 24 18 48 89 54 24 10 53 48 83 EC 50 48 8D 59 48");
+			auto write_to_log_file = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "write_to_log_file = " << write_to_log_file << std::endl;
+#endif
+			if (write_to_log_file)
+			{
+				write_to_log_file_hook.detour = reinterpret_cast<void*>(&write_to_log_file_detour);
+				write_to_log_file_hook.target = write_to_log_file;
+				write_to_log_file_hook.create();
+				write_to_log_file_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
 
 		/*{
 			SIG_INST("4C 8B 89 10 03 00 00 48 8B CE 41 FF D1");
@@ -3213,7 +3287,10 @@ else
 end)EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(local was_down = false
 repeat
-	if owf_is_key_down('K') then
+	if owf_is_key_down('K')
+		and get_active_input_filter() ~= "/EE/Types/Input/MenuInputFilter"
+		and get_active_input_filter() ~= "/Lotus/Types/Input/LoadoutReduxInputFilter"
+	then
 		if not was_down then
 			was_down = true
 			if gRegion:GetLocalPlayerAvatar():isFollowedByCamera() then
