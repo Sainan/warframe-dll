@@ -160,6 +160,15 @@ function mem_scan_exe(sig)
 function mem_read_i32(addr)
 function mem_read_i64(addr)
 function mem_read_f32(addr)
+function chat_block_prefix(prefix)
+function chat_unblock_prefix(prefix)
+function chat_system_reply(text)
+
+-- OpenWF events
+
+OWF_EVT_BLOCKED_CHAT_MESSAGE
+
+function owf_next_event()
 
 -- OpenWF Overlay. Any pixel with RGB=255,0,255 will show the game window underneath.
 

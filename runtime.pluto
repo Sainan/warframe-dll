@@ -774,6 +774,8 @@ Engine.INVALID = 14
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
 
+OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
+
 coroutine.sleep = function(ms)
 	local t = os.millis() + ms
 	repeat

@@ -15,6 +15,7 @@ enum luau_Type
 	LUAU_NUMBER = 3,
 	LUAU_STRING = 5,
 	LUAU_TABLE = 6,
+	LUAU_FUNCTION = 7,
 	LUAU_USERDATA = 8,
 };
 
@@ -23,9 +24,9 @@ struct luau_TValue
 	/* 0x00 */ luau_Value value;
 	PAD(0x08, 0x0C) uint32_t type;
 
-	[[nodiscard]] const char* getString() const noexcept
+	[[nodiscard]] char* getString() noexcept
 	{
-		return reinterpret_cast<const char*>(value.as_uintptr + 0x18);
+		return reinterpret_cast<char*>(value.as_uintptr + 0x18);
 	}
 };
 static_assert(sizeof(luau_TValue) == 0x10);

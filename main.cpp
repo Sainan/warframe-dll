@@ -8,6 +8,7 @@
 #define PROVIDE_VERSION_INFO true
 
 #include <cstdlib>
+#include <deque>
 #include <iostream>
 #include <mutex>
 
@@ -931,6 +932,9 @@ static luau_pushobject_t luau_pushobject = nullptr;
 using luau_gettable_t = int(*)(luau_State*, int idx);
 static luau_gettable_t luau_gettable = nullptr;
 
+using luauD_call_t = int(*)(luau_State* L, luau_TValue* func, int nresults);
+static luauD_call_t luauD_call = nullptr;
+
 static luau_State* luau_L = nullptr;
 //static Object*** luau_obj_buf[4];
 static std::string luau_error_msg;
@@ -1046,12 +1050,18 @@ static ObfusString runtime_script_name("OpenWF Script Runtime");
 static Mutex script_log_mtx;
 static std::string script_log;
 
+static uintptr_t ChatRedux_table = 0;
+static uintptr_t ChatRedux_SystemMessage_method = 0;
+
 struct owfScript
 {
 	std::string name;
 	lua_State* main;
 	lua_State* coro = nullptr;
 	bool stop_requested = false;
+
+	std::unordered_set<std::string> blocked_chat_prefixes;
+	std::deque<std::string> blocked_chat_messages;
 
 	static void logNl(const std::string& msg)
 	{
@@ -1668,6 +1678,84 @@ struct owfScript
 		});
 		{ ObfusString name("set_pause_always_stops_time"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.emplace(pluto_checkstring(L, 1));
+			return 0;
+		});
+		{ ObfusString name("chat_block_prefix"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.erase(pluto_checkstring(L, 2));
+			return 0;
+		});
+		{ ObfusString name("chat_unblock_prefix"); lua_setglobal(L, name.c_str()); }
+
+		if (luauD_call)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				if (/*ChatRedux_table &&*/ ChatRedux_SystemMessage_method)
+				{
+					const auto message = luaL_checkstring(L, 1);
+
+					const auto call_top = luau_L->outtop;
+
+					luau_L->outtop->value.as_uintptr = ChatRedux_SystemMessage_method;
+					luau_L->outtop->type = LUAU_FUNCTION;
+					luau_L->outtop++;
+					luau_L->outtop->value.as_uintptr = ChatRedux_table;
+					luau_L->outtop->type = LUAU_TABLE;
+					luau_L->outtop++;
+					luau_pushstring(luau_L, message);
+
+					luau_error_msg.clear();
+					__try
+					{
+						luauD_call(luau_L, call_top, 0);
+					}
+					__except (EXCEPTION_EXECUTE_HANDLER)
+					{
+						if (luau_error_msg.empty())
+						{
+							luau_error_msg = ObfusString("low-level exception").str();
+						}
+					}
+					luau_L->outtop = call_top;
+					SOUP_IF_UNLIKELY (!luau_error_msg.empty())
+					{
+						luaL_error(L, luau_error_msg.c_str());
+					}
+				}
+				return 0;
+			});
+			{ ObfusString name("chat_system_reply"); lua_setglobal(L, name.c_str()); }
+		}
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto scr = static_cast<owfScript*>(L->l_G->user_data);
+			if (!scr->blocked_chat_messages.empty())
+			{
+				lua_newtable(L);
+				{
+					pluto_pushstring(L, ObfusString("type").str());
+					lua_pushinteger(L, 1); // OWF_EVT_BLOCKED_CHAT_MESSAGE
+					lua_settable(L, -3);
+				}
+				{
+					pluto_pushstring(L, ObfusString("text").str());
+					pluto_pushstring(L, scr->blocked_chat_messages.front());
+					lua_settable(L, -3);
+				}
+				scr->blocked_chat_messages.pop_front();
+				return 1;
+			}
+			return 0;
+		});
+		{ ObfusString name("owf_next_event"); lua_setglobal(L, name.c_str()); }
+
 		std::string runtime;
 #if PRIVATE
 		runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
@@ -1945,6 +2033,75 @@ static bool is_pause_allowed_detour(void* gamerules)
 	return pause_always_stops_time
 		|| reinterpret_cast<decltype(&is_pause_allowed_detour)>(is_pause_allowed_hook.original)(gamerules)
 		;
+}
+
+
+static owfScript* find_message_blocking_script(const std::string& msg)
+{
+	std::lock_guard lock(running_scripts_mtx);
+	for (auto& scr : running_scripts)
+	{
+		for (const auto& prefix : scr->blocked_chat_prefixes)
+		{
+			if (msg.starts_with(prefix))
+			{
+				return scr.get();
+			}
+		}
+	}
+	return nullptr;
+}
+
+static luau_CFunction lua_FlashInstance_GetStringVariable_og;
+
+static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
+{
+	auto ret = lua_FlashInstance_GetStringVariable_og(L);
+	//std::cout << "lua_FlashInstance_GetStringVariable: " << L->intop[1].getString() << " -> " << L->outtop[-1].getString() << std::endl;
+	if (soup::joaat::hash(L->intop[1].getString()) == soup::joaat::compileTimeHash("Window.SendMessageBar.MessageBox"))
+	{
+		std::string current_draft = L->outtop[-1].getString();
+		auto blocking_script = find_message_blocking_script(current_draft);
+
+		if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
+		{
+			if (blocking_script != nullptr)
+			{
+				blocking_script->blocked_chat_messages.emplace_back(std::move(current_draft));
+			}
+		}
+
+		if (blocking_script != nullptr && luau_pushstring)
+		{
+			// Stop the game from processing this
+			L->outtop--;
+			luau_pushstring(L, " ");
+		}
+
+		if (luau_gettable)
+		{
+			int i = 0;
+			while (--i > -20)
+			{
+				if (L->outtop[i].type == LUAU_TABLE)
+				{
+					ObfusString SystemMessage("SystemMessage");
+					luau_pushstring(L, SystemMessage.c_str());
+					if (luau_gettable(L, i - 1) == LUAU_FUNCTION
+						//&& *(uint8_t*)(L->outtop[-1].value.as_uintptr + 3) == 0 // Closure::isC
+						)
+					{
+						ChatRedux_table = L->outtop[i - 1].value.as_uintptr;
+						ChatRedux_SystemMessage_method = L->outtop[-1].value.as_uintptr;
+						L->outtop--;
+						break;
+					}
+					L->outtop--;
+				}
+			}
+		}
+	}
+	return ret;
 }
 
 
@@ -2839,6 +2996,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
+			SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0");
+			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
+#if LOGGING
+			std::cout << "luauD_call = " << (void*)luauD_call << std::endl;
+#endif
+			if (!luauD_call)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
 			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB 02 33 FF E8 ? ? ? ? 48 8B C8");
 			Pointer res[20];
 			int nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
@@ -2937,6 +3106,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			SIG_INST("6F 5D A9 54 00 00 00 00");
+			auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
+#endif
+			if (lua_FlashInstance_GetStringVariable_hash)
+			{
+				auto lua_FlashInstance_GetStringVariable_fp = lua_FlashInstance_GetStringVariable_hash.add(8).as<luau_CFunction*>();
+				lua_FlashInstance_GetStringVariable_og = *lua_FlashInstance_GetStringVariable_fp;
+				memGuard::setAllowedAccess(lua_FlashInstance_GetStringVariable_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_FlashInstance_GetStringVariable_fp = lua_FlashInstance_GetStringVariable_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
 $version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
 Write-Host "Downloading OpenWF Bootstrapper v$version..."
@@ -2966,6 +3154,58 @@ until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
 gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), ObfusString(R"EOC(local commands = {}
+commands["/god"] = function()
+	if gRegion:GetLocalPlayerAvatar():DamageControl():HasTemporaryImmunity() then
+		gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity()
+		chat_system_reply("Removed immunity.")
+	else
+		gRegion:GetLocalPlayerAvatar():DamageControl():GiveTemporaryImmunity(500000, 500000)
+		chat_system_reply("Granted immunity.")
+	end
+end
+commands["/suicide"] = function()
+	if gGameRules instanceof LotusGameRules then
+		gRegion:GetLocalPlayerAvatar():Suicide()
+	else
+		chat_system_reply("That's not a good idea.")
+	end
+end
+commands["/killall"] = function()
+	local player = gRegion:GetLocalPlayerAvatar()
+	for gRegion:GetAvatars() as avatar do
+		if not avatar:IsAvatarFriendly(player) then
+			avatar:Suicide()
+		end
+	end
+end
+commands["/kdrive"] = function()
+	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar"))
+end
+commands["/simulacrum"] = function()
+	local args = Engine.OpenLevelArgs()
+	args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
+	args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
+	Engine.OpenLevel(args)
+end
+commands["/quit"] = function()
+	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
+end
+for prefix in commands do
+	chat_block_prefix(prefix)
+end
+repeat
+	while evt := owf_next_event() do
+		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
+			for prefix, f in commands do
+				if evt.text:sub(1, #prefix) == prefix then
+					f()
+					break
+				end
+			end
+		end
+	end
+until yield())EOC").str());
 		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(if gGameRules instanceof LotusGameRules then
 	gGameRules:OpenMissionContinueDialog(nil)
 else
