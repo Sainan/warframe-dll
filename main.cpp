@@ -3262,6 +3262,13 @@ commands["/simulacrum"] = function()
 	args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
 	Engine.OpenLevel(args)
 end
+commands["/level"] = function(text)
+	local level = text:sub(8)
+	chat_system_reply("Loading level "..level)
+	local args = Engine.OpenLevelArgs()
+	args:SetLevel(level)
+	Engine.OpenLevel(args)
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
@@ -3273,7 +3280,7 @@ repeat
 		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
 			for prefix, f in commands do
 				if evt.text:sub(1, #prefix) == prefix then
-					f()
+					f(evt.text)
 					break
 				end
 			end
