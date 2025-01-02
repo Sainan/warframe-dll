@@ -3269,6 +3269,10 @@ commands["/level"] = function(text)
 	args:SetLevel(level)
 	Engine.OpenLevel(args)
 end
+commands["/energy"] = function()
+	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetMaxEnergy(1000000)
+	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetEnergy(1000000)
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
