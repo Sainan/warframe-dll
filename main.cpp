@@ -3256,6 +3256,9 @@ end
 commands["/kdrive"] = function()
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar"))
 end
+commands["/dargyn"] = function()
+	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar"))
+end
 commands["/simulacrum"] = function()
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
