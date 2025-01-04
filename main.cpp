@@ -3266,14 +3266,14 @@ commands["/simulacrum"] = function()
 	Engine.OpenLevel(args)
 end
 commands["/level"] = function(text)
-	local level = text:sub(8)
+	local level = text:split(" ")[2]
 	chat_system_reply("Loading level "..level)
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel(level)
 	Engine.OpenLevel(args)
 end
 commands["/captura"] = function(text)
-	local level = text:sub(10)
+	local level = text:split(" ")[2]
 	chat_system_reply("Opening Captura in "..level)
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel(level)
@@ -3283,6 +3283,9 @@ end
 commands["/energy"] = function()
 	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetMaxEnergy(1000000)
 	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetEnergy(1000000)
+end
+commands["/scale"] = function(text)
+	gRegion:GetLocalPlayerAvatar():SetMeshScale(tonumber(text:split(" ")[2]))
 end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
