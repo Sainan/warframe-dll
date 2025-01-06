@@ -7,6 +7,9 @@
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
 
+// LOGGING should be true when using this
+#define VERBOSE_RNG false
+
 #include <cstdlib>
 #include <deque>
 #include <iostream>
@@ -2160,6 +2163,43 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 }
 
 
+#if VERBOSE_RNG
+static int64_t* lua_seed;
+static luau_CFunction lua_SetSeed_og;
+static luau_CFunction lua_ChurnSeed_og;
+static luau_CFunction lua_SRandom_og;
+static luau_CFunction lua_SRandomInt_og;
+
+static int lua_SetSeed_detour(luau_State* L)
+{
+	lua_SetSeed_og(L);
+	std::cout << "lua_SetSeed: lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	return 0;
+}
+
+static int lua_ChurnSeed_detour(luau_State* L)
+{
+	lua_ChurnSeed_og(L);
+	std::cout << "lua_ChurnSeed: lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	return 0;
+}
+
+static int lua_SRandom_detour(luau_State* L)
+{
+	lua_SRandom_og(L);
+	std::cout << "lua_SRandom(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	return 1;
+}
+
+static int lua_SRandomInt_detour(luau_State* L)
+{
+	lua_SRandomInt_og(L);
+	std::cout << "lua_SRandomInt(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	return 1;
+}
+#endif
+
+
 static void save_config()
 {
 	JsonObject config;
@@ -3198,6 +3238,100 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+
+#if VERBOSE_RNG
+		{
+			SIG_INST("48 89 1D ? ? ? ? 85 C0 74 27 48 B9 2D 7F 95 4C 2D F4 51 58");
+			auto lua_seed_mov = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_seed_mov = " << lua_seed_mov.as<void*>() << std::endl;
+#endif
+			if (lua_seed_mov)
+			{
+				lua_seed = lua_seed_mov.add(3).rip().as<int64_t*>();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("FF 51 68 4F 00 00 00 00");
+			auto lua_SetSeed_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_SetSeed_hash = " << lua_SetSeed_hash.as<void*>() << std::endl;
+#endif
+			if (lua_SetSeed_hash)
+			{
+				auto lua_SetSeed_fp = lua_SetSeed_hash.add(8).as<luau_CFunction*>();
+				lua_SetSeed_og = *lua_SetSeed_fp;
+				memGuard::setAllowedAccess(lua_SetSeed_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_SetSeed_fp = lua_SetSeed_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("05 3F 88 84 00 00 00 00");
+			auto lua_ChurnSeed_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_ChurnSeed_hash = " << lua_ChurnSeed_hash.as<void*>() << std::endl;
+#endif
+			if (lua_ChurnSeed_hash)
+			{
+				auto lua_ChurnSeed_fp = lua_ChurnSeed_hash.add(8).as<luau_CFunction*>();
+				lua_ChurnSeed_og = *lua_ChurnSeed_fp;
+				memGuard::setAllowedAccess(lua_ChurnSeed_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_ChurnSeed_fp = lua_ChurnSeed_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("F8 4C 6E DD 00 00 00 00 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? F9 62 5E 0C 00 00 00 00");
+			auto lua_SRandom_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_SRandom_hash = " << lua_SRandom_hash.as<void*>() << std::endl;
+#endif
+			if (lua_SRandom_hash)
+			{
+				auto lua_SRandom_fp = lua_SRandom_hash.add(8).as<luau_CFunction*>();
+				lua_SRandom_og = *lua_SRandom_fp;
+				memGuard::setAllowedAccess(lua_SRandom_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_SRandom_fp = lua_SRandom_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("F9 62 5E 0C 00 00 00 00 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 5B CF 93 5F 00 00 00 00");
+			auto lua_SRandomInt_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_SRandomInt_hash = " << lua_SRandomInt_hash.as<void*>() << std::endl;
+#endif
+			if (lua_SRandomInt_hash)
+			{
+				auto lua_SRandomInt_fp = lua_SRandomInt_hash.add(8).as<luau_CFunction*>();
+				lua_SRandomInt_og = *lua_SRandomInt_fp;
+				memGuard::setAllowedAccess(lua_SRandomInt_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_SRandomInt_fp = lua_SRandomInt_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
 
 soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
 $version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
