@@ -3352,17 +3352,20 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), ObfusString(R"EOC(repeat
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
 	for gRegion:GetLocalPlayer():GetHudStatus():GetFlashMarkers() as marker do
 		if marker.markerType == 49 and not marker.garbage then
 			gRegion:GetLocalPlayerAvatar():SetPosition(marker.pos)
 		end
 	end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
 gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), ObfusString(R"EOC(local commands = {}
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+local commands = {}
 commands["/god"] = function()
 	if gRegion:GetLocalPlayerAvatar():DamageControl():HasTemporaryImmunity() then
 		gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity()
@@ -3445,12 +3448,14 @@ repeat
 		end
 	end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(if gGameRules instanceof LotusGameRules then
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+if gGameRules instanceof LotusGameRules then
 	gGameRules:OpenMissionContinueDialog(nil)
 else
 	print("Not available in the current mission")
 end)EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(local was_down = false
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+local was_down = false
 repeat
 	if owf_is_key_down('K')
 		and get_active_input_filter() ~= "/EE/Types/Input/MenuInputFilter"
@@ -3475,7 +3480,8 @@ repeat
 		was_down = false
 	end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), ObfusString(R"EOC(local args = Engine.OpenLevelArgs()
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+local args = Engine.OpenLevelArgs()
 args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
 args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
 Engine.OpenLevel(args))EOC").str());
@@ -3496,7 +3502,8 @@ repeat
         end
     end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC($define VK_CONTROL = 0x11
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+$define VK_CONTROL = 0x11
 $define VK_SPACE = 0x20
 
 local Y_STEP <const> = Vector3(0, 0.01, 0)
@@ -3514,14 +3521,16 @@ repeat
 	end
 	t = os.millis()
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(repeat
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
     if avatar := gRegion:GetLocalPlayerAvatar() then
         avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
     end
 until not pcall(yield)
 
 gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(if weapon := gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0) then
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+if weapon := gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0) then
 	local impactBehavior = weapon:GetActiveImpactBehavior()
 	impactBehavior.criticalHitChance = 10000
 	impactBehavior.criticalHitDamageMultiplier = 10000
@@ -3529,7 +3538,8 @@ gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").s
 else
 	print("You don't seem to have a weapon in hand.")
 end)EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(repeat
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
 	local player = gRegion:GetLocalPlayerAvatar()
 	for gRegion:GetAvatars() as avatar do
 		if not avatar:IsAvatarFriendly(player) then
@@ -3537,14 +3547,16 @@ end)EOC").str());
 		end
 	end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), ObfusString(R"EOC(repeat
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
 	for gRegion:GetAvatars() as avatar do
 		if inventory := avatar:InventoryControl() then
 			inventory:DoItemDrop()
 		end
 	end
 until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), ObfusString(R"EOC(local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0, 2)
+		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
+local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0, 2)
 local text = owf_overlay_add_text(10, 10, "OpenWF", OWF_FONT_SIMPLE8, 90, 253, 123, 2)
 owf_overlay_update()
 
