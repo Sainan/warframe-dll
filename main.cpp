@@ -3287,6 +3287,12 @@ end
 commands["/scale"] = function(text)
 	gRegion:GetLocalPlayerAvatar():SetMeshScale(tonumber(text:split(" ")[2]))
 end
+commands["/pause"] = function(text)
+	gGameRules:RequestPause()
+end
+commands["/unpause"] = function(text)
+	gGameRules:RequestUnpause()
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
