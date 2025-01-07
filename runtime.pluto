@@ -931,6 +931,8 @@ gFlashMgr = {
 	end,
 }
 
+gEntityType = Type("/EE/Types/Engine/Entity")
+
 ZERO_ROTATION = Rotation()
 EMPTY_SYMBOL = Symbol()
 
