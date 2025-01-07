@@ -1101,6 +1101,8 @@ static ObfusString runtime_script_name("OpenWF Script Runtime");
 static Mutex script_log_mtx;
 static std::string script_log;
 
+static std::unordered_map<uint32_t, uintptr_t> lua_exe_scan_cache;
+
 static uintptr_t ChatRedux_table = 0;
 static uintptr_t ChatRedux_SystemMessage_method = 0;
 
@@ -1349,7 +1351,17 @@ struct owfScript
 		{
 			size_t len;
 			const char* str = luaL_checklstring(L, 1, &len);
-			lua_pushinteger(L, Module(nullptr).range.scan(Pattern(str, len)).as<uintptr_t>());
+			const auto cache_key = soup::joaat::hashRange(str, len);
+			if (auto e = lua_exe_scan_cache.find(cache_key); e != lua_exe_scan_cache.end())
+			{
+				lua_pushinteger(L, e->second);
+			}
+			else
+			{
+				const auto res = Module(nullptr).range.scan(Pattern(str, len)).as<uintptr_t>();
+				lua_exe_scan_cache.emplace(cache_key, res);
+				lua_pushinteger(L, res);
+			}
 			return 1;
 		});
 		{ ObfusString name("mem_scan_exe"); lua_setglobal(L, name.c_str()); }
