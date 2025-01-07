@@ -196,6 +196,7 @@ gRegion
 	function GetGameCamera()
 	function GetGameRules()
 	function GetAvatars()
+	function FindTagged(symbol)
 	function CreateEntity(type, pos, rot)
 	function GetNpcMgr()
 

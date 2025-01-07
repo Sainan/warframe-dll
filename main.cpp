@@ -1619,6 +1619,13 @@ struct owfScript
 		});
 		{ ObfusString name("luau_pop_object"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushboolean(L, luau_L->getValue(luaL_checkinteger(L, 1))->type == LUAU_TABLE);
+			return 1;
+		});
+		{ ObfusString name("luau_istable"); lua_setglobal(L, name.c_str()); }
+
 		if (luau_gettable)
 		{
 			lua_pushcfunction(L, [](lua_State* L) -> int
