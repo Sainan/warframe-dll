@@ -156,6 +156,19 @@ class Entity extends BaseEntity
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
+	function SetRotation(rot)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("Entity", "GetRotation"), 1)
+		end
+		local ud = luau_get_userdata()
+		mem_write_f32(ud + 0x20, rot.x)
+		mem_write_f32(ud + 0x24, rot.y)
+		mem_write_f32(ud + 0x28, rot.z)
+		luau_call(luau_find_method("Entity", "SetRotation"), 2)
+	end
+
 	function GetHealth()
 		luau_begin_call()
 		luau_push_object(self.addr)
@@ -263,6 +276,27 @@ class BaseAvatar extends Entity
 		if addr := luau_pop_object() do
 			return new MotionControllerBase(addr)
 		end
+	end
+
+	function GetCameraView()
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_end_call(luau_find_method("BaseAvatar", "GetCameraView"))
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetCameraView(rot)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("BaseAvatar", "GetCameraView"), 1)
+		end
+		local ud = luau_get_userdata()
+		mem_write_f32(ud + 0x20, rot.x)
+		mem_write_f32(ud + 0x24, rot.y)
+		mem_write_f32(ud + 0x28, rot.z)
+		luau_call(luau_find_method("BaseAvatar", "SetCameraView"), 2)
 	end
 end
 

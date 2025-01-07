@@ -36,6 +36,7 @@ class Entity extends BaseEntity
 	function GetPosition()
 	function SetPosition(pos)
 	function GetRotation()
+	function SetRotation(rot)
 	function GetHealth()
 	function SetHealth(health)
 	function GetDrawOnTop()
@@ -52,6 +53,8 @@ class BaseAvatar extends Entity
 	function InputControl()
 	function GiveItem(type, b)
 	function MotionControl()
+	function GetCameraView()
+	function SetCameraView(rot)
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)
