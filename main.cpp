@@ -1623,8 +1623,8 @@ struct owfScript
 		{
 			lua_pushcfunction(L, [](lua_State* L) -> int
 			{
-				luau_gettable(luau_L, luaL_checkinteger(L, 1));
-				return 0;
+				lua_pushinteger(L, luau_gettable(luau_L, luaL_checkinteger(L, 1)));
+				return 1;
 			});
 			{ ObfusString name("luau_gettable"); lua_setglobal(L, name.c_str()); }
 		}
