@@ -838,6 +838,7 @@ gFlashMgr = {
 	end,
 }
 
+ZERO_ROTATION = Rotation()
 EMPTY_SYMBOL = Symbol()
 
 Engine.SLOT_1 = 0

@@ -203,6 +203,7 @@ gGameRules
 gFlashMgr
 	function ExecuteToolMenuCommand(resource)
 
+ZERO_ROTATION = Rotation()
 EMPTY_SYMBOL = Symbol()
 
 Engine.SLOT_1 = 0 -- Secondary
