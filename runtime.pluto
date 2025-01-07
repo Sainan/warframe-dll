@@ -781,6 +781,10 @@ class Engine.OpenLevelArgs
 end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
 
+function IsNull(val)
+	return not val
+end
+
 function Type(name)
 	return name
 end

@@ -157,6 +157,7 @@ class Engine.OpenLevelArgs
 
 -- Global functions
 
+function IsNull(val)
 function Type(name)
 function Symbol(name)
 function Resource(name)
