@@ -742,7 +742,7 @@ gRegion = {
 		luau_pop(2)
 		return t
 	end,
-	function CreateEntity(type)
+	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
 			luau_push_object(get_regionmgr())
 			do
@@ -752,10 +752,22 @@ gRegion = {
 			do
 				luau_push_object(avatar.addr)
 				luau_call(luau_find_method("Entity", "GetPosition"), 1)
+				if pos then -- optional for compatibility with older OpenWF versions
+					local ud = luau_get_userdata()
+					mem_write_f32(ud + 0x20, pos.x)
+					mem_write_f32(ud + 0x24, pos.y)
+					mem_write_f32(ud + 0x28, pos.z)
+				end
 			end
 			do
 				luau_push_object(avatar.addr)
 				luau_call(luau_find_method("Entity", "GetRotation"), 1)
+				if rot then -- optional for compatibility with older OpenWF versions
+					local ud = luau_get_userdata()
+					mem_write_f32(ud + 0x20, rot.x)
+					mem_write_f32(ud + 0x24, rot.y)
+					mem_write_f32(ud + 0x28, rot.z)
+				end
 			end
 			luau_call(luau_find_method("RegionMgrImpl", "CreateEntity"), 4)
 			return new Entity(luau_pop_object())
