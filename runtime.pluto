@@ -806,8 +806,8 @@ gRegion = {
 		luau_end_call(luau_find_method("RegionMgrImpl", "GetAvatars"))
 		local t = {}
 		local i = 1
-		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) and nil) or luau_pop_object() do
-			t:insert(new LotusAvatar(obj))
+		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+			t:insert(new LotusAvatar(luau_pop_object()))
 			++i
 		end
 		luau_pop(2)
