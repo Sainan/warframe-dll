@@ -3373,7 +3373,7 @@ Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$versio
 repeat
 	for gRegion:GetLocalPlayer():GetHudStatus():GetFlashMarkers() as marker do
 		if marker.markerType == 49 and not marker.garbage then
-			gRegion:GetLocalPlayerAvatar():SetPosition(marker.pos)
+			gRegion:GetLocalPlayerAvatar():SetPosition(marker.baseMarkerInfo:GetPosition())
 		end
 	end
 until yield())EOC").str());
