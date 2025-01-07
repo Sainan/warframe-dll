@@ -146,8 +146,9 @@ class FlashMarker extends owfClassBase
 	function ScreenY()
 	function ScreenZ()
 
-class BaseMarkerInfo
+class BaseMarkerInfo extends Entity
 	function SetMarkerType(i)
+	function SetDisplayRange(range)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)
@@ -158,6 +159,7 @@ class Engine.OpenLevelArgs
 function Type(name)
 function Symbol(name)
 function Resource(name)
+function Range(min, max)
 function Engine.OpenLevel(args)
 
 -- OpenWF global functions

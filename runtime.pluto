@@ -232,7 +232,12 @@ class Entity extends BaseEntity
 			mem_write_f32(ud + 0x24, optionalPosOffset.y)
 			mem_write_f32(ud + 0x28, optionalPosOffset.z)
 		end
-		luau_pop(luau_call(luau_find_method("Entity", "Attach"), optionalPosOffset ? 4 : 3))
+		luau_call(luau_find_method("Entity", "Attach"), optionalPosOffset ? 4 : 3)
+		local obj = new Object(luau_pop_object())
+		if obj:GetType():isNameInHierarchy("BaseMarkerInfo") then
+			return new BaseMarkerInfo(obj.addr)
+		end
+		return obj
 	end
 end
 
@@ -699,21 +704,29 @@ class FlashMarker extends owfClassBase
 				break
 
 			case "baseMarkerInfo":
-				return new BaseMarkerInfo(self.addr)
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("FlashMarker", "baseMarkerInfo"), 1)
+				return new BaseMarkerInfo(luau_pop_object())
 		end
 	end
 end
 FlashMarker.__parent = nil -- Hack so our __index is used
 
-class BaseMarkerInfo --extends Entity
-	function __construct(private owner)
-	end
-
+class BaseMarkerInfo extends Entity
 	function SetMarkerType(i)
-		luau_push_pointer(self.owner)
-		luau_call(luau_find_getter("FlashMarker", "baseMarkerInfo"), 1)
+		luau_push_object(self.addr)
 		luau_push_int(i)
 		luau_call(luau_find_method("BaseMarkerInfo", "SetMarkerType"), 2)
+	end
+
+	function SetDisplayRange(range)
+		luau_push_object(self.addr)
+		do
+			luau_push_float(range.min)
+			luau_push_float(range.max)
+			luau_call(luau_find_ctor("Range"), 2)
+		end
+		luau_call(luau_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
 	end
 end
 
@@ -760,6 +773,10 @@ end
 
 function Resource(name)
 	return name
+end
+
+function Range(min, max)
+	return { min = min, max = max }
 end
 
 function Engine.OpenLevel(args)
