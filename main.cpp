@@ -1623,7 +1623,14 @@ struct owfScript
 		{
 			lua_pushcfunction(L, [](lua_State* L) -> int
 			{
-				lua_pushinteger(L, luau_gettable(luau_L, luaL_checkinteger(L, 1)));
+				try
+				{
+					lua_pushinteger(L, luau_gettable(luau_L, luaL_checkinteger(L, 1)));
+				}
+				catch (const int&)
+				{
+					luaL_error(L, luau_error_msg.c_str());
+				}
 				return 1;
 			});
 			{ ObfusString name("luau_gettable"); lua_setglobal(L, name.c_str()); }
@@ -2022,6 +2029,9 @@ static int lua_update_hud_detour(luau_State* L)
 		std::cout << "LuaU is panicking" << std::endl;
 #endif
 		luau_error_msg = (--L->outtop)->getString();
+#if LOGGING
+		std::cout << luau_error_msg << std::endl;
+#endif
 		throw 0;
 	};
 	{
