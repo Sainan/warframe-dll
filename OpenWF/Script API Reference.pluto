@@ -45,6 +45,7 @@ class Entity extends BaseEntity
 	function GetMeshScale()
 	function SetMeshScale(f)
 	function Attach(type, symbol, optionalPosOffset)
+	function GetAttachment(type)
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)
