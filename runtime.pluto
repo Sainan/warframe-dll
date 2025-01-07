@@ -872,6 +872,26 @@ gRegion = {
 		end
 		return t
 	end,
+	function FindAll(type)
+		luau_push_object(get_regionmgr())
+		do
+			luau_push_string(type)
+			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		luau_call(luau_find_method("RegionMgrImpl", "FindAll"), 2)
+		local t = {}
+		if luau_istable(-1) then
+			local i = 1
+			while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+				t:insert(new LotusAvatar(luau_pop_object()))
+				++i
+			end
+			luau_pop(2)
+		else
+			luau_pop(1)
+		end
+		return t
+	end,
 	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
 			luau_push_object(get_regionmgr())
