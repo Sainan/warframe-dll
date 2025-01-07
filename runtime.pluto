@@ -1,7 +1,8 @@
 --dummy,R"EOC(--[[OpenWF Script Runtime]]--
 
-Vector3 = require "pluto:vector3"
-Rotation = Vector3
+Vector = require "pluto:vector3"
+Vector3 = Vector
+Rotation = Vector
 
 class owfClassBase
 	function __construct(addr)

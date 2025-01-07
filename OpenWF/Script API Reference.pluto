@@ -1,5 +1,6 @@
 --dummy,R"EOC(-- Classes
 
+Vector = require "pluto:vector3"
 Vector3 = require "pluto:vector3"
 Rotation = require "pluto:vector3"
 
