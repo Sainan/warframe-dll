@@ -591,6 +591,40 @@ class NpcManager extends EngineNpcMgr
 		luau_push_object(self.addr)
 		luau_end_call(luau_find_method("NpcManager", "PauseAllAgents"))
 	end
+
+	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
+		if avatar := gRegion:GetLocalPlayerAvatar() then
+			luau_push_object(self.addr)
+			do
+				luau_push_string(type)
+				luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			end
+			do
+				luau_push_object(avatar.addr)
+				luau_call(luau_find_method("Entity", "GetPosition"), 1)
+				local ud = luau_get_userdata()
+				mem_write_f32(ud + 0x20, pos.x)
+				mem_write_f32(ud + 0x24, pos.y)
+				mem_write_f32(ud + 0x28, pos.z)
+			end
+			do
+				luau_push_object(avatar.addr)
+				luau_call(luau_find_method("Entity", "GetRotation"), 1)
+				local ud = luau_get_userdata()
+				mem_write_f32(ud + 0x20, rot.x)
+				mem_write_f32(ud + 0x24, rot.y)
+				mem_write_f32(ud + 0x28, rot.z)
+			end
+			if optionalSymbol then
+				luau_push_string(optionalSymbol)
+				luau_call(luau_find_ctor("Symbol"), 1)
+			else
+				luau_call(luau_find_ctor("Symbol"), 0)
+			end
+			luau_push_int(optionalLevel or 0)
+			luau_pop(luau_call(luau_find_method("NpcManager", "CreateAgentAtPosition"), 6))
+		end
+	end
 end
 
 class HudStatus extends Object end

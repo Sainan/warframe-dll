@@ -129,6 +129,7 @@ class EngineNpcMgr extends Object
 
 class NpcManager extends EngineNpcMgr
 	function PauseAllAgents()
+	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
 
 class HudStatus extends Object
 
