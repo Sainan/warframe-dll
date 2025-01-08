@@ -30,6 +30,7 @@ class HumanPlayer extends Player
 	function ToggleFreeCamera()
 	function isControllingCamera()
 	function setControllingCamera(b)
+	function AssignAvatar(avatar, b1 = true, b2 = true)
 
 class BaseEntity extends Object
 
