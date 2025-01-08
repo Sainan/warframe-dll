@@ -1840,6 +1840,11 @@ struct owfScript
 		});
 		{ ObfusString name("get_active_input_filter"); lua_setglobal(L, name.c_str()); }
 
+#if PRIVATE
+		lua_pushboolean(L, true);
+		lua_setglobal(L, "OWF_PRIVATE_BUILD");
+#endif
+
 		std::string runtime;
 #if PRIVATE
 		runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
