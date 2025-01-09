@@ -1106,6 +1106,8 @@ static std::unordered_map<uint32_t, uintptr_t> lua_exe_scan_cache;
 static uintptr_t ChatRedux_table = 0;
 static uintptr_t ChatRedux_SystemMessage_method = 0;
 
+static std::string bgscript_status_string;
+
 struct owfScript
 {
 	std::string name;
@@ -1826,6 +1828,13 @@ struct owfScript
 		});
 		{ ObfusString name("get_active_input_filter"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			bgscript_status_string = pluto_checkstring(L, 1);
+			return 0;
+		});
+		{ ObfusString name("owf_set_bgscript_status_string"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 		lua_pushboolean(L, true);
 		lua_setglobal(L, "OWF_PRIVATE_BUILD");
@@ -1899,18 +1908,15 @@ struct owfScript
 
 	bool tick()
 	{
-		if (!prohibit_scripts)
+		int nresults;
+		int status = lua_resume(coro, main, 0, &nresults);
+		if (status == LUA_YIELD)
 		{
-			int nresults;
-			int status = lua_resume(coro, main, 0, &nresults);
-			if (status == LUA_YIELD)
-			{
-				return true;
-			}
-			if (status != LUA_OK)
-			{
-				owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
-			}
+			return true;
+		}
+		if (status != LUA_OK)
+		{
+			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
 		}
 		return false;
 	}
@@ -1923,6 +1929,7 @@ struct owfScript
 
 static Mutex running_scripts_mtx;
 static std::vector<UniquePtr<owfScript>> running_scripts;
+static owfScript* bgscript = nullptr;
 
 static void start_script_from_file(std::string&& path)
 {
@@ -1956,75 +1963,8 @@ static owfScript* get_script_by_name(const std::string& name)
 	return nullptr;
 }
 
-template <typename T>
-struct LinkedList
-{
-	struct Entry
-	{
-		PAD(0, 0x10) void** unk;
-		/* 0x18 */ Entry* _next;
-
-		[[nodiscard]] T* getNext() noexcept
-		{
-			if (*_next->unk && _next != this)
-			{
-				return static_cast<T*>(_next);
-			}
-			return nullptr;
-		}
-	};
-	static_assert(sizeof(Entry) == 0x20);
-
-	uintptr_t _head;
-	int unk1;
-	int unk2;
-
-	[[nodiscard]] T* getHead() noexcept
-	{
-		auto node = reinterpret_cast<Entry*>(_head - 0x10);
-		if (*node->unk)
-		{
-			return static_cast<T*>(node);
-		}
-		return nullptr;
-	}
-};
-
-enum MarkerType : uint8_t
-{
-	HUD_OBJECTIVE = 3, // (Diamond icon)
-	HUD_TARGET1 = 9, // Exterminate
-	HUD_LIFE_SUPPORT_CAPSULE = 12,
-	HUD_ELEVATOR = 14, // Typically only shows when nearby (without distance indicator)
-	HUD_TARGET2 = 29, // Capture Target, Disruption Demolyst
-	HUD_LIFE_SUPPORT_PICKUP = 31,
-	HUD_SPY_A = 40,
-	HUD_SPY_B = 41,
-	HUD_SPY_C = 42,
-	HUD_WAYPOINT_1 = 49,
-	HUD_FOCUS = 65,
-	HUD_EXTRACT = 75,
-	HUD_DISRUPTION = 79, // All keys & conduits seem to use this
-	HUD_REINFORCEMENT_BEACON = 86, // Orb Vallis
-};
-
-struct Marker : public LinkedList<Marker>::Entry
-{
-	PAD(0x20, 0x4C) float world_x;
-	/* 0x50 */ float world_y;
-	/* 0x54 */ float world_z;
-	PAD(0x58, 0x80) const char* label;
-	PAD(0x88, 0xB0) MarkerType type;
-	PAD(0xB1, 0xD0) int distance;
-};
-
-struct LotusHudStatus : public Object
-{
-	INIT_PAD(Object, 0xB80) LinkedList<Marker>** markers;
-};
-
-static DetourHook lua_update_hud_hook;
-static int lua_update_hud_detour(luau_State* L)
+static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
+static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 {
 	const auto og_outtop = L->outtop;
 	const auto og_intop = L->intop;
@@ -2044,11 +1984,15 @@ static int lua_update_hud_detour(luau_State* L)
 #endif
 		throw 0;
 	};
+	if (bgscript != nullptr)
+	{
+		bgscript->tick();
+	}
 	{
 		std::lock_guard mtx(running_scripts_mtx);
 		for (auto i = running_scripts.begin(); i != running_scripts.end(); )
 		{
-			if ((*i)->tick())
+			if (!prohibit_scripts && (*i)->tick())
 			{
 				++i;
 			}
@@ -2070,16 +2014,7 @@ static int lua_update_hud_detour(luau_State* L)
 	L->global_state->error_longjump_data = og_lngjmp;
 	L->global_state->panic_func = og_panic;
 
-	return reinterpret_cast<decltype(&lua_update_hud_detour)>(lua_update_hud_hook.original)(L);
-}
-
-static DetourHook update_hud_hook;
-static LinkedList<Marker>* markers = nullptr;
-
-static bool update_hud_detour(LotusHudStatus* hud, void* a2, void* a3, float a4)
-{
-	markers = *hud->markers;
-	return reinterpret_cast<decltype(&update_hud_detour)>(update_hud_hook.original)(hud, a2, a3, a4);
+	return lua_LotusHudStatus_UpdateFlashMarkers_og(L);
 }
 
 
@@ -3039,25 +2974,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("0F 28 D8 4C 8B C3 48 8B D7 48 8B CE E8");
-			auto lua_update_hud = Module(nullptr).range.scan(sig_inst);
+			SIG_INST("C2 96 84 6B 00 00 00 00");
+			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "lua_update_hud = " << lua_update_hud.as<void*>() << std::endl;
+			std::cout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
 #endif
-			if (lua_update_hud)
+			if (lua_LotusHudStatus_UpdateFlashMarkers_hash)
 			{
-				auto update_hud = lua_update_hud.add(13).rip().as<void*>();
-				lua_update_hud = lua_update_hud.sub(0x0000000141054F72 - 0x0000000141054F10);
-
-				lua_update_hud_hook.detour = reinterpret_cast<void*>(&lua_update_hud_detour);
-				lua_update_hud_hook.target = lua_update_hud.as<void*>();
-				lua_update_hud_hook.create();
-				lua_update_hud_hook.enable();
-
-				update_hud_hook.detour = reinterpret_cast<void*>(&update_hud_detour);
-				update_hud_hook.target = update_hud;
-				update_hud_hook.create();
-				update_hud_hook.enable();
+				auto lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_hash.add(8).as<luau_CFunction*>();
+				lua_LotusHudStatus_UpdateFlashMarkers_og = *lua_LotusHudStatus_UpdateFlashMarkers_fp;
+				memGuard::setAllowedAccess(lua_LotusHudStatus_UpdateFlashMarkers_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_detour;
 			}
 			else
 			{
@@ -3591,6 +3518,29 @@ owf_overlay_remove(shadow)
 owf_overlay_remove(text)
 owf_overlay_update())EOC").str());
 
+		bgscript = new owfScript();
+		bgscript->loadString(ObfusString(R"EOC(local json = require"pluto:json"
+repeat
+	local markers = {}
+	if ply := gRegion:GetLocalPlayer() then
+		if hud := ply:GetHudStatus() then
+			for hud:GetFlashMarkers() as marker do
+				if not marker.garbage then
+					local pos = marker.baseMarkerInfo:GetPosition()
+					markers:insert({
+						type = marker.markerType,
+						x = pos.x,
+						y = pos.y,
+						z = pos.z,
+						dist = marker.distanceToEye,
+					})
+				end
+			end
+		end
+	end
+	owf_set_bgscript_status_string(json.encode({ markers = markers }))
+until yield())EOC").str());
+
 		if (!auto_start_scripts.empty())
 		{
 			ObfusString base_path("OpenWF/scripts/");
@@ -3733,8 +3683,10 @@ owf_overlay_update())EOC").str());
 				}
 				document.getElementById("pos").value = res.pos ?? "";
 
+				const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
+				bgscript_status.markers ??= [];
 				const marker_set = {};
-				for (const marker of res.markers) {
+				for (const marker of bgscript_status.markers) {
 					if (marker.type != 14) {
 						const name = (marker.type in marker_types ? marker_types[marker.type] : "Marker") + " in " + marker.dist + "m";
 						const pos = marker.x + "," + marker.y + "," + marker.z;
@@ -3997,46 +3949,7 @@ owf_overlay_update())EOC").str());
 									}
 								}
 							}
-							{
-								auto arr = soup::make_unique<JsonArray>();
-								if (markers)
-								{
-									Marker* marker = nullptr;
-									__try
-									{
-										marker = markers->getHead();
-									}
-									__except (EXCEPTION_EXECUTE_HANDLER)
-									{
-#if LOGGING
-										std::cout << "Exception while fetching marker head" << std::endl;
-#endif
-										markers = nullptr;
-									}
-									while (marker != nullptr)
-									{
-										auto marker_obj = soup::make_unique<JsonObject>();
-										__try
-										{
-											marker_obj->add(ObfusString("type").str(), (int)marker->type);
-											marker_obj->add(ObfusString("x").str(), marker->world_x);
-											marker_obj->add(ObfusString("y").str(), marker->world_y);
-											marker_obj->add(ObfusString("z").str(), marker->world_z);
-											marker_obj->add(ObfusString("dist").str(), marker->distance);
-											marker = marker->getNext();
-										}
-										__except (EXCEPTION_EXECUTE_HANDLER)
-										{
-#if LOGGING
-											std::cout << "Exception while reading marker" << std::endl;
-#endif
-											markers = nullptr;
-										}
-										arr->children.emplace_back(std::move(marker_obj));
-									}
-								}
-								obj.add(ObfusString("markers"), std::move(arr));
-							}
+							obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
 							{
 								std::lock_guard lock(running_scripts_mtx);
 								auto arr = soup::make_unique<JsonArray>();
