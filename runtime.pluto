@@ -12,31 +12,22 @@ class owfClassBase
 	end
 end
 
-luau_begin_call = luau_stktrk_begin
-
-function luau_end_call(f)
-	luau_call(f, luau_stktrk_end())
-end
-
 class ObjectType extends owfClassBase
 	function GetName()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("ObjectType", "GetName"))
+		luau_call(luau_find_method("ObjectType", "GetName"), 1)
 		return luau_pop_string()
 	end
 
 	function GetFullName()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("ObjectType", "GetFullName"))
+		luau_call(luau_find_method("ObjectType", "GetFullName"), 1)
 		return luau_pop_string()
 	end
 
 	function GetParent()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("ObjectType", "GetParent"))
+		luau_call(luau_find_method("ObjectType", "GetParent"), 1)
 		if addr := luau_pop_pointer() then
 			return new ObjectType(addr)
 		end
@@ -56,25 +47,22 @@ end
 
 class Object extends owfClassBase
 	function GetType()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Object", "GetType"))
+		luau_call(luau_find_method("Object", "GetType"), 1)
 		if addr := luau_pop_pointer() then
 			return new ObjectType(addr)
 		end
 	end
 
 	function GetName()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Object", "GetName"))
+		luau_call(luau_find_method("Object", "GetName"), 1)
 		return luau_pop_string()
 	end
 
 	function GetFullName()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Object", "GetFullName"))
+		luau_call(luau_find_method("Object", "GetFullName"), 1)
 		return luau_pop_string()
 	end
 end
@@ -87,46 +75,40 @@ class Player extends Object
 	end
 
 	function GetPlayerName()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Player", "GetPlayerName"))
+		luau_call(luau_find_method("Player", "GetPlayerName"), 1)
 		return luau_pop_string()
 	end
 
 	function GetClanName()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Player", "GetClanName"))
+		luau_call(luau_find_method("Player", "GetClanName"), 1)
 		return luau_pop_string()
 	end
 
 	function GetPlayerAccountIDString()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Player", "GetPlayerAccountIDString"))
+		luau_call(luau_find_method("Player", "GetPlayerAccountIDString"), 1)
 		return luau_pop_string()
 	end
 
 	function GetPlayerMatchMakingString()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Player", "GetPlayerMatchMakingString"))
+		luau_call(luau_find_method("Player", "GetPlayerMatchMakingString"), 1)
 		return luau_pop_string()
 	end
 
 	function GetHudStatus()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Player", "GetHudStatus"))
+		luau_call(luau_find_method("Player", "GetHudStatus"), 1)
 		return new LotusHudStatus(luau_pop_object())
 	end
 end
 
 class HumanPlayer extends Player
 	function ToggleFreeCamera()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("HumanPlayer", "ToggleFreeCamera"))
+		luau_call(luau_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
 	end
 
 	function isControllingCamera()
@@ -170,9 +152,8 @@ class Entity extends BaseEntity
 	end
 
 	function GetRotation()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Entity", "GetRotation"))
+		luau_call(luau_find_method("Entity", "GetRotation"), 1)
 		local ud = luau_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
@@ -191,54 +172,47 @@ class Entity extends BaseEntity
 	end
 
 	function GetHealth()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Entity", "GetHealth"))
+		luau_call(luau_find_method("Entity", "GetHealth"), 1)
 		return luau_pop_number()
 	end
 
 	function SetHealth(health)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_int(health)
-		luau_end_call(luau_find_method("Entity", "SetHealth"))
+		luau_call(luau_find_method("Entity", "SetHealth"), 2)
 	end
 
 	function GetDrawOnTop()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Entity", "GetDrawOnTop"))
+		luau_call(luau_find_method("Entity", "GetDrawOnTop"), 1)
 		return luau_pop_bool()
 	end
 
 	function SetDrawOnTop(b)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("Entity", "SetDrawOnTop"))
+		luau_call(luau_find_method("Entity", "SetDrawOnTop"), 2)
 	end
 
 	function GetMeshScale()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("Entity", "GetMeshScale"))
+		luau_call(luau_find_method("Entity", "GetMeshScale"), 1)
 		return luau_pop_number()
 	end
 
 	function SetMeshScale(f)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_float(f)
-		luau_end_call(luau_find_method("Entity", "SetMeshScale"))
+		luau_call(luau_find_method("Entity", "SetMeshScale"), 2)
 	end
 
 	function SetMesh(object, b1, b2)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_object(object.addr)
 		luau_push_bool(b1)
 		luau_push_bool(b2)
-		luau_end_call(luau_find_method("Entity", "SetMesh"))
+		luau_call(luau_find_method("Entity", "SetMesh"), 4)
 	end
 
 	function Attach(type, symbol, optionalPosOffset)
@@ -278,25 +252,22 @@ end
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("BaseAvatar", "GetMaxHealth"))
+		luau_call(luau_find_method("BaseAvatar", "GetMaxHealth"), 2)
 		return luau_pop_number()
 	end
 
 	function SetMaxHealth(health, b = false)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_int(health)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("BaseAvatar", "SetMaxHealth"))
+		luau_call(luau_find_method("BaseAvatar", "SetMaxHealth"), 3)
 	end
 
 	function Suicide()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("BaseAvatar", "Suicide"))
+		luau_call(luau_find_method("BaseAvatar", "Suicide"), 1)
 	end
 
 	function DamageControl()
@@ -315,9 +286,8 @@ class BaseAvatar extends Entity
 	end
 
 	function InputControl()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("BaseAvatar", "InputControl"))
+		luau_call(luau_find_method("BaseAvatar", "InputControl"), 1)
 		if addr := luau_pop_object() do
 			return new InputController(addr)
 		end
@@ -334,18 +304,16 @@ class BaseAvatar extends Entity
 	end
 
 	function MotionControl()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("BaseAvatar", "MotionControl"))
+		luau_call(luau_find_method("BaseAvatar", "MotionControl"), 1)
 		if addr := luau_pop_object() do
 			return new MotionControllerBase(addr)
 		end
 	end
 
 	function GetCameraView()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("BaseAvatar", "GetCameraView"))
+		luau_call(luau_find_method("BaseAvatar", "GetCameraView"), 1)
 		local ud = luau_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
@@ -377,44 +345,39 @@ end
 
 class LotusAvatar extends Avatar
 	function IsAvatarFriendly(other)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_object(other.addr)
-		luau_end_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"))
+		luau_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
 		return luau_pop_bool()
 	end
 end
 
 class DamageControllerBase extends Object
 	function GiveTemporaryImmunity(a, b)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_float(a)
 		luau_push_float(b)
-		luau_end_call(luau_find_method("DamageControllerBase", "GiveTemporaryImmunity"))
+		luau_call(luau_find_method("DamageControllerBase", "GiveTemporaryImmunity"), 3)
 	end
 
 	function HasTemporaryImmunity()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("DamageControllerBase", "HasTemporaryImmunity"))
+		luau_call(luau_find_method("DamageControllerBase", "HasTemporaryImmunity"), 1)
 		return luau_pop_bool()
 	end
 
 	function RemoveTemporaryImmunity()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("DamageControllerBase", "RemoveTemporaryImmunity"))
+		luau_call(luau_find_method("DamageControllerBase", "RemoveTemporaryImmunity"), 1)
 	end
 end
 
 class InventoryControllerBase extends Object
 	function RemoveItem(slot, b)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_int(slot)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("InventoryControllerBase", "RemoveItem"))
+		luau_call(luau_find_method("InventoryControllerBase", "RemoveItem"), 3)
 	end
 
 	function GetWeaponInHand(hand)
@@ -424,12 +387,11 @@ class InventoryControllerBase extends Object
 	end
 
 	function AddUpgrade(upgradeType, operationType, value)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_int(upgradeType)
 		luau_push_int(operationType)
 		luau_push_float(value)
-		luau_end_call(luau_find_method("NullInventoryController", "AddUpgrade"))
+		luau_call(luau_find_method("NullInventoryController", "AddUpgrade"), 4)
 	end
 end
 
@@ -441,9 +403,8 @@ class LotusInventoryController extends InventoryControllerBase
 	end
 
 	function DoItemDrop()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_pop(luau_end_call(luau_find_method("LotusInventoryController", "DoItemDrop")))
+		luau_pop(luau_call(luau_find_method("LotusInventoryController", "DoItemDrop"), 1))
 	end
 end
 
@@ -451,11 +412,10 @@ class Item extends Object
 	function GetAttachmentEntity(category, hand = 4)
 		-- restricting category to avoid access violations
 		if category == 0 or category == 1 then
-			luau_begin_call()
 			luau_push_object(self.addr)
 			luau_push_int(category)
 			luau_push_int(hand)
-			luau_end_call(luau_find_method("Item", "GetAttachmentEntity"))
+			luau_call(luau_find_method("Item", "GetAttachmentEntity"), 3)
 			if addr := luau_pop_object() then
 				return new Entity(addr)
 			end
@@ -475,17 +435,15 @@ end
 
 class LotusWeapon extends WeaponEx
 	function GetXP()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("LotusWeapon", "GetXP"))
+		luau_call(luau_find_method("LotusWeapon", "GetXP"), 1)
 		return luau_pop_number()
 	end
 
 	function SetXP(xp)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_int(xp)
-		luau_end_call(luau_find_method("LotusWeapon", "SetXP"))
+		luau_call(luau_find_method("LotusWeapon", "SetXP"), 2)
 	end
 end
 
@@ -498,9 +456,8 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				luau_begin_call()
 				luau_push_object(self.addr)
-				luau_end_call(luau_find_getter("WeaponImpactBehavior", name))
+				luau_call(luau_find_getter("WeaponImpactBehavior", name), 1)
 				return luau_pop_number()
 		end
 	end
@@ -510,10 +467,9 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				luau_begin_call()
 				luau_push_object(self.addr)
 				luau_push_float(value)
-				luau_end_call(luau_find_setter("WeaponImpactBehavior", name))
+				luau_call(luau_find_setter("WeaponImpactBehavior", name), 2)
 		end
 	end
 end
@@ -521,37 +477,32 @@ WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
 
 class PowerSuit extends LotusWeapon
 	function SetEnergy(value)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_float(value)
-		luau_end_call(luau_find_method("PowerSuit", "SetEnergy"))
+		luau_call(luau_find_method("PowerSuit", "SetEnergy"), 2)
 	end
 
 	function SetMaxEnergy(value)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_float(value)
-		luau_end_call(luau_find_method("PowerSuit", "SetMaxEnergy"))
+		luau_call(luau_find_method("PowerSuit", "SetMaxEnergy"), 2)
 	end
 
 	function GetUnmodifiedMaxEnergy()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"))
+		luau_call(luau_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"), 1)
 		return luau_pop_number()
 	end
 
 	function GetCurEnergy()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("PowerSuit", "GetCurEnergy"))
+		luau_call(luau_find_method("PowerSuit", "GetCurEnergy"), 1)
 		return luau_pop_number()
 	end
 
 	function GetMaxEnergy()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("PowerSuit", "GetMaxEnergy"))
+		luau_call(luau_find_method("PowerSuit", "GetMaxEnergy"), 1)
 		return luau_pop_number()
 	end
 end
@@ -560,40 +511,35 @@ class InputControllerBase extends Object end
 
 class InputController extends InputControllerBase
 	function SetStopMovement(b)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("InputController", "SetStopMovement"))
+		luau_call(luau_find_method("InputController", "SetStopMovement"), 2)
 	end
 end
 
 class GameRules extends Object
 	function IsPauseMenuShowing()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("GameRules", "IsPauseMenuShowing"))
+		luau_call(luau_find_method("GameRules", "IsPauseMenuShowing"), 1)
 		return luau_pop_bool()
 	end
 
 	function RequestPause()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("GameRules", "RequestPause"))
+		luau_call(luau_find_method("GameRules", "RequestPause"), 1)
 	end
 
 	function RequestUnpause()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("GameRules", "RequestUnpause"))
+		luau_call(luau_find_method("GameRules", "RequestUnpause"), 1)
 	end
 end
 
 class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_bool(b)
-		luau_end_call(luau_find_method("GameRulesImpl", "SetPauseDisabled"))
+		luau_call(luau_find_method("GameRulesImpl", "SetPauseDisabled"), 2)
 	end
 end
 
@@ -601,35 +547,31 @@ class LotusBaseGameRules extends GameRulesImpl end
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
-		luau_begin_call()
 		luau_push_object(get_gamerules())
 		luau_push_nil()
-		luau_end_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"))
+		luau_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
 	end
 end
 
 class MotionControllerBase extends Object
 	function GetSpeedMultiplier()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("MotionControllerBase", "GetSpeedMultiplier"))
+		luau_call(luau_find_method("MotionControllerBase", "GetSpeedMultiplier"), 1)
 		return luau_pop_number()
 	end
 
 	function SetSpeedMultiplier(f)
-		luau_begin_call()
 		luau_push_object(self.addr)
 		luau_push_float(f)
-		luau_end_call(luau_find_method("MotionControllerBase", "SetSpeedMultiplier"))
+		luau_call(luau_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
 	end
 end
 
 class EngineNpcMgr extends Object end
 class NpcManager extends EngineNpcMgr
 	function PauseAllAgents()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("NpcManager", "PauseAllAgents"))
+		luau_call(luau_find_method("NpcManager", "PauseAllAgents"), 1)
 	end
 
 	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
@@ -670,9 +612,8 @@ end
 class HudStatus extends Object end
 class LotusHudStatus extends HudStatus
 	function GetFlashMarkers()
-		luau_begin_call()
 		luau_push_object(self.addr)
-		luau_end_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"))
+		luau_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
 		local t = {}
 		local i = 1
 		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) and nil) or luau_pop_object() do
@@ -686,23 +627,20 @@ end
 
 class FlashMarker extends owfClassBase
 	function ScreenX()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("FlashMarker", "ScreenX"))
+		luau_call(luau_find_method("FlashMarker", "ScreenX"), 1)
 		return luau_pop_number()
 	end
 
 	function ScreenY()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("FlashMarker", "ScreenY"))
+		luau_call(luau_find_method("FlashMarker", "ScreenY"), 1)
 		return luau_pop_number()
 	end
 
 	function ScreenZ()
-		luau_begin_call()
 		luau_push_pointer(self.addr)
-		luau_end_call(luau_find_method("FlashMarker", "ScreenZ"))
+		luau_call(luau_find_method("FlashMarker", "ScreenZ"), 1)
 		return luau_pop_number()
 	end
 
@@ -712,21 +650,18 @@ class FlashMarker extends owfClassBase
 		end
 		switch name do
 			case "garbage":
-				luau_begin_call()
 				luau_push_pointer(self.addr)
-				luau_end_call(luau_find_getter("FlashMarker", name))
+				luau_call(luau_find_getter("FlashMarker", name), 1)
 				return luau_pop_bool()
 
 			case "markerType":
-				luau_begin_call()
 				luau_push_pointer(self.addr)
-				luau_end_call(luau_find_getter("FlashMarker", name))
+				luau_call(luau_find_getter("FlashMarker", name), 1)
 				return math.tointeger(luau_pop_number())
 
 			case "distanceToEye":
-				luau_begin_call()
 				luau_push_pointer(self.addr)
-				luau_end_call(luau_find_getter("FlashMarker", name))
+				luau_call(luau_find_getter("FlashMarker", name), 1)
 				return luau_pop_number()
 
 			case "pos":
@@ -780,19 +715,16 @@ class Engine.OpenLevelArgs
 	end
 
 	function pushToLuau()
-		luau_begin_call()
-		luau_end_call(luau_find_ctor("OpenLevelArgs"))
+		luau_call(luau_find_ctor("OpenLevelArgs"), 0)
 
-		luau_begin_call()
 		luau_push_value(-1)
 		luau_push_string(self.level)
-		luau_end_call(luau_find_method("OpenLevelArgs", "SetLevel"))
+		luau_call(luau_find_method("OpenLevelArgs", "SetLevel"), 2)
 
 		if self.gamerules then
-			luau_begin_call()
 			luau_push_value(-1)
 			luau_push_string(self.gamerules)
-			luau_end_call(luau_find_method("OpenLevelArgs", "SetGameRules"))
+			luau_call(luau_find_method("OpenLevelArgs", "SetGameRules"), 2)
 		end
 	end
 end
@@ -857,9 +789,8 @@ gRegion = {
 		return obj
 	end,
 	function GetAvatars()
-		luau_begin_call()
 		luau_push_object(get_regionmgr())
-		luau_end_call(luau_find_method("RegionMgrImpl", "GetAvatars"))
+		luau_call(luau_find_method("RegionMgrImpl", "GetAvatars"), 1)
 		local t = {}
 		local i = 1
 		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
@@ -950,9 +881,8 @@ gRegion = {
 		end
 	end,
 	function GetNpcMgr()
-		luau_begin_call()
 		luau_push_object(get_regionmgr())
-		luau_end_call(luau_find_method("RegionMgrImpl", "GetNpcMgr"))
+		luau_call(luau_find_method("RegionMgrImpl", "GetNpcMgr"), 1)
 		return new NpcManager(luau_pop_object())
 	end,
 }

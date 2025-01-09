@@ -1396,20 +1396,6 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			luau_L->intop = luau_L->outtop;
-			return 0;
-		});
-		{ ObfusString name("luau_stktrk_begin"); lua_setglobal(L, name.c_str()); }
-
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
-			lua_pushinteger(L, luau_L->outtop - luau_L->intop);
-			return 1;
-		});
-		{ ObfusString name("luau_stktrk_end"); lua_setglobal(L, name.c_str()); }
-
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
 			luau_L->outtop->type = LUAU_NIL;
 			luau_L->outtop++;
 			return 0;
