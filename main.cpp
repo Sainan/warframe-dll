@@ -3456,7 +3456,12 @@ commands["/energy"] = function()
 	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetEnergy(1000000)
 end
 commands["/scale"] = function(text)
-	gRegion:GetLocalPlayerAvatar():SetMeshScale(tonumber(text:split(" ")[2]))
+	local scale = tonumber(text:split(" ")[2])
+	if scale ~= 0 then
+		gRegion:GetLocalPlayerAvatar():SetMeshScale(scale)
+	else
+		chat_system_reply("That's not a good idea.")
+	end
 end
 commands["/pause"] = function(text)
 	gGameRules:RequestPause()
