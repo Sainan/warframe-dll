@@ -232,6 +232,15 @@ class Entity extends BaseEntity
 		luau_end_call(luau_find_method("Entity", "SetMeshScale"))
 	end
 
+	function SetMesh(object, b1, b2)
+		luau_begin_call()
+		luau_push_object(self.addr)
+		luau_push_object(object.addr)
+		luau_push_bool(b1)
+		luau_push_bool(b2)
+		luau_end_call(luau_find_method("Entity", "SetMesh"))
+	end
+
 	function Attach(type, symbol, optionalPosOffset)
 		luau_push_object(self.addr)
 		do
@@ -899,6 +908,15 @@ gRegion = {
 			luau_pop(1)
 		end
 		return t
+	end,
+	function CreateObject(type)
+		luau_push_object(get_regionmgr())
+		do
+			luau_push_string(type)
+			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		luau_call(luau_find_method("RegionMgrImpl", "CreateObject"), 2)
+		return new Object(luau_pop_object())
 	end,
 	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then

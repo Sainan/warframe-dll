@@ -45,6 +45,7 @@ class Entity extends BaseEntity
 	function SetDrawOnTop(b)
 	function GetMeshScale()
 	function SetMeshScale(f)
+	function SetMesh(object, b1, b2)
 	function Attach(type, symbol, optionalPosOffset)
 	function GetAttachment(type)
 
@@ -203,6 +204,7 @@ gRegion
 	function GetAvatars()
 	function FindTagged(symbol)
 	function FindAll(type)
+	function CreateObject(type)
 	function CreateEntity(type, pos, rot)
 	function GetNpcMgr()
 
