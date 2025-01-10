@@ -160,10 +160,13 @@ class Engine.OpenLevelArgs
 -- Global functions
 
 function IsNull(val)
+function Sleep(ms)
+
 function Type(name)
 function Symbol(name)
 function Resource(name)
 function Range(min, max)
+
 function Engine.OpenLevel(args)
 
 -- OpenWF global functions

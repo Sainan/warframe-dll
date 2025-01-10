@@ -738,6 +738,8 @@ function Type(name)
 	return name
 end
 
+Sleep = coroutine.sleep
+
 function Symbol(name)
 	return name
 end
