@@ -255,6 +255,12 @@ class Entity extends BaseEntity
 		luau_call(luau_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(luau_pop_string())
 	end
+
+	function FirePort(port)
+		luau_push_object(self.addr)
+		luau_push_string(port)
+		luau_call(luau_find_method("Entity", "FirePort"), 2)
+	end
 end
 
 class BaseAvatar extends Entity
