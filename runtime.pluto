@@ -760,7 +760,7 @@ class Symbol
 		return self.name
 	end
 end
-setmetatable(Symbol, { __call = |name| -> new Symbol(name) })
+setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
 
 function IsNull(val)
 	return not val
