@@ -48,6 +48,7 @@ class Entity extends BaseEntity
 	function SetMesh(object, b1, b2)
 	function Attach(type, symbol, optionalPosOffset)
 	function GetAttachment(type)
+	function GetTag()
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)
@@ -157,13 +158,15 @@ class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
 
+class Symbol
+	function __tostring()
+
 -- Global functions
 
 function IsNull(val)
 function Sleep(ms)
 
 function Type(name)
-function Symbol(name)
 function Resource(name)
 function Range(min, max)
 

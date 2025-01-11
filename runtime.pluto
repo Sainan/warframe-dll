@@ -222,7 +222,7 @@ class Entity extends BaseEntity
 			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
 		if symbol then
-			luau_push_string(symbol)
+			luau_push_string(symbol.name)
 			luau_call(luau_find_ctor("Symbol"), 1)
 		else
 			luau_call(luau_find_ctor("Symbol"), 0)
@@ -247,6 +247,13 @@ class Entity extends BaseEntity
 		end
 		luau_call(luau_find_method("Entity", "GetAttachment"), 2)
 		return pop_entity()
+	end
+
+	function GetTag()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("Entity", "GetTag"), 1)
+		luau_call(luau_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(luau_pop_string())
 	end
 end
 
@@ -598,7 +605,7 @@ class NpcManager extends EngineNpcMgr
 				mem_write_f32(ud + 0x28, rot.z)
 			end
 			if optionalSymbol then
-				luau_push_string(optionalSymbol)
+				luau_push_string(optionalSymbol.name)
 				luau_call(luau_find_ctor("Symbol"), 1)
 			else
 				luau_call(luau_find_ctor("Symbol"), 0)
@@ -730,6 +737,16 @@ class Engine.OpenLevelArgs
 end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
 
+class Symbol
+	function __construct(public name)
+	end
+
+	function __tostring()
+		return self.name
+	end
+end
+setmetatable(Symbol, { __call = |name| -> new Symbol(name) })
+
 function IsNull(val)
 	return not val
 end
@@ -739,10 +756,6 @@ function Type(name)
 end
 
 Sleep = coroutine.sleep
-
-function Symbol(name)
-	return name
-end
 
 function Resource(name)
 	return name
@@ -805,7 +818,7 @@ gRegion = {
 	function FindTagged(symbol)
 		luau_push_object(get_regionmgr())
 		do
-			luau_push_string(symbol)
+			luau_push_string(symbol.name)
 			luau_call(luau_find_ctor("Symbol"), 1)
 		end
 		luau_call(luau_find_method("RegionMgrImpl", "FindTagged"), 2)
