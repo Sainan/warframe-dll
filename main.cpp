@@ -2003,10 +2003,10 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		}
 	}
 
-#if LOGGING
+#if PRIVATE
 	if (L->outtop != og_outtop)
 	{
-		std::cout << "Not all values were popped from LuaU stack" << std::endl;
+		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
 	L->outtop = og_outtop;
