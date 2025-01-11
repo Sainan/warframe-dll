@@ -830,6 +830,19 @@ gRegion = {
 		luau_pop(2)
 		return t
 	end,
+	function FindFirstTagged(symbol)
+		luau_push_object(get_regionmgr())
+		do
+			luau_push_string(symbol.name)
+			luau_call(luau_find_ctor("Symbol"), 1)
+		end
+		luau_call(luau_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
+		if obj := luau_pop_object() then
+			return new LotusAvatar(obj)
+		else
+			luau_pop(1)
+		end
+	end,
 	function FindTagged(symbol)
 		luau_push_object(get_regionmgr())
 		do
