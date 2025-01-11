@@ -363,6 +363,15 @@ class LotusAvatar extends Avatar
 		luau_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
 		return luau_pop_bool()
 	end
+
+	function PlayEmote(resource)
+		luau_push_object(self.addr)
+		do
+			luau_push_string(resource)
+			luau_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+		end
+		luau_call(luau_find_method("LotusAvatar", "PlayEmote"), 2)
+	end
 end
 
 class DamageControllerBase extends Object
