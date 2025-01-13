@@ -588,7 +588,13 @@ class GameRulesImpl extends GameRules
 	end
 end
 
-class LotusBaseGameRules extends GameRulesImpl end
+class LotusBaseGameRules extends GameRulesImpl
+	function GetCurrentStarChart()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
+		return new RadialSolarMap(luau_pop_object())
+	end
+end
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
@@ -597,6 +603,137 @@ class LotusGameRules extends LotusBaseGameRules
 		luau_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
 	end
 end
+
+class LotusAttractModeGameRules extends GameRulesImpl
+	function GetStarChart()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
+		return new RadialSolarMap(luau_pop_object())
+	end
+end
+
+class RadialSolarMap extends Object
+	function GetRegions()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("RadialSolarMap", "GetRegions"), 1)
+		local t = {}
+		if luau_istable(-1) then
+			local i = 1
+			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+				t:insert(new RadialRegion())
+				++i
+			end
+			luau_pop(2)
+		else
+			luau_pop(1)
+		end
+		return t
+	end
+end
+
+class RadialRegion
+	function __construct()
+		luau_push_value(-1)
+		luau_call(luau_find_getter("RadialRegion", "name"), 1)
+		self.name = luau_pop_string()
+
+		self.sectors = {}
+		luau_call(luau_find_getter("RadialRegion", "sectors"), 1)
+		if luau_istable(-1) then
+			local i = 1
+			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+				self.sectors:insert(new RadialSector(luau_pop_pointer()))
+				++i
+			end
+			luau_pop(2)
+		else
+			luau_pop(1)
+		end
+	end
+end
+
+class RadialSector extends owfClassBase
+	function __newindex(name, value)
+		if RadialSector[name] then
+			return rawset(self, name, value)
+		end
+		switch name do
+			case "unlocked":
+				luau_push_pointer(self.addr)
+				luau_push_bool(value)
+				luau_call(luau_find_setter("RadialSector", "unlocked"), 2)
+				return
+		end
+		error()
+	end
+
+	function __index(name)
+		if RadialSector[name] then
+			return rawget(self, name)
+		end
+		switch name do
+			case "name":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("RadialSector", "name"), 1)
+				luau_call(luau_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(luau_pop_string())
+
+			case "unlocked":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("RadialSector", "unlocked"), 1)
+				return luau_pop_bool()
+
+			case "nodeType":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("RadialSector", "nodeType"), 1)
+				return math.tointeger(luau_pop_number())
+
+			case "missionTag":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("RadialSector", "missionTag"), 1)
+				luau_call(luau_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(luau_pop_string())
+
+			case "mission":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("RadialSector", "mission"), 1)
+				return new LotusMissionInfo(luau_pop_pointer())
+		end
+	end
+end
+RadialSector.__parent = nil -- Hack so our __index is used
+
+class LotusMissionInfo extends owfClassBase
+	function __index(name)
+		if RadialSector[name] then
+			return RadialSector[name]
+		end
+		switch name do
+			case "missionType":
+			case "minEnemyLevel":
+			case "maxEnemyLevel":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("LotusMissionInfo", name), 1)
+				return math.tointeger(luau_pop_number())
+
+			case "goalTag":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("LotusMissionInfo", "goalTag"), 1)
+				luau_call(luau_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(luau_pop_string())
+
+			case "levelOverride":
+				luau_push_pointer(self.addr)
+				luau_call(luau_find_getter("LotusMissionInfo", "levelOverride"), 1)
+				if addr := luau_pop_pointer() then 
+					return new ObjectType(addr)
+				end
+				luau_pop(1)
+				return nil
+		end
+	end
+end
+LotusMissionInfo.__parent = nil -- Hack so our __index is used
 
 class MotionControllerBase extends Object
 	function GetSpeedMultiplier()
@@ -837,6 +974,9 @@ gRegion = {
 	function GetGameRules()
 		local obj = new Object(get_gamerules())
 		local type = obj:GetType()
+		if type:isNameInHierarchy("LotusAttractModeGameRules") then
+			return new LotusAttractModeGameRules(obj.addr)
+		end
 		if type:isNameInHierarchy("LotusGameRules") then
 			return new LotusGameRules(obj.addr)
 		end
@@ -961,6 +1101,13 @@ setmetatable(_G, {
 	function __index(name)
 		if name == "gGameRules" then
 			return gRegion:GetGameRules()
+		end
+		if name == "gStarChart" then
+			local gr = gRegion:GetGameRules()
+			if gr instanceof LotusAttractModeGameRules then
+				return gr:GetStarChart()
+			end
+			return gr:GetCurrentStarChart()
 		end
 		return rawget(self, name)
 	end

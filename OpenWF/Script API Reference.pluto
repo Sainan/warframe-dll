@@ -125,9 +125,34 @@ class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
 
 class LotusBaseGameRules extends GameRulesImpl
+	function GetCurrentStarChart()
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
+
+class LotusAttractModeGameRules extends GameRulesImpl
+	function GetStarChart()
+
+class RadialSolarMap extends Object
+	function GetRegions()
+
+class RadialRegion
+	name
+	sectors
+
+class RadialSector extends owfClassBase
+	name
+	unlocked
+	nodeType
+	missionTag
+	mission
+
+class LotusMissionInfo extends owfClassBase
+	missionType
+	minEnemyLevel
+	maxEnemyLevel
+	goalTag
+	levelOverride
 
 class MotionControllerBase
 	function GetSpeedMultiplier()
@@ -221,6 +246,7 @@ gRegion
 	function GetNpcMgr()
 
 gGameRules
+gStarChart
 
 gFlashMgr
 	function ExecuteToolMenuCommand(resource)
