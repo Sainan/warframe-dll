@@ -163,6 +163,8 @@ class Engine.OpenLevelArgs
 	function SetGameRules(gamerules)
 
 class Symbol
+	function __construct(public name = "")
+	function __eq(b)
 	function __tostring()
 
 -- Global functions

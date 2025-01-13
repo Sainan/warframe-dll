@@ -776,7 +776,11 @@ end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
 
 class Symbol
-	function __construct(public name)
+	function __construct(public name = "")
+	end
+
+	function __eq(b)
+		return self.name == b.name
 	end
 
 	function __tostring()
