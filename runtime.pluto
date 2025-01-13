@@ -30,6 +30,8 @@ class ObjectType extends owfClassBase
 		luau_call(luau_find_method("ObjectType", "GetParent"), 1)
 		if addr := luau_pop_pointer() then
 			return new ObjectType(addr)
+		else
+			luau_pop(1)
 		end
 	end
 
