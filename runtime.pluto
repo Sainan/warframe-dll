@@ -974,6 +974,10 @@ gFlashMgr = {
 }
 
 gEntityType = Type("/EE/Types/Engine/Entity")
+gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
+gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
+gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")
+gLotusDuelGameRulesType = Type("/Lotus/Types/Game/LotusDuelGameRules")
 
 ZERO_ROTATION = Rotation()
 EMPTY_SYMBOL = Symbol()
