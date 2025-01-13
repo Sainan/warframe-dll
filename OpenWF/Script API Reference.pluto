@@ -17,6 +17,7 @@ class Object extends owfClassBase
 	function GetType()
 	function GetName()
 	function GetFullName()
+	function IsA(type)
 
 class Player extends Object
 	function GetAvatar()

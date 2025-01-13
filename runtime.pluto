@@ -65,6 +65,17 @@ class Object extends owfClassBase
 		luau_call(luau_find_method("Object", "GetFullName"), 1)
 		return luau_pop_string()
 	end
+
+	function IsA(type)
+		local htype = self:GetType()
+		repeat
+			if htype:GetFullName() == type then
+				return true
+			end
+			htype = htype:GetParent()
+		until not htype
+		return false
+	end
 end
 
 class Player extends Object
