@@ -592,7 +592,7 @@ class LotusBaseGameRules extends GameRulesImpl end
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
-		luau_push_object(get_gamerules())
+		luau_push_object(self.addr)
 		luau_push_nil()
 		luau_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
 	end
