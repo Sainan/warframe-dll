@@ -12,6 +12,7 @@ class ObjectType extends owfClassBase
 	function GetFullName()
 	function GetParent()
 	function isNameInHierarchy(name)
+	function getHierarchy()
 
 class Object extends owfClassBase
 	function GetType()

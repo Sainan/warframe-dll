@@ -43,6 +43,16 @@ class ObjectType extends owfClassBase
 		until not type
 		return false
 	end
+
+	function getHierarchy()
+		local hier = {}
+		local type = self
+		repeat
+			hier:insert(type:GetFullName())
+			type = type:GetParent()
+		until not type
+		return hier
+	end
 end
 
 class Object extends owfClassBase
