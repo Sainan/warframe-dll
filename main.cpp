@@ -3589,6 +3589,7 @@ until yield())EOC").str());
 	<hr>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
+	<p><button onclick="clearScriptLog()">Clear Script Log</button></p>
 	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
 	<script>
 		fetch("/server_host").then(res => res.text()).then(res => {
@@ -3674,9 +3675,9 @@ until yield())EOC").str());
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
 		}
 
-		let script_log_len = 0;
+		let status_request_suffix = "?0";
 		function pollStatus() {
-			fetch("/status?" + script_log_len).then(res => res.json()).then(res => {
+			fetch("/status" + status_request_suffix).then(res => res.json()).then(res => {
 				document.getElementById("console").checked = res.console;
 				if (res.camtype) {
 					document.getElementById("camtype").value = res.camtype;
@@ -3721,7 +3722,7 @@ until yield())EOC").str());
 					const log = document.getElementById("script_log");
 					log.textContent += res.script_log_sub;
 					log.scrollTop = log.scrollHeight;
-					script_log_len = res.script_log_len;
+					status_request_suffix = "?" + res.script_log_len;
 				}
 
 				pollStatus();
@@ -3731,6 +3732,13 @@ until yield())EOC").str());
 			});
 		}
 		pollStatus();
+
+		function clearScriptLog() {
+			status_request_suffix = "";
+			fetch("/clear_script_log").then(() => {
+				document.getElementById("script_log").innerHTML = "";
+			});
+		}
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
