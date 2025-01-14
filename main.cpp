@@ -4025,6 +4025,7 @@ until yield())EOC").str());
 
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
+						ServerWebService::send204(s);
 						break;
 					}
 				});
