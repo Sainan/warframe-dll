@@ -718,8 +718,9 @@ class LotusMissionInfo extends owfClassBase
 				return math.tointeger(luau_pop_number())
 
 			case "goalTag":
+			case "activeMissionTag":
 				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("LotusMissionInfo", "goalTag"), 1)
+				luau_call(luau_find_getter("LotusMissionInfo", name), 1)
 				luau_call(luau_find_method("Symbol", "__tostring"), 1)
 				return new Symbol(luau_pop_string())
 

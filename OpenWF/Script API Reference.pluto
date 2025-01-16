@@ -152,6 +152,7 @@ class LotusMissionInfo extends owfClassBase
 	minEnemyLevel
 	maxEnemyLevel
 	goalTag
+	activeMissionTag
 	levelOverride
 
 class MotionControllerBase
