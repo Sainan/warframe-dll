@@ -1598,7 +1598,7 @@ return function(f)
 	coroutine.yield()
 	coroutine.yield = yield
 	xpcall(|| -> f(), function(e)
-		if e:sub(-14) == "Stop requested" then
+		if type(e) == "string" and e:sub(-14) == "Stop requested" then
 			print(e)
 		else
 			print(debug.traceback(e,2))
