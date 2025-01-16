@@ -215,10 +215,12 @@ function mem_read_f32(addr)
 function chat_block_prefix(prefix)
 function chat_unblock_prefix(prefix)
 function chat_system_reply(text)
+function owf_register_custom_route(path, mime, content)
 
 -- OpenWF events
 
 OWF_EVT_BLOCKED_CHAT_MESSAGE
+OWF_EVT_CUSTOM_ROUTE_SERVED
 
 function owf_next_event()
 

@@ -1115,8 +1115,25 @@ struct owfScript
 	lua_State* coro = nullptr;
 	bool stop_requested = false;
 
+	struct Event
+	{
+		enum Type : uint8_t
+		{
+			BLOCKED_CHAT_MESSAGE = 1,
+			CUSTOM_ROUTE_SERVED = 2,
+		};
+
+		Type type;
+		std::string data;
+	};
+	struct CustomRoute
+	{
+		std::string mime;
+		std::string content;
+	};
 	std::unordered_set<std::string> blocked_chat_prefixes;
-	std::deque<std::string> blocked_chat_messages;
+	std::unordered_map<uint32_t, CustomRoute> custom_routes;
+	std::deque<Event> events;
 
 	static void logNl(const std::string& msg)
 	{
@@ -1801,20 +1818,20 @@ struct owfScript
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
 			auto scr = static_cast<owfScript*>(L->l_G->user_data);
-			if (!scr->blocked_chat_messages.empty())
+			if (!scr->events.empty())
 			{
 				lua_newtable(L);
 				{
 					pluto_pushstring(L, ObfusString("type").str());
-					lua_pushinteger(L, 1); // OWF_EVT_BLOCKED_CHAT_MESSAGE
+					lua_pushinteger(L, scr->events.front().type);
 					lua_settable(L, -3);
 				}
 				{
-					pluto_pushstring(L, ObfusString("text").str());
-					pluto_pushstring(L, scr->blocked_chat_messages.front());
+					pluto_pushstring(L, scr->events.front().type == Event::BLOCKED_CHAT_MESSAGE ? ObfusString("text").str() : ObfusString("path").str());
+					pluto_pushstring(L, scr->events.front().data);
 					lua_settable(L, -3);
 				}
-				scr->blocked_chat_messages.pop_front();
+				scr->events.pop_front();
 				return 1;
 			}
 			return 0;
@@ -1834,6 +1851,13 @@ struct owfScript
 			return 0;
 		});
 		{ ObfusString name("owf_set_bgscript_status_string"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			static_cast<owfScript*>(L->l_G->user_data)->custom_routes.emplace(soup::joaat::hash(luaL_checkstring(L, 1)), CustomRoute{ pluto_checkstring(L, 2), pluto_checkstring(L, 3) });
+			return 0;
+		});
+		{ ObfusString name("owf_register_custom_route"); lua_setglobal(L, name.c_str()); }
 
 #if PRIVATE
 		lua_pushboolean(L, true);
@@ -1919,6 +1943,27 @@ struct owfScript
 			owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
 		}
 		return false;
+	}
+
+	bool isBlockingMessage(const std::string& msg) const noexcept
+	{
+		for (const auto& prefix : blocked_chat_prefixes)
+		{
+			if (msg.starts_with(prefix))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	const CustomRoute* findCustomRoute(uint32_t hash) const noexcept
+	{
+		if (auto e = custom_routes.find(hash); e != custom_routes.end())
+		{
+			return &e->second;
+		}
+		return nullptr;
 	}
 
 	~owfScript()
@@ -2048,23 +2093,6 @@ static bool is_pause_allowed_detour(void* gamerules)
 		;
 }
 
-
-static owfScript* find_message_blocking_script(const std::string& msg)
-{
-	std::lock_guard lock(running_scripts_mtx);
-	for (auto& scr : running_scripts)
-	{
-		for (const auto& prefix : scr->blocked_chat_prefixes)
-		{
-			if (msg.starts_with(prefix))
-			{
-				return scr.get();
-			}
-		}
-	}
-	return nullptr;
-}
-
 static luau_CFunction lua_FlashInstance_GetStringVariable_og;
 
 static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
@@ -2073,14 +2101,30 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 	//std::cout << "lua_FlashInstance_GetStringVariable: " << L->intop[1].getString() << " -> " << L->outtop[-1].getString() << std::endl;
 	if (soup::joaat::hash(L->intop[1].getString()) == soup::joaat::compileTimeHash("Window.SendMessageBar.MessageBox"))
 	{
-		std::string current_draft = L->outtop[-1].getString();
-		auto blocking_script = find_message_blocking_script(current_draft);
-
-		if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
+		owfScript* blocking_script = nullptr;
 		{
-			if (blocking_script != nullptr)
+			std::string current_draft = L->outtop[-1].getString();
+
+			std::lock_guard lock(running_scripts_mtx);
+			for (auto& scr : running_scripts)
 			{
-				blocking_script->blocked_chat_messages.emplace_back(std::move(current_draft));
+				if (scr->isBlockingMessage(current_draft))
+				{
+					blocking_script = scr.get();
+					break;
+				}
+			}
+			/*if (!blocking_script && bgscript && bgscript->isBlockingMessage)
+			{
+				blocking_script = bgscript;
+			}*/
+
+			if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
+			{
+				if (blocking_script != nullptr)
+				{
+					blocking_script->events.emplace_back(owfScript::Event::BLOCKED_CHAT_MESSAGE, std::move(current_draft));
+				}
 			}
 		}
 
@@ -3558,12 +3602,9 @@ until yield())EOC").str());
 				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 				{
 					auto arr = string::explode(req.path, '?');
-					switch (soup::joaat::hash(arr.at(0)))
+					const auto route_hash = soup::joaat::hash(arr.at(0));
+					switch (route_hash)
 					{
-					default:
-						ServerWebService::send404(s);
-						break;
-
 					case soup::joaat::compileTimeHash("/"):
 						{
 							std::string html;
@@ -4034,6 +4075,36 @@ until yield())EOC").str());
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
 						ServerWebService::send204(s);
+						break;
+
+					default:
+						{
+							bool handled = false;
+							std::lock_guard lock(running_scripts_mtx);
+							for (auto& scr : running_scripts)
+							{
+								if (auto route = scr->findCustomRoute(route_hash))
+								{
+									ServerWebService::sendData(s, route->mime.c_str(), route->content);
+									scr->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+									handled = true;
+									break;
+								}
+							}
+							/*if (!handled && bgscript)
+							{
+								if (auto route = bgscript->findCustomRoute(route_hash))
+								{
+									ServerWebService::sendData(s, route->mime.c_str(), route->content);
+									bgscript->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+									handled = true;
+								}
+							}*/
+							if (!handled)
+							{
+								ServerWebService::send404(s);
+							}
+						}
 						break;
 					}
 				});
