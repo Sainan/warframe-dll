@@ -664,7 +664,7 @@ class RadialSector extends owfClassBase
 				luau_call(luau_find_setter("RadialSector", "unlocked"), 2)
 				return
 		end
-		error()
+		error("Unknown field: "..name)
 	end
 
 	function __index(name)
@@ -699,7 +699,7 @@ class RadialSector extends owfClassBase
 				luau_call(luau_find_getter("RadialSector", "mission"), 1)
 				return new LotusMissionInfo(luau_pop_pointer())
 		end
-		error()
+		error("Unknown field: "..name)
 	end
 end
 RadialSector.__parent = nil -- Hack so our __index is used
@@ -732,7 +732,7 @@ class LotusMissionInfo extends owfClassBase
 				luau_pop(1)
 				return nil
 		end
-		error()
+		error("Unknown field: "..name)
 	end
 end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
@@ -862,7 +862,7 @@ class FlashMarker extends owfClassBase
 				luau_call(luau_find_getter("FlashMarker", "baseMarkerInfo"), 1)
 				return new BaseMarkerInfo(luau_pop_object())
 		end
-		error()
+		error("Unknown field: "..name)
 	end
 end
 FlashMarker.__parent = nil -- Hack so our __index is used
