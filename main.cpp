@@ -359,6 +359,10 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 		}
 #endif
 	}
+	else if (uri.path == ObfusString("/api/logout.php").str())
+	{
+		owfOverlay::setPrelogin(true);
+	}
 #if PRIVATE
 	/*else if (uri.path == "/api/heartbeat.php")
 	{
@@ -511,6 +515,8 @@ static void do_logout()
 		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
 		SOUP_UNUSED(hr.execute());
 		auth_query.clear();
+
+		owfOverlay::setPrelogin(true);
 	}
 }
 
@@ -3929,7 +3935,6 @@ until yield())EOC").str());
 					{
 						do_logout();
 						server_host = arr[1];
-						owfOverlay::setPrelogin(true);
 						on_got_server_host();
 					}
 					ServerWebService::sendText(s, server_host);
