@@ -2208,7 +2208,6 @@ static void save_config()
 	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
-	config.add(ObfusString("enable_http_interface"), enable_http_interface);
 	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
 	config.add(ObfusString("autologin"), autologin);
 	config.add(ObfusString("autologin_email"), autologin_email);
@@ -2412,15 +2411,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				pause_always_stops_time = false;
-			}
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("enable_http_interface")); it != config->reinterpretAsObj().end() && it->second->isBool())
-			{
-				enable_http_interface = it->second->reinterpretAsBool().value;
-			}
-			else
-			{
-				enable_http_interface = true;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_nrs_connection")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -3588,26 +3578,25 @@ until yield())EOC").str());
 			}
 		}
 
-		if (enable_http_interface)
 		{
 			Thread thrd([](Capture&&)
 			{
 				Server serv;
-				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
+			ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
+			{
+				auto arr = string::explode(req.path, '?');
+				const auto route_hash = soup::joaat::hash(arr.at(0));
+				switch (route_hash)
 				{
-					auto arr = string::explode(req.path, '?');
-					const auto route_hash = soup::joaat::hash(arr.at(0));
-					switch (route_hash)
+				case soup::joaat::compileTimeHash("/"):
 					{
-					case soup::joaat::compileTimeHash("/"):
-						{
-							std::string html;
+						std::string html;
 #if PRIVATE
-							html = string::fromFile("index.html");
-							if (html.empty())
+						html = string::fromFile("index.html");
+						if (html.empty())
 #endif
-							{
-								html = ObfusString(R"EOC(<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
+						{
+							html = ObfusString(R"EOC(<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
 <body>
 	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
 	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
@@ -3810,302 +3799,302 @@ until yield())EOC").str());
 		});
 	</script>
 </body>)EOC").str();
-							}
-							ServerWebService::sendHtml(s, html);
 						}
-						break;
-
-					case soup::joaat::compileTimeHash("/ping"):
-						ServerWebService::sendText(s, ObfusString("pong"));
-						break;
-
-					case soup::joaat::compileTimeHash("/save_config"):
-						save_config();
-						ServerWebService::send204(s);
-						break;
-
-					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
-						if (arr.size() > 1)
-						{
-							skip_mission_start_timer = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
-						break;
-
-					case soup::joaat::compileTimeHash("/simulacrum_whitelisted"):
-						if (arr.size() > 1)
-						{
-							simulacrum_whitelisted = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(simulacrum_whitelisted));
-						break;
-
-					case soup::joaat::compileTimeHash("/simulacrum_blacklisted"):
-						if (arr.size() > 1)
-						{
-							simulacrum_blacklisted = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
-						break;
-
-					case soup::joaat::compileTimeHash("/pause_always_stops_time"):
-						ServerWebService::sendText(s, std::to_string(pause_always_stops_time));
-						break;
-
-					case soup::joaat::compileTimeHash("/fov_override"):
-						if (arr.size() > 1)
-						{
-							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
-						}
-						ServerWebService::sendText(s, std::to_string(fov_override));
-						break;
-
-					case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
-						if (arr.size() > 1)
-						{
-							high_damage_numbers_patch = (arr[1].size() == 4);
-							if (high_damage_numbers_patch)
-							{
-								enable_dmg_number_patch();
-							}
-							else
-							{
-								disable_dmg_number_patch();
-							}
-						}
-						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
-						break;
-
-					case soup::joaat::compileTimeHash("/logout"):
-						do_logout();
-						ServerWebService::send204(s);
-						break;
-
-					case soup::joaat::compileTimeHash("/server_host"):
-						if (arr.size() > 1
-							&& server_host != arr[1]
-							)
-						{
-							do_logout();
-							server_host = arr[1];
-							owfOverlay::setPrelogin(true);
-							on_got_server_host();
-						}
-						ServerWebService::sendText(s, server_host);
-						break;
-
-					case soup::joaat::compileTimeHash("/freecam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = true;
-								local_player->getAvatar()->followed_by_camera = false;
-							}
-						}
-						ServerWebService::send204(s);
-						break;
-
-					case soup::joaat::compileTimeHash("/lockcam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera = false;
-							}
-						}
-						ServerWebService::send204(s);
-						break;
-
-					case soup::joaat::compileTimeHash("/gamecam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera = true;
-							}
-						}
-						ServerWebService::send204(s);
-						break;
-
-						// Vania Mall: Closet behind Arthur: -15,-6.5,13
-						// Vania Mall: Cutscene Room: -19,-6.5,14
-					case soup::joaat::compileTimeHash("/teleport"):
-						if (Entity_SetPosition && regionmgr && !prohibit_teleport)
-						{
-							std::vector<std::string> pos_arr;
-							if (arr.size() > 1)
-							{
-								pos_arr = string::explode(arr[1], ',');
-							}
-							if (pos_arr.size() == 3)
-							{
-								float pos[3] = {
-									strtof(pos_arr[0].c_str(), nullptr),
-									strtof(pos_arr[1].c_str(), nullptr),
-									strtof(pos_arr[2].c_str(), nullptr)
-								};
-								Entity_SetPosition(regionmgr->GetLocalPlayerAvatar(), pos);
-								ServerWebService::send204(s);
-							}
-							else
-							{
-								ServerWebService::send400(s);
-							}
-						}
-						else
-						{
-							ServerWebService::send500(s);
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/status"):
-						{
-							JsonObject obj;
-							obj.add(ObfusString("console"), owfConsole::active);
-							if (regionmgr)
-							{
-								if (auto local_player = regionmgr->GetLocalPlayer())
-								{
-									if (auto avatar = local_player->getAvatar())
-									{
-										std::string camtype = ObfusString("gamecam").str();
-										if (!avatar->followed_by_camera)
-										{
-											camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
-										}
-										obj.add(ObfusString("camtype"), std::move(camtype));
-
-										std::string pos_str;
-										pos_str = std::to_string(avatar->pos_x);
-										pos_str.push_back(',');
-										pos_str.append(std::to_string(avatar->pos_y));
-										pos_str.push_back(',');
-										pos_str.append(std::to_string(avatar->pos_z));
-										obj.add(ObfusString("pos"), std::move(pos_str));
-									}
-								}
-							}
-							obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
-							{
-								std::lock_guard lock(running_scripts_mtx);
-								auto arr = soup::make_unique<JsonArray>();
-								for (const auto& scr : running_scripts)
-								{
-									arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
-								}
-								obj.add(ObfusString("running_scripts"), std::move(arr));
-							}
-							if (arr.size() > 1)
-							{
-								const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
-								std::lock_guard lock(script_log_mtx);
-								obj.add(ObfusString("script_log_sub"), script_log.substr(i));
-								obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
-							}
-							ServerWebService::sendText(s, obj.encodePretty());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/toggle_console"):
-						if (owfConsole::active)
-						{
-							owfConsole::deactivate();
-						}
-						else
-						{
-							owfConsole::activate(BOOTSTRAPPER_TITLE);
-						}
-						ServerWebService::send204(s);
-						break;
-
-					case soup::joaat::compileTimeHash("/scripts"):
-						{
-							JsonArray arr;
-							for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
-							{
-								if (std::filesystem::is_regular_file(file))
-								{
-									arr.children.emplace_back(soup::make_unique<JsonString>(string::fixType(file.path().u8string()).substr(15)));
-								}
-							}
-							ServerWebService::sendText(s, arr.encodePretty());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/start_script"):
-						if (!prohibit_scripts)
-						{
-							start_script_from_file(urlenc::decode(arr[1]));
-							ServerWebService::send204(s);
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/start_script_inline"):
-						if (!prohibit_scripts)
-						{
-							start_script_from_string(urlenc::decode(arr[1]));
-							ServerWebService::send204(s);
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/stop_script"):
-						{
-							std::lock_guard lock(running_scripts_mtx);
-							if (auto scr = get_script_by_name(urlenc::decode(arr[1])))
-							{
-								scr->stop_requested = true;
-							}
-							ServerWebService::send204(s);
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/clear_script_log"):
-						script_log.clear();
-						ServerWebService::send204(s);
-						break;
-
-					default:
-						{
-							bool handled = false;
-							std::lock_guard lock(running_scripts_mtx);
-							for (auto& scr : running_scripts)
-							{
-								if (auto route = scr->findCustomRoute(route_hash))
-								{
-									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									scr->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
-									handled = true;
-									break;
-								}
-							}
-							/*if (!handled && bgscript)
-							{
-								if (auto route = bgscript->findCustomRoute(route_hash))
-								{
-									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									bgscript->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
-									handled = true;
-								}
-							}*/
-							if (!handled)
-							{
-								ServerWebService::send404(s);
-							}
-						}
-						break;
+						ServerWebService::sendHtml(s, html);
 					}
-				});
-				if (serv.bind(61558, &srv))
-				{
-					serv.run();
+					break;
+
+				case soup::joaat::compileTimeHash("/ping"):
+					ServerWebService::sendText(s, ObfusString("pong"));
+					break;
+
+				case soup::joaat::compileTimeHash("/save_config"):
+					save_config();
+					ServerWebService::send204(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
+					if (arr.size() > 1)
+					{
+						skip_mission_start_timer = (arr[1].size() == 4);
+					}
+					ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
+					break;
+
+				case soup::joaat::compileTimeHash("/simulacrum_whitelisted"):
+					if (arr.size() > 1)
+					{
+						simulacrum_whitelisted = (arr[1].size() == 4);
+					}
+					ServerWebService::sendText(s, std::to_string(simulacrum_whitelisted));
+					break;
+
+				case soup::joaat::compileTimeHash("/simulacrum_blacklisted"):
+					if (arr.size() > 1)
+					{
+						simulacrum_blacklisted = (arr[1].size() == 4);
+					}
+					ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
+					break;
+
+				case soup::joaat::compileTimeHash("/pause_always_stops_time"):
+					ServerWebService::sendText(s, std::to_string(pause_always_stops_time));
+					break;
+
+				case soup::joaat::compileTimeHash("/fov_override"):
+					if (arr.size() > 1)
+					{
+						fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
+					}
+					ServerWebService::sendText(s, std::to_string(fov_override));
+					break;
+
+				case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
+					if (arr.size() > 1)
+					{
+						high_damage_numbers_patch = (arr[1].size() == 4);
+						if (high_damage_numbers_patch)
+						{
+							enable_dmg_number_patch();
+						}
+						else
+						{
+							disable_dmg_number_patch();
+						}
+					}
+					ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
+					break;
+
+				case soup::joaat::compileTimeHash("/logout"):
+					do_logout();
+					ServerWebService::send204(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/server_host"):
+					if (arr.size() > 1
+						&& server_host != arr[1]
+						)
+					{
+						do_logout();
+						server_host = arr[1];
+						owfOverlay::setPrelogin(true);
+						on_got_server_host();
+					}
+					ServerWebService::sendText(s, server_host);
+					break;
+
+				case soup::joaat::compileTimeHash("/freecam"):
+					if (regionmgr && !prohibit_freecam)
+					{
+						if (auto local_player = regionmgr->GetLocalPlayer())
+						{
+							local_player->controlling_camera = true;
+							local_player->getAvatar()->followed_by_camera = false;
+						}
+					}
+					ServerWebService::send204(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/lockcam"):
+					if (regionmgr && !prohibit_freecam)
+					{
+						if (auto local_player = regionmgr->GetLocalPlayer())
+						{
+							local_player->controlling_camera = false;
+							local_player->getAvatar()->followed_by_camera = false;
+						}
+					}
+					ServerWebService::send204(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/gamecam"):
+					if (regionmgr && !prohibit_freecam)
+					{
+						if (auto local_player = regionmgr->GetLocalPlayer())
+						{
+							local_player->controlling_camera = false;
+							local_player->getAvatar()->followed_by_camera = true;
+						}
+					}
+					ServerWebService::send204(s);
+					break;
+
+					// Vania Mall: Closet behind Arthur: -15,-6.5,13
+					// Vania Mall: Cutscene Room: -19,-6.5,14
+				case soup::joaat::compileTimeHash("/teleport"):
+					if (Entity_SetPosition && regionmgr && !prohibit_teleport)
+					{
+						std::vector<std::string> pos_arr;
+						if (arr.size() > 1)
+						{
+							pos_arr = string::explode(arr[1], ',');
+						}
+						if (pos_arr.size() == 3)
+						{
+							float pos[3] = {
+								strtof(pos_arr[0].c_str(), nullptr),
+								strtof(pos_arr[1].c_str(), nullptr),
+								strtof(pos_arr[2].c_str(), nullptr)
+							};
+							Entity_SetPosition(regionmgr->GetLocalPlayerAvatar(), pos);
+							ServerWebService::send204(s);
+						}
+						else
+						{
+							ServerWebService::send400(s);
+						}
+					}
+					else
+					{
+						ServerWebService::send500(s);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/status"):
+					{
+						JsonObject obj;
+						obj.add(ObfusString("console"), owfConsole::active);
+						if (regionmgr)
+						{
+							if (auto local_player = regionmgr->GetLocalPlayer())
+							{
+								if (auto avatar = local_player->getAvatar())
+								{
+									std::string camtype = ObfusString("gamecam").str();
+									if (!avatar->followed_by_camera)
+									{
+										camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
+									}
+									obj.add(ObfusString("camtype"), std::move(camtype));
+
+									std::string pos_str;
+									pos_str = std::to_string(avatar->pos_x);
+									pos_str.push_back(',');
+									pos_str.append(std::to_string(avatar->pos_y));
+									pos_str.push_back(',');
+									pos_str.append(std::to_string(avatar->pos_z));
+									obj.add(ObfusString("pos"), std::move(pos_str));
+								}
+							}
+						}
+						obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
+						{
+							std::lock_guard lock(running_scripts_mtx);
+							auto arr = soup::make_unique<JsonArray>();
+							for (const auto& scr : running_scripts)
+							{
+								arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
+							}
+							obj.add(ObfusString("running_scripts"), std::move(arr));
+						}
+						if (arr.size() > 1)
+						{
+							const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
+							std::lock_guard lock(script_log_mtx);
+							obj.add(ObfusString("script_log_sub"), script_log.substr(i));
+							obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
+						}
+						ServerWebService::sendText(s, obj.encodePretty());
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/toggle_console"):
+					if (owfConsole::active)
+					{
+						owfConsole::deactivate();
+					}
+					else
+					{
+						owfConsole::activate(BOOTSTRAPPER_TITLE);
+					}
+					ServerWebService::send204(s);
+					break;
+
+				case soup::joaat::compileTimeHash("/scripts"):
+					{
+						JsonArray arr;
+						for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
+						{
+							if (std::filesystem::is_regular_file(file))
+							{
+								arr.children.emplace_back(soup::make_unique<JsonString>(string::fixType(file.path().u8string()).substr(15)));
+							}
+						}
+						ServerWebService::sendText(s, arr.encodePretty());
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/start_script"):
+					if (!prohibit_scripts)
+					{
+						start_script_from_file(urlenc::decode(arr[1]));
+						ServerWebService::send204(s);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/start_script_inline"):
+					if (!prohibit_scripts)
+					{
+						start_script_from_string(urlenc::decode(arr[1]));
+						ServerWebService::send204(s);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/stop_script"):
+					{
+						std::lock_guard lock(running_scripts_mtx);
+						if (auto scr = get_script_by_name(urlenc::decode(arr[1])))
+						{
+							scr->stop_requested = true;
+						}
+						ServerWebService::send204(s);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("/clear_script_log"):
+					script_log.clear();
+					ServerWebService::send204(s);
+					break;
+
+				default:
+					{
+						bool handled = false;
+						std::lock_guard lock(running_scripts_mtx);
+						for (auto& scr : running_scripts)
+						{
+							if (auto route = scr->findCustomRoute(route_hash))
+							{
+								ServerWebService::sendData(s, route->mime.c_str(), route->content);
+								scr->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+								handled = true;
+								break;
+							}
+						}
+						/*if (!handled && bgscript)
+						{
+							if (auto route = bgscript->findCustomRoute(route_hash))
+							{
+								ServerWebService::sendData(s, route->mime.c_str(), route->content);
+								bgscript->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+								handled = true;
+							}
+						}*/
+						if (!handled)
+						{
+							ServerWebService::send404(s);
+						}
+					}
+					break;
 				}
-				else
-				{
-					std::cout << ObfusString("Failed to bind TCP/61558. HTTP interface will be unavailable.").str() << std::endl;
-				}
+			});
+			if (serv.bind(61558, &srv))
+			{
+				serv.run();
+			}
+			else
+			{
+				std::cout << ObfusString("Failed to bind TCP/61558. HTTP interface will be unavailable.").str() << std::endl;
+			}
 			});
 			thrd.detach();
 		}
