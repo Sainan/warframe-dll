@@ -3898,7 +3898,7 @@ until yield())EOC").str());
 							{
 								owfConsole::activate();
 							}
-							owfOverlay::setPrelogin(false);
+							owfOverlay::setPrelogin(true);
 							on_got_server_host();
 						}
 						ServerWebService::sendText(s, server_host);
