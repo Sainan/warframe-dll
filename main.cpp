@@ -321,12 +321,6 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
-#if !LOGGING
-		if (owfConsole::active)
-		{
-			owfConsole::deactivate();
-		}
-#endif
 		owfOverlay::setPrelogin(false);
 		if (autologin && !did_auto_login)
 		{
@@ -951,7 +945,7 @@ static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 			regionmgr = static_cast<RegionMgr*>(**a2);
 			if (!owfOverlay::isInited())
 			{
-				owfOverlay::init();
+				owfOverlay::init(!LOGGING);
 			}
 			break;
 
@@ -2272,7 +2266,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			return FALSE;
 		}
 
-		owfConsole::activate();
+		owfConsole::activate(BOOTSTRAPPER_TITLE);
 
 		{
 			std::wstring path(_wgetenv(L"windir"));
@@ -3894,10 +3888,6 @@ until yield())EOC").str());
 						{
 							do_logout();
 							server_host = arr[1];
-							if (!owfConsole::active)
-							{
-								owfConsole::activate();
-							}
 							owfOverlay::setPrelogin(true);
 							on_got_server_host();
 						}
@@ -4026,7 +4016,7 @@ until yield())EOC").str());
 						}
 						else
 						{
-							owfConsole::activate();
+							owfConsole::activate(BOOTSTRAPPER_TITLE);
 						}
 						ServerWebService::send204(s);
 						break;

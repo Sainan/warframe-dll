@@ -2,10 +2,10 @@ struct owfConsole
 {
 	inline static bool active = false;
 
-	static void activate()
+	static void activate(const char* title)
 	{
 		AllocConsole();
-		SetConsoleTitleA(BOOTSTRAPPER_TITLE);
+		SetConsoleTitleA(title);
 		{
 			FILE* f;
 			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);

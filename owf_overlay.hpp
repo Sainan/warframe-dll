@@ -12,7 +12,7 @@
 struct owfOverlay
 {
 	static bool isInited();
-	static void init();
+	static void init(bool close_console);
 	static void setPrelogin(bool prelogin);
 	static void redraw();
 
