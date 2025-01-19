@@ -670,12 +670,16 @@ static void write_to_log_file_detour(void* a1, const char* data, size_t size)
 			message += log_sep.size();
 			size -= (message - data);
 
-			if (size > 20)
+			if (size > 10)
 			{
-				switch (soup::joaat::hashRange(message, 20))
+				switch (soup::joaat::hashRange(message, 10))
 				{
+				case soup::joaat::compileTimeHash("Logged in "):
+					owfOverlay::setPrelogin(false);
+					break;
+
 #if PROVIDE_VERSION_INFO && !SELF_HOST_CACHE_MANIFEST
-				case soup::joaat::compileTimeHash("Cache manifest hash "):
+				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
 					if (size == 43)
 					{
 						build_hash = std::string(message + 20, 22);
@@ -683,7 +687,7 @@ static void write_to_log_file_detour(void* a1, const char* data, size_t size)
 					break;
 #endif
 
-				case soup::joaat::compileTimeHash("InitMapping for all "): // "InitMapping for all devices with bindings ... and filter ..."
+				case soup::joaat::compileTimeHash("InitMappin"): // "InitMapping for all devices with bindings ... and filter ..."
 					if (size > 42)
 					{
 						ObfusString sep(" and filter ");
