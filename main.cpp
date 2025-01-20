@@ -2189,7 +2189,7 @@ static int lua_SetSeed_detour(luau_State* L)
 static int lua_ChurnSeed_detour(luau_State* L)
 {
 	lua_ChurnSeed_og(L);
-	std::cout << "lua_ChurnSeed: lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	std::cout << "lua_ChurnSeed: " << L->intop[1].value.as_float << " iterations; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
 	return 0;
 }
 
