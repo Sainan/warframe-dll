@@ -63,9 +63,15 @@ static bool fallback_graphicsDriver_was_used = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 
-static HMODULE og_lib;
+static HMODULE og_dwmapi;
 static FARPROC og_DwmGetCompositionTimingInfo;
 extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetCompositionTimingInfo(); }
+
+static HMODULE og_wtsapi32;
+static FARPROC og_WTSRegisterSessionNotification;
+static FARPROC og_WTSUnRegisterSessionNotification;
+extern "C" __declspec(dllexport) void WTSRegisterSessionNotification() { og_WTSRegisterSessionNotification(); }
+extern "C" __declspec(dllexport) void WTSUnRegisterSessionNotification() { og_WTSUnRegisterSessionNotification(); }
 
 /*struct ParsedUrl
 {
@@ -2279,11 +2285,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			std::wstring path(_wgetenv(L"windir"));
 			path.append(LR"(\System32\dwmapi.dll)");
-			og_lib = LoadLibraryW(path.c_str());
+			og_dwmapi = LoadLibraryW(path.c_str());
 #if LOGGING
-			std::cout << "og_lib = " << (void*)og_lib << std::endl;
+			std::cout << "og_dwmapi = " << (void*)og_dwmapi << std::endl;
 #endif
-			og_DwmGetCompositionTimingInfo = GetProcAddress(og_lib, ObfusString("DwmGetCompositionTimingInfo"));
+			og_DwmGetCompositionTimingInfo = GetProcAddress(og_dwmapi, "DwmGetCompositionTimingInfo");
+		}
+
+		{
+			std::wstring path(_wgetenv(L"windir"));
+			path.append(LR"(\System32\wtsapi32.dll)");
+			og_wtsapi32 = LoadLibraryW(path.c_str());
+#if LOGGING
+			std::cout << "og_wtsapi32 = " << (void*)og_wtsapi32 << std::endl;
+#endif
+			og_WTSRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSRegisterSessionNotification");
+			og_WTSUnRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSUnRegisterSessionNotification");
 		}
 
 		std::error_code ec{};
