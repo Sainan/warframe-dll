@@ -1868,6 +1868,34 @@ struct owfScript
 		});
 		{ ObfusString name("owf_register_custom_route"); lua_setglobal(L, name.c_str()); }
 
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushinteger(L, static_cast<float>(luaL_checkinteger(L, 1)) + static_cast<float>(luaL_checkinteger(L, 2)));
+			return 1;
+		});
+		{ ObfusString name("luau_int_add"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushinteger(L, static_cast<float>(luaL_checkinteger(L, 1)) * static_cast<float>(luaL_checkinteger(L, 2)));
+			return 1;
+		});
+		{ ObfusString name("luau_int_mul"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushnumber(L, static_cast<float>(luaL_checknumber(L, 1)) + static_cast<float>(luaL_checknumber(L, 2)));
+			return 1;
+		});
+		{ ObfusString name("luau_float_add"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushnumber(L, static_cast<float>(luaL_checknumber(L, 1)) * static_cast<float>(luaL_checknumber(L, 2)));
+			return 1;
+		});
+		{ ObfusString name("luau_float_mul"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 		lua_pushboolean(L, true);
 		lua_setglobal(L, "OWF_PRIVATE_BUILD");
