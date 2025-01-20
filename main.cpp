@@ -2542,15 +2542,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
 #endif
-			if (!winhttp_connect)
+			if (winhttp_connect)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
+				winhttp_connect_hook.target = winhttp_connect;
+				winhttp_connect_hook.create();
+				winhttp_connect_hook.enable();
 			}
-			winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
-			winhttp_connect_hook.target = winhttp_connect;
-			winhttp_connect_hook.create();
-			winhttp_connect_hook.enable();
+			else
+			{
+				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+			}
 		}
 
 #if SELF_HOST_CACHE_MANIFEST
