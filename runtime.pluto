@@ -594,6 +594,12 @@ class LotusBaseGameRules extends GameRulesImpl
 		luau_call(luau_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
 		return new RadialSolarMap(luau_pop_object())
 	end
+
+	function GetStoreManifest()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusBaseGameRules", "GetStoreManifest"), 1)
+		return new StoreManifest(luau_pop_object())
+	end
 end
 
 class LotusGameRules extends LotusBaseGameRules
@@ -609,6 +615,12 @@ class LotusAttractModeGameRules extends GameRulesImpl
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
 		return new RadialSolarMap(luau_pop_object())
+	end
+
+	function GetStoreManifest()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStoreManifest"), 1)
+		return new StoreManifest(luau_pop_object())
 	end
 end
 
@@ -737,6 +749,45 @@ class LotusMissionInfo extends owfClassBase
 	end
 end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
+
+class StoreManifest extends Object
+	function GetStoreItemsOfType(weakResource)
+		luau_push_object(self.addr)
+		do
+			luau_push_string(weakResource)
+			luau_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+		end
+		luau_call(luau_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
+		local t = {}
+		local i = 1
+		while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+			t:insert(new StoreItem(luau_pop_object()))
+			++i
+		end
+		luau_pop(2)
+		return t
+	end
+end
+
+class StoreItem extends Object
+	function GetProductCategory()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("StoreItem", "GetProductCategory"), 1)
+		return math.tointeger(luau_pop_number())
+	end
+
+	function ExcludeFromCodex()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("StoreItem", "ExcludeFromCodex"), 1)
+		return luau_pop_bool()
+	end
+
+	function ShowInMarket()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("StoreItem", "ShowInMarket"), 1)
+		return luau_pop_bool()
+	end
+end
 
 class MotionControllerBase extends Object
 	function GetSpeedMultiplier()
@@ -941,6 +992,10 @@ end
 Sleep = coroutine.sleep
 
 function Resource(name)
+	return name
+end
+
+function WeakResource(name)
 	return name
 end
 

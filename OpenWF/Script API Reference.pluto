@@ -126,12 +126,14 @@ class GameRulesImpl extends GameRules
 
 class LotusBaseGameRules extends GameRulesImpl
 	function GetCurrentStarChart()
+	function GetStoreManifest()
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
 
 class LotusAttractModeGameRules extends GameRulesImpl
 	function GetStarChart()
+	function GetStoreManifest()
 
 class RadialSolarMap extends Object
 	function GetRegions()
@@ -154,6 +156,14 @@ class LotusMissionInfo extends owfClassBase
 	goalTag
 	activeMissionTag
 	levelOverride
+
+class StoreManifest extends Object
+	function GetStoreItemsOfType(weakResource)
+
+class StoreItem extends Object
+	function GetProductCategory()
+	function ExcludeFromCodex()
+	function ShowInMarket()
 
 class MotionControllerBase
 	function GetSpeedMultiplier()
@@ -200,6 +210,7 @@ function Sleep(ms)
 
 function Type(name)
 function Resource(name)
+function WeakResource(name)
 function Range(min, max)
 
 function Engine.OpenLevel(args)
