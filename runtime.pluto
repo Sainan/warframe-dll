@@ -801,8 +801,8 @@ class LotusHudStatus extends HudStatus
 		luau_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
 		local t = {}
 		local i = 1
-		while obj := (luau_push_int(i) and nil) or (luau_gettable(-2) and nil) or luau_pop_object() do
-			t:insert(new FlashMarker(obj))
+		while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+			t:insert(new FlashMarker(luau_pop_object()))
 			++i
 		end
 		luau_pop(2)
