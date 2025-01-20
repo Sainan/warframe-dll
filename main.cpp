@@ -2177,6 +2177,7 @@ static luau_CFunction lua_SetSeed_og;
 static luau_CFunction lua_ChurnSeed_og;
 static luau_CFunction lua_SRandom_og;
 static luau_CFunction lua_SRandomInt_og;
+static luau_CFunction lua_HashCrc32_og;
 
 static int lua_SetSeed_detour(luau_State* L)
 {
@@ -2203,6 +2204,13 @@ static int lua_SRandomInt_detour(luau_State* L)
 {
 	lua_SRandomInt_og(L);
 	std::cout << "lua_SRandomInt(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	return 1;
+}
+
+static int lua_HashCrc32_detour(luau_State* L)
+{
+	lua_HashCrc32_og(L);
+	std::cout << "lua_HashCrc32(" << L->intop[0].getString() << "): returned " << L->outtop[-1].value.as_float << std::endl;
 	return 1;
 }
 #endif
@@ -3348,6 +3356,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				lua_SRandomInt_og = *lua_SRandomInt_fp;
 				memGuard::setAllowedAccess(lua_SRandomInt_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 				*lua_SRandomInt_fp = lua_SRandomInt_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("51 E0 F5 F1 00 00 00 00");
+			auto lua_HashCrc32_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_HashCrc32_hash = " << lua_HashCrc32_hash.as<void*>() << std::endl;
+#endif
+			if (lua_HashCrc32_hash)
+			{
+				auto lua_HashCrc32_fp = lua_HashCrc32_hash.add(8).as<luau_CFunction*>();
+				lua_HashCrc32_og = *lua_HashCrc32_fp;
+				memGuard::setAllowedAccess(lua_HashCrc32_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_HashCrc32_fp = lua_HashCrc32_detour;
 			}
 			else
 			{
