@@ -3881,6 +3881,7 @@ until yield())EOC").str());
 		function clearScriptLog() {
 			status_request_suffix = "";
 			fetch("/clear_script_log").then(() => {
+				status_request_suffix = "?0";
 				document.getElementById("script_log").innerHTML = "";
 			});
 		}
