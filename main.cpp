@@ -2555,7 +2555,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if SELF_HOST_CACHE_MANIFEST
 		{
-			SIG_INST("75 0E 48 8B 45 98 49 3B 47 08");
+			SIG_INST("75 0E 48 8B 45 ? ? 3B 47 08 0F");
 			auto cache_hash_checks = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 #if LOGGING
 			std::cout << "cache_hash_checks = " << (void*)cache_hash_checks << std::endl;
