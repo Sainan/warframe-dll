@@ -52,6 +52,7 @@ class Entity extends BaseEntity
 	function GetAttachment(type)
 	function GetTag()
 	function FirePort(port)
+	function SetVisibility(visible, delegateToAttachments = false)
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)

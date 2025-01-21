@@ -284,6 +284,13 @@ class Entity extends BaseEntity
 		luau_push_string(port)
 		luau_call(luau_find_method("Entity", "FirePort"), 2)
 	end
+
+	function SetVisibility(visible, delegateToAttachments = false)
+		luau_push_object(self.addr)
+		luau_push_bool(visible)
+		luau_push_bool(delegateToAttachments)
+		luau_call(luau_find_method("Entity", "SetVisibility"), 3)
+	end
 end
 
 class BaseAvatar extends Entity
