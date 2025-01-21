@@ -159,6 +159,9 @@ local function pop_entity()
 		if obj:GetType():isNameInHierarchy("BaseMarkerInfo") then
 			return new BaseMarkerInfo(addr)
 		end
+		if obj:GetType():isNameInHierarchy("LensFlare") then
+			return new LensFlare(addr)
+		end
 		return obj
 	else
 		luau_pop(1)
@@ -944,6 +947,20 @@ class BaseMarkerInfo extends Entity
 	end
 end
 
+class LensFlare extends Entity
+	function SetTint(color)
+		luau_push_object(self.addr)
+		do
+			luau_push_int(color.r)
+			luau_push_int(color.g)
+			luau_push_int(color.b)
+			luau_push_int(color.a)
+			luau_call(luau_find_ctor("Color"), 4)
+		end
+		luau_call(luau_find_method("LensFlare", "SetTint"), 2)
+	end
+end
+
 Engine = {}
 
 class Engine.OpenLevelArgs
@@ -1008,6 +1025,10 @@ end
 
 function Range(min, max)
 	return { min = min, max = max }
+end
+
+function Color(r, g, b, a)
+	return { r = r, g = g, b = b, a = a }
 end
 
 function Engine.OpenLevel(args)

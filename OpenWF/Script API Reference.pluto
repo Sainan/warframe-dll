@@ -195,6 +195,9 @@ class BaseMarkerInfo extends Entity
 	function SetMarkerType(i)
 	function SetDisplayRange(range)
 
+class LensFlare extends Entity
+	function SetTint(color)
+
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
@@ -213,6 +216,7 @@ function Type(name)
 function Resource(name)
 function WeakResource(name)
 function Range(min, max)
+function Color(r, g, b, a)
 
 function Engine.OpenLevel(args)
 
