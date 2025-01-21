@@ -1189,6 +1189,7 @@ gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
 gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")
 gLotusDuelGameRulesType = Type("/Lotus/Types/Game/LotusDuelGameRules")
 
+ZERO_VECTOR = Vector()
 ZERO_ROTATION = Rotation()
 EMPTY_SYMBOL = Symbol()
 
