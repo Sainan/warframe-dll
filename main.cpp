@@ -992,6 +992,12 @@ static luau_pushobject_t luau_pushobject = nullptr;
 using luau_gettable_t = int(*)(luau_State*, int idx);
 static luau_gettable_t luau_gettable = nullptr;
 
+using luau_createtable_t = void(*)(luau_State*, int, int);
+static luau_createtable_t luau_createtable = nullptr;
+
+using luau_settable_t = void(*)(luau_State*, int);
+static luau_settable_t luau_settable = nullptr;
+
 using luauD_call_t = int(*)(luau_State* L, luau_TValue* func, int nresults);
 static luauD_call_t luauD_call = nullptr;
 
@@ -1667,6 +1673,33 @@ struct owfScript
 				return 1;
 			});
 			{ ObfusString name("luau_gettable"); lua_setglobal(L, name.c_str()); }
+		}
+
+		if (luau_createtable)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				luau_createtable(luau_L, 0, 0);
+				return 0;
+			});
+			{ ObfusString name("luau_newtable"); lua_setglobal(L, name.c_str()); }
+		}
+
+		if (luau_settable)
+		{
+			lua_pushcfunction(L, [](lua_State* L) -> int
+			{
+				try
+				{
+					luau_settable(luau_L, luaL_checkinteger(L, 1));
+				}
+				catch (const int&)
+				{
+					luaL_error(L, luau_error_msg.c_str());
+				}
+				return 0;
+			});
+			{ ObfusString name("luau_settable"); lua_setglobal(L, name.c_str()); }
 		}
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
@@ -3161,6 +3194,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (luau_gettable_callsite)
 			{
 				luau_gettable = luau_gettable_callsite.add(9).rip().as<luau_gettable_t>();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("E8 ? ? ? ? 4C 8B C5 48 8B D7 48 8B CE E8 ? ? ? ? BA FE FF FF FF 48 8B CE E8 ? ? ? ? BA FC FF FF FF 48 8B CE E8");
+			auto luau_createtable_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "luau_createtable_callsite = " << luau_createtable_callsite.as<void*>() << std::endl;
+#endif
+			if (luau_createtable_callsite)
+			{
+				luau_createtable = luau_createtable_callsite.add(1).rip().as<luau_createtable_t>();
+				luau_settable = luau_createtable_callsite.add(41).rip().as<luau_settable_t>();
 			}
 			else
 			{
