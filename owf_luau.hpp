@@ -1,5 +1,7 @@
 #pragma once
 
+#include "owf_structs.hpp"
+
 union luau_Value
 {
 	uintptr_t as_uintptr;
@@ -71,3 +73,102 @@ inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
 		return realloc(ptr, nsize);
 	}
 }
+
+/*using luau_newstate_t = luau_State*(*)(luau_Alloc f, void* ud, char);
+inline luau_newstate_t luau_newstate = nullptr;*/
+
+using luau_pushstring_t = const char*(*)(luau_State*, const char*);
+inline luau_pushstring_t luau_pushstring = nullptr;
+
+using luau_pushpointer_t = void*(*)(luau_State*, void*);
+inline luau_pushpointer_t luau_pushpointer = nullptr;
+
+using luau_pushobject_t = Object*(*)(luau_State*, Object*);
+inline luau_pushobject_t luau_pushobject = nullptr;
+
+using luau_gettable_t = int(*)(luau_State*, int idx);
+inline luau_gettable_t luau_gettable = nullptr;
+
+using luau_createtable_t = void(*)(luau_State*, int, int);
+inline luau_createtable_t luau_createtable = nullptr;
+
+using luau_settable_t = void(*)(luau_State*, int);
+inline luau_settable_t luau_settable = nullptr;
+
+using luauD_call_t = int(*)(luau_State* L, luau_TValue* func, int nresults);
+inline luauD_call_t luauD_call = nullptr;
+
+inline luau_State* luau_L = nullptr;
+//inline Object*** luau_obj_buf[4];
+inline std::string luau_error_msg;
+
+struct SwigMethod
+{
+	uint32_t hash;
+	luau_CFunction func;
+};
+static_assert(sizeof(SwigMethod) == 0x10);
+
+struct SwigAttribute
+{
+	uint32_t hash;
+	luau_CFunction getter;
+	luau_CFunction setter;
+};
+static_assert(sizeof(SwigAttribute) == 0x18);
+
+struct SwigTypeDesc
+{
+	/* 0x00 */ const char* name; // e.g. "Object"
+	PAD(0x08, 0x10) luau_CFunction ctor;
+	PAD(0x18, 0x20) SwigMethod* methods;
+	/* 0x28 */ SwigAttribute* attributes;
+	PAD(0x30, 0x38) const char** parent_ptr_name; // e.g. "Object *"
+
+	luau_CFunction findMethod(uint32_t hash)
+	{
+		for (auto method = this->methods; method->hash != 0; ++method)
+		{
+			if (method->hash == hash)
+			{
+				return method->func;
+			}
+		}
+		return nullptr;
+	}
+
+	luau_CFunction findGetter(uint32_t hash)
+	{
+		for (auto attr = this->attributes; attr->hash != 0; ++attr)
+		{
+			if (attr->hash == hash)
+			{
+				return attr->getter;
+			}
+		}
+		return nullptr;
+	}
+
+	luau_CFunction findSetter(uint32_t hash)
+	{
+		for (auto attr = this->attributes; attr->hash != 0; ++attr)
+		{
+			if (attr->hash == hash)
+			{
+				return attr->setter;
+			}
+		}
+		return nullptr;
+	}
+};
+static_assert(sizeof(SwigTypeDesc) == 0x40);
+
+struct SwigTypeField
+{
+	/* 0x00 */ const char* field_name; // e.g. "_p_Object"
+	/* 0x08 */ const char* type_name; // e.g. "Object *"
+	PAD(0x10, 0x18) SwigTypeDesc* type_desc;
+};
+static_assert(sizeof(SwigTypeField) == 0x20);
+
+inline std::unordered_map<uint32_t, SwigTypeDesc*> swig_types;
