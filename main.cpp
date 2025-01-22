@@ -2275,9 +2275,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
 		write_archive_file(ObfusString("OpenWF/Script API Reference.pluto").str(), soup::joaat::compileTimeHash("OpenWF/Script API Reference.pluto"));
 
+#if !PRIVATE
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
-
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Auto Teleport to Waypoint.pluto"));
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Become The Stalker.pluto"));
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Chat Commands.pluto"));
@@ -2291,6 +2291,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Kill All Enemies.pluto"));
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Loot Party.pluto"));
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Watermark.pluto"));
+#endif
 
 		bgscript = new owfScript();
 		bgscript->loadString(ObfusString(R"EOC(local json = require"pluto:json"
