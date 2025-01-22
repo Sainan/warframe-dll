@@ -5,6 +5,8 @@ Vector3 = Vector
 Rotation = Vector
 
 class owfClassBase
+	__name = "owfClassBase"
+
 	function __construct(addr)
 		assert(addr ~= nil)
 		assert(addr ~= 0)
@@ -13,6 +15,8 @@ class owfClassBase
 end
 
 class ObjectType extends owfClassBase
+	__name = "ObjectType"
+
 	function GetName()
 		luau_push_pointer(self.addr)
 		luau_call(luau_find_method("ObjectType", "GetName"), 1)
@@ -58,6 +62,8 @@ class ObjectType extends owfClassBase
 end
 
 class Object extends owfClassBase
+	__name = "Object"
+
 	function GetType()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("Object", "GetType"), 1)
@@ -91,6 +97,8 @@ class Object extends owfClassBase
 end
 
 class Player extends Object
+	__name = "Player"
+
 	function GetAvatar()
 		if avatar := player_get_avatar(self.addr) then
 			return new LotusAvatar(avatar)
@@ -129,6 +137,8 @@ class Player extends Object
 end
 
 class HumanPlayer extends Player
+	__name = "HumanPlayer"
+
 	function ToggleFreeCamera()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
@@ -151,7 +161,10 @@ class HumanPlayer extends Player
 	end
 end
 
-class BaseEntity extends Object end
+class BaseEntity extends Object
+	__name = "BaseEntity"
+
+end
 
 local function pop_entity()
 	if addr := luau_pop_object() then
@@ -169,6 +182,8 @@ local function pop_entity()
 end
 
 class Entity extends BaseEntity
+	__name = "Entity"
+
 	function GetPosition()
 		return new Vector3(entity_get_pos(self.addr))
 	end
@@ -297,6 +312,8 @@ class Entity extends BaseEntity
 end
 
 class BaseAvatar extends Entity
+	__name = "BaseAvatar"
+
 	function GetMaxHealth(b = true)
 		luau_push_object(self.addr)
 		luau_push_bool(b)
@@ -379,6 +396,8 @@ class BaseAvatar extends Entity
 end
 
 class Avatar extends BaseAvatar
+	__name = "Avatar"
+
 	function ControlCamera(b)
 		-- Original function would write to EE.log but otherwise this is identical
 		avatar_set_followed_by_camera(self.addr, b)
@@ -390,6 +409,8 @@ class Avatar extends BaseAvatar
 end
 
 class LotusAvatar extends Avatar
+	__name = "LotusAvatar"
+
 	function IsAvatarFriendly(other)
 		luau_push_object(self.addr)
 		luau_push_object(other.addr)
@@ -408,6 +429,8 @@ class LotusAvatar extends Avatar
 end
 
 class DamageControllerBase extends Object
+	__name = "DamageControllerBase"
+
 	function GiveTemporaryImmunity(a, b)
 		luau_push_object(self.addr)
 		luau_push_float(a)
@@ -428,6 +451,8 @@ class DamageControllerBase extends Object
 end
 
 class InventoryControllerBase extends Object
+	__name = "InventoryControllerBase"
+
 	function RemoveItem(slot, b)
 		luau_push_object(self.addr)
 		luau_push_int(slot)
@@ -451,6 +476,8 @@ class InventoryControllerBase extends Object
 end
 
 class LotusInventoryController extends InventoryControllerBase
+	__name = "LotusInventoryController"
+
 	function GetActivePowerSuit()
 		if addr := inventory_get_active_powersuit(self.addr) then
 			return new PowerSuit(addr)
@@ -464,6 +491,8 @@ class LotusInventoryController extends InventoryControllerBase
 end
 
 class Item extends Object
+	__name = "Item"
+
 	function GetAttachmentEntity(category, hand = 4)
 		-- restricting category to avoid access violations
 		if category == 0 or category == 1 then
@@ -478,9 +507,14 @@ class Item extends Object
 	end
 end
 
-class WeaponBase extends Item end
+class WeaponBase extends Item
+	__name = "WeaponBase"
+
+end
 
 class WeaponEx extends WeaponBase
+	__name = "WeaponEx"
+
 	function GetActiveImpactBehavior()
 		if addr := weaponex_get_active_impact_behavior(self.addr) then
 			return new WeaponImpactBehavior(addr)
@@ -489,6 +523,8 @@ class WeaponEx extends WeaponBase
 end
 
 class LotusWeapon extends WeaponEx
+	__name = "LotusWeapon"
+
 	function GetXP()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("LotusWeapon", "GetXP"), 1)
@@ -503,6 +539,8 @@ class LotusWeapon extends WeaponEx
 end
 
 class WeaponImpactBehavior extends Object
+	__name = "WeaponImpactBehavior"
+
 	function __index(name)
 		if Object[name] then
 			return Object[name]
@@ -531,6 +569,8 @@ end
 WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
 
 class PowerSuit extends LotusWeapon
+	__name = "PowerSuit"
+
 	function SetEnergy(value)
 		luau_push_object(self.addr)
 		luau_push_float(value)
@@ -562,9 +602,14 @@ class PowerSuit extends LotusWeapon
 	end
 end
 
-class InputControllerBase extends Object end
+class InputControllerBase extends Object
+	__name = "InputControllerBase"
+
+end
 
 class InputController extends InputControllerBase
+	__name = "InputController"
+
 	function SetStopMovement(b)
 		luau_push_object(self.addr)
 		luau_push_bool(b)
@@ -573,6 +618,8 @@ class InputController extends InputControllerBase
 end
 
 class GameRules extends Object
+	__name = "GameRules"
+
 	function IsPauseMenuShowing()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("GameRules", "IsPauseMenuShowing"), 1)
@@ -591,6 +638,8 @@ class GameRules extends Object
 end
 
 class GameRulesImpl extends GameRules
+	__name = "GameRulesImpl"
+
 	function SetPauseDisabled(b)
 		luau_push_object(self.addr)
 		luau_push_bool(b)
@@ -599,6 +648,8 @@ class GameRulesImpl extends GameRules
 end
 
 class LotusBaseGameRules extends GameRulesImpl
+	__name = "LotusBaseGameRules"
+
 	function GetCurrentStarChart()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
@@ -613,6 +664,8 @@ class LotusBaseGameRules extends GameRulesImpl
 end
 
 class LotusGameRules extends LotusBaseGameRules
+	__name = "LotusGameRules"
+
 	function OpenMissionContinueDialog()
 		luau_push_object(self.addr)
 		luau_push_nil()
@@ -621,6 +674,8 @@ class LotusGameRules extends LotusBaseGameRules
 end
 
 class LotusAttractModeGameRules extends GameRulesImpl
+	__name = "LotusAttractModeGameRules"
+
 	function GetStarChart()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
@@ -635,6 +690,8 @@ class LotusAttractModeGameRules extends GameRulesImpl
 end
 
 class RadialSolarMap extends Object
+	__name = "RadialSolarMap"
+
 	function GetRegions()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("RadialSolarMap", "GetRegions"), 1)
@@ -654,6 +711,8 @@ class RadialSolarMap extends Object
 end
 
 class RadialRegion
+	__name = "RadialRegion"
+
 	function __construct()
 		luau_push_value(-1)
 		luau_call(luau_find_getter("RadialRegion", "name"), 1)
@@ -675,6 +734,8 @@ class RadialRegion
 end
 
 class RadialSector extends owfClassBase
+	__name = "RadialSector"
+
 	function __newindex(name, value)
 		if RadialSector[name] then
 			return rawset(self, name, value)
@@ -727,6 +788,8 @@ end
 RadialSector.__parent = nil -- Hack so our __index is used
 
 class LotusMissionInfo extends owfClassBase
+	__name = "LotusMissionInfo"
+
 	function __index(name)
 		if RadialSector[name] then
 			return RadialSector[name]
@@ -761,6 +824,8 @@ end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
 
 class StoreManifest extends Object
+	__name = "StoreManifest"
+
 	function GetStoreItemsOfType(weakResource)
 		luau_push_object(self.addr)
 		do
@@ -780,6 +845,8 @@ class StoreManifest extends Object
 end
 
 class StoreItem extends Object
+	__name = "StoreItem"
+
 	function GetProductCategory()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("StoreItem", "GetProductCategory"), 1)
@@ -800,6 +867,8 @@ class StoreItem extends Object
 end
 
 class MotionControllerBase extends Object
+	__name = "MotionControllerBase"
+
 	function GetSpeedMultiplier()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("MotionControllerBase", "GetSpeedMultiplier"), 1)
@@ -813,8 +882,13 @@ class MotionControllerBase extends Object
 	end
 end
 
-class EngineNpcMgr extends Object end
+class EngineNpcMgr extends Object
+	__name = "EngineNpcMgr"
+
+end
 class NpcManager extends EngineNpcMgr
+	__name = "NpcManager"
+
 	function PauseAllAgents()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("NpcManager", "PauseAllAgents"), 1)
@@ -855,8 +929,13 @@ class NpcManager extends EngineNpcMgr
 	end
 end
 
-class HudStatus extends Object end
+class HudStatus extends Object
+	__name = "HudStatus"
+
+end
 class LotusHudStatus extends HudStatus
+	__name = "LotusHudStatus"
+
 	function GetFlashMarkers()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
@@ -872,6 +951,8 @@ class LotusHudStatus extends HudStatus
 end
 
 class FlashMarker extends owfClassBase
+	__name = "FlashMarker"
+
 	function ScreenX()
 		luau_push_pointer(self.addr)
 		luau_call(luau_find_method("FlashMarker", "ScreenX"), 1)
@@ -930,6 +1011,8 @@ end
 FlashMarker.__parent = nil -- Hack so our __index is used
 
 class BaseMarkerInfo extends Entity
+	__name = "BaseMarkerInfo"
+
 	function SetMarkerType(i)
 		luau_push_object(self.addr)
 		luau_push_int(i)
@@ -948,6 +1031,8 @@ class BaseMarkerInfo extends Entity
 end
 
 class LensFlare extends Entity
+	__name = "LensFlare"
+
 	function SetTint(color)
 		luau_push_object(self.addr)
 		do
@@ -964,6 +1049,8 @@ end
 Engine = {}
 
 class Engine.OpenLevelArgs
+	__name = "Engine.OpenLevelArgs"
+
 	private level
 	private gamerules
 
@@ -992,6 +1079,8 @@ end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
 
 class Symbol
+	__name = "Symbol"
+
 	function __construct(public name = "")
 	end
 
