@@ -247,6 +247,7 @@ OWF_FONT_SIMPLE5
 
 function owf_overlay_add_rect(x, y, w, h, r, g, b)
 function owf_overlay_add_text(x, y, text, font, r, g, b, scale = 1)
+function owf_overlay_set_visibility(id, visible)
 function owf_overlay_remove(id)
 function owf_overlay_update()
 

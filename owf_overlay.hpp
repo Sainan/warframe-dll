@@ -18,13 +18,13 @@ struct owfOverlay
 
 	struct DrawItem
 	{
-		enum Type : uint8_t
+		enum Type : int8_t
 		{
 			RECT,
 			TEXT,
 		};
 
-		Type type;
+		int8_t type;
 		uint8_t r;
 		uint8_t g;
 		uint8_t b;

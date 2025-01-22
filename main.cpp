@@ -1800,6 +1800,21 @@ struct owfScript
 			{
 				luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
 			}
+			if (lua_toboolean(L, 2) ^ (id->type >= 0))
+			{
+				id->type *= -1;
+			}
+			return 0;
+		});
+		{ ObfusString name("owf_overlay_set_visibility"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			auto id = (owfOverlay::DrawItem*)lua_touserdata(L, 1);
+			SOUP_IF_UNLIKELY (!id)
+			{
+				luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
+			}
 			owfOverlay::remove(id);
 			return 0;
 		});
