@@ -1,0 +1,204 @@
+<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
+<body>
+	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
+	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
+	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
+	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
+	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
+	<p><label for="pause_always_stops_time">Pause Always Stops Time:</label> <input id="pause_always_stops_time" type="checkbox" /></p>
+	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<button id="save_config">Save changes to client_config.json</button>
+	<hr>
+	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
+	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
+	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
+	<hr>
+	<div id="scripts-container"></div>
+	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
+	<p><button onclick="clearScriptLog()">Clear Script Log</button></p>
+	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
+	<script>
+		fetch("/server_host").then(res => res.text()).then(res => {
+			document.getElementById("server_host").value = res;
+		});
+		document.getElementById("server_host_submit").onclick = function() {
+			fetch("/server_host?" + document.getElementById("server_host").value);
+		};
+		document.getElementById("logout").onclick = function() {
+			fetch("/logout");
+		};
+
+		fetch("/high_damage_numbers_patch").then(res => res.text()).then(res => {
+			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
+		});
+		document.getElementById("high_damage_numbers_patch").onchange = function() {
+			fetch("/high_damage_numbers_patch?" + this.checked);
+		};
+
+		fetch("/skip_mission_start_timer").then(res => res.text()).then(res => {
+			document.getElementById("skip_mission_start_timer").checked = (res == "1");
+		});
+		document.getElementById("skip_mission_start_timer").onchange = function() {
+			fetch("/skip_mission_start_timer?" + this.checked);
+		};
+
+		fetch("/simulacrum_blacklisted").then(res => res.text()).then(res => {
+			document.getElementById("simulacrum_blacklisted").checked = (res == "1");
+		});
+		document.getElementById("simulacrum_blacklisted").onchange = function() {
+			fetch("/simulacrum_blacklisted?" + this.checked);
+		};
+
+		fetch("/simulacrum_whitelisted").then(res => res.text()).then(res => {
+			document.getElementById("simulacrum_whitelisted").checked = (res == "1");
+		});
+		document.getElementById("simulacrum_whitelisted").onchange = function() {
+			fetch("/simulacrum_whitelisted?" + this.checked);
+		};
+
+		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {
+			document.getElementById("pause_always_stops_time").checked = (res == "1");
+		});
+		document.getElementById("pause_always_stops_time").onchange = function() {
+			if (this.checked) {
+				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true)`));
+			}
+			else {
+				fetch("/start_script_inline?" + encodeURIComponent(`gGameRules:RequestUnpause() set_pause_always_stops_time(false)`));
+			}
+		};
+
+		fetch("/fov_override").then(res => res.text()).then(res => {
+			document.getElementById("fov_override").value = parseFloat(res) * 10000;
+		});
+		document.getElementById("fov_override").oninput = function() {
+			fetch("/fov_override?" + this.value);
+		};
+
+		document.getElementById("save_config").onclick = function() {
+			fetch("/save_config");
+		};
+
+		document.getElementById("camtype").onchange = function() {
+			fetch("/" + this.value);
+		};
+
+		const marker_types = {
+			"3": "Objective",
+			"9": "Target",
+			"12": "Life Support Capsule",
+			"29": "Target",
+			"31": "Life Support Pickup",
+			"40": "A",
+			"41": "B",
+			"42": "C",
+			"49": "Waypoint",
+			"65": "Focus",
+			"75": "Extraction",
+		};
+
+		function onMarkersChange() {
+			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
+		}
+
+		let status_request_suffix = "?0";
+		function pollStatus() {
+			fetch("/status" + status_request_suffix).then(res => res.json()).then(res => {
+				document.getElementById("console").checked = res.console;
+				if (res.camtype) {
+					document.getElementById("camtype").value = res.camtype;
+				}
+				document.getElementById("pos").value = res.pos ?? "";
+
+				const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
+				bgscript_status.markers ??= [];
+				const marker_set = {};
+				for (const marker of bgscript_status.markers) {
+					if (marker.type != 14) {
+						const name = (marker.type in marker_types ? marker_types[marker.type] : "Marker") + " in " + marker.dist + "m";
+						const pos = marker.x + "," + marker.y + "," + marker.z;
+						const slug = marker.type == 49 ? "wp" : pos;
+						marker_set[slug] = true;
+						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
+						if (!option) {
+							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
+							option.setAttribute("data-slug", slug);
+						}
+						if (option.value != pos) {
+							option.value = pos;
+						}
+						if (option.textContent != name) {
+							option.textContent = name;
+						}
+					}
+				}
+				for (const child of document.getElementById("tp-target").children) {
+					if (child.value != "Custom" && !(child.getAttribute("data-slug") in marker_set)) {
+						document.getElementById("tp-target").removeChild(child);
+						onMarkersChange();
+					}
+				}
+
+				for (const script of document.getElementById("scripts-container").children) {
+					const path = script.children[1].getAttribute("data-path");
+					script.children[1].checked = res.running_scripts.find(x => x == path);
+				}
+
+				if (res.script_log_sub) {
+					const log = document.getElementById("script_log");
+					log.textContent += res.script_log_sub;
+					log.scrollTop = log.scrollHeight;
+					status_request_suffix = "?" + res.script_log_len;
+				}
+
+				pollStatus();
+			}).catch((e) => {
+				console.error(e);
+				document.body.innerHTML = `<p>Connection to DLL lost. <a href="/">Attempt to reconnect.</a></p>`;
+			});
+		}
+		pollStatus();
+
+		function clearScriptLog() {
+			status_request_suffix = "";
+			fetch("/clear_script_log").then(() => {
+				status_request_suffix = "?0";
+				document.getElementById("script_log").innerHTML = "";
+			});
+		}
+
+		document.getElementById("tp-target").onchange = onMarkersChange;
+
+		document.getElementById("tp-submit").onclick = function() {
+			let pos = document.getElementById("tp-target").value;
+			if (pos == "Custom") {
+				pos = document.getElementById("tp-pos").value
+			}
+			fetch("/teleport?" + pos);
+		};
+
+		document.getElementById("console").onchange = function() {
+			fetch("/toggle_console");
+		};
+
+		fetch("/scripts").then(res => res.json()).then(res => {
+			res.forEach(script => {
+				script = script.split("\\").join("/");
+				const p = document.createElement("p");
+				const label = document.createElement("label");
+				label.setAttribute("for", script);
+				label.textContent = script + ": ";
+				p.appendChild(label);
+				const input = document.createElement("input");
+				input.id = script;
+				input.type = "checkbox";
+				input.setAttribute("data-path", "OpenWF/scripts/" + script);
+				input.onchange = function() {
+					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
+				};
+				p.appendChild(input);
+				document.getElementById("scripts-container").appendChild(p);
+			});
+		});
+	</script>
+</body>

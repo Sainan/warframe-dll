@@ -1,0 +1,6 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+if gGameRules instanceof LotusGameRules then
+	gGameRules:OpenMissionContinueDialog(nil)
+else
+	print("Not available in the current mission")
+end

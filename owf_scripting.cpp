@@ -12,6 +12,7 @@
 #include <lauxlib.h>
 #include <lstate.h>
 
+#include "owf_archive.hpp"
 #include "owf_config.hpp"
 #include "owf_luau.hpp"
 #include "owf_structs.hpp"
@@ -879,15 +880,13 @@ owfScript::owfScript()
 
 	std::string runtime;
 #if PRIVATE
-	runtime = string::fromFile(R"(C:\Users\Sainan\Desktop\Repos\warframe-dll\runtime.pluto)");
+	runtime = string::fromFile(R"(OpenWF/runtime.pluto)");
 	if (runtime.empty())
 #endif
 	{
-		using namespace soup::literals;
-		int dummy;
-		runtime = (
-			#include "runtime.pluto"
-		).str();
+		uint32_t size;
+		auto data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
+		runtime = std::string(data, size);
 	}
 	if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) != LUA_OK
 		|| lua_pcall(L, 0, 1, 0) != LUA_OK

@@ -1,0 +1,9 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
+	local player = gRegion:GetLocalPlayerAvatar()
+	for gRegion:GetAvatars() as avatar do
+		if not avatar:IsAvatarFriendly(player) then
+			avatar:Suicide()
+		end
+	end
+until yield()

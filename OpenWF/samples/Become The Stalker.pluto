@@ -1,0 +1,4 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
+gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
+gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000)

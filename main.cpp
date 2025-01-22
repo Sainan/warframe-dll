@@ -8,11 +8,13 @@
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
 
+#include <fstream>
 #include <iostream>
 #include <mutex>
 
 #include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
+#include <filesystem.hpp>
 #include <HttpRequest.hpp>
 #include <joaat.hpp>
 #include <json.hpp>
@@ -41,6 +43,7 @@
 
 using namespace soup;
 
+#include "owf_archive.hpp"
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_luau.hpp"
@@ -1074,6 +1077,16 @@ static bool check_ec(const std::error_code& ec)
 		return false;
 	}
 	return true;
+}
+
+static void write_archive_file(const std::string& path, uint32_t key)
+{
+	uint32_t size;
+	if (auto data = owfArchive::find(key, size))
+	{
+		std::ofstream of(soup::filesystem::u8path(path), std::ios_base::binary);
+		of.write(data, size);
+	}
 }
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
@@ -2259,239 +2272,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-soup::string::toFile(ObfusString("OpenWF/Download Latest DLL.ps1").str(), ObfusString(R"EOC(Write-Host "Fetching latest DLL version..."
-$version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
-Write-Host "Downloading OpenWF Bootstrapper v$version..."
-Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$version/dwmapi.dll" -OutFile "../dwmapi.dll")EOC").str());
-
-		{
-			std::string reference;
-			{
-				using namespace soup::literals;
-				int dummy;
-				reference = (
-					#include "OpenWF/Script API Reference.pluto"
-				).str();
-			}
-			soup::string::toFile(ObfusString("OpenWF/Script API Reference.pluto").str(), std::move(reference));
-		}
+		write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
+		write_archive_file(ObfusString("OpenWF/Script API Reference.pluto").str(), soup::joaat::compileTimeHash("OpenWF/Script API Reference.pluto"));
 
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
 		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-repeat
-	for gRegion:GetLocalPlayer():GetHudStatus():GetFlashMarkers() as marker do
-		if marker.markerType == 49 and not marker.garbage then
-			gRegion:GetLocalPlayerAvatar():SetPosition(marker.baseMarkerInfo:GetPosition())
-		end
-	end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
-gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Types/Enemies/Stalker/StalkerSuit"), true)
-gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000))EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-local commands = {}
-commands["/god"] = function()
-	if gRegion:GetLocalPlayerAvatar():DamageControl():HasTemporaryImmunity() then
-		gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity()
-		chat_system_reply("Removed immunity.")
-	else
-		gRegion:GetLocalPlayerAvatar():DamageControl():GiveTemporaryImmunity(500000, 500000)
-		chat_system_reply("Granted immunity.")
-	end
-end
-commands["/suicide"] = function()
-	if gGameRules instanceof LotusGameRules then
-		gRegion:GetLocalPlayerAvatar():Suicide()
-	else
-		chat_system_reply("That's not a good idea.")
-	end
-end
-commands["/killall"] = function()
-	local player = gRegion:GetLocalPlayerAvatar()
-	for gRegion:GetAvatars() as avatar do
-		if not avatar:IsAvatarFriendly(player) then
-			avatar:Suicide()
-		end
-	end
-end
-commands["/kdrive"] = function()
-	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar"))
-end
-commands["/dargyn"] = function()
-	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar"))
-end
-commands["/simulacrum"] = function()
-	local args = Engine.OpenLevelArgs()
-	args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
-	args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
-	Engine.OpenLevel(args)
-end
-commands["/level"] = function(text)
-	local level = text:split(" ")[2]
-	chat_system_reply("Loading level "..level)
-	local args = Engine.OpenLevelArgs()
-	args:SetLevel(level)
-	Engine.OpenLevel(args)
-end
-commands["/captura"] = function(text)
-	local level = text:split(" ")[2]
-	chat_system_reply("Opening Captura in "..level)
-	local args = Engine.OpenLevelArgs()
-	args:SetLevel(level)
-	args:SetGameRules("/Lotus/Types/GameRules/LotusPhotoBoothGameRules")
-	Engine.OpenLevel(args)
-end
-commands["/energy"] = function()
-	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetMaxEnergy(1000000)
-	gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetEnergy(1000000)
-end
-commands["/scale"] = function(text)
-	local scale = tonumber(text:split(" ")[2])
-	if scale ~= 0 then
-		gRegion:GetLocalPlayerAvatar():SetMeshScale(scale)
-	else
-		chat_system_reply("That's not a good idea.")
-	end
-end
-commands["/pause"] = function(text)
-	gGameRules:RequestPause()
-end
-commands["/unpause"] = function(text)
-	gGameRules:RequestUnpause()
-end
-commands["/quit"] = function()
-	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
-end
-for prefix in commands do
-	chat_block_prefix(prefix)
-end
-repeat
-	while evt := owf_next_event() do
-		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
-			for prefix, f in commands do
-				if evt.text:sub(1, #prefix) == prefix then
-					f(evt.text)
-					break
-				end
-			end
-		end
-	end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-if gGameRules instanceof LotusGameRules then
-	gGameRules:OpenMissionContinueDialog(nil)
-else
-	print("Not available in the current mission")
-end)EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-local was_down = false
-repeat
-	if owf_is_key_down('K')
-		and get_active_input_filter() ~= "/EE/Types/Input/MenuInputFilter"
-		and get_active_input_filter() ~= "/Lotus/Types/Input/LoadoutReduxInputFilter"
-	then
-		if not was_down then
-			was_down = true
-			if gRegion:GetLocalPlayerAvatar():isFollowedByCamera() then
-				print("Normal -> Freecam")
-				gRegion:GetLocalPlayer():setControllingCamera(true)
-				gRegion:GetLocalPlayerAvatar():ControlCamera(false)
-			elseif gRegion:GetLocalPlayer():isControllingCamera() then
-				print("Freecam -> Locked In Place")
-				gRegion:GetLocalPlayer():setControllingCamera(false)
-			else
-				print("Locked In Place -> Normal")
-				gRegion:GetLocalPlayer():setControllingCamera(false)
-				gRegion:GetLocalPlayerAvatar():ControlCamera(true)
-			end
-		end
-	else
-		was_down = false
-	end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-local args = Engine.OpenLevelArgs()
-args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
-args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
-Engine.OpenLevel(args))EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), ObfusString(R"EOC(local was_in_freecam = false
-local last_pos
-repeat
-    if avatar := gRegion:GetLocalPlayerAvatar() then
-        if avatar:isFollowedByCamera() then
-            if was_in_freecam then
-                was_in_freecam = false
-                avatar:SetPosition(last_pos)
-            end
-        else
-            was_in_freecam = gRegion:GetLocalPlayer():isControllingCamera()
-            if was_in_freecam then
-                last_pos = gRegion:GetGameCamera():GetPosition()
-            end
-        end
-    end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-$define VK_CONTROL = 0x11
-$define VK_SPACE = 0x20
 
-local Y_STEP <const> = Vector3(0, 0.01, 0)
-
-local t = os.millis()
-repeat
-	local delta = os.millis() - t
-	if gRegion:GetLocalPlayer():isControllingCamera() then
-		if owf_is_key_down(VK_SPACE) then
-			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP * delta)
-		end
-		if owf_is_key_down(VK_CONTROL) then
-			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() - Y_STEP * delta)
-		end
-	end
-	t = os.millis()
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-repeat
-    if avatar := gRegion:GetLocalPlayerAvatar() then
-        avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
-    end
-until not pcall(yield)
-
-gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-if weapon := gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0) then
-	local impactBehavior = weapon:GetActiveImpactBehavior()
-	impactBehavior.criticalHitChance = 10000
-	impactBehavior.criticalHitDamageMultiplier = 10000
-	print("Your weapon damage has been increased!")
-else
-	print("You don't seem to have a weapon in hand.")
-end)EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-repeat
-	local player = gRegion:GetLocalPlayerAvatar()
-	for gRegion:GetAvatars() as avatar do
-		if not avatar:IsAvatarFriendly(player) then
-			avatar:Suicide()
-		end
-	end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-repeat
-	for gRegion:GetAvatars() as avatar do
-		if inventory := avatar:InventoryControl() then
-			inventory:DoItemDrop()
-		end
-	end
-until yield())EOC").str());
-		soup::string::toFile(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), ObfusString(R"EOC(-- Modifications to sample scripts will be lost the next time you start the game.
-local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0, 2)
-local text = owf_overlay_add_text(10, 10, "OpenWF", OWF_FONT_SIMPLE8, 90, 253, 123, 2)
-owf_overlay_update()
-
-while pcall(yield) do end)EOC").str());
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Auto Teleport to Waypoint.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Become The Stalker.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Chat Commands.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Complete Wave or Mission.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Cycle Camera Hotkey (K).pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Enter Simulacrum.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Teleport on Disable.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Up Down.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Godmode.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Increase Damage.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Kill All Enemies.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Loot Party.pluto"));
+		write_archive_file(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Watermark.pluto"));
 
 		bgscript = new owfScript();
 		bgscript->loadString(ObfusString(R"EOC(local json = require"pluto:json"
@@ -2534,45 +2333,9 @@ until yield())EOC").str());
 #if SELF_HOST_CACHE_MANIFEST
 				if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); req.path.find(cache_sub.str()) != std::string::npos)
 				{
-					uint8_t bin[] = {
-						0x53, 0x48, 0x43, 0x43, 0x1f, 0x00, 0x00, 0x00, 0x02, 0x8a, 0x03, 0x00, 0x00, 0x0e, 0x02, 0x00,
-						0x00, 0x80, 0x00, 0x08, 0x18, 0x00, 0x00, 0x71, 0x41, 0x8c, 0x06, 0x00, 0x02, 0x00, 0x88, 0x01,
-						0xfe, 0x03, 0x0e, 0xf5, 0x7d, 0xd5, 0xba, 0x70, 0x15, 0x00, 0x01, 0x99, 0xc0, 0x58, 0x8e, 0x11,
-						0x8a, 0xe6, 0x5e, 0x46, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x13, 0x11, 0x2f, 0x42,
-						0x2e, 0x43, 0x61, 0x63, 0x68, 0x65, 0x2e, 0x44, 0x78, 0x31, 0x31, 0x2e, 0x62, 0x69, 0x6e, 0xd4,
-						0xdb, 0x97, 0x7e, 0xe9, 0x35, 0xac, 0xb0, 0x92, 0x1f, 0x67, 0x78, 0x10, 0x0c, 0x05, 0x2f, 0x83,
-						0x6e, 0x03, 0x20, 0x32, 0x3c, 0xf7, 0x21, 0x97, 0x5a, 0x8c, 0x6e, 0x89, 0xa6, 0xbf, 0xd7, 0xc8,
-						0x89, 0xdf, 0x0c, 0x2d, 0x04, 0x79, 0x14, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0xdb, 0x5b,
-						0x28, 0x33, 0xd1, 0x30, 0x6f, 0x49, 0x88, 0xa7, 0xd3, 0xe9, 0x6c, 0x24, 0x24, 0x5a, 0xd3, 0x59,
-						0x79, 0x20, 0x17, 0x5f, 0x64, 0x65, 0xb7, 0x95, 0x4e, 0xa7, 0x5e, 0x99, 0x24, 0xc8, 0x49, 0xd9,
-						0x91, 0x77, 0xa6, 0x11, 0x08, 0x1f, 0x53, 0x04, 0x00, 0x65, 0x6e, 0xab, 0xb3, 0x5d, 0x2d, 0x8b,
-						0x7a, 0xff, 0x7e, 0x59, 0xff, 0x62, 0xc4, 0x44, 0xd1, 0x14, 0x9b, 0x52, 0x73, 0xce, 0xf4, 0xed,
-						0x07, 0x7c, 0xfa, 0x3e, 0xa4, 0xea, 0x0b, 0x9f, 0xd2, 0x73, 0x75, 0xd6, 0xa1, 0x66, 0x72, 0x4d,
-						0x27, 0x69, 0x94, 0x5c, 0xf3, 0x37, 0x3b, 0x3d, 0x07, 0x5f, 0xb1, 0x4a, 0x92, 0x78, 0x10, 0x50,
-						0x69, 0x74, 0xff, 0xcf, 0x22, 0x02, 0x66, 0xe9, 0xc1, 0x5e, 0x0c, 0x6d, 0xa5, 0x9c, 0xb7, 0xba,
-						0xb3, 0xfe, 0x52, 0x6a, 0x61, 0x2c, 0x28, 0xd3, 0xdb, 0x15, 0xd7, 0x14, 0x11, 0x06, 0x96, 0xf0,
-						0x07, 0x45, 0xf5, 0x5a, 0xec, 0x61, 0x6b, 0x6f, 0xe2, 0xdc, 0x6f, 0x85, 0xed, 0xa8, 0x51, 0xf6,
-						0x48, 0x7a, 0x3c, 0x91, 0x6e, 0x38, 0x7c, 0xc7, 0x60, 0x70, 0x6c, 0x18, 0x76, 0x1f, 0xf6, 0xc2,
-						0xc5, 0x0f, 0xe5, 0xbd, 0x0f, 0x77, 0x8b, 0x85, 0x5c, 0xd3, 0xcc, 0x54, 0x74, 0xe6, 0xea, 0x2c,
-						0x82, 0x21, 0xd3, 0xec, 0x6e, 0x37, 0xf1, 0x69, 0x6a, 0x49, 0x90, 0xf2, 0x5e, 0x52, 0x72, 0x75,
-						0xc6, 0x64, 0x74, 0xf2, 0x71, 0x7f, 0x83, 0x92, 0xe3, 0x0d, 0x5a, 0x2c, 0x5c, 0x8c, 0xdf, 0x67,
-						0x53, 0x74, 0x63, 0x8b, 0xa7, 0x56, 0x5c, 0x72, 0xd1, 0x64, 0x6f, 0xfa, 0xca, 0x98, 0xde, 0xc5,
-						0x74, 0x85, 0x21, 0x61, 0x68, 0xce, 0xf0, 0xd8, 0x74, 0xd5, 0xc2, 0xa2, 0xc6, 0x28, 0x13, 0xad,
-						0x4b, 0xa9, 0x6a, 0xf8, 0x0e, 0x55, 0x72, 0x1c, 0x66, 0x33, 0x01, 0x11, 0x0e, 0xb8, 0x04, 0xcb,
-						0x87, 0x38, 0x1d, 0xb2, 0xbe, 0x5e, 0x4b, 0x53, 0x75, 0x6b, 0x5a, 0x07, 0x45, 0x5b, 0x6b, 0xaf,
-						0x12, 0x3d, 0xcc, 0x38, 0x0b, 0x15, 0x94, 0x48, 0x16, 0x67, 0x78, 0x78, 0x13, 0xcb, 0x9b, 0x1c,
-						0x3c, 0x6d, 0xe2, 0x38, 0x64, 0x02, 0xd8, 0xfc, 0x56, 0xeb, 0x14, 0x87, 0xda, 0x94, 0x09, 0x7a,
-						0x68, 0x02, 0x1a, 0xc2, 0x2a, 0xcd, 0x04, 0xca, 0x34, 0x01, 0xd5, 0x70, 0xf9, 0xa6, 0x70, 0x8a,
-						0x7b, 0x62, 0x04, 0x00, 0x20, 0x00, 0x00, 0x27, 0x07, 0x05, 0xfb, 0x09, 0x03, 0x29, 0xcb, 0x3f,
-						0xcb, 0x3f, 0x0a, 0x3f, 0x09, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f,
-						0x09, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f, 0x09, 0x3f, 0x09, 0x3f, 0x0a, 0x3f, 0x0a, 0x3f, 0x0a, 0x00,
-						0x00, 0x03, 0x01, 0x04, 0x07, 0x00, 0x00, 0x25, 0x0e, 0x22, 0x0f, 0x04, 0x12, 0x02, 0x00, 0x10,
-						0x05, 0x0e, 0x08, 0x0d, 0x08, 0x0e, 0x07, 0x0e, 0x07, 0x0e, 0x07, 0x0e, 0x07, 0x0e, 0x08, 0x0e,
-						0x07, 0x0e, 0x07, 0x0e, 0x08, 0x0e, 0x08, 0x0e, 0x07, 0x0d, 0x08, 0x10, 0x05, 0x22, 0x90, 0x00,
-						0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
-						0x00, 0x52, 0x0f, 0xc4, 0x0a, 0x2d,
-					};
-					ServerWebService::sendText(s, (const char*)bin, sizeof(bin));
+					uint32_t size;
+					const char* data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/H.Cache_35.6.1.bin"), size);
+					ServerWebService::sendText(s, data, size);
 					return;
 				}
 #endif
@@ -2582,218 +2345,19 @@ until yield())EOC").str());
 				{
 				case soup::joaat::compileTimeHash("/"):
 					{
-						std::string html;
 #if PRIVATE
-						html = string::fromFile("index.html");
-						if (html.empty())
+						std::string html = string::fromFile("OpenWF/index.html");
+						if (!html.empty())
+						{
+							ServerWebService::sendHtml(s, html);
+						}
+						else
 #endif
 						{
-							html = ObfusString(R"EOC(<style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
-<body>
-	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
-	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
-	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
-	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
-	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
-	<p><label for="pause_always_stops_time">Pause Always Stops Time:</label> <input id="pause_always_stops_time" type="checkbox" /></p>
-	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
-	<button id="save_config">Save changes to client_config.json</button>
-	<hr>
-	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
-	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
-	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
-	<hr>
-	<div id="scripts-container"></div>
-	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
-	<p><button onclick="clearScriptLog()">Clear Script Log</button></p>
-	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
-	<script>
-		fetch("/server_host").then(res => res.text()).then(res => {
-			document.getElementById("server_host").value = res;
-		});
-		document.getElementById("server_host_submit").onclick = function() {
-			fetch("/server_host?" + document.getElementById("server_host").value);
-		};
-		document.getElementById("logout").onclick = function() {
-			fetch("/logout");
-		};
-
-		fetch("/high_damage_numbers_patch").then(res => res.text()).then(res => {
-			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
-		});
-		document.getElementById("high_damage_numbers_patch").onchange = function() {
-			fetch("/high_damage_numbers_patch?" + this.checked);
-		};
-
-		fetch("/skip_mission_start_timer").then(res => res.text()).then(res => {
-			document.getElementById("skip_mission_start_timer").checked = (res == "1");
-		});
-		document.getElementById("skip_mission_start_timer").onchange = function() {
-			fetch("/skip_mission_start_timer?" + this.checked);
-		};
-
-		fetch("/simulacrum_blacklisted").then(res => res.text()).then(res => {
-			document.getElementById("simulacrum_blacklisted").checked = (res == "1");
-		});
-		document.getElementById("simulacrum_blacklisted").onchange = function() {
-			fetch("/simulacrum_blacklisted?" + this.checked);
-		};
-
-		fetch("/simulacrum_whitelisted").then(res => res.text()).then(res => {
-			document.getElementById("simulacrum_whitelisted").checked = (res == "1");
-		});
-		document.getElementById("simulacrum_whitelisted").onchange = function() {
-			fetch("/simulacrum_whitelisted?" + this.checked);
-		};
-
-		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {
-			document.getElementById("pause_always_stops_time").checked = (res == "1");
-		});
-		document.getElementById("pause_always_stops_time").onchange = function() {
-			if (this.checked) {
-				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true)`));
-			}
-			else {
-				fetch("/start_script_inline?" + encodeURIComponent(`gGameRules:RequestUnpause() set_pause_always_stops_time(false)`));
-			}
-		};
-
-		fetch("/fov_override").then(res => res.text()).then(res => {
-			document.getElementById("fov_override").value = parseFloat(res) * 10000;
-		});
-		document.getElementById("fov_override").oninput = function() {
-			fetch("/fov_override?" + this.value);
-		};
-
-		document.getElementById("save_config").onclick = function() {
-			fetch("/save_config");
-		};
-
-		document.getElementById("camtype").onchange = function() {
-			fetch("/" + this.value);
-		};
-
-		const marker_types = {
-			"3": "Objective",
-			"9": "Target",
-			"12": "Life Support Capsule",
-			"29": "Target",
-			"31": "Life Support Pickup",
-			"40": "A",
-			"41": "B",
-			"42": "C",
-			"49": "Waypoint",
-			"65": "Focus",
-			"75": "Extraction",
-		};
-
-		function onMarkersChange() {
-			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
-		}
-
-		let status_request_suffix = "?0";
-		function pollStatus() {
-			fetch("/status" + status_request_suffix).then(res => res.json()).then(res => {
-				document.getElementById("console").checked = res.console;
-				if (res.camtype) {
-					document.getElementById("camtype").value = res.camtype;
-				}
-				document.getElementById("pos").value = res.pos ?? "";
-
-				const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
-				bgscript_status.markers ??= [];
-				const marker_set = {};
-				for (const marker of bgscript_status.markers) {
-					if (marker.type != 14) {
-						const name = (marker.type in marker_types ? marker_types[marker.type] : "Marker") + " in " + marker.dist + "m";
-						const pos = marker.x + "," + marker.y + "," + marker.z;
-						const slug = marker.type == 49 ? "wp" : pos;
-						marker_set[slug] = true;
-						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
-						if (!option) {
-							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
-							option.setAttribute("data-slug", slug);
+							uint32_t size;
+							const char* data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
+							ServerWebService::sendHtml(s, data, size);
 						}
-						if (option.value != pos) {
-							option.value = pos;
-						}
-						if (option.textContent != name) {
-							option.textContent = name;
-						}
-					}
-				}
-				for (const child of document.getElementById("tp-target").children) {
-					if (child.value != "Custom" && !(child.getAttribute("data-slug") in marker_set)) {
-						document.getElementById("tp-target").removeChild(child);
-						onMarkersChange();
-					}
-				}
-
-				for (const script of document.getElementById("scripts-container").children) {
-					const path = script.children[1].getAttribute("data-path");
-					script.children[1].checked = res.running_scripts.find(x => x == path);
-				}
-
-				if (res.script_log_sub) {
-					const log = document.getElementById("script_log");
-					log.textContent += res.script_log_sub;
-					log.scrollTop = log.scrollHeight;
-					status_request_suffix = "?" + res.script_log_len;
-				}
-
-				pollStatus();
-			}).catch((e) => {
-				console.error(e);
-				document.body.innerHTML = `<p>Connection to DLL lost. <a href="/">Attempt to reconnect.</a></p>`;
-			});
-		}
-		pollStatus();
-
-		function clearScriptLog() {
-			status_request_suffix = "";
-			fetch("/clear_script_log").then(() => {
-				status_request_suffix = "?0";
-				document.getElementById("script_log").innerHTML = "";
-			});
-		}
-
-		document.getElementById("tp-target").onchange = onMarkersChange;
-
-		document.getElementById("tp-submit").onclick = function() {
-			let pos = document.getElementById("tp-target").value;
-			if (pos == "Custom") {
-				pos = document.getElementById("tp-pos").value
-			}
-			fetch("/teleport?" + pos);
-		};
-
-		document.getElementById("console").onchange = function() {
-			fetch("/toggle_console");
-		};
-
-		fetch("/scripts").then(res => res.json()).then(res => {
-			res.forEach(script => {
-				script = script.split("\\").join("/");
-				const p = document.createElement("p");
-				const label = document.createElement("label");
-				label.setAttribute("for", script);
-				label.textContent = script + ": ";
-				p.appendChild(label);
-				const input = document.createElement("input");
-				input.id = script;
-				input.type = "checkbox";
-				input.setAttribute("data-path", "OpenWF/scripts/" + script);
-				input.onchange = function() {
-					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
-				};
-				p.appendChild(input);
-				document.getElementById("scripts-container").appendChild(p);
-			});
-		});
-	</script>
-</body>)EOC").str();
-						}
-						ServerWebService::sendHtml(s, html);
 					}
 					break;
 

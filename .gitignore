@@ -4,3 +4,4 @@ int/
 *.exp
 *.lib
 *.pdb
+owf_archive_data.hpp

@@ -1,0 +1,9 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+if weapon := gRegion:GetLocalPlayerAvatar():InventoryControl():GetWeaponInHand(0) then
+	local impactBehavior = weapon:GetActiveImpactBehavior()
+	impactBehavior.criticalHitChance = 10000
+	impactBehavior.criticalHitDamageMultiplier = 10000
+	print("Your weapon damage has been increased!")
+else
+	print("You don't seem to have a weapon in hand.")
+end

@@ -1,0 +1,17 @@
+local was_in_freecam = false
+local last_pos
+repeat
+    if avatar := gRegion:GetLocalPlayerAvatar() then
+        if avatar:isFollowedByCamera() then
+            if was_in_freecam then
+                was_in_freecam = false
+                avatar:SetPosition(last_pos)
+            end
+        else
+            was_in_freecam = gRegion:GetLocalPlayer():isControllingCamera()
+            if was_in_freecam then
+                last_pos = gRegion:GetGameCamera():GetPosition()
+            end
+        end
+    end
+until yield()

@@ -1,0 +1,5 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+local args = Engine.OpenLevelArgs()
+args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
+args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
+Engine.OpenLevel(args)

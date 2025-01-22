@@ -1,0 +1,8 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
+    if avatar := gRegion:GetLocalPlayerAvatar() then
+        avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
+    end
+until not pcall(yield)
+
+gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity()

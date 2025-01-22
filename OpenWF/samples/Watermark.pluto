@@ -1,0 +1,6 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0, 2)
+local text = owf_overlay_add_text(10, 10, "OpenWF", OWF_FONT_SIMPLE8, 90, 253, 123, 2)
+owf_overlay_update()
+
+while pcall(yield) do end
