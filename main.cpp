@@ -2294,27 +2294,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		bgscript = new owfScript();
-		bgscript->loadString(ObfusString(R"EOC(local json = require"pluto:json"
-repeat
-	local markers = {}
-	if ply := gRegion:GetLocalPlayer() then
-		if hud := ply:GetHudStatus() then
-			for hud:GetFlashMarkers() as marker do
-				if not marker.garbage then
-					local pos = marker.baseMarkerInfo:GetPosition()
-					markers:insert({
-						type = marker.markerType,
-						x = pos.x,
-						y = pos.y,
-						z = pos.z,
-						dist = marker.distanceToEye,
-					})
-				end
-			end
-		end
-	end
-	owf_set_bgscript_status_string(json.encode({ markers = markers }))
-until yield())EOC").str());
+		{
+			std::string code;
+#if PRIVATE
+			code = string::fromFile("OpenWF/bgscript.pluto");
+			if (code.empty())
+#endif
+			{
+				uint32_t size;
+				auto data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
+				code = std::string(data, size);
+			}
+			bgscript->loadString(std::move(code));
+		}
 
 		if (!auto_start_scripts.empty())
 		{

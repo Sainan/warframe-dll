@@ -1,0 +1,21 @@
+local json = require"pluto:json"
+repeat
+	local markers = {}
+	if ply := gRegion:GetLocalPlayer() then
+		if hud := ply:GetHudStatus() then
+			for hud:GetFlashMarkers() as marker do
+				if not marker.garbage then
+					local pos = marker.baseMarkerInfo:GetPosition()
+					markers:insert({
+						type = marker.markerType,
+						x = pos.x,
+						y = pos.y,
+						z = pos.z,
+						dist = marker.distanceToEye,
+					})
+				end
+			end
+		end
+	end
+	owf_set_bgscript_status_string(json.encode({ markers = markers }))
+until yield()
