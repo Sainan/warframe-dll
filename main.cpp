@@ -39,6 +39,9 @@
 #include <Uri.hpp>
 #include <urlenc.hpp>
 
+//#include <wininet.h>
+//#pragma comment(lib, "wininet")
+
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -72,28 +75,6 @@ static FARPROC og_WTSRegisterSessionNotification;
 static FARPROC og_WTSUnRegisterSessionNotification;
 extern "C" __declspec(dllexport) void WTSRegisterSessionNotification() { og_WTSRegisterSessionNotification(); }
 extern "C" __declspec(dllexport) void WTSUnRegisterSessionNotification() { og_WTSUnRegisterSessionNotification(); }
-
-/*struct ParsedUrl
-{
-	char pad[16];
-	char host[256];
-};
-
-static DetourHook parse_url_hook;
-
-static bool parse_url_detour(const char* in, ParsedUrl* out)
-{
-#if LOGGING
-	std::cout << "parse_url " << in << std::endl;
-#endif
-	//in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
-	if (reinterpret_cast<decltype(&parse_url_detour)>(parse_url_hook.original)(in, out))
-	{
-		//strcpy(out->host, SERVER);
-		return true;
-	}
-	return false;
-}*/
 
 union GameString
 {
@@ -152,6 +133,15 @@ union GameString
 };
 static_assert(sizeof(GameString) == 0x10);
 
+union LegacyGameString
+{
+	char data[32];
+	char* long_data;
+
+	[[nodiscard]] bool isLong() const noexcept { return data[sizeof(data) - 1] == (char)0xFF; }
+	[[nodiscard]] char* getData() noexcept { return isLong() ? long_data : data; }
+};
+
 struct Arguments
 {
 	PAD(0, 0x04) bool silent;
@@ -175,6 +165,99 @@ static_assert(offsetof(Arguments, language) == 0x1B0);
 static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
 static_assert(offsetof(Arguments, cluster) == 0x1C8);
 static_assert(offsetof(Arguments, relaunch) == 0x1D8);
+
+
+/*struct ParsedUrl
+{
+	char pad[16];
+	char host[256];
+};
+
+static DetourHook parse_url_hook;
+
+static bool parse_url_detour(const char* in, ParsedUrl* out)
+{
+#if LOGGING
+	std::cout << "parse_url " << in << std::endl;
+#endif
+	//in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
+	if (reinterpret_cast<decltype(&parse_url_detour)>(parse_url_hook.original)(in, out))
+	{
+		//strcpy(out->host, SERVER);
+		return true;
+	}
+	return false;
+}*/
+
+
+/*struct LegacyParsedUrl
+{
+	PAD(0, 0x30) const wchar_t* hostname;
+};
+
+static DetourHook legacy_parse_url_hook;
+
+static bool legacy_parse_url_detour(LegacyParsedUrl* out, LegacyGameString* in)
+{
+	std::cout << "legacy_parse_url: " << in->getData() << std::endl;
+
+	LegacyGameString buf;
+	strcpy(buf.data, "http://localhost");
+	in = &buf;
+
+	auto ret = reinterpret_cast<decltype(&legacy_parse_url_detour)>(legacy_parse_url_hook.original)(out, in);
+	if (out->hostname)
+	{
+		//std::cout << "hostname = " << unicode::utf16_to_utf8(std::wstring(out->hostname)) << std::endl;
+	}
+	return ret;
+}*/
+
+
+/*static CompactDetourHook internet_connect_hook;
+
+static void internet_connect_detour(uintptr_t a1)
+{
+	ObfusString localhost("localhost");
+	*reinterpret_cast<HINTERNET*>(a1 + 104) = InternetConnectA(
+		*reinterpret_cast<HINTERNET*>(a1 + 96),
+		localhost.c_str(),
+		61558,
+		"",
+		"",
+		INTERNET_SERVICE_HTTP,
+		0,
+		0
+	);
+}*/
+
+
+static DetourHook resolve_addr_hook;
+
+static bool resolve_addr_detour(sockaddr* sa, void* a2, void* a3)
+{
+	if (sa->sa_family == AF_INET)
+	{
+#if LOGGING
+		std::cout << "resolve_addr called with IPv4, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in*>(sa)->sin_port)) << std::endl;
+#endif
+		reinterpret_cast<sockaddr_in*>(sa)->sin_addr.s_addr = SOUP_IPV4_NWE(127, 0, 0, 1);
+		return reinterpret_cast<decltype(&resolve_addr_detour)>(resolve_addr_hook.original)(sa, a2, a3);
+	}
+	else if (sa->sa_family == AF_INET6)
+	{
+#if LOGGING
+		std::cout << "resolve_addr called with IPv6, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in6*>(sa)->sin6_port)) << std::endl;
+#endif
+	}
+	else
+	{
+#if LOGGING
+		std::cout << "resolve_addr called with unknown address family" << std::endl;
+#endif
+	}
+	return false;
+}
 
 
 static DetourHook winhttp_connect_hook;
@@ -2597,6 +2680,63 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		save_config();
 
+		bool is_legacy = false;
+
+		// 2018.02.22.14.34 (16721518 on Steam)
+		/*{
+			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 00 FA FF FF 48 81 EC 00 07 00 00 48 8B 05 ? ? ? ? 48 33 C4");
+			auto legacy_parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "legacy_parse_url = " << legacy_parse_url << std::endl;
+#endif
+			if (legacy_parse_url)
+			{
+				legacy_parse_url_hook.detour = reinterpret_cast<void*>(&legacy_parse_url_detour);
+				legacy_parse_url_hook.target = legacy_parse_url;
+				legacy_parse_url_hook.create();
+				legacy_parse_url_hook.enable();
+
+				is_legacy = true;
+			}
+		}*/
+
+		// 2018.02.22.14.34 (16721518 on Steam)
+		/*{
+			SIG_INST("40 53 48 81 EC 60 02 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 02 00 00 4C 8B 49 08");
+			auto internet_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "internet_connect = " << internet_connect << std::endl;
+#endif
+			if (internet_connect)
+			{
+				internet_connect_hook.detour = reinterpret_cast<void*>(&internet_connect_detour);
+				internet_connect_hook.target = internet_connect;
+				internet_connect_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
+				internet_connect_hook.create();
+				internet_connect_hook.enable();
+
+				is_legacy = true;
+			}
+		}*/
+
+		// 2018.02.22.14.34 (16721518 on Steam)
+		{
+			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 0F B7 01");
+			auto resolve_addr = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "resolve_addr = " << resolve_addr << std::endl;
+#endif
+			if (resolve_addr)
+			{
+				resolve_addr_hook.detour = reinterpret_cast<void*>(&resolve_addr_detour);
+				resolve_addr_hook.target = resolve_addr;
+				resolve_addr_hook.create();
+				resolve_addr_hook.enable();
+
+				is_legacy = true;
+			}
+		}
+
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
 			auto parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2609,6 +2749,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			parse_url_hook.enable();
 		}*/
 
+		if (!is_legacy)
 		{
 			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00");
 			auto winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2666,6 +2807,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		if (!is_legacy)
 		{
 			SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
 			auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
@@ -2684,6 +2826,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			game_http_request_hook.enable();
 		}
 
+		if (!is_legacy)
 		{
 			//SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
 			SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
@@ -2703,7 +2846,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("49 8B D4 48 8B CB E8 ? ? ? ? 85 C0 7F");
+			SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F");
 			auto ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 			std::cout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
@@ -2720,6 +2863,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			ssl_verify_internal_hook.enable();
 		}
 
+		if (!is_legacy)
 		{
 			//SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
 			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05");
@@ -2739,6 +2883,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// This hook allows WorldSeed to be absent or just any value.
+		if (!is_legacy)
 		{
 			SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
 			auto verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2920,6 +3065,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			insn[3] = 0x90;
 			insn[4] = 0x90;
 		}*/
+
+		// Same idea for 2018.02.22.14.34 (16721518 on Steam), but can't see any immediate issues with it.
+		if (is_legacy)
+		{
+			SIG_INST("E8 ? ? ? ? 0F B6 84 24 ? ? ? ? 88 05 ? ? ? ? 0F B6 84");
+			auto insn = Module(nullptr).range.scan(sig_inst).add(5).as<uint8_t*>();
+			memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
+			insn[0] = 0x31;
+			insn[1] = 0xc0;
+			insn[2] = 0x90;
+			insn[3] = 0x90;
+			insn[4] = 0x90;
+			insn[5] = 0x90;
+			insn[6] = 0x90;
+			insn[7] = 0x90;
+		}
 
 		{
 			// Search for string "PostProcessInfo", vftable is below that, function is at offset 0x260
