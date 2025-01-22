@@ -1764,7 +1764,7 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			lua_pushinteger(L, owfOverlay::addRect(
+			lua_pushlightuserdata(L, owfOverlay::addRect(
 				luaL_checkinteger(L, 1),
 				luaL_checkinteger(L, 2),
 				luaL_checkinteger(L, 3),
@@ -1779,7 +1779,7 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			lua_pushinteger(L, owfOverlay::addText(
+			lua_pushlightuserdata(L, owfOverlay::addText(
 				luaL_checkinteger(L, 1),
 				luaL_checkinteger(L, 2),
 				pluto_checkstring(L, 3),
@@ -1795,7 +1795,12 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			owfOverlay::remove(luaL_checkinteger(L, 1));
+			auto id = (owfOverlay::DrawItem*)lua_touserdata(L, 1);
+			SOUP_IF_UNLIKELY (!id)
+			{
+				luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
+			}
+			owfOverlay::remove(id);
 			return 0;
 		});
 		{ ObfusString name("owf_overlay_remove"); lua_setglobal(L, name.c_str()); }
