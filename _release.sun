@@ -5,5 +5,5 @@ require ../Soup/soup
 require ../Pluto/src
 arg -O3
 
-arg -DLOGGING=true
-arg -DPRIVATE=true
+arg -DLOGGING=false
+arg -DPRIVATE=false

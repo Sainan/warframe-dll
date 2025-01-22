@@ -11,9 +11,10 @@
 using namespace soup;
 
 #include "owf_config.hpp"
+#if !LOGGING
 #include "owf_console.hpp"
+#endif
 
-static bool s_should_close_console = false;
 static HWND s_game_hwnd = 0;
 static Window w;
 static bool s_prelogin = true;
@@ -28,10 +29,8 @@ bool owfOverlay::isInited()
 	return s_game_hwnd != 0;
 }
 
-void owfOverlay::init(bool close_console)
+void owfOverlay::init()
 {
-	s_should_close_console = close_console;
-
 	const auto game_pid = GetCurrentProcessId();
 	EnumWindows([](HWND hwnd, LPARAM lparam) -> BOOL
 	{
@@ -58,10 +57,12 @@ void owfOverlay::init(bool close_console)
 				Sleep(100);
 			}
 
-			if (s_should_close_console && owfConsole::active)
+#if !LOGGING
+			if (owfConsole::active)
 			{
 				owfConsole::deactivate();
 			}
+#endif
 
 			//std::cout << "Creating our window..." << std::endl;
 			const auto [width, height] = Window(s_game_hwnd).getSize();

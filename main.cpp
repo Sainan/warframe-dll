@@ -1,8 +1,5 @@
 #define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.7.6"
 
-#define LOGGING false
-#define PRIVATE false
-
 #define SELF_HOST_CACHE_MANIFEST true
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
@@ -990,7 +987,7 @@ static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 			regionmgr = static_cast<RegionMgr*>(**a2);
 			if (!owfOverlay::isInited())
 			{
-				owfOverlay::init(!LOGGING);
+				owfOverlay::init();
 			}
 			break;
 
