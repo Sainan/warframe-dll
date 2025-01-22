@@ -1135,6 +1135,8 @@ struct owfScript
 	lua_State* coro = nullptr;
 	bool stop_requested = false;
 
+	std::unordered_set<owfOverlay::DrawItem*> overlay_items;
+
 	struct Event
 	{
 		enum Type : uint8_t
@@ -1764,7 +1766,7 @@ struct owfScript
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			lua_pushlightuserdata(L, owfOverlay::addRect(
+			auto id = owfOverlay::addRect(
 				luaL_checkinteger(L, 1),
 				luaL_checkinteger(L, 2),
 				luaL_checkinteger(L, 3),
@@ -1772,14 +1774,16 @@ struct owfScript
 				luaL_checkinteger(L, 5),
 				luaL_checkinteger(L, 6),
 				luaL_checkinteger(L, 7)
-			));
+			);
+			static_cast<owfScript*>(L->l_G->user_data)->overlay_items.emplace(id);
+			lua_pushlightuserdata(L, id);
 			return 1;
 		});
 		{ ObfusString name("owf_overlay_add_rect"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			lua_pushlightuserdata(L, owfOverlay::addText(
+			auto id = owfOverlay::addText(
 				luaL_checkinteger(L, 1),
 				luaL_checkinteger(L, 2),
 				pluto_checkstring(L, 3),
@@ -1788,7 +1792,9 @@ struct owfScript
 				luaL_checkinteger(L, 6),
 				luaL_checkinteger(L, 7),
 				luaL_optinteger(L, 8, 1)
-			));
+			);
+			static_cast<owfScript*>(L->l_G->user_data)->overlay_items.emplace(id);
+			lua_pushlightuserdata(L, id);
 			return 1;
 		});
 		{ ObfusString name("owf_overlay_add_text"); lua_setglobal(L, name.c_str()); }
@@ -1815,7 +1821,12 @@ struct owfScript
 			{
 				luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
 			}
-			owfOverlay::remove(id);
+			auto& overlay_items = static_cast<owfScript*>(L->l_G->user_data)->overlay_items;
+			if (auto e = overlay_items.find(id); e != overlay_items.end())
+			{
+				overlay_items.erase(e);
+				owfOverlay::remove(id);
+			}
 			return 0;
 		});
 		{ ObfusString name("owf_overlay_remove"); lua_setglobal(L, name.c_str()); }
@@ -2071,6 +2082,21 @@ struct owfScript
 	~owfScript()
 	{
 		lua_close(main);
+
+		if (!overlay_items.empty())
+		{
+			bool need_redraw = false;
+			for (auto& id : overlay_items)
+			{
+				owfOverlay::remove(id);
+				need_redraw |= (id->type >= 0);
+			}
+			if (need_redraw)
+			{
+				owfOverlay::redraw();
+			}
+			overlay_items.clear();
+		}
 	}
 };
 
@@ -3725,11 +3751,7 @@ local shadow = owf_overlay_add_text(12, 12, "OpenWF", OWF_FONT_SIMPLE8, 0, 0, 0,
 local text = owf_overlay_add_text(10, 10, "OpenWF", OWF_FONT_SIMPLE8, 90, 253, 123, 2)
 owf_overlay_update()
 
-while pcall(yield) do end
-
-owf_overlay_remove(shadow)
-owf_overlay_remove(text)
-owf_overlay_update())EOC").str());
+while pcall(yield) do end)EOC").str());
 
 		bgscript = new owfScript();
 		bgscript->loadString(ObfusString(R"EOC(local json = require"pluto:json"
