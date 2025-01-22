@@ -1300,6 +1300,14 @@ gFlashMgr = {
 	end,
 }
 
+gGameData = {
+	function SyncInventoryFromDB()
+		luau_push_object(get_gamedata())
+		luau_push_string("WantsEndOfMatchPreview") -- A callback is required; so giving it basically a no-op in the script we hijack (PostCameraUpdateHud.lua)
+		luau_call(luau_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
+	end,
+}
+
 gEntityType = Type("/EE/Types/Engine/Entity")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")

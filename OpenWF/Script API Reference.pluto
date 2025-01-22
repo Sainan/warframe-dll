@@ -270,6 +270,9 @@ gStarChart
 gFlashMgr
 	function ExecuteToolMenuCommand(resource)
 
+gGameData
+	function SyncInventoryFromDB()
+
 gEntityType = Type("/EE/Types/Engine/Entity")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
