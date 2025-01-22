@@ -945,6 +945,7 @@ static DetourHook set_lua_global_hook;
 static RegionMgr* regionmgr = nullptr;
 //static LotusGameRules* gamerules;
 static Object* flashmgr = nullptr;
+static Object* gamedata = nullptr;
 
 static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 {
@@ -970,6 +971,10 @@ static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 
 		case soup::joaat::compileTimeHash("gFlashMgr"):
 			flashmgr = **a2;
+			break;
+
+		case soup::joaat::compileTimeHash("gGameData"):
+			gamedata = **a2;
 			break;
 		}
 	}
@@ -1271,6 +1276,13 @@ struct owfScript
 			return 1;
 		});
 		{ ObfusString name("get_flashmgr"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushpointer(L, gamedata);
+			return 1;
+		});
+		{ ObfusString name("get_gamedata"); lua_setglobal(L, name.c_str()); }
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
