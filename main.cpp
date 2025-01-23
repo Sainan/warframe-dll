@@ -55,8 +55,8 @@ using namespace soup;
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
 static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
-static std::string build_hash;
 #endif
+static std::string build_hash;
 static bool fallback_language_was_used = false;
 static bool fallback_graphicsDriver_was_used = false;
 static bool did_auto_login = false;
@@ -625,8 +625,8 @@ static DetourHook ReadCacheManifest_hook;
 
 static bool ReadCacheManifest_detour(uintptr_t a1)
 {
-	bool ret = reinterpret_cast<decltype(&ReadCacheManifest_detour)>(ReadCacheManifest_hook.original)(a1);
 	build_hash = ObfusString("owf_no_manifest").str();
+	bool ret = reinterpret_cast<decltype(&ReadCacheManifest_detour)>(ReadCacheManifest_hook.original)(a1);
 	reinterpret_cast<GameString*>(a1 + 0x1F0)->setShortData(build_hash);
 	return ret;
 }
@@ -636,7 +636,7 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 static DetourHook write_to_log_file_hook;
 static ObfusString log_sep("]: ");
 
-static void write_to_log_file_detour(void* const a1, const char* const data, const size_t _size)
+static void write_to_log_file_detour(void* const a1, char* const data, size_t _size)
 {
 	SOUP_IF_LIKELY (_size > 15)
 	{
@@ -662,14 +662,19 @@ static void write_to_log_file_detour(void* const a1, const char* const data, con
 					break;
 #endif
 
-#if PROVIDE_VERSION_INFO && !SELF_HOST_CACHE_MANIFEST
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
 					if (size == 43)
 					{
+#if !SELF_HOST_CACHE_MANIFEST
 						build_hash = std::string(message + 20, 22);
+#else
+						auto ptr = data + (_size - size) + 20;
+						memcpy(ptr, build_hash.data(), build_hash.size()); ptr += build_hash.size();
+						*ptr++ = '\n';
+						_size = (_size - size) + 20 + build_hash.size() + 1;
+#endif
 					}
 					break;
-#endif
 
 				case soup::joaat::compileTimeHash("InitMappin"): // "InitMapping for all devices with bindings ... and filter ..."
 					if (size > 42)
