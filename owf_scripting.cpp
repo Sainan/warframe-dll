@@ -810,6 +810,16 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("owf_overlay_update"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, ([](lua_State* L) -> int
+	{
+		const auto font = luaL_checkinteger(L, 1) == 5 ? &RasterFont::simple5() : &RasterFont::simple8();
+		auto [width, height] = font->measure(pluto_checkstring(L, 2));
+		lua_pushinteger(L, width);
+		lua_pushinteger(L, height);
+		return 2;
+	}));
+	{ ObfusString name("owf_measure_text"); lua_setglobal(L, name.c_str()); }
+
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pause_always_stops_time = lua_toboolean(L, 1);
