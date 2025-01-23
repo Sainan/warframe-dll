@@ -54,7 +54,7 @@ using namespace soup;
 
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
-static const char* build_label = nullptr; // e.g. "2024.12.14.10.37 Retail Windows x64"
+static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 static std::string build_hash;
 #endif
 static bool fallback_language_was_used = false;
@@ -288,7 +288,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 		}
 #endif
 #if PROVIDE_VERSION_INFO
-		if (build_label && !build_hash.empty())
+		if (build_label[0] && !build_hash.empty())
 		{
 			uri.query.append(ObfusString("&buildLabel=").str());
 			uri.query.append(build_label, 16);
@@ -304,7 +304,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
-		if (build_label && !build_hash.empty())
+		if (build_label[0] && !build_hash.empty())
 		{
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
@@ -654,6 +654,15 @@ static void write_to_log_file_detour(void* a1, const char* data, size_t size)
 				case soup::joaat::compileTimeHash("Logged in "):
 					owfOverlay::setPrelogin(false);
 					break;
+
+#if PROVIDE_VERSION_INFO
+				case soup::joaat::compileTimeHash("Build Labe"):
+					if (size >= 29)
+					{
+						memcpy(build_label, message + 13, 16);
+					}
+					break;
+#endif
 
 #if PROVIDE_VERSION_INFO && !SELF_HOST_CACHE_MANIFEST
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
@@ -1453,24 +1462,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			cache_hash_checks[1] = 0x90;
 			cache_hash_checks[10] = 0x90;
 			cache_hash_checks[11] = 0xe9;
-		}
-#endif
-
-#if PROVIDE_VERSION_INFO
-		{
-			SIG_INST("4C 8D 05 ? ? ? ? 4C 8B CB 48 8D 0D");
-			auto pBuildLabel = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "pBuildLabel = " << pBuildLabel.as<void*>() << std::endl;
-#endif
-			if (pBuildLabel)
-			{
-				build_label = pBuildLabel.add(13).rip().as<const char*>();
-			}
-			else
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
 		}
 #endif
 
