@@ -634,6 +634,13 @@ class GameRules extends Object
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("GameRules", "RequestUnpause"), 1)
 	end
+
+	function RequestResource(name, callbackName)
+		luau_push_object(self.addr)
+		luau_push_string(name)
+		luau_push_string("OWF_"..callbackName) owf_register_callback(callbackName)
+		luau_call(luau_find_method("GameRules", "RequestResource"), 3)
+	end
 end
 
 class GameRulesImpl extends GameRules

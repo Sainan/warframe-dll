@@ -122,6 +122,7 @@ class GameRules extends Object
 	function IsPauseMenuShowing()
 	function RequestPause()
 	function RequestUnpause()
+	function RequestResource(name, callbackName)
 
 class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
