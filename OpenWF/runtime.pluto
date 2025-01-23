@@ -266,12 +266,7 @@ class Entity extends BaseEntity
 			luau_push_string(type)
 			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		if symbol then
-			luau_push_string(symbol.name)
-			luau_call(luau_find_ctor("Symbol"), 1)
-		else
-			luau_call(luau_find_ctor("Symbol"), 0)
-		end
+		(symbol or EMPTY_SYMBOL):pushToLuau()
 		if optionalPosOffset then
 			luau_push_object(self.addr)
 			luau_call(luau_find_method("Entity", "GetPosition"), 1)
@@ -921,12 +916,7 @@ class NpcManager extends EngineNpcMgr
 				mem_write_f32(ud + 0x24, rot.y)
 				mem_write_f32(ud + 0x28, rot.z)
 			end
-			if optionalSymbol then
-				luau_push_string(optionalSymbol.name)
-				luau_call(luau_find_ctor("Symbol"), 1)
-			else
-				luau_call(luau_find_ctor("Symbol"), 0)
-			end
+			(optionalSymbol or EMPTY_SYMBOL):pushToLuau()
 			luau_push_int(optionalLevel or 0)
 			luau_pop(luau_call(luau_find_method("NpcManager", "CreateAgentAtPosition"), 6))
 		end
@@ -1095,6 +1085,11 @@ class Symbol
 	function __tostring()
 		return self.name
 	end
+
+	function pushToLuau()
+		luau_push_string(self.name)
+		luau_call(luau_find_ctor("Symbol"), 1)
+	end
 end
 setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
 
@@ -1179,10 +1174,7 @@ gRegion = {
 	end,
 	function FindFirstTagged(symbol)
 		luau_push_object(get_regionmgr())
-		do
-			luau_push_string(symbol.name)
-			luau_call(luau_find_ctor("Symbol"), 1)
-		end
+		symbol:pushToLuau()
 		luau_call(luau_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
 		if obj := luau_pop_object() then
 			return new LotusAvatar(obj)
@@ -1192,10 +1184,7 @@ gRegion = {
 	end,
 	function FindTagged(symbol)
 		luau_push_object(get_regionmgr())
-		do
-			luau_push_string(symbol.name)
-			luau_call(luau_find_ctor("Symbol"), 1)
-		end
+		symbol:pushToLuau()
 		luau_call(luau_find_method("RegionMgrImpl", "FindTagged"), 2)
 		local t = {}
 		if luau_istable(-1) then
