@@ -192,6 +192,10 @@ class Entity extends BaseEntity
 		entity_set_pos(self.addr, pos.x, pos.y, pos.z)
 	end
 
+	function DistanceToEntity(b)
+		return GetPosition():distance(b:GetPosition())
+	end
+
 	function GetRotation()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("Entity", "GetRotation"), 1)
