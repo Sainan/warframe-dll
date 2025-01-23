@@ -1436,6 +1436,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 #if SELF_HOST_CACHE_MANIFEST
+		if (!is_legacy)
 		{
 			SIG_INST("75 0E 48 8B 45 ? ? 3B 47 08 0F");
 			auto cache_hash_checks = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
@@ -1737,15 +1738,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			SIG_INST("E8 ? ? ? ? 0F B6 84 24 ? ? ? ? 88 05 ? ? ? ? 0F B6 84");
 			auto insn = Module(nullptr).range.scan(sig_inst).add(5).as<uint8_t*>();
-			memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
-			insn[0] = 0x31;
-			insn[1] = 0xc0;
-			insn[2] = 0x90;
-			insn[3] = 0x90;
-			insn[4] = 0x90;
-			insn[5] = 0x90;
-			insn[6] = 0x90;
-			insn[7] = 0x90;
+#if LOGGING
+			std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
+			if ((uintptr_t)insn != 5)
+			{
+				memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
+				insn[0] = 0x31;
+				insn[1] = 0xc0;
+				insn[2] = 0x90;
+				insn[3] = 0x90;
+				insn[4] = 0x90;
+				insn[5] = 0x90;
+				insn[6] = 0x90;
+				insn[7] = 0x90;
+			}
+			else
+			{
+				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+			}
 		}
 
 		{
