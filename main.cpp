@@ -1347,7 +1347,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		bool is_legacy = false;
 
-		// 2018.02.22.14.34 (16721518 on Steam)
+		// 2018.02.22.14.34 (M:8004325165498360760)
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 00 FA FF FF 48 81 EC 00 07 00 00 48 8B 05 ? ? ? ? 48 33 C4");
 			auto legacy_parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -1365,7 +1365,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-		// 2018.02.22.14.34 (16721518 on Steam)
+		// 2018.02.22.14.34 (M:8004325165498360760)
 		/*{
 			SIG_INST("40 53 48 81 EC 60 02 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 02 00 00 4C 8B 49 08");
 			auto internet_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -1384,7 +1384,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-		// 2018.02.22.14.34 (16721518 on Steam)
+		// 2018.02.22.14.34 (M:8004325165498360760)
 		{
 			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 0F B7 01");
 			auto resolve_addr = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -1731,7 +1731,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			insn[4] = 0x90;
 		}*/
 
-		// Same idea for 2018.02.22.14.34 (16721518 on Steam), but can't see any immediate issues with it.
+		// Same idea for 2018.02.22.14.34 (M:8004325165498360760), but can't see any immediate issues with it.
 		if (is_legacy)
 		{
 			SIG_INST("E8 ? ? ? ? 0F B6 84 24 ? ? ? ? 88 05 ? ? ? ? 0F B6 84");
