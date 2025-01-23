@@ -709,7 +709,10 @@ static void write_to_log_file_detour(void* const a1, const char* const data, con
 			}
 		}
 	}
-	//std::cout << std::string(data, size);
+	if (ee_log_in_console)
+	{
+		std::cout << std::string(data, _size);
+	}
 	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, _size);
 }
 
@@ -1074,6 +1077,7 @@ static void save_config()
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
 	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
+	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
 
@@ -1368,6 +1372,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if !CONFIG_LOADED_ONLY_ONCE
 				forced_profile_dir.clear();
 #endif
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("ee_log_in_console")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				ee_log_in_console = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				ee_log_in_console = false;
 			}
 		}
 		save_config();
@@ -2426,6 +2439,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							simulacrum_blacklisted = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
+						break;
+
+					case soup::joaat::compileTimeHash("/ee_log_in_console"):
+						if (arr.size() > 1)
+						{
+							ee_log_in_console = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(ee_log_in_console));
 						break;
 
 					case soup::joaat::compileTimeHash("/pause_always_stops_time"):

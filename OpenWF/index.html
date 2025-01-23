@@ -6,6 +6,7 @@
 	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
 	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
 	<p><label for="pause_always_stops_time">Pause Always Stops Time:</label> <input id="pause_always_stops_time" type="checkbox" /></p>
+	<p><label for="ee_log_in_console">EE.log in Console:</label> <input id="ee_log_in_console" type="checkbox" /></p>
 	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<button id="save_config">Save changes to client_config.json</button>
 	<hr>
@@ -54,6 +55,13 @@
 		});
 		document.getElementById("simulacrum_whitelisted").onchange = function() {
 			fetch("/simulacrum_whitelisted?" + this.checked);
+		};
+
+		fetch("/ee_log_in_console").then(res => res.text()).then(res => {
+			document.getElementById("ee_log_in_console").checked = (res == "1");
+		});
+		document.getElementById("ee_log_in_console").onchange = function() {
+			fetch("/ee_log_in_console?" + this.checked);
 		};
 
 		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {

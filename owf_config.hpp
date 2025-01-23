@@ -22,3 +22,4 @@ inline std::string autologin_email;
 inline std::string autologin_password;
 inline std::vector<std::string> auto_start_scripts;
 inline std::string forced_profile_dir;
+inline bool ee_log_in_console;
