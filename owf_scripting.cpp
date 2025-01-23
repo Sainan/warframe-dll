@@ -617,6 +617,69 @@ owfScript::owfScript()
 		{ ObfusString name("luau_settable"); lua_setglobal(L, name.c_str()); }
 	}
 
+#if PRIVATE
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_Integer i = 0;
+		lua_newtable(L);
+		for (const auto& entry : swig_types)
+		{
+			lua_pushinteger(L, ++i);
+			lua_pushstring(L, entry.second->name);
+			lua_settable(L, -3);
+		}
+		return 1;
+	});
+	{ ObfusString name("luau_get_types"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+		{
+			lua_Integer i = 0;
+			lua_newtable(L);
+			for (auto method = e->second->methods; method->hash != 0; ++method)
+			{
+				lua_pushinteger(L, ++i);
+				lua_pushinteger(L, method->hash);
+				lua_settable(L, -3);
+			}
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("luau_get_methods"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+		{
+			lua_Integer i = 0;
+			lua_newtable(L);
+			for (auto attr = e->second->attributes; attr->hash != 0; ++attr)
+			{
+				lua_pushinteger(L, ++i);
+				lua_pushinteger(L, attr->hash);
+				lua_settable(L, -3);
+			}
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("luau_get_attributes"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
+		{
+			lua_pushstring(L, *e->second->parent_ptr_name);
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("luau_get_parent"); lua_setglobal(L, name.c_str()); }
+#endif
+
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		void* res = nullptr;
