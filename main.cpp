@@ -19,6 +19,7 @@
 #include <joaat.hpp>
 #include <json.hpp>
 #include <memGuard.hpp>
+#include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <Mutex.hpp>
 #include <netConfig.hpp>
@@ -2271,6 +2272,27 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 #endif
+
+		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
+		{
+			MemoryRefReader r(hotfix);
+			uint32_t target_version_hash;
+			if (r.u32le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
+			{
+				const auto off = r.getPosition();
+				owfArchive::load(hotfix.data() + off, hotfix.size() - off);
+				std::cout << ObfusString("Hotfix applied") << std::endl;
+			}
+			else
+			{
+				std::cout << ObfusString("Failed to apply hotfix as it was made for a different DLL version") << std::endl;
+				owfArchive::loadBuiltin();
+			}
+		}
+		else
+		{
+			owfArchive::loadBuiltin();
+		}
 
 		write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
 		write_archive_file(ObfusString("OpenWF/Script API Reference.pluto").str(), soup::joaat::compileTimeHash("OpenWF/Script API Reference.pluto"));

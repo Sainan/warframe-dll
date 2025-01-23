@@ -4,4 +4,5 @@ int/
 *.exp
 *.lib
 *.pdb
+Hotfix.bin
 owf_archive_data.hpp

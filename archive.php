@@ -35,3 +35,6 @@ add_folder_to_archive("OpenWF/samples/");
 $bin_str = gzcompress($uncompressed);
 file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
 touch("owf_archive.cpp");
+
+$target_version = substr(trim(explode("\n", file_get_contents("main.cpp"))[0]), 28, -1);
+file_put_contents("Hotfix.bin", pack("V", joaat($target_version)).$bin_str);

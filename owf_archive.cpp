@@ -7,13 +7,18 @@
 
 static std::string archive_data;
 
-const char* owfArchive::find(uint32_t key, uint32_t& out_len)
-{	
-	if (archive_data.empty())
-	{
-		archive_data = soup::deflate::decompress(compressed_archive_data, sizeof(compressed_archive_data)).decompressed;
-	}
+void owfArchive::load(const char* data, size_t size)
+{
+	archive_data = soup::deflate::decompress(data, size).decompressed;
+}
 
+void owfArchive::loadBuiltin()
+{
+	return load(compressed_archive_data, sizeof(compressed_archive_data));
+}
+
+const char* owfArchive::find(uint32_t key, uint32_t& out_len)
+{
 	soup::MemoryRefReader r(archive_data);
 	while (r.hasMore())
 	{
