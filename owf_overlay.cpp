@@ -20,8 +20,8 @@ static Window w;
 static bool s_prelogin = true;
 static int s_x = -1;
 static int s_y = -1;
-static int s_w = -1;
-static int s_h = -1;
+static unsigned int s_w = -1;
+static unsigned int s_h = -1;
 static bool s_topmost = false;
 
 bool owfOverlay::isInited()
@@ -160,4 +160,14 @@ void owfOverlay::setPrelogin(bool prelogin)
 void owfOverlay::redraw()
 {
 	w.redraw();
+}
+
+unsigned int owfOverlay::getWidth()
+{
+	return s_w;
+}
+
+unsigned int owfOverlay::getHeight()
+{
+	return s_h;
 }

@@ -730,6 +730,14 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushinteger(L, owfOverlay::getWidth());
+		lua_pushinteger(L, owfOverlay::getHeight());
+		return 2;
+	});
+	{ ObfusString name("owf_overlay_get_size"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		auto id = owfOverlay::addRect(
 			luaL_checkinteger(L, 1),
 			luaL_checkinteger(L, 2),

@@ -15,6 +15,8 @@ struct owfOverlay
 	static void init();
 	static void setPrelogin(bool prelogin);
 	static void redraw();
+	static unsigned int getWidth();
+	static unsigned int getHeight();
 
 	struct DrawItem
 	{
