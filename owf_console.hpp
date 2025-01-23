@@ -12,6 +12,8 @@ struct owfConsole
 			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
 			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
 		}
+		SetConsoleCP(CP_UTF8);
+		SetConsoleOutputCP(CP_UTF8);
 		active = true;
 	}
 
