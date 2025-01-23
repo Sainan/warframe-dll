@@ -175,6 +175,9 @@ local function pop_entity()
 		if obj:GetType():isNameInHierarchy("LensFlare") then
 			return new LensFlare(addr)
 		end
+		if "/EE/Types/Engine/Decoration" in obj:GetType():getHierarchy() then
+			return new Decoration(addr)
+		end
 		return obj
 	else
 		luau_pop(1)
@@ -1060,6 +1063,21 @@ class LensFlare extends Entity
 	end
 end
 
+class Decoration extends Entity
+	__name = "Decoration"
+
+	function TriggerAnimation()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("Decoration", "TriggerAnimation"), 1)
+	end
+
+	function IsTriggeredAnimationDone()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("Decoration", "IsTriggeredAnimationDone"), 1)
+		return luau_pop_bool()
+	end
+end
+
 Engine = {}
 
 class Engine.OpenLevelArgs
@@ -1244,7 +1262,7 @@ gRegion = {
 		if luau_istable(-1) then
 			local i = 1
 			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-				t:insert(new LotusAvatar(luau_pop_object()))
+				t:insert(pop_entity())
 				++i
 			end
 			luau_pop(2)
