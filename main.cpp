@@ -636,16 +636,14 @@ static bool ReadCacheManifest_detour(uintptr_t a1)
 static DetourHook write_to_log_file_hook;
 static ObfusString log_sep("]: ");
 
-static void write_to_log_file_detour(void* a1, const char* data, size_t size)
+static void write_to_log_file_detour(void* const a1, const char* const data, const size_t _size)
 {
-	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, size);
-	//std::cout << std::string(data, size);
-	SOUP_IF_LIKELY (size > 15)
+	SOUP_IF_LIKELY (_size > 15)
 	{
 		SOUP_IF_LIKELY (auto message = strstr(data + 15, log_sep.c_str()))
 		{
 			message += log_sep.size();
-			size -= (message - data);
+			size_t size = _size - (message - data);
 
 			if (size > 10)
 			{
@@ -686,10 +684,33 @@ static void write_to_log_file_detour(void* a1, const char* data, size_t size)
 						}
 					}
 					break;
+
+				case soup::joaat::compileTimeHash("Failed to "): // "Failed to created child context for function OWF_..., script: /Lotus/Interface/PostCameraUpdateHud.lua"
+					if (size > 100 && soup::joaat::hashRange(message + 10, 39) == soup::joaat::compileTimeHash("created child context for function OWF_"))
+					{
+						const auto name = std::string(message + 49, size - 100);
+#if LOGGING
+						std::cout << "OWF callback called: " << name << std::endl;
+#endif
+						std::lock_guard lock(running_scripts_mtx);
+						for (auto& scr : running_scripts)
+						{
+							if (scr->callbacks.contains(name))
+							{
+								scr->callbacks.erase(name);
+								scr->events.emplace_back(OWF_EVT_CALLBACK, std::move(name));
+								break;
+							}
+						}
+						return; // Don't log this
+					}
+					break;
 				}
 			}
 		}
 	}
+	//std::cout << std::string(data, size);
+	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, _size);
 }
 
 
@@ -793,10 +814,6 @@ static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
 	return reinterpret_cast<decltype(&set_lua_global_detour)>(set_lua_global_hook.original)(a1, a2, name);
 }
 
-
-static Mutex running_scripts_mtx;
-static std::vector<UniquePtr<owfScript>> running_scripts;
-static owfScript* bgscript = nullptr;
 
 static void start_script_from_file(std::string&& path)
 {
@@ -945,7 +962,7 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 			{
 				if (blocking_script != nullptr)
 				{
-					blocking_script->events.emplace_back(owfScript::Event::BLOCKED_CHAT_MESSAGE, std::move(current_draft));
+					blocking_script->events.emplace_back(OWF_EVT_BLOCKED_CHAT_MESSAGE, std::move(current_draft));
 				}
 			}
 		}
@@ -2638,7 +2655,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								if (auto route = scr->findCustomRoute(route_hash))
 								{
 									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									scr->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+									scr->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
 									handled = true;
 									break;
 								}
@@ -2648,7 +2665,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								if (auto route = bgscript->findCustomRoute(route_hash))
 								{
 									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									bgscript->events.emplace_back(owfScript::Event::CUSTOM_ROUTE_SERVED, req.path);
+									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
 									handled = true;
 								}
 							}*/

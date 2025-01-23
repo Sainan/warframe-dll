@@ -1321,9 +1321,14 @@ gFlashMgr = {
 }
 
 gGameData = {
-	function SyncInventoryFromDB()
+	function SyncInventoryFromDB(callbackName)
 		luau_push_object(get_gamedata())
-		luau_push_string("WantsEndOfMatchPreview") -- A callback is required; so giving it basically a no-op in the script we hijack (PostCameraUpdateHud.lua)
+		if callbackName then
+			owf_register_callback(callbackName)
+			luau_push_string("OWF_"..callbackName)
+		else
+			luau_push_string("WantsEndOfMatchPreview") -- Basically a no-op
+		end
 		luau_call(luau_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
 	end,
 }
@@ -1359,6 +1364,7 @@ OWF_FONT_SIMPLE5 = 5
 
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
+OWF_EVT_CALLBACK = 3
 
 UpgradeType = {
 	NONE = 0,

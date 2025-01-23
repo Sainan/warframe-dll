@@ -19,6 +19,13 @@ inline std::string bgscript_status_string;
 
 inline std::string active_input_filter;
 
+enum owfScriptEventType : uint8_t
+{
+	OWF_EVT_BLOCKED_CHAT_MESSAGE = 1,
+	OWF_EVT_CUSTOM_ROUTE_SERVED = 2,
+	OWF_EVT_CALLBACK = 3,
+};
+
 struct owfScript
 {
 	std::string name;
@@ -30,13 +37,7 @@ struct owfScript
 
 	struct Event
 	{
-		enum Type : uint8_t
-		{
-			BLOCKED_CHAT_MESSAGE = 1,
-			CUSTOM_ROUTE_SERVED = 2,
-		};
-
-		Type type;
+		owfScriptEventType type;
 		std::string data;
 	};
 	struct CustomRoute
@@ -46,6 +47,7 @@ struct owfScript
 	};
 	std::unordered_set<std::string> blocked_chat_prefixes;
 	std::unordered_map<uint32_t, CustomRoute> custom_routes;
+	std::unordered_set<std::string> callbacks;
 	std::deque<Event> events;
 
 	static void logNl(const std::string& msg);
@@ -99,3 +101,7 @@ struct owfScript
 		}
 	}
 };
+
+inline soup::Mutex running_scripts_mtx;
+inline std::vector<soup::UniquePtr<owfScript>> running_scripts;
+inline owfScript* bgscript = nullptr;

@@ -239,8 +239,9 @@ function owf_register_custom_route(path, mime, content)
 
 -- OpenWF events
 
-OWF_EVT_BLOCKED_CHAT_MESSAGE
-OWF_EVT_CUSTOM_ROUTE_SERVED
+OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
+OWF_EVT_CUSTOM_ROUTE_SERVED = 2
+OWF_EVT_CALLBACK = 3
 
 function owf_next_event()
 
@@ -276,7 +277,7 @@ gFlashMgr
 	function ExecuteToolMenuCommand(resource)
 
 gGameData
-	function SyncInventoryFromDB()
+	function SyncInventoryFromDB(callbackName)
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")

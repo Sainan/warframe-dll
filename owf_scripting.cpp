@@ -876,7 +876,12 @@ owfScript::owfScript()
 				lua_settable(L, -3);
 			}
 			{
-				pluto_pushstring(L, scr->events.front().type == Event::BLOCKED_CHAT_MESSAGE ? ObfusString("text").str() : ObfusString("path").str());
+				switch (scr->events.front().type)
+				{
+				case OWF_EVT_BLOCKED_CHAT_MESSAGE: pluto_pushstring(L, ObfusString("text").str()); break;
+				case OWF_EVT_CUSTOM_ROUTE_SERVED: pluto_pushstring(L, ObfusString("path").str()); break;
+				case OWF_EVT_CALLBACK: pluto_pushstring(L, ObfusString("name").str()); break;
+				}
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
 			}
@@ -907,6 +912,13 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_register_custom_route"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->callbacks.emplace(luaL_checkstring(L, 1));
+		return 0;
+	});
+	{ ObfusString name("owf_register_callback"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
