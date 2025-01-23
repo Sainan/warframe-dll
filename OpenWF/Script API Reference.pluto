@@ -139,6 +139,7 @@ class LotusAttractModeGameRules extends GameRulesImpl
 
 class RadialSolarMap extends Object
 	function GetRegions()
+	function BuildMissionForLocation(symbol)
 
 class RadialRegion
 	name
@@ -158,6 +159,7 @@ class LotusMissionInfo extends owfClassBase
 	goalTag
 	activeMissionTag
 	levelOverride
+	function EncodeAsString()
 
 class StoreManifest extends Object
 	function GetStoreItemsOfType(weakResource)
@@ -202,6 +204,7 @@ class LensFlare extends Entity
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
+	function AddContextTag(tag)
 
 class Symbol
 	function __construct(public name = "")

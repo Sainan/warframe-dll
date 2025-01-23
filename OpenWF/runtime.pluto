@@ -707,6 +707,13 @@ class RadialSolarMap extends Object
 		end
 		return t
 	end
+
+	function BuildMissionForLocation(symbol)
+		luau_push_object(self.addr)
+		symbol:pushToLuau()
+		luau_call(luau_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
+		return new LotusMissionInfo(luau_pop_pointer())
+	end
 end
 
 class RadialRegion
@@ -790,8 +797,8 @@ class LotusMissionInfo extends owfClassBase
 	__name = "LotusMissionInfo"
 
 	function __index(name)
-		if RadialSector[name] then
-			return RadialSector[name]
+		if LotusMissionInfo[name] then
+			return LotusMissionInfo[name]
 		end
 		switch name do
 			case "missionType":
@@ -818,6 +825,12 @@ class LotusMissionInfo extends owfClassBase
 				return nil
 		end
 		error("Unknown field: "..name)
+	end
+
+	function EncodeAsString()
+		luau_push_pointer(self.addr)
+		luau_call(luau_find_method("LotusMissionInfo", "EncodeAsString"), 1)
+		return luau_pop_string()
 	end
 end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
@@ -1047,6 +1060,7 @@ class Engine.OpenLevelArgs
 
 	private level
 	private gamerules
+	private context_tags
 
 	function SetLevel(level)
 		self.level = level
@@ -1054,6 +1068,11 @@ class Engine.OpenLevelArgs
 
 	function SetGameRules(gamerules)
 		self.gamerules = gamerules
+	end
+
+	function AddContextTag(tag)
+		self.context_tags ??= {}
+		self.context_tags:insert(tag)
 	end
 
 	function pushToLuau()
@@ -1067,6 +1086,14 @@ class Engine.OpenLevelArgs
 			luau_push_value(-1)
 			luau_push_string(self.gamerules)
 			luau_call(luau_find_method("OpenLevelArgs", "SetGameRules"), 2)
+		end
+
+		if self.context_tags then
+			for self.context_tags as tag do
+				luau_push_value(-1)
+				luau_push_string(tag)
+				luau_call(luau_find_method("OpenLevelArgs", "AddContextTag"), 2)
+			end
 		end
 	end
 end
