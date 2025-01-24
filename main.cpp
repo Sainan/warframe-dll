@@ -402,12 +402,6 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
-static bool prohibit_skip_mission_start_timer = false;
-static bool prohibit_fov_override = false;
-static bool prohibit_freecam = false;
-static bool prohibit_teleport = false;
-static bool prohibit_scripts = false;
-
 static void on_got_server_host()
 {
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
@@ -1958,18 +1952,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("40 53 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 70 48 8B 81 E0 01 00 00");
-			Entity_SetPosition = Module(nullptr).range.scan(sig_inst).as<Entity_SetPosition_t>();
-#if LOGGING
-			std::cout << "Entity_SetPosition = " << (void*)Entity_SetPosition << std::endl;
-#endif
-			if (!Entity_SetPosition)
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
-		}
-
-		{
 			SIG_INST("C2 96 84 6B 00 00 00 00");
 			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
@@ -2537,37 +2519,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::send204(s);
 						break;
 
-						// Vania Mall: Closet behind Arthur: -15,-6.5,13
-						// Vania Mall: Cutscene Room: -19,-6.5,14
-					case soup::joaat::compileTimeHash("/teleport"):
-						if (Entity_SetPosition && regionmgr && !prohibit_teleport)
-						{
-							std::vector<std::string> pos_arr;
-							if (arr.size() > 1)
-							{
-								pos_arr = string::explode(arr[1], ',');
-							}
-							if (pos_arr.size() == 3)
-							{
-								float pos[3] = {
-									strtof(pos_arr[0].c_str(), nullptr),
-									strtof(pos_arr[1].c_str(), nullptr),
-									strtof(pos_arr[2].c_str(), nullptr)
-								};
-								Entity_SetPosition(regionmgr->GetLocalPlayerAvatar(), pos);
-								ServerWebService::send204(s);
-							}
-							else
-							{
-								ServerWebService::send400(s);
-							}
-						}
-						else
-						{
-							ServerWebService::send500(s);
-						}
-						break;
-
 					case soup::joaat::compileTimeHash("/status"):
 						{
 							JsonObject obj;
@@ -2688,7 +2639,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									break;
 								}
 							}
-							/*if (!handled && bgscript)
+							if (!handled && bgscript)
 							{
 								if (auto route = bgscript->findCustomRoute(route_hash))
 								{
@@ -2696,7 +2647,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
 									handled = true;
 								}
-							}*/
+							}
 							if (!handled)
 							{
 								ServerWebService::send404(s);

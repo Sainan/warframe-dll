@@ -138,9 +138,6 @@ struct Entity : public BaseEntity
 	/* 0x118 */ float vis_z;
 };
 
-using Entity_SetPosition_t = void(*)(Entity*, float[3]);
-inline Entity_SetPosition_t Entity_SetPosition = nullptr;
-
 struct UnkControlsArg
 {
 };

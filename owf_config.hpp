@@ -23,3 +23,10 @@ inline std::string autologin_password;
 inline std::vector<std::string> auto_start_scripts;
 inline std::string forced_profile_dir;
 inline bool ee_log_in_console;
+
+// Tunables
+inline bool prohibit_skip_mission_start_timer = false;
+inline bool prohibit_fov_override = false;
+inline bool prohibit_freecam = false;
+inline bool prohibit_teleport = false;
+inline bool prohibit_scripts = false;

@@ -232,21 +232,6 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("entity_get_pos"); lua_setglobal(L, name.c_str()); }
 
-	if (Entity_SetPosition)
-	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
-			auto entity = reinterpret_cast<Entity*>(luaL_checkinteger(L, 1));
-			float pos[3];
-			pos[0] = static_cast<float>(luaL_checknumber(L, 2));
-			pos[1] = static_cast<float>(luaL_checknumber(L, 3));
-			pos[2] = static_cast<float>(luaL_checknumber(L, 4));
-			Entity_SetPosition(entity, pos);
-			return 3;
-		});
-		{ ObfusString name("entity_set_pos"); lua_setglobal(L, name.c_str()); }
-	}
-
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<BaseAvatar*>(luaL_checkinteger(L, 1))->getDamageController());
@@ -923,6 +908,13 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_set_bgscript_status_string"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushboolean(L, prohibit_teleport);
+		return 1;
+	});
+	{ ObfusString name("owf_get_prohibit_teleport"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

@@ -199,7 +199,16 @@ class Entity extends BaseEntity
 	end
 
 	function SetPosition(pos)
-		entity_set_pos(self.addr, pos.x, pos.y, pos.z)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("Entity", "GetPosition"), 1)
+		end
+		local ud = luau_get_userdata()
+		mem_write_f32(ud + 0x20, pos.x)
+		mem_write_f32(ud + 0x24, pos.y)
+		mem_write_f32(ud + 0x28, pos.z)
+		luau_call(luau_find_method("Entity", "SetPosition"), 2)
 	end
 
 	function DistanceToEntity(b)
