@@ -1,5 +1,3 @@
---dummy,R"EOC(--[[OpenWF Script Runtime]]--
-
 Vector = require "pluto:vector3"
 Vector3 = Vector
 Rotation = Vector
@@ -1981,5 +1979,3 @@ return function(f)
 		end
 	end)
 end
-
---)EOC"_obfus

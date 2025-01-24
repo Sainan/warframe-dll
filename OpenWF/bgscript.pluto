@@ -1,6 +1,6 @@
 owf_register_custom_route("/teleport", "text/plain", "")
 local json = require"pluto:json"
-repeat
+while pcall(yield) do
 	local markers = {}
 	if ply := gRegion:GetLocalPlayer() then
 		if hud := ply:GetHudStatus() then
@@ -29,4 +29,4 @@ repeat
 			end
 		end
 	end
-until yield()
+end

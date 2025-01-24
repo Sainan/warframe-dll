@@ -874,7 +874,11 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	};
 	if (bgscript != nullptr)
 	{
-		bgscript->tick();
+		SOUP_IF_UNLIKELY (!bgscript->tick())
+		{
+			delete bgscript;
+			bgscript = nullptr;
+		}
 	}
 	{
 		std::lock_guard mtx(running_scripts_mtx);
@@ -1109,6 +1113,22 @@ static bool check_ec(const std::error_code& ec)
 		return false;
 	}
 	return true;
+}
+
+static void start_bgscript()
+{
+	std::string code;
+#if PRIVATE
+	code = string::fromFile("OpenWF/bgscript.pluto");
+	if (code.empty())
+#endif
+	{
+		uint32_t size;
+		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
+		code = std::string(data, size);
+	}
+	bgscript = new owfScript();
+	bgscript->loadString(std::move(code));
 }
 
 static void write_archive_file(const std::string& path, uint32_t key)
@@ -2336,20 +2356,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		write_archive_file(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Watermark.pluto"));
 #endif
 
-		bgscript = new owfScript();
-		{
-			std::string code;
-#if PRIVATE
-			code = string::fromFile("OpenWF/bgscript.pluto");
-			if (code.empty())
-#endif
-			{
-				uint32_t size;
-				auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
-				code = std::string(data, size);
-			}
-			bgscript->loadString(std::move(code));
-		}
+		start_bgscript();
 
 		if (!auto_start_scripts.empty())
 		{
@@ -2618,6 +2625,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 							ServerWebService::send204(s);
 						}
+						break;
+
+					case soup::joaat::compileTimeHash("/stop_bgscript"):
+						if (bgscript)
+						{
+							bgscript->stop_requested = true;
+						}
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/start_bgscript"):
+						if (!bgscript)
+						{
+							start_bgscript();
+						}
+						ServerWebService::send204(s);
 						break;
 
 					case soup::joaat::compileTimeHash("/clear_script_log"):
