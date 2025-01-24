@@ -538,6 +538,18 @@ class LotusWeapon extends WeaponEx
 		luau_push_int(xp)
 		luau_call(luau_find_method("LotusWeapon", "SetXP"), 2)
 	end
+
+	function GetCustomization()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusWeapon", "GetCustomization"), 1)
+		return new WeaponCustomization(luau_pop_userdata())
+	end
+
+	function SetCustomization(cust)
+		luau_push_object(self.addr)
+		luau_push_userdata(cust.ud)
+		luau_call(luau_find_method("LotusWeapon", "SetCustomization"), 2)
+	end
 end
 
 class WeaponImpactBehavior extends Object
@@ -1075,6 +1087,23 @@ class Decoration extends Entity
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("Decoration", "IsTriggeredAnimationDone"), 1)
 		return luau_pop_bool()
+	end
+end
+
+class WeaponCustomization
+	__name = "WeaponCustomization"
+
+	function __construct(public ud)
+	end
+
+	function SetSkin(weakResource, i)
+		luau_push_userdata(self.ud)
+		do
+			luau_push_string(weakResource)
+			luau_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+		end
+		luau_push_int(i)
+		luau_call(luau_find_method("WeaponCustomization", "SetSkin"), 3)
 	end
 end
 

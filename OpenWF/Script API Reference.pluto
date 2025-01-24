@@ -100,6 +100,8 @@ class WeaponEx extends WeaponBase
 class LotusWeapon extends WeaponEx
 	function GetXP()
 	function SetXP(xp)
+	function GetCustomization()
+	function SetCustomization(cust)
 
 class WeaponImpactBehavior extends Object
 	criticalHitChance
@@ -205,6 +207,9 @@ class LensFlare extends Entity
 class Decoration extends Entity
 	function TriggerAnimation()
 	function IsTriggeredAnimationDone()
+
+class WeaponCustomization
+	function SetSkin(weakResource, i)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)
