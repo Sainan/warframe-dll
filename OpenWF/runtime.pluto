@@ -966,14 +966,14 @@ end
 class CameraControllerBase extends Object
 	__name = "CameraControllerBase"
 
-	function GetViewOffset()
+	function implGetVector(funcName)
 		luau_push_object(self.addr)
-		luau_call(luau_find_method("CameraControllerBase", "GetViewOffset"), 1)
+		luau_call(luau_find_method("CameraControllerBase", funcName), 1)
 		local ud = luau_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
-	function SetViewOffset(vec)
+	function implSetVector(funcName, vec)
 		luau_push_object(self.addr)
 		do
 			luau_push_object(self.addr)
@@ -983,67 +983,39 @@ class CameraControllerBase extends Object
 			mem_write_f32(ud + 0x24, vec.y)
 			mem_write_f32(ud + 0x28, vec.z)
 		end
-		luau_call(luau_find_method("CameraControllerBase", "SetViewOffset"), 2)
+		luau_call(luau_find_method("CameraControllerBase", funcName), 2)
+	end
+
+	function GetViewOffset()
+		return self:implGetVector("GetViewOffset")
+	end
+
+	function SetViewOffset(vec)
+		return self:implSetVector("SetViewOffset", vec)
 	end
 
 	function GetAimViewOffset()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("CameraControllerBase", "GetAimViewOffset"), 1)
-		local ud = luau_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return self:implGetVector("GetAimViewOffset")
 	end
 
 	function SetAimViewOffset(vec)
-		luau_push_object(self.addr)
-		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("CameraControllerBase", "GetAimViewOffset"), 1)
-			local ud = luau_get_userdata()
-			mem_write_f32(ud + 0x20, vec.x)
-			mem_write_f32(ud + 0x24, vec.y)
-			mem_write_f32(ud + 0x28, vec.z)
-		end
-		luau_call(luau_find_method("CameraControllerBase", "SetAimViewOffset"), 2)
+		return self:implSetVector("SetAimViewOffset", vec)
 	end
 
 	function GetRunViewOffset()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("CameraControllerBase", "GetRunViewOffset"), 1)
-		local ud = luau_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return self:implGetVector("GetRunViewOffset")
 	end
 
 	function SetRunViewOffset(vec)
-		luau_push_object(self.addr)
-		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("CameraControllerBase", "GetRunViewOffset"), 1)
-			local ud = luau_get_userdata()
-			mem_write_f32(ud + 0x20, vec.x)
-			mem_write_f32(ud + 0x24, vec.y)
-			mem_write_f32(ud + 0x28, vec.z)
-		end
-		luau_call(luau_find_method("CameraControllerBase", "SetRunViewOffset"), 2)
+		return self:implSetVector("SetRunViewOffset", vec)
 	end
 
 	function GetInAirViewOffset()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("CameraControllerBase", "GetInAirViewOffset"), 1)
-		local ud = luau_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return self:implGetVector("GetInAirViewOffset")
 	end
 
 	function SetInAirViewOffset(vec)
-		luau_push_object(self.addr)
-		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("CameraControllerBase", "GetInAirViewOffset"), 1)
-			local ud = luau_get_userdata()
-			mem_write_f32(ud + 0x20, vec.x)
-			mem_write_f32(ud + 0x24, vec.y)
-			mem_write_f32(ud + 0x28, vec.z)
-		end
-		luau_call(luau_find_method("CameraControllerBase", "SetInAirViewOffset"), 2)
+		return self:implSetVector("SetInAirViewOffset", vec)
 	end
 end
 
