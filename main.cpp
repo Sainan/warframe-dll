@@ -2410,7 +2410,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					case soup::joaat::compileTimeHash("/save_config"):
 						save_config();
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
@@ -2475,7 +2475,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					case soup::joaat::compileTimeHash("/logout"):
 						do_logout();
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/server_host"):
@@ -2499,7 +2499,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								local_player->getAvatar()->followed_by_camera = false;
 							}
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/lockcam"):
@@ -2511,7 +2511,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								local_player->getAvatar()->followed_by_camera = false;
 							}
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/gamecam"):
@@ -2523,7 +2523,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								local_player->getAvatar()->followed_by_camera = true;
 							}
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/status"):
@@ -2583,7 +2583,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							owfConsole::activate(BOOTSTRAPPER_TITLE);
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/scripts"):
@@ -2604,7 +2604,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (!prohibit_scripts)
 						{
 							start_script_from_file(urlenc::decode(arr[1]));
-							ServerWebService::send204(s);
+							ServerWebService::sendText(s, {});
 						}
 						break;
 
@@ -2612,7 +2612,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (!prohibit_scripts)
 						{
 							start_script_from_string(urlenc::decode(arr[1]));
-							ServerWebService::send204(s);
+							ServerWebService::sendText(s, {});
 						}
 						break;
 
@@ -2623,7 +2623,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							{
 								scr->stop_requested = true;
 							}
-							ServerWebService::send204(s);
+							ServerWebService::sendText(s, {});
 						}
 						break;
 
@@ -2632,7 +2632,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							bgscript->stop_requested = true;
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/start_bgscript"):
@@ -2640,12 +2640,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							start_bgscript();
 						}
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					default:
