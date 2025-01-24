@@ -295,6 +295,8 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 			uri.query.push_back('/');
 			uri.query.append(build_hash);
 		}
+		uri.query.append(ObfusString("&clientMod=").str());
+		uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
 #endif
 	}
 	else if (uri.path == ObfusString("/api/inbox.php").str())
