@@ -1025,6 +1025,26 @@ class CameraControllerBase extends Object
 		end
 		luau_call(luau_find_method("CameraControllerBase", "SetRunViewOffset"), 2)
 	end
+
+	function GetInAirViewOffset()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("CameraControllerBase", "GetInAirViewOffset"), 1)
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetInAirViewOffset(vec)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("CameraControllerBase", "GetInAirViewOffset"), 1)
+			local ud = luau_get_userdata()
+			mem_write_f32(ud + 0x20, vec.x)
+			mem_write_f32(ud + 0x24, vec.y)
+			mem_write_f32(ud + 0x28, vec.z)
+		end
+		luau_call(luau_find_method("CameraControllerBase", "SetInAirViewOffset"), 2)
+	end
 end
 
 class EngineNpcMgr extends Object
