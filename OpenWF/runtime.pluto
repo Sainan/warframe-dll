@@ -1017,6 +1017,14 @@ class CameraControllerBase extends Object
 	function SetInAirViewOffset(vec)
 		return self:implSetVector("SetInAirViewOffset", vec)
 	end
+
+	function SetInAirAimViewOffset(vec)
+		return self:implSetVector("SetInAirAimViewOffset", vec)
+	end
+
+	function SetMeleeOffset(vec)
+		return self:implSetVector("SetMeleeOffset", vec)
+	end
 end
 
 class EngineNpcMgr extends Object

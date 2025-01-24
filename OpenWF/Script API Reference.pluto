@@ -189,6 +189,8 @@ class CameraControllerBase extends Object
 	function SetRunViewOffset(vec)
 	function GetInAirViewOffset()
 	function SetInAirViewOffset(vec)
+	function SetInAirAimViewOffset(vec)
+	function SetMeleeOffset(vec)
 
 class EngineNpcMgr extends Object
 
