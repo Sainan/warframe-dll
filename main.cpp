@@ -1120,7 +1120,7 @@ static bool check_ec(const std::error_code& ec)
 static void write_archive_file(const std::string& path, uint32_t key)
 {
 	uint32_t size;
-	if (auto data = owfArchive::find(key, size))
+	if (auto data = g_archive.find(key, size))
 	{
 		std::ofstream of(soup::filesystem::u8path(path), std::ios_base::binary);
 		of.write(data, size);
@@ -2319,18 +2319,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (r.u32le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
 			{
 				const auto off = r.getPosition();
-				owfArchive::load(hotfix.data() + off, hotfix.size() - off);
+				g_archive.load(hotfix.data() + off, hotfix.size() - off);
 				std::cout << ObfusString("Hotfix applied") << std::endl;
 			}
 			else
 			{
 				std::cout << ObfusString("Failed to apply hotfix as it was made for a different DLL version") << std::endl;
-				owfArchive::loadBuiltin();
+				g_archive.loadBuiltin();
 			}
 		}
 		else
 		{
-			owfArchive::loadBuiltin();
+			g_archive.loadBuiltin();
 		}
 
 		write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
@@ -2363,7 +2363,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			{
 				uint32_t size;
-				auto data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
+				auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
 				code = std::string(data, size);
 			}
 			bgscript->loadString(std::move(code));
@@ -2388,7 +2388,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); req.path.find(cache_sub.str()) != std::string::npos)
 					{
 						uint32_t size;
-						const char* data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/H.Cache_35.6.1.bin"), size);
+						const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/H.Cache_35.6.1.bin"), size);
 						ServerWebService::sendText(s, data, size);
 						return;
 					}
@@ -2409,7 +2409,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 							{
 								uint32_t size;
-								const char* data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
+								const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
 								ServerWebService::sendHtml(s, data, size);
 							}
 						}

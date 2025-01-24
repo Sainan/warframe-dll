@@ -5,11 +5,9 @@
 
 #include "owf_archive_data.hpp"
 
-static std::string archive_data;
-
 void owfArchive::load(const char* data, size_t size)
 {
-	archive_data = soup::deflate::decompress(data, size).decompressed;
+	this->data = soup::deflate::decompress(data, size).decompressed;
 }
 
 void owfArchive::loadBuiltin()
@@ -17,9 +15,9 @@ void owfArchive::loadBuiltin()
 	return load(compressed_archive_data, sizeof(compressed_archive_data));
 }
 
-const char* owfArchive::find(uint32_t key, uint32_t& out_len)
+const char* owfArchive::find(uint32_t key, uint32_t& out_len) const
 {
-	soup::MemoryRefReader r(archive_data);
+	soup::MemoryRefReader r(this->data);
 	while (r.hasMore())
 	{
 		uint32_t e_key;
@@ -27,7 +25,7 @@ const char* owfArchive::find(uint32_t key, uint32_t& out_len)
 		r.u32le(out_len);
 		if (e_key == key)
 		{
-			return archive_data.data() + r.getPosition();
+			return this->data.data() + r.getPosition();
 		}
 		r.skip(out_len);
 	}

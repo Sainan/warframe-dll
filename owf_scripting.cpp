@@ -978,7 +978,7 @@ owfScript::owfScript()
 #endif
 	{
 		uint32_t size;
-		auto data = owfArchive::find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
+		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
 		runtime = std::string(data, size);
 	}
 	if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) != LUA_OK
