@@ -19,7 +19,6 @@
 #include <joaat.hpp>
 #include <json.hpp>
 #include <memGuard.hpp>
-#include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <Mutex.hpp>
 #include <netConfig.hpp>
@@ -2316,12 +2315,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
-			MemoryRefReader r(hotfix);
-			uint32_t target_version_hash;
-			if (r.u32le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
+			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
 			{
-				const auto off = r.getPosition();
-				g_archive.load(hotfix.data() + off, hotfix.size() - off);
 				std::cout << ObfusString("Hotfix applied") << std::endl;
 			}
 			else
