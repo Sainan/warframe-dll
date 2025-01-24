@@ -27,6 +27,7 @@ class Player extends Object
 	function GetPlayerAccountIDString()
 	function GetPlayerMatchMakingString()
 	function GetHudStatus()
+	function CameraControl()
 
 class HumanPlayer extends Player
 	function ToggleFreeCamera()
@@ -64,8 +65,11 @@ class BaseAvatar extends Entity
 	function InputControl()
 	function GiveItem(type, b)
 	function MotionControl()
+	function GetView()
+	function SetView(rot)
 	function GetCameraView()
 	function SetCameraView(rot)
+	function SetEyePosition(pos)
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)
@@ -175,6 +179,14 @@ class StoreItem extends Object
 class MotionControllerBase
 	function GetSpeedMultiplier()
 	function SetSpeedMultiplier(f)
+
+class CameraControllerBase extends Object
+	function GetViewOffset()
+	function SetViewOffset(vec)
+	function GetAimViewOffset()
+	function SetAimViewOffset(vec)
+	function GetRunViewOffset()
+	function SetRunViewOffset(vec)
 
 class EngineNpcMgr extends Object
 

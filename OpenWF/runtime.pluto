@@ -134,6 +134,12 @@ class Player extends Object
 		luau_call(luau_find_method("Player", "GetHudStatus"), 1)
 		return new LotusHudStatus(luau_pop_object())
 	end
+
+	function CameraControl()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("Player", "CameraControl"), 1)
+		return new CameraControllerBase(luau_pop_object())
+	end
 end
 
 class HumanPlayer extends Player
@@ -377,6 +383,26 @@ class BaseAvatar extends Entity
 		end
 	end
 
+	function GetView()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("BaseAvatar", "GetView"), 1)
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetView(rot)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("BaseAvatar", "GetView"), 1)
+		end
+		local ud = luau_get_userdata()
+		mem_write_f32(ud + 0x20, rot.x)
+		mem_write_f32(ud + 0x24, rot.y)
+		mem_write_f32(ud + 0x28, rot.z)
+		luau_call(luau_find_method("BaseAvatar", "SetView"), 2)
+	end
+
 	function GetCameraView()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("BaseAvatar", "GetCameraView"), 1)
@@ -395,6 +421,19 @@ class BaseAvatar extends Entity
 		mem_write_f32(ud + 0x24, rot.y)
 		mem_write_f32(ud + 0x28, rot.z)
 		luau_call(luau_find_method("BaseAvatar", "SetCameraView"), 2)
+	end
+
+	function SetEyePosition(pos)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("Entity", "GetPosition"), 1)
+		end
+		local ud = luau_get_userdata()
+		mem_write_f32(ud + 0x20, pos.x)
+		mem_write_f32(ud + 0x24, pos.y)
+		mem_write_f32(ud + 0x28, pos.z)
+		luau_call(luau_find_method("BaseAvatar", "SetEyePosition"), 2)
 	end
 end
 
@@ -914,6 +953,70 @@ class MotionControllerBase extends Object
 		luau_push_object(self.addr)
 		luau_push_float(f)
 		luau_call(luau_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
+	end
+end
+
+class CameraControllerBase extends Object
+	__name = "CameraControllerBase"
+
+	function GetViewOffset()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("CameraControllerBase", "GetViewOffset"), 1)
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetViewOffset(vec)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("CameraControllerBase", "GetViewOffset"), 1)
+			local ud = luau_get_userdata()
+			mem_write_f32(ud + 0x20, vec.x)
+			mem_write_f32(ud + 0x24, vec.y)
+			mem_write_f32(ud + 0x28, vec.z)
+		end
+		luau_call(luau_find_method("CameraControllerBase", "SetViewOffset"), 2)
+	end
+
+	function GetAimViewOffset()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("CameraControllerBase", "GetAimViewOffset"), 1)
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetAimViewOffset(vec)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("CameraControllerBase", "GetAimViewOffset"), 1)
+			local ud = luau_get_userdata()
+			mem_write_f32(ud + 0x20, vec.x)
+			mem_write_f32(ud + 0x24, vec.y)
+			mem_write_f32(ud + 0x28, vec.z)
+		end
+		luau_call(luau_find_method("CameraControllerBase", "SetAimViewOffset"), 2)
+	end
+
+	function GetRunViewOffset()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("CameraControllerBase", "GetRunViewOffset"), 1)
+		local ud = luau_pop_userdata()
+		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	end
+
+	function SetRunViewOffset(vec)
+		luau_push_object(self.addr)
+		do
+			luau_push_object(self.addr)
+			luau_call(luau_find_method("CameraControllerBase", "GetRunViewOffset"), 1)
+			local ud = luau_get_userdata()
+			mem_write_f32(ud + 0x20, vec.x)
+			mem_write_f32(ud + 0x24, vec.y)
+			mem_write_f32(ud + 0x28, vec.z)
+		end
+		luau_call(luau_find_method("CameraControllerBase", "SetRunViewOffset"), 2)
 	end
 end
 
