@@ -239,7 +239,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 			uri.port = https_port;
 		}
 	}
-	if (uri.path == ObfusString("/api/inventory.php").str())
+	if (uri.path == ObfusString("/api/inventory.php").str() || uri.path == ObfusString("/api/missionInventoryUpdate.php").str())
 	{
 #if DISABLE_XP_BASED_LEVEL_CAPPING
 		if (disabled_xp_based_level_cap)
