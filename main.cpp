@@ -1140,6 +1140,33 @@ static void write_archive_file(const std::string& path, uint32_t key)
 	}
 }
 
+static void on_archive_loaded()
+{
+	write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
+	write_archive_file(ObfusString("OpenWF/Script API Reference.pluto").str(), soup::joaat::compileTimeHash("OpenWF/Script API Reference.pluto"));
+
+#if !PRIVATE
+	std::error_code ec;
+	std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
+	std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Auto Teleport to Waypoint.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Become The Stalker.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Chat Commands.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Complete Wave or Mission.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Cycle Camera Hotkey (K).pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Enter Simulacrum.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Teleport on Disable.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Up Down.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Godmode.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Increase Damage.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Kill All Enemies.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Loot Party.pluto"));
+	write_archive_file(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Watermark.pluto"));
+#endif
+
+	start_bgscript();
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -2329,29 +2356,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			g_archive.loadBuiltin();
 		}
-
-		write_archive_file(ObfusString("OpenWF/Download Latest DLL.ps1").str(), soup::joaat::compileTimeHash("OpenWF/Download Latest DLL.ps1"));
-		write_archive_file(ObfusString("OpenWF/Script API Reference.pluto").str(), soup::joaat::compileTimeHash("OpenWF/Script API Reference.pluto"));
-
-#if !PRIVATE
-		std::filesystem::create_directory(ObfusString("OpenWF/scripts").str(), ec);
-		std::filesystem::create_directory(ObfusString("OpenWF/scripts/samples").str(), ec);
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Auto Teleport to Waypoint.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Become The Stalker.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Become The Stalker.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Chat Commands.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Chat Commands.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Complete Wave or Mission.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Complete Wave or Mission.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Cycle Camera Hotkey (K).pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Enter Simulacrum.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Enter Simulacrum.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Teleport on Disable.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Freecam Up Down.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Freecam Up Down.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Godmode.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Godmode.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Increase Damage.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Increase Damage.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Kill All Enemies.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Kill All Enemies.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Loot Party.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Loot Party.pluto"));
-		write_archive_file(ObfusString("OpenWF/scripts/samples/Watermark.pluto").str(), soup::joaat::compileTimeHash("OpenWF/samples/Watermark.pluto"));
-#endif
-
-		start_bgscript();
+		on_archive_loaded();
 
 		if (!auto_start_scripts.empty())
 		{
@@ -2641,6 +2646,50 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
 						ServerWebService::sendText(s, {});
+						break;
+
+					case soup::joaat::compileTimeHash("/apply_hotfix"):
+						{
+							owfArchive archive;
+							if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
+							{
+								if (!archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+								{
+									ServerWebService::sendText(s, ObfusString("Failed to apply hotfix as it was made for a different DLL version").str());
+									break;
+								}
+								if (archive.data == g_archive.data)
+								{
+									ServerWebService::sendText(s, ObfusString("No changes").str());
+									break;
+								}
+								ServerWebService::sendText(s, ObfusString("Hotfix applied").str());
+							}
+							else
+							{
+								archive.loadBuiltin();
+								if (archive.data == g_archive.data)
+								{
+									ServerWebService::sendText(s, ObfusString("No changes").str());
+									break;
+								}
+								ServerWebService::sendText(s, ObfusString("Reverting to pre-hotfix state").str());
+							}
+
+							g_archive = std::move(archive);
+
+							if (bgscript)
+							{
+								bgscript->stop_requested = true;
+								while (bgscript)
+								{
+									Sleep(10);
+								}
+								delete bgscript;
+							}
+
+							on_archive_loaded();
+						}
 						break;
 
 					default:
