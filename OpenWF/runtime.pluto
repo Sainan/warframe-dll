@@ -169,15 +169,16 @@ end
 local function pop_entity()
 	if addr := luau_pop_object() then
 		local obj = new Entity(addr)
-		if obj:GetType():isNameInHierarchy("BaseMarkerInfo") then
-			return new BaseMarkerInfo(addr)
-		end
-		if obj:GetType():isNameInHierarchy("LensFlare") then
-			return new LensFlare(addr)
-		end
-		if "/EE/Types/Engine/Decoration" in obj:GetType():getHierarchy() then
-			return new Decoration(addr)
-		end
+		local type = obj:GetType()
+		repeat
+			switch type:GetFullName() do
+				case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo(addr)
+				case "/EE/Types/Effects/LensFlare": return new LensFlare(addr)
+				case "/EE/Types/Engine/Decoration": return new Decoration(addr)
+				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar(addr)
+			end
+			type = type:GetParent()
+		until not type
 		return obj
 	else
 		luau_pop(1)
