@@ -682,7 +682,7 @@ owfScript::owfScript()
 		void* res = nullptr;
 		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
 		{
-			res = reinterpret_cast<void*>(e->second->findMethod(wf_fnv_32(luaL_checkstring(L, 2))));
+			res = reinterpret_cast<void*>(e->second->findMethod(lua_type(L, 2) == LUA_TNUMBER ? luaL_checkinteger(L, 2) : wf_fnv_32(luaL_checkstring(L, 2))));
 		}
 		lua_pushpointer(L, res);
 		return 1;
