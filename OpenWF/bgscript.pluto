@@ -9,7 +9,6 @@ if not OWF_PRIVATE_BUILD then
 	io.contents("OpenWF/scripts/samples/Chat Commands.pluto", owf_archive_find("OpenWF/samples/Chat Commands.pluto"))
 	io.contents("OpenWF/scripts/samples/Complete Wave or Mission.pluto", owf_archive_find("OpenWF/samples/Complete Wave or Mission.pluto"))
 	io.contents("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto", owf_archive_find("OpenWF/samples/Cycle Camera Hotkey (K).pluto"))
-	io.contents("OpenWF/scripts/samples/Enter Simulacrum.pluto", owf_archive_find("OpenWF/samples/Enter Simulacrum.pluto"))
 	io.contents("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto", owf_archive_find("OpenWF/samples/Freecam Teleport on Disable.pluto"))
 	io.contents("OpenWF/scripts/samples/Freecam Up Down.pluto", owf_archive_find("OpenWF/samples/Freecam Up Down.pluto"))
 	io.contents("OpenWF/scripts/samples/Godmode.pluto", owf_archive_find("OpenWF/samples/Godmode.pluto"))
