@@ -2648,7 +2648,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								{
 									Sleep(10);
 								}
-								delete bgscript;
 							}
 
 							start_bgscript();
