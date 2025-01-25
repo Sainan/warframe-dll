@@ -1,4 +1,24 @@
 owf_register_custom_route("/teleport", "text/plain", "")
+
+io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
+io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
+if not OWF_PRIVATE_BUILD then
+	io.mkdirs("OpenWF/scripts/samples")
+	io.contents("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto", owf_archive_find("OpenWF/samples/Auto Teleport to Waypoint.pluto"))
+	io.contents("OpenWF/scripts/samples/Become The Stalker.pluto", owf_archive_find("OpenWF/samples/Become The Stalker.pluto"))
+	io.contents("OpenWF/scripts/samples/Chat Commands.pluto", owf_archive_find("OpenWF/samples/Chat Commands.pluto"))
+	io.contents("OpenWF/scripts/samples/Complete Wave or Mission.pluto", owf_archive_find("OpenWF/samples/Complete Wave or Mission.pluto"))
+	io.contents("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto", owf_archive_find("OpenWF/samples/Cycle Camera Hotkey (K).pluto"))
+	io.contents("OpenWF/scripts/samples/Enter Simulacrum.pluto", owf_archive_find("OpenWF/samples/Enter Simulacrum.pluto"))
+	io.contents("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto", owf_archive_find("OpenWF/samples/Freecam Teleport on Disable.pluto"))
+	io.contents("OpenWF/scripts/samples/Freecam Up Down.pluto", owf_archive_find("OpenWF/samples/Freecam Up Down.pluto"))
+	io.contents("OpenWF/scripts/samples/Godmode.pluto", owf_archive_find("OpenWF/samples/Godmode.pluto"))
+	io.contents("OpenWF/scripts/samples/Increase Damage.pluto", owf_archive_find("OpenWF/samples/Increase Damage.pluto"))
+	io.contents("OpenWF/scripts/samples/Kill All Enemies.pluto", owf_archive_find("OpenWF/samples/Kill All Enemies.pluto"))
+	io.contents("OpenWF/scripts/samples/Loot Party.pluto", owf_archive_find("OpenWF/samples/Loot Party.pluto"))
+	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))
+end
+
 local json = require"pluto:json"
 while pcall(yield) do
 	local markers = {}

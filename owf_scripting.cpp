@@ -958,6 +958,18 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("luau_float_mul"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		uint32_t size;
+		if (auto data = g_archive.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
+		{
+			lua_pushlstring(L, data, size);
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
