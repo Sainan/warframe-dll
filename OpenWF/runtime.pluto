@@ -1025,6 +1025,22 @@ class CameraControllerBase extends Object
 	function SetMeleeOffset(vec)
 		return self:implSetVector("SetMeleeOffset", vec)
 	end
+
+	function SetCoverLeftViewOffset(vec)
+		return self:implSetVector("SetCoverLeftViewOffset", vec)
+	end
+
+	function SetCoverRightViewOffset(vec)
+		return self:implSetVector("SetCoverRightViewOffset", vec)
+	end
+
+	function SetCrouchCoverAimLeftViewOffset(vec)
+		return self:implSetVector("SetCrouchCoverAimLeftViewOffset", vec)
+	end
+
+	function SetCrouchCoverAimRightViewOffset(vec)
+		return self:implSetVector("SetCrouchCoverAimRightViewOffset", vec)
+	end
 end
 
 class EngineNpcMgr extends Object
