@@ -9,6 +9,7 @@ if true then
 	io.contents("OpenWF/scripts/samples/Chat Commands.pluto", owf_archive_find("OpenWF/samples/Chat Commands.pluto"))
 	io.contents("OpenWF/scripts/samples/Complete Wave or Mission.pluto", owf_archive_find("OpenWF/samples/Complete Wave or Mission.pluto"))
 	io.contents("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto", owf_archive_find("OpenWF/samples/Cycle Camera Hotkey (K).pluto"))
+	io.contents("OpenWF/scripts/samples/Detailed Enemy HP.pluto", owf_archive_find("OpenWF/samples/Detailed Enemy HP.pluto"))
 	io.contents("OpenWF/scripts/samples/First Person View.pluto", owf_archive_find("OpenWF/samples/First Person View.pluto"))
 	io.contents("OpenWF/scripts/samples/Freecam Teleport on Disable.pluto", owf_archive_find("OpenWF/samples/Freecam Teleport on Disable.pluto"))
 	io.contents("OpenWF/scripts/samples/Freecam Up Down.pluto", owf_archive_find("OpenWF/samples/Freecam Up Down.pluto"))

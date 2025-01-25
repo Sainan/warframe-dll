@@ -1,0 +1,13 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
+	for gRegion:FindAll("/Lotus/Types/Game/LotusAvatar") as ent do
+		local dc = ent:DamageControl()
+		ent:SetDynamicUIName(true)
+		ent:SetUIName(
+			Localize(ent:GetLocTag():c_str())
+			.."\r\nHealth: "..string.formatint(ent:GetHealth()).." / "..string.formatint(ent:GetMaxHealth())
+			.."\r\nShield: "..string.formatint(dc:GetShield()).." / "..string.formatint(dc:GetMaxShield())
+			.."\r\nArmor: "..string.formatint(dc:GetArmourRating())
+		)
+	end
+until yield()
