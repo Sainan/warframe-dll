@@ -1,14 +1,36 @@
-Write-Host "Fetching latest DLL version..."
-$version = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest.txt" -Method Get
-Write-Host "Downloading OpenWF Bootstrapper v$version..."
-Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$version/dwmapi.dll" -OutFile "../dwmapi.dll"
+Write-Host "Fetching latest version..."
+$latest = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/meta" -Method Get
 
-Write-Host "Checking for hotfixes..."
-$hotfix = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/latest_hotfix.txt" -Method Get
-if ($hotfix -eq "") {
-	Remove-Item "Hotfix.bin"
+$sha256 = ""
+if (Test-Path "../dwmapi.dll") {
+	$sha256 = (Get-FileHash "../dwmapi.dll" -Algorithm SHA256).Hash.ToLower()
+}
+$hotfix_sha256 = ""
+if (Test-Path "Hotfix.bin") {
+	$hotfix_sha256 = (Get-FileHash "Hotfix.bin" -Algorithm SHA256).Hash.ToLower()
+}
+
+if ($sha256 -ne $latest.sha256 -or $hotfix_sha256 -ne $latest.hotfix_sha256) {
+	if ($latest.hotfix -ne "") {
+		Write-Host "Downloading OpenWF Bootstrapper v$($latest.version) $($latest.hotfix)..."
+	}
+	else {
+		Write-Host "Downloading OpenWF Bootstrapper v$($latest.version)..."
+	}
+
+	if ($sha256 -ne $latest.sha256) {
+		Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/dwmapi.dll" -OutFile "../dwmapi.dll"
+	}
+	if ($hotfix_sha256 -ne $latest.hotfix_sha256) {
+		if ($latest.hotfix -ne "") {
+			Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/$($latest.hotfix)/Hotfix.bin" -OutFile "Hotfix.bin"
+		}
+		else {
+			Remove-Item "Hotfix.bin"
+		}
+	}
 }
 else {
-	Write-Host "Downloading $version $hotfix..."
-	Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$version/$hotfix/Hotfix.bin" -OutFile "Hotfix.bin"
+	Write-Host "Your OpenWF Bootstrapper is up-to-date."
+	Start-Sleep -Seconds 2
 }
