@@ -507,6 +507,18 @@ class LotusAvatar extends Avatar
 		luau_push_string(str)
 		luau_call(luau_find_method("LotusAvatar", "SetUIName"), 2)
 	end
+
+	function HasDynamicUIName()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusAvatar", "HasDynamicUIName"), 1)
+		return luau_pop_bool()
+	end
+
+	function SetDynamicUIName(b)
+		luau_push_object(self.addr)
+		luau_push_bool(b)
+		luau_call(luau_find_method("LotusAvatar", "SetDynamicUIName"), 2)
+	end
 end
 
 class DamageControllerBase extends Object
