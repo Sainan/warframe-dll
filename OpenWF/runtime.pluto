@@ -442,6 +442,26 @@ class BaseAvatar extends Entity
 		mem_write_f32(ud + 0x28, pos.z)
 		luau_call(luau_find_method("BaseAvatar", "SetEyePosition"), 2)
 	end
+
+	function GetFaction()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("BaseAvatar", "GetFaction"), 1)
+		luau_call(luau_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(luau_pop_string())
+	end
+
+	function GetOriginalFaction()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("BaseAvatar", "GetOriginalFaction"), 1)
+		luau_call(luau_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(luau_pop_string())
+	end
+
+	function SetFaction(symbol)
+		luau_push_object(self.addr)
+		symbol:pushToLuau()
+		luau_call(luau_find_method("BaseAvatar", "SetFaction"), 2)
+	end
 end
 
 class Avatar extends BaseAvatar
@@ -1104,8 +1124,17 @@ class NpcManager extends EngineNpcMgr
 			end
 			(optionalSymbol or EMPTY_SYMBOL):pushToLuau()
 			luau_push_int(optionalLevel or 0)
-			luau_pop(luau_call(luau_find_method("NpcManager", "CreateAgentAtPosition"), 6))
+			luau_call(luau_find_method("NpcManager", "CreateAgentAtPosition"), 6)
+			return new EngineNpcAgent(luau_pop_object())
 		end
+	end
+end
+
+class EngineNpcAgent extends Object
+	function GetAvatar()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("EngineNpcAgent", "GetAvatar"), 1)
+		return new LotusAvatar(luau_pop_object())
 	end
 end
 
