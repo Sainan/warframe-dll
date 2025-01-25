@@ -266,6 +266,7 @@ class Symbol
 	function __construct(public name = "")
 	function __eq(b)
 	function __tostring()
+	function c_str()
 
 -- Global functions
 

@@ -1415,6 +1415,10 @@ class Symbol
 		return self.name
 	end
 
+	function c_str()
+		return self.name
+	end
+
 	function pushToLuau()
 		luau_push_string(self.name)
 		luau_call(luau_find_ctor("Symbol"), 1)
