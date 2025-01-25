@@ -180,6 +180,7 @@ local function pop_entity()
 				case "/EE/Types/Effects/LensFlare": return new LensFlare(addr)
 				case "/EE/Types/Engine/Decoration": return new Decoration(addr)
 				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar(addr)
+				case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar(addr)
 			end
 			type = type:GetParent()
 		until not type
@@ -1211,7 +1212,24 @@ class EngineNpcAgent extends Object
 	function GetAvatar()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("EngineNpcAgent", "GetAvatar"), 1)
-		return new LotusAvatar(luau_pop_object())
+		return new LotusNpcAvatar(luau_pop_object())
+	end
+end
+
+class LotusNpcAvatar extends LotusAvatar
+	__name = "LotusNpcAvatar"
+
+	function GetEnhancementCount()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusNpcAvatar", "GetEnhancementCount"), 1)
+		return math.tointeger(luau_pop_number())
+	end
+
+	function GetEnhancementLocTag()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusNpcAvatar", "GetEnhancementLocTag"), 1)
+		luau_call(luau_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(luau_pop_string())
 	end
 end
 

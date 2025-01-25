@@ -229,6 +229,10 @@ class NpcManager extends EngineNpcMgr
 class EngineNpcAgent extends Object
 	function GetAvatar()
 
+class LotusNpcAvatar extends LotusAvatar
+	function GetEnhancementCount()
+	function GetEnhancementLocTag()
+
 class HudStatus extends Object
 
 class LotusHudStatus extends HudStatus
