@@ -2,7 +2,7 @@ owf_register_custom_route("/teleport", "text/plain", "")
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
 io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
-if not OWF_PRIVATE_BUILD then
+if true then
 	io.mkdirs("OpenWF/scripts/samples")
 	io.contents("OpenWF/scripts/samples/Auto Teleport to Waypoint.pluto", owf_archive_find("OpenWF/samples/Auto Teleport to Waypoint.pluto"))
 	io.contents("OpenWF/scripts/samples/Become The Stalker.pluto", owf_archive_find("OpenWF/samples/Become The Stalker.pluto"))
