@@ -1206,6 +1206,8 @@ class NpcManager extends EngineNpcMgr
 end
 
 class EngineNpcAgent extends Object
+	__name = "EngineNpcAgent"
+
 	function GetAvatar()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("EngineNpcAgent", "GetAvatar"), 1)
