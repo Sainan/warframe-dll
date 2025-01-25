@@ -81,6 +81,8 @@ class Avatar extends BaseAvatar
 class LotusAvatar extends Avatar
 	function IsAvatarFriendly(other)
 	function PlayEmote(resource)
+	function GetUIName()
+	function SetUIName(str)
 
 class DamageControllerBase extends Object
 	function GiveTemporaryImmunity(a, b)
