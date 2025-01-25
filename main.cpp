@@ -165,6 +165,9 @@ static bool resolve_addr_detour(sockaddr* sa, void* a2, void* a3)
 
 
 static DetourHook winhttp_connect_hook;
+#if SELF_HOST_CACHE_MANIFEST
+static bool served_cache_manifest = false;
+#endif
 
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
 {
@@ -182,19 +185,24 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 #if SELF_HOST_CACHE_MANIFEST
 	ObfusString localhost("localhost");
-	host_1 = localhost.c_str();
-	port = 61558;
-#else
-	host_1 = server_host.c_str();
-	if (port == 80)
+	if (!served_cache_manifest)
 	{
-		port = http_port;
+		host_1 = localhost.c_str();
+		port = 61558;
 	}
 	else
-	{
-		port = https_port;
-	}
 #endif
+	{
+		host_1 = server_host.c_str();
+		if (port == 80)
+		{
+			port = http_port;
+		}
+		else
+		{
+			port = https_port;
+		}
+	}
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, host_1, port, nullptr, nullptr);
 }
@@ -2339,6 +2347,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if SELF_HOST_CACHE_MANIFEST
 					if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); req.path.find(cache_sub.str()) != std::string::npos)
 					{
+						served_cache_manifest = true;
 						uint32_t size;
 						const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/H.Cache_35.6.1.bin"), size);
 						ServerWebService::sendText(s, data, size);
