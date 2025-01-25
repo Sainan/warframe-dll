@@ -1010,6 +1010,14 @@ class CameraControllerBase extends Object
 		return self:implSetVector("SetRunViewOffset", vec)
 	end
 
+	function GetDodgeOffset()
+		return self:implGetVector("GetDodgeOffset")
+	end
+
+	function SetDodgeOffset(vec)
+		return self:implSetVector("SetDodgeOffset", vec)
+	end
+
 	function GetInAirViewOffset()
 		return self:implGetVector("GetInAirViewOffset")
 	end

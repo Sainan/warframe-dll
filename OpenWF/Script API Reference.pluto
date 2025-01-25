@@ -187,6 +187,8 @@ class CameraControllerBase extends Object
 	function SetAimViewOffset(vec)
 	function GetRunViewOffset()
 	function SetRunViewOffset(vec)
+	function GetDodgeOffset()
+	function SetDodgeOffset(vec)
 	function GetInAirViewOffset()
 	function SetInAirViewOffset(vec)
 	function SetInAirAimViewOffset(vec)
