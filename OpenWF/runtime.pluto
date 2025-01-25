@@ -236,7 +236,7 @@ class Entity extends BaseEntity
 	function GetHealth()
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("Entity", "GetHealth"), 1)
-		return luau_pop_number()
+		return math.tointeger(luau_pop_number())
 	end
 
 	function SetHealth(health)
@@ -334,7 +334,7 @@ class BaseAvatar extends Entity
 		luau_push_object(self.addr)
 		luau_push_bool(b)
 		luau_call(luau_find_method("BaseAvatar", "GetMaxHealth"), 2)
-		return luau_pop_number()
+		return math.tointeger(luau_pop_number())
 	end
 
 	function SetMaxHealth(health, b = false)
