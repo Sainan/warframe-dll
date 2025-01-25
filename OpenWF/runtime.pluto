@@ -1041,6 +1041,22 @@ class CameraControllerBase extends Object
 	function SetCrouchCoverAimRightViewOffset(vec)
 		return self:implSetVector("SetCrouchCoverAimRightViewOffset", vec)
 	end
+
+	function SetWallRunLeftViewOffset(vec)
+		return self:implSetVector("SetWallRunLeftViewOffset", vec)
+	end
+
+	function SetWallRunRightViewOffset(vec)
+		return self:implSetVector("SetWallRunRightViewOffset", vec)
+	end
+
+	function SetWallRunLeftAimViewOffset(vec)
+		return self:implSetVector("SetWallRunLeftAimViewOffset", vec)
+	end
+
+	function SetWallRunRightAimViewOffset(vec)
+		return self:implSetVector("SetWallRunRightAimViewOffset", vec)
+	end
 end
 
 class EngineNpcMgr extends Object

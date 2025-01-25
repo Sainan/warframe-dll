@@ -195,6 +195,10 @@ class CameraControllerBase extends Object
 	function SetCoverRightViewOffset(vec)
 	function SetCrouchCoverAimLeftViewOffset(vec)
 	function SetCrouchCoverAimRightViewOffset(vec)
+	function SetWallRunLeftViewOffset(vec)
+	function SetWallRunRightViewOffset(vec)
+	function SetWallRunLeftAimViewOffset(vec)
+	function SetWallRunRightAimViewOffset(vec)
 
 class EngineNpcMgr extends Object
 
