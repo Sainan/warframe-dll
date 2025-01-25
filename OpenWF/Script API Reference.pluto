@@ -88,6 +88,10 @@ class DamageControllerBase extends Object
 	function GiveTemporaryImmunity(a, b)
 	function HasTemporaryImmunity()
 	function RemoveTemporaryImmunity()
+	function GetShield()
+	function SetShield(i)
+	function GetMaxShield()
+	function SetMaxShield(i)
 
 class InventoryControllerBase extends Object
 	function RemoveItem(slot, b)

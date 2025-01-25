@@ -529,6 +529,30 @@ class DamageControllerBase extends Object
 		luau_push_object(self.addr)
 		luau_call(luau_find_method("DamageControllerBase", "RemoveTemporaryImmunity"), 1)
 	end
+
+	function GetShield()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("DamageControllerBase", "GetShield"), 1)
+		return math.tointeger(luau_pop_number())
+	end
+
+	function SetShield(i)
+		luau_push_object(self.addr)
+		luau_push_int(i)
+		luau_call(luau_find_method("DamageControllerBase", "SetShield"), 2)
+	end
+
+	function GetMaxShield()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("DamageControllerBase", "GetMaxShield"), 1)
+		return math.tointeger(luau_pop_number())
+	end
+
+	function SetMaxShield(i)
+		luau_push_object(self.addr)
+		luau_push_int(i)
+		luau_call(luau_find_method("DamageControllerBase", "SetMaxShield"), 2)
+	end
 end
 
 class InventoryControllerBase extends Object
