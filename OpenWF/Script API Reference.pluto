@@ -95,6 +95,12 @@ class DamageControllerBase extends Object
 	function GetMaxShield()
 	function SetMaxShield(i)
 
+class DamageController extends DamageControllerBase
+
+class LotusDamageController extends DamageController
+	function GetArmourRating()
+	function SetArmourRating(i)
+
 class InventoryControllerBase extends Object
 	function RemoveItem(slot, b)
 	function GetWeaponInHand(hand)

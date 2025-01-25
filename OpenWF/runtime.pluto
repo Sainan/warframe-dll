@@ -351,7 +351,7 @@ class BaseAvatar extends Entity
 
 	function DamageControl()
 		if addr := baseavatar_get_damage_controller(self.addr) then
-			return new DamageControllerBase(addr)
+			return new LotusDamageController(addr)
 		end
 	end
 
@@ -564,6 +564,26 @@ class DamageControllerBase extends Object
 		luau_push_object(self.addr)
 		luau_push_int(i)
 		luau_call(luau_find_method("DamageControllerBase", "SetMaxShield"), 2)
+	end
+end
+
+class DamageController extends DamageControllerBase
+	__name = "DamageController"
+end
+
+class LotusDamageController extends DamageController
+	__name = "LotusDamageController"
+
+	function GetArmourRating()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("LotusDamageController", "GetArmourRating"), 1)
+		return math.tointeger(luau_pop_number())
+	end
+
+	function SetArmourRating(i)
+		luau_push_object(self.addr)
+		luau_push_int(i)
+		luau_call(luau_find_method("LotusDamageController", "SetArmourRating"), 2)
 	end
 end
 
