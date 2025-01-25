@@ -436,26 +436,7 @@ static void on_got_server_host()
 		prohibit_teleport = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_teleport").str());
 		prohibit_scripts = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_scripts").str());
 
-		if (prohibit_skip_mission_start_timer)
-		{
-			std::cout << ObfusString("Note: Skip Mission Start Timer is prohibited on this server.") << std::endl;
-		}
-		if (prohibit_fov_override)
-		{
-			std::cout << ObfusString("Note: FOV Override is prohibited on this server.") << std::endl;
-		}
-		if (prohibit_freecam)
-		{
-			std::cout << ObfusString("Note: Freecam is prohibited on this server.") << std::endl;
-		}
-		if (prohibit_teleport)
-		{
-			std::cout << ObfusString("Note: Teleport is prohibited on this server.") << std::endl;
-		}
-		if (prohibit_scripts)
-		{
-			std::cout << ObfusString("Note: Scripts are prohibited on this server.") << std::endl;
-		}
+		owfOverlay::redraw();
 	});
 	thrd.detach();
 #endif

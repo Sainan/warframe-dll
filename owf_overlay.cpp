@@ -83,6 +83,19 @@ void owfOverlay::init()
 					at.append(server_host);
 					rt.drawText(88 + 1, 18 + 1, at, RasterFont::simple8(), Rgb::BLACK, 1);
 					rt.drawText(88, 18, at, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+
+					std::string banned;
+					if (prohibit_skip_mission_start_timer) { soup::string::listAppend(banned, ObfusString("Skip Mission Start Timer").str()); }
+					if (prohibit_fov_override) { soup::string::listAppend(banned, ObfusString("FOV Override").str()); }
+					if (prohibit_freecam) { soup::string::listAppend(banned, ObfusString("Freecam").str()); }
+					if (prohibit_teleport) { soup::string::listAppend(banned, ObfusString("Teleport").str()); }
+					if (prohibit_scripts) { soup::string::listAppend(banned, ObfusString("Scripts").str()); }
+					if (!banned.empty())
+					{
+						banned.insert(0, ObfusString("This server prohibits: ").str());
+						rt.drawText(10 + 1, 33 + 1, banned, RasterFont::simple8(), Rgb::BLACK, 1);
+						rt.drawText(10, 33, banned, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+					}
 				}
 
 				{
