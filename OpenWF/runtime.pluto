@@ -462,6 +462,13 @@ class BaseAvatar extends Entity
 		symbol:pushToLuau()
 		luau_call(luau_find_method("BaseAvatar", "SetFaction"), 2)
 	end
+
+	function GetLocTag()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("BaseAvatar", "GetLocTag"), 1)
+		luau_call(luau_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(luau_pop_string())
+	end
 end
 
 class Avatar extends BaseAvatar
@@ -1450,6 +1457,13 @@ end
 
 function Color(r, g, b, a)
 	return { r = r, g = g, b = b, a = a }
+end
+
+function Localize(loctag)
+	luau_push_string(loctag)
+	luau_push_nil()
+	luau_call(mem_read_i64(mem_scan_exe("AD 36 36 60 00 00 00 00") + 8), 2)
+	return luau_pop_string()
 end
 
 function Engine.OpenLevel(args)

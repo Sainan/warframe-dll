@@ -73,6 +73,7 @@ class BaseAvatar extends Entity
 	function GetFaction()
 	function GetOriginalFaction()
 	function SetFaction(symbol)
+	function GetLocTag()
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)
@@ -278,6 +279,8 @@ function Resource(name)
 function WeakResource(name)
 function Range(min, max)
 function Color(r, g, b, a)
+
+function Localize(loctag)
 
 function Engine.OpenLevel(args)
 
