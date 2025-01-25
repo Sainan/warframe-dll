@@ -1459,9 +1459,14 @@ function Color(r, g, b, a)
 	return { r = r, g = g, b = b, a = a }
 end
 
-function Localize(loctag)
+function Localize(loctag, subs = {})
 	luau_push_string(loctag)
-	luau_push_nil()
+	luau_newtable()
+	for k, v in subs do
+		luau_push_string(k)
+		luau_push_string(v)
+		luau_settable(-3)
+	end
 	luau_call(mem_read_i64(mem_scan_exe("AD 36 36 60 00 00 00 00") + 8), 2)
 	return luau_pop_string()
 end

@@ -280,7 +280,7 @@ function WeakResource(name)
 function Range(min, max)
 function Color(r, g, b, a)
 
-function Localize(loctag)
+function Localize(loctag, subs = {})
 
 function Engine.OpenLevel(args)
 
