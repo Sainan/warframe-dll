@@ -1,1 +1,3 @@
 *.pluto linguist-language=Lua
+whirlpool.cpp linguist-vendored
+whirlpool.hpp linguist-vendored
