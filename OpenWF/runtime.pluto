@@ -476,6 +476,20 @@ class BaseAvatar extends Entity
 		luau_call(luau_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(luau_pop_string())
 	end
+
+	function ClearAgent()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("BaseAvatar", "ClearAgent"), 1)
+	end
+
+	function PushInputFilter(resource)
+		luau_push_object(self.addr)
+		do
+			luau_push_string(resource)
+			luau_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+		end
+		luau_call(luau_find_method("BaseAvatar", "PushInputFilter"), 2)
+	end
 end
 
 class Avatar extends BaseAvatar
