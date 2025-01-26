@@ -326,6 +326,12 @@ class Entity extends BaseEntity
 		luau_push_bool(delegateToAttachments)
 		luau_call(luau_find_method("Entity", "SetVisibility"), 3)
 	end
+
+	function GetSpeed()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("Entity", "GetSpeed"), 1)
+		return luau_pop_number()
+	end
 end
 
 class BaseAvatar extends Entity
