@@ -2597,7 +2597,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							{
 								if (std::filesystem::is_regular_file(file))
 								{
-									arr.children.emplace_back(soup::make_unique<JsonString>(string::fixType(file.path().u8string()).substr(15)));
+									auto name = string::fixType(file.path().u8string()).substr(15);
+									soup::string::replaceAll(name, '\\', '/');
+									arr.children.emplace_back(soup::make_unique<JsonString>(std::move(name)));
 								}
 							}
 							ServerWebService::sendText(s, arr.encodePretty());

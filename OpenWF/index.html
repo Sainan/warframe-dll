@@ -191,7 +191,6 @@
 
 		fetch("/scripts").then(res => res.json()).then(res => {
 			res.forEach(script => {
-				script = script.split("\\").join("/");
 				const p = document.createElement("p");
 				const label = document.createElement("label");
 				label.setAttribute("for", script);
