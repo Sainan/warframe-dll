@@ -1760,6 +1760,8 @@ end
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
 
+owf_overlay_set_color = owf_overlay_set_colour
+
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3

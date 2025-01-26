@@ -778,6 +778,32 @@ owfScript::owfScript()
 		{
 			luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
 		}
+		id->r = luaL_checkinteger(L, 2);
+		id->g = luaL_checkinteger(L, 3);
+		id->b = luaL_checkinteger(L, 4);
+		return 0;
+	});
+	{ ObfusString name("owf_overlay_set_colour"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto id = (owfOverlay::Text*)lua_touserdata(L, 1);
+		SOUP_IF_UNLIKELY (!id || id->getType() != owfOverlay::DrawItem::TEXT)
+		{
+			luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
+		}
+		id->text = pluto_checkstring(L, 2);
+		return 0;
+	});
+	{ ObfusString name("owf_overlay_set_text"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto id = (owfOverlay::DrawItem*)lua_touserdata(L, 1);
+		SOUP_IF_UNLIKELY (!id)
+		{
+			luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
+		}
 		auto& overlay_items = static_cast<owfScript*>(L->l_G->user_data)->overlay_items;
 		if (auto e = overlay_items.find(id); e != overlay_items.end())
 		{

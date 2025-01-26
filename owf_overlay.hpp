@@ -32,6 +32,11 @@ struct owfOverlay
 		uint8_t b;
 		int x;
 		int y;
+
+		int8_t getType() const noexcept
+		{
+			return type < 0 ? type * -1 : type;
+		}
 	};
 
 	inline static soup::Mutex mtx;
