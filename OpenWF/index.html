@@ -204,7 +204,21 @@
 					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
 				};
 				p.appendChild(input);
+				const button = document.createElement("button");
+				button.style.marginLeft = "10px";
+				button.textContent = "Enable Auto Start";
+				button.onclick = function() {
+					const on = (this.textContent != "Enable Auto Start");
+					fetch((on ? "/remove_autostart_script?" : "/add_autostart_script?") + script);
+					this.textContent = (on ? "Enable Auto Start" : "Disable Auto Start");
+				};
+				p.appendChild(button);
 				document.getElementById("scripts-container").appendChild(p);
+			});
+			fetch("/autostart_scripts").then(res => res.json()).then(res => {
+				res.forEach(script => {
+					document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = "Disable Auto Start";
+				});
 			});
 		});
 	</script>

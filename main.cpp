@@ -2654,6 +2654,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
+					case soup::joaat::compileTimeHash("/autostart_scripts"):
+						{
+							JsonArray arr;
+							for (const auto& name : auto_start_scripts)
+							{
+								arr.children.emplace_back(soup::make_unique<JsonString>(name));
+							}
+							ServerWebService::sendText(s, arr.encodePretty());
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/add_autostart_script"):
+						if (auto name = urlenc::decode(arr[1]); std::find(auto_start_scripts.begin(), auto_start_scripts.end(), name) == auto_start_scripts.end())
+						{
+							auto_start_scripts.emplace_back(std::move(name));
+							save_config();
+						}
+						ServerWebService::sendText(s, {});
+						break;
+
+					case soup::joaat::compileTimeHash("/remove_autostart_script"):
+						if (auto it = std::find(auto_start_scripts.begin(), auto_start_scripts.end(), urlenc::decode(arr[1])); it != auto_start_scripts.end())
+						{
+							auto_start_scripts.erase(it);
+							save_config();
+						}
+						ServerWebService::sendText(s, {});
+						break;
+
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
 						ServerWebService::sendText(s, {});
