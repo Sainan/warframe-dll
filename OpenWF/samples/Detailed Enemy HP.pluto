@@ -1,4 +1,7 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
+local Health = Localize("/Lotus/Language/Labels/HUD_COLOR_HEALTH")
+local Shield = Localize("/Lotus/Language/Labels/HUD_COLOR_SHIELD")
+local Armor = Localize("/Lotus/Language/Labels/HUD_COLOR_ARMOR")
 repeat
 	for gRegion:FindAll("/Lotus/Types/Game/LotusNpcAvatar") as ent do
 		local dc = ent:DamageControl()
@@ -13,9 +16,9 @@ repeat
 		ent:SetDynamicUIName(true)
 		ent:SetUIName(
 			name
-			.."\r\nHealth: "..string.formatint(ent:GetHealth()).." / "..string.formatint(ent:GetMaxHealth())
-			.."\r\nShield: "..string.formatint(dc:GetShield()).." / "..string.formatint(dc:GetMaxShield())
-			.."\r\nArmor: "..string.formatint(dc:GetArmourRating())
+			.."\r\n"..Health..": "..string.formatint(ent:GetHealth()).." / "..string.formatint(ent:GetMaxHealth())
+			.."\r\n"..Shield..": "..string.formatint(dc:GetShield()).." / "..string.formatint(dc:GetMaxShield())
+			.."\r\n"..Armor..": "..string.formatint(dc:GetArmourRating())
 		)
 	end
 until yield()
