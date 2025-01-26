@@ -5,6 +5,11 @@ struct owfConsole
 	static void activate(const char* title)
 	{
 		AllocConsole();
+#if PRIVATE
+		std::string str = title;
+		str.append(" [Private Build]");
+		title = str.c_str();
+#endif
 		SetConsoleTitleA(title);
 		{
 			FILE* f;
