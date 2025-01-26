@@ -2393,20 +2393,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					switch (route_hash)
 					{
 					case soup::joaat::compileTimeHash("/"):
-						{
 #if PRIVATE
-							std::string html = string::fromFile("OpenWF/index.html");
-							if (!html.empty())
-							{
-								ServerWebService::sendHtml(s, html);
-							}
-							else
+						if (std::string html = string::fromFile("OpenWF/index.html"); !html.empty())
+						{
+							ServerWebService::sendHtml(s, html);
+						}
+						else
 #endif
-							{
-								uint32_t size;
-								const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
-								ServerWebService::sendHtml(s, data, size);
-							}
+						{
+							uint32_t size;
+							const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
+							ServerWebService::sendHtml(s, data, size);
 						}
 						break;
 
