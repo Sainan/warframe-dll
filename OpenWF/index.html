@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <style>body{font-family:sans-serif;background:#000;filter:invert(1)}</style>
 <body>
-	<p><label for="server_host">Server Host:</label> <input id="server_host" type="text" /> <button id="server_host_submit">Change</button> <button id="logout">Logout</button></p>
-	<p><label for="high_damage_numbers_patch">High Damage Numbers Patch:</label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
-	<p><label for="skip_mission_start_timer">Skip Mission Start Timer:</label> <input id="skip_mission_start_timer" type="checkbox" /></p>
-	<p><label for="simulacrum_blacklisted">Blacklisted Enemies in Simulacrum:</label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
-	<p><label for="simulacrum_whitelisted">Whitelisted Enemies in Simulacrum:</label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
-	<p><label for="pause_always_stops_time">Pause Always Stops Time:</label> <input id="pause_always_stops_time" type="checkbox" /></p>
-	<p><label for="ee_log_in_console">EE.log in Console:</label> <input id="ee_log_in_console" type="checkbox" /></p>
-	<p><label for="fov_override">FOV Override (0 = disabled):</label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
-	<button id="save_config">Save changes to client_config.json</button>
+	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
+	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
+	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
+	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
+	<p><label for="simulacrum_whitelisted"></label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
+	<p><label for="pause_always_stops_time"></label> <input id="pause_always_stops_time" type="checkbox" /></p>
+	<p><label for="ee_log_in_console"></label> <input id="ee_log_in_console" type="checkbox" /></p>
+	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<button id="save_config"></button>
 	<hr>
-	<p><label for="camtype">Camera Type:</label> <select id="camtype"><option value="gamecam">Normal</option><option value="freecam">Freecam</option><option value="lockcam">Locked In Place</option></select></p>
-	<p><label for="pos">Position:</label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
-	<p><button id="tp-submit">Teleport To</button> <select id="tp-target"><option>Custom</option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
+	<p><label for="camtype"></label> <select id="camtype"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select></p>
+	<p><label for="pos"></label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
+	<p><button id="tp_submit"></button> <select id="tp-target"><option value="custom"></option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
 	<hr>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
-	<p><button onclick="clearScriptLog()">Clear Script Log</button></p>
-	<p><label for="console">Console:</label> <input id="console" type="checkbox" /></p>
+	<p><button id="clear_script_log" onclick="clearScriptLog()"></button></p>
+	<p><label for="console"></label> <input id="console" type="checkbox" /></p>
+	<script src="/dict.js"></script>
 	<script>
+		document.querySelectorAll("label[for]").forEach(elm => {
+			elm.textContent = dict[elm.getAttribute("for")] + ": ";
+		});
+		document.querySelectorAll("button[id]").forEach(elm => {
+			elm.textContent = dict[elm.id];
+		});
+		document.querySelectorAll("option[value]").forEach(elm => {
+			elm.textContent = dict[elm.value];
+		});
+
 		fetch("/server_host").then(res => res.text()).then(res => {
 			document.getElementById("server_host").value = res;
 		});
@@ -93,21 +104,21 @@
 		};
 
 		const marker_types = {
-			"3": "Objective",
-			"9": "Target",
-			"12": "Life Support Capsule",
-			"29": "Target",
-			"31": "Life Support Pickup",
-			"40": "A",
-			"41": "B",
-			"42": "C",
-			"49": "Waypoint",
-			"65": "Focus",
-			"75": "Extraction",
+			"3": dict.marker_obj,
+			"9": dict.marker_target,
+			"12": dict.marker_surcap,
+			"29": dict.marker_target,
+			"31": dict.marker_surpup,
+			"40": dict.marker_a,
+			"41": dict.marker_b,
+			"42": dict.marker_c,
+			"49": dict.marker_wp,
+			"65": dict.marker_focus,
+			"75": dict.marker_extract,
 		};
 
 		function onMarkersChange() {
-			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "Custom" ? "" : "none";
+			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "custom" ? "" : "none";
 		}
 
 		let status_request_suffix = "?0";
@@ -142,7 +153,7 @@
 					}
 				}
 				for (const child of document.getElementById("tp-target").children) {
-					if (child.value != "Custom" && !(child.getAttribute("data-slug") in marker_set)) {
+					if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
 						document.getElementById("tp-target").removeChild(child);
 						onMarkersChange();
 					}
@@ -163,7 +174,7 @@
 				pollStatus();
 			}).catch((e) => {
 				console.error(e);
-				document.body.innerHTML = `<p>Connection to DLL lost. <a href="/">Attempt to reconnect.</a></p>`;
+				document.body.innerHTML = `<p>` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
 			});
 		}
 		pollStatus();
@@ -178,9 +189,9 @@
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
-		document.getElementById("tp-submit").onclick = function() {
+		document.getElementById("tp_submit").onclick = function() {
 			let pos = document.getElementById("tp-target").value;
-			if (pos == "Custom") {
+			if (pos == "custom") {
 				pos = document.getElementById("tp-pos").value
 			}
 			fetch("/teleport?" + pos);
@@ -207,18 +218,18 @@
 				p.appendChild(input);
 				const button = document.createElement("button");
 				button.style.marginLeft = "10px";
-				button.textContent = "Enable Auto Start";
+				button.textContent = dict.enable_auto_start;
 				button.onclick = function() {
-					const on = (this.textContent != "Enable Auto Start");
+					const on = (this.textContent != dict.enable_auto_start);
 					fetch((on ? "/remove_autostart_script?" : "/add_autostart_script?") + script);
-					this.textContent = (on ? "Enable Auto Start" : "Disable Auto Start");
+					this.textContent = (on ? dict.enable_auto_start : dict.disable_auto_start);
 				};
 				p.appendChild(button);
 				document.getElementById("scripts-container").appendChild(p);
 			});
 			fetch("/autostart_scripts").then(res => res.json()).then(res => {
 				res.forEach(script => {
-					document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = "Disable Auto Start";
+					document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = dict.disable_auto_start;
 				});
 			});
 		});
