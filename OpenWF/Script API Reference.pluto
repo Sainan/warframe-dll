@@ -94,6 +94,7 @@ class DamageControllerBase extends Object
 	function SetShield(i)
 	function GetMaxShield()
 	function SetMaxShield(i)
+	function getOverguard()
 
 class DamageController extends DamageControllerBase
 
