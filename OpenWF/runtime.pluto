@@ -1710,6 +1710,20 @@ Engine.SLOT_13 = 12
 Engine.SLOT_14 = 13
 Engine.INVALID = 14
 
+local { http, json, url } = require "*"
+
+function owf_get_running_scripts()
+	return (http.request("http://localhost:61558/status") |> json.decode).running_scripts
+end
+
+function owf_start_script(name)
+	http.request("http://localhost:61558/start_script?"..url.encode("OpenWF/scripts/"..name))
+end
+
+function owf_stop_script(name)
+	http.request("http://localhost:61558/stop_script?"..url.encode("OpenWF/scripts/"..name))
+end
+
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
 

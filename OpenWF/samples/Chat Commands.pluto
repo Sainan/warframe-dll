@@ -69,6 +69,19 @@ end
 commands["/unpause"] = function(text)
 	gGameRules:RequestUnpause()
 end
+commands["/script"] = function(text)
+	local script = text:split(" ")[2]
+	if script:sub(-6) ~= ".pluto" then
+		script ..= ".pluto"
+	end
+	if script in owf_get_running_scripts() then
+		owf_stop_script(script)
+		chat_system_reply($"Stopped {script}.")
+	else
+		owf_start_script(script)
+		chat_system_reply($"Started {script}.")
+	end
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
