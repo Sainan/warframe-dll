@@ -294,6 +294,7 @@ function Engine.OpenLevel(args)
 -- OpenWF global functions
 
 function yield()
+function get_lang_code()
 function owf_is_key_down(vk)
 function mem_scan_exe(sig)
 function mem_read_i32(addr)

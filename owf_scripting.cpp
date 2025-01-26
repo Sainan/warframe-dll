@@ -135,6 +135,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		pluto_pushstring(L, lang_code);
+		return 1;
+	});
+	{ ObfusString name("get_lang_code"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		if (DWORD pid; GetWindowThreadProcessId(GetForegroundWindow(), &pid), pid == GetCurrentProcessId())
 		{
 			int vk = 0;

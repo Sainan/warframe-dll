@@ -24,6 +24,8 @@ inline std::vector<std::string> auto_start_scripts;
 inline std::string forced_profile_dir;
 inline bool ee_log_in_console;
 
+inline std::string lang_code;
+
 // Tunables
 inline bool prohibit_skip_mission_start_timer = false;
 inline bool prohibit_fov_override = false;

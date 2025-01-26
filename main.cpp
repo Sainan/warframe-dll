@@ -523,6 +523,8 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 		arguments->got_cluster = true;
 		arguments->cluster.setShortData(fallback_cluster);
 	}
+
+	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
 }
 
 
