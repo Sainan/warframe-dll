@@ -1119,6 +1119,20 @@ static void start_bgscript()
 	bgscript->tick();
 }
 
+static void restart_bgscript()
+{
+	if (bgscript)
+	{
+		bgscript->stop_requested = true;
+		while (bgscript)
+		{
+			Sleep(10);
+		}
+	}
+
+	start_bgscript();
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -2633,6 +2647,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
+					case soup::joaat::compileTimeHash("/restart_bgscript"):
+						restart_bgscript();
+						ServerWebService::sendText(s, {});
+						break;
+
 					case soup::joaat::compileTimeHash("/clear_script_log"):
 						script_log.clear();
 						ServerWebService::sendText(s, {});
@@ -2668,16 +2687,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 							g_archive = std::move(archive);
 
-							if (bgscript)
-							{
-								bgscript->stop_requested = true;
-								while (bgscript)
-								{
-									Sleep(10);
-								}
-							}
-
-							start_bgscript();
+							restart_bgscript();
 						}
 						break;
 
