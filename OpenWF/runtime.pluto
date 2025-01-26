@@ -194,7 +194,7 @@ class Entity extends BaseEntity
 	__name = "Entity"
 
 	function GetPosition()
-		return new Vector3(entity_get_pos(self.addr))
+		return new Vector(entity_get_pos(self.addr))
 	end
 
 	function SetPosition(pos)
@@ -1306,7 +1306,7 @@ class FlashMarker extends owfClassBase
 					luau_push_pointer(self.addr)
 					luau_call(luau_find_getter("FlashMarker", name), 1)
 					local addr = mem_read_i64(luau_pop_userdata() + 0x18)
-					return new Vector3(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
+					return new Vector(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
 				end
 				break
 
