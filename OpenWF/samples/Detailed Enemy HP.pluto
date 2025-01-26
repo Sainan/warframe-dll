@@ -20,7 +20,7 @@ repeat
 			.."\r\n"..Health..": "..string.formatint(ent:GetHealth()).." / "..string.formatint(ent:GetMaxHealth())
 			.."\r\n"..Shield..": "..string.formatint(dc:GetShield()).." / "..string.formatint(dc:GetMaxShield())
 			.."\r\n"..Armor..": "..string.formatint(dc:GetArmourRating())
-			.."\r\n"..Overguard..": "..string.formatint(dc:getOverguard())
+			.."\r\n"..Overguard..": "..string.formatint(dc:GetOverguardAmount())
 		)
 	end
 until yield()
