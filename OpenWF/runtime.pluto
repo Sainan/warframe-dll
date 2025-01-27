@@ -650,7 +650,7 @@ class InventoryControllerBase extends Object
 		end
 	end
 
-	function AddUpgrade(upgradeType, operationType, value)
+	function AddUpgrade(upgradeType, operationType, value, _, _, damageType = DamageType.DT_ANY)
 		luau_push_object(self.addr)
 		luau_push_int(upgradeType)
 		luau_push_int(operationType)
@@ -1780,6 +1780,8 @@ OperationType = {
 	SET_MIN = 6,
 	SET_MAX = 7
 }
+
+DamageType = UpgradeType
 
 coroutine.sleep = function(ms)
 	local t = os.millis() + ms
