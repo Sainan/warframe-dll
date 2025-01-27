@@ -288,12 +288,6 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 				}
 			}
 		}
-#if PRIVATE
-		if (strstr(request->body.getData(), "\"kick\"") != nullptr)
-		{
-			MessageBoxA(0, "ANTI-CHEAT TRIGGERED", "ANTI-CHEAT TRIGGERED", 0);
-		}
-#endif
 #if PROVIDE_VERSION_INFO
 		if (build_label[0] && !build_hash.empty())
 		{
@@ -714,11 +708,11 @@ static int get_config_bool_detour(luau_State* L)
 {
 	SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
 	{
-		ObfusString str("Steam.AutoLogin");
+		ObfusString str("Client.AutoLogin");
 		if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
 		{
 #if LOGGING
-			std::cout << "Reporting Steam.AutoLogin as true" << std::endl;
+			std::cout << "Reporting Client.AutoLogin as true" << std::endl;
 #endif
 			L->outtop[-1].value.as_bool = true;
 			L->outtop[-1].type = LUA_BOOL;
@@ -737,13 +731,13 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 {
 	SOUP_IF_LIKELY (name)
 	{
-		ObfusString str("Steam.AutoLogin");
+		ObfusString str("Client.AutoLogin");
 		SOUP_IF_UNLIKELY (strcmp(name, str.c_str()) == 0)
 		{
 			if (!did_auto_login)
 			{
 #if LOGGING
-				std::cout << "Reporting Steam.AutoLogin as true" << std::endl;
+				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
 #endif
 				return true;
 			}
@@ -751,24 +745,6 @@ static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallba
 	}
 
 	return reinterpret_cast<decltype(&get_config_bool_vfunc_detour)>(get_config_bool_vfunc_hook.original)(a1, name, fallback);
-}
-
-
-static void* lua_SteamService_IsInitialized_og;
-
-static int lua_SteamService_IsInitialized_detour(luau_State* L)
-{
-	if (!did_auto_login)
-	{
-#if LOGGING
-		//std::cout << "Making lua_SteamService_IsInitialized return true" << std::endl;
-#endif
-		L->outtop->value.as_bool = true;
-		L->outtop->type = LUAU_BOOL;
-		L->outtop++;
-		return 1;
-	}
-	return reinterpret_cast<decltype(&lua_SteamService_IsInitialized_detour)>(lua_SteamService_IsInitialized_og)(L);
 }
 
 
@@ -1963,31 +1939,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					get_config_bool_vfunc_hook.target = get_config_bool_vfunc;
 					get_config_bool_vfunc_hook.create();
 					get_config_bool_vfunc_hook.enable();
-				}
-			}
-			else
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
-		}
-
-		{
-			SIG_INST("FC C6 D4 49");
-			auto lua_SteamService_IsInitialized_hash = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "lua_SteamService_IsInitialized_hash = " << lua_SteamService_IsInitialized_hash.as<void*>() << std::endl;
-#endif
-			if (lua_SteamService_IsInitialized_hash)
-			{
-				auto lua_SteamService_IsInitialized_fp = lua_SteamService_IsInitialized_hash.add(8).as<void**>();
-#if LOGGING
-				std::cout << "lua_SteamService_IsInitialized = " << *lua_SteamService_IsInitialized_fp << std::endl;
-#endif
-				if (autologin)
-				{
-					memGuard::setAllowedAccess(lua_SteamService_IsInitialized_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
-					lua_SteamService_IsInitialized_og = *lua_SteamService_IsInitialized_fp;
-					*lua_SteamService_IsInitialized_fp = reinterpret_cast<void*>(&lua_SteamService_IsInitialized_detour);
 				}
 			}
 			else
