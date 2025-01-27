@@ -722,6 +722,24 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		const auto target = luaL_checkstring(L, 1);
+		for (const auto& first : swig_enums)
+		{
+			for (auto i = first; i->name != nullptr; ++i)
+			{
+				if (strcmp(i->name, target) == 0)
+				{
+					lua_pushinteger(L, i->value);
+					return 1;
+				}
+			}
+		}
+		return 0;
+	});
+	{ ObfusString name("luau_get_enum_value"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushinteger(L, owfOverlay::getWidth());
 		lua_pushinteger(L, owfOverlay::getHeight());
 		return 2;

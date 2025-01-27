@@ -2111,6 +2111,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
+			SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
+			Pointer res[10];
+			int nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+			swig_enums.reserve(nres);
+			for (int i = 0; i != nres; ++i)
+			{
+				swig_enums.emplace_back(res[i].add(3).rip().as<SwigEnum*>());
+			}
+			if (nres == 0)
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
 			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 AF 02 00 00");
 			auto get_profile_dir = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING

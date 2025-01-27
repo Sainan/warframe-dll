@@ -172,3 +172,13 @@ struct SwigTypeField
 static_assert(sizeof(SwigTypeField) == 0x20);
 
 inline std::unordered_map<uint32_t, SwigTypeDesc*> swig_types;
+
+struct SwigEnum
+{
+	PAD(0, 0x08) const char* name;
+	/* 0x10 */ int32_t value;
+	PAD(0x14, 0x38);
+};
+static_assert(sizeof(SwigEnum) == 0x38);
+
+inline std::vector<SwigEnum*> swig_enums;
