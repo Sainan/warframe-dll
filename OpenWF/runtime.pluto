@@ -606,6 +606,12 @@ class DamageControllerBase extends Object
 		luau_call(luau_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
 		return math.tointeger(luau_pop_number())
 	end
+
+	function GetOverguardMax()
+		luau_push_object(self.addr)
+		luau_call(luau_find_method("DamageControllerBase", "GetOverguardMax"), 1)
+		return math.tointeger(luau_pop_number())
+	end
 end
 
 class DamageController extends DamageControllerBase
