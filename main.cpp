@@ -2393,6 +2393,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					switch (route_hash)
 					{
 					case soup::joaat::compileTimeHash("/"):
+						if (arr.size() > 1 && soup::joaat::hash(arr[1].substr(0, 5)) == soup::joaat::compileTimeHash("lang="))
+						{
+							webui_lang_code = arr[1].substr(5);
+						}
+						else
+						{
+							webui_lang_code = lang_code;
+						}
 #if PRIVATE
 						if (std::string html = string::fromFile("OpenWF/index.html"); !html.empty())
 						{
@@ -2417,7 +2425,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 						{
 							uint32_t size;
-							auto data = g_archive.find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/webui_dicts/"), lang_code), ObfusString(".js").str()), size);
+							auto data = g_archive.find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/webui_dicts/"), webui_lang_code), ObfusString(".js").str()), size);
 							if (!data)
 							{
 								data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/webui_dicts/en.js"), size);
