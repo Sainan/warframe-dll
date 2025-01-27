@@ -135,7 +135,7 @@
 				const marker_set = {};
 				for (const marker of bgscript_status.markers) {
 					if (marker.type != 14) {
-						const name = (marker.type in marker_types ? marker_types[marker.type] : "Marker") + " in " + marker.dist + "m";
+						const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
 						const pos = marker.x + "," + marker.y + "," + marker.z;
 						const slug = marker.type == 49 ? "wp" : pos;
 						marker_set[slug] = true;
