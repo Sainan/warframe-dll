@@ -125,7 +125,6 @@ void owfOverlay::init()
 				}
 			});
 			w.setInvisibleColour(Rgb::MAGENTA);
-			w.setTopmost(true);
 			w.setClickThrough(true);
 			w.hideFromTaskbar();
 			{
