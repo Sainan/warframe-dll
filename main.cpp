@@ -2421,7 +2421,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if PRIVATE
 						if (std::string content = string::fromFile("OpenWF/dict.js"); !content.empty())
 						{
-							ServerWebService::sendData(s, ObfusString("text/javascript"), content);
+							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), content);
 						}
 						else
 #endif
@@ -2432,7 +2432,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							{
 								data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/webui_dicts/en.js"), size);
 							}
-							ServerWebService::sendData(s, ObfusString("text/javascript"), data, size);
+							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), data, size);
 						}
 						break;
 
