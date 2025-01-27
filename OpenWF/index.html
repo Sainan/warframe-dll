@@ -121,63 +121,69 @@
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "custom" ? "" : "none";
 		}
 
+		let ws = new WebSocket(location.href);
 		let status_request_suffix = "?0";
 		function pollStatus() {
-			fetch("/status" + status_request_suffix).then(res => res.json()).then(res => {
-				document.getElementById("console").checked = res.console;
-				if (res.camtype) {
-					document.getElementById("camtype").value = res.camtype;
-				}
-				document.getElementById("pos").value = res.pos ?? "";
-
-				const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
-				bgscript_status.markers ??= [];
-				const marker_set = {};
-				for (const marker of bgscript_status.markers) {
-					if (marker.type != 14) {
-						const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
-						const pos = marker.x + "," + marker.y + "," + marker.z;
-						const slug = marker.type == 49 ? "wp" : pos;
-						marker_set[slug] = true;
-						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
-						if (!option) {
-							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
-							option.setAttribute("data-slug", slug);
-						}
-						if (option.value != pos) {
-							option.value = pos;
-						}
-						if (option.textContent != name) {
-							option.textContent = name;
-						}
-					}
-				}
-				for (const child of document.getElementById("tp-target").children) {
-					if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
-						document.getElementById("tp-target").removeChild(child);
-						onMarkersChange();
-					}
-				}
-
-				for (const script of document.getElementById("scripts-container").children) {
-					const path = script.children[1].getAttribute("data-path");
-					script.children[1].checked = res.running_scripts.find(x => x == path);
-				}
-
-				if (res.script_log_sub) {
-					const log = document.getElementById("script_log");
-					log.textContent += res.script_log_sub;
-					log.scrollTop = log.scrollHeight;
-					status_request_suffix = "?" + res.script_log_len;
-				}
-
-				pollStatus();
-			}).catch((e) => {
-				console.error(e);
-				document.body.innerHTML = `<p>` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
-			});
+			ws.send("/status" + status_request_suffix);
 		}
-		pollStatus();
+		ws.onopen = function() {
+			pollStatus();
+		};
+		ws.onmessage = function(e) {
+			const res = JSON.parse(e.data);
+			document.getElementById("console").checked = res.console;
+			if (res.camtype) {
+				document.getElementById("camtype").value = res.camtype;
+			}
+			document.getElementById("pos").value = res.pos ?? "";
+
+			const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
+			bgscript_status.markers ??= [];
+			const marker_set = {};
+			for (const marker of bgscript_status.markers) {
+				if (marker.type != 14) {
+					const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
+					const pos = marker.x + "," + marker.y + "," + marker.z;
+					const slug = marker.type == 49 ? "wp" : pos;
+					marker_set[slug] = true;
+					let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
+					if (!option) {
+						option = document.getElementById("tp-target").appendChild(document.createElement("option"));
+						option.setAttribute("data-slug", slug);
+					}
+					if (option.value != pos) {
+						option.value = pos;
+					}
+					if (option.textContent != name) {
+						option.textContent = name;
+					}
+				}
+			}
+			for (const child of document.getElementById("tp-target").children) {
+				if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
+					document.getElementById("tp-target").removeChild(child);
+					onMarkersChange();
+				}
+			}
+
+			for (const script of document.getElementById("scripts-container").children) {
+				const path = script.children[1].getAttribute("data-path");
+				script.children[1].checked = res.running_scripts.find(x => x == path);
+			}
+
+			if (res.script_log_sub) {
+				const log = document.getElementById("script_log");
+				log.textContent += res.script_log_sub;
+				log.scrollTop = log.scrollHeight;
+				status_request_suffix = "?" + res.script_log_len;
+			}
+
+			setTimeout(pollStatus, 20);
+		};
+		ws.onerror = function(e) {
+			console.error(e);
+			document.body.innerHTML = `<p>` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
+		};
 
 		function clearScriptLog() {
 			status_request_suffix = "";

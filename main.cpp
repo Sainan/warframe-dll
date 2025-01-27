@@ -34,6 +34,7 @@
 #include <Thread.hpp>
 #include <Uri.hpp>
 #include <urlenc.hpp>
+#include <WebSocketMessage.hpp>
 
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
@@ -1135,6 +1136,53 @@ static void restart_bgscript()
 	}
 
 	start_bgscript();
+}
+
+static JsonObject get_status_object(const std::vector<std::string>& arr)
+{
+	JsonObject obj;
+	obj.add(ObfusString("console"), owfConsole::active);
+	if (regionmgr)
+	{
+		if (auto local_player = regionmgr->GetLocalPlayer())
+		{
+			if (auto avatar = local_player->getAvatar())
+			{
+				std::string camtype = ObfusString("gamecam").str();
+				if (!avatar->followed_by_camera)
+				{
+					camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
+				}
+				obj.add(ObfusString("camtype"), std::move(camtype));
+
+				std::string pos_str;
+				pos_str = std::to_string(avatar->pos_x);
+				pos_str.push_back(',');
+				pos_str.append(std::to_string(avatar->pos_y));
+				pos_str.push_back(',');
+				pos_str.append(std::to_string(avatar->pos_z));
+				obj.add(ObfusString("pos"), std::move(pos_str));
+			}
+		}
+	}
+	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
+	{
+		std::lock_guard lock(running_scripts_mtx);
+		auto arr = soup::make_unique<JsonArray>();
+		for (const auto& scr : running_scripts)
+		{
+			arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
+		}
+		obj.add(ObfusString("running_scripts"), std::move(arr));
+	}
+	if (arr.size() > 1)
+	{
+		const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
+		std::lock_guard lock(script_log_mtx);
+		obj.add(ObfusString("script_log_sub"), script_log.substr(i));
+		obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
+	}
+	return obj;
 }
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
@@ -2574,51 +2622,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/status"):
-						{
-							JsonObject obj;
-							obj.add(ObfusString("console"), owfConsole::active);
-							if (regionmgr)
-							{
-								if (auto local_player = regionmgr->GetLocalPlayer())
-								{
-									if (auto avatar = local_player->getAvatar())
-									{
-										std::string camtype = ObfusString("gamecam").str();
-										if (!avatar->followed_by_camera)
-										{
-											camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
-										}
-										obj.add(ObfusString("camtype"), std::move(camtype));
-
-										std::string pos_str;
-										pos_str = std::to_string(avatar->pos_x);
-										pos_str.push_back(',');
-										pos_str.append(std::to_string(avatar->pos_y));
-										pos_str.push_back(',');
-										pos_str.append(std::to_string(avatar->pos_z));
-										obj.add(ObfusString("pos"), std::move(pos_str));
-									}
-								}
-							}
-							obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
-							{
-								std::lock_guard lock(running_scripts_mtx);
-								auto arr = soup::make_unique<JsonArray>();
-								for (const auto& scr : running_scripts)
-								{
-									arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
-								}
-								obj.add(ObfusString("running_scripts"), std::move(arr));
-							}
-							if (arr.size() > 1)
-							{
-								const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
-								std::lock_guard lock(script_log_mtx);
-								obj.add(ObfusString("script_log_sub"), script_log.substr(i));
-								obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
-							}
-							ServerWebService::sendText(s, obj.encodePretty());
-						}
+						ServerWebService::sendText(s, get_status_object(arr).encodePretty());
 						break;
 
 					case soup::joaat::compileTimeHash("/toggle_console"):
@@ -2796,6 +2800,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 					}
 				});
+				srv.should_accept_websocket_connection = [](Socket&, const HttpRequest&, ServerWebService&) { return true; };
+				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
+				{
+					auto arr = string::explode(msg.data, '?');
+					ServerWebService::wsSendText(s, get_status_object(arr).encode());
+				};
 				if (serv.bind(61558, &srv))
 				{
 					serv.run();
