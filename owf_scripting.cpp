@@ -670,6 +670,33 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("luau_get_parent"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_newtable(L);
+		lua_Integer n = 0;
+		for (const auto& first : swig_enums)
+		{
+			for (auto i = first; i->name != nullptr; ++i)
+			{
+				lua_pushinteger(L, ++n);
+				lua_newtable(L);
+				{
+					lua_pushstring(L, "name");
+					lua_pushstring(L, i->name);
+					lua_settable(L, -3);
+				}
+				{
+					lua_pushstring(L, "value");
+					lua_pushinteger(L, i->value);
+					lua_settable(L, -3);
+				}
+				lua_settable(L, -3);
+			}
+		}
+		return 1;
+	});
+	{ ObfusString name("luau_get_enums"); lua_setglobal(L, name.c_str()); }
 #endif
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
