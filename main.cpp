@@ -861,16 +861,16 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 #endif
 		throw 0;
 	};
-	if (bgscript != nullptr)
-	{
-		SOUP_IF_UNLIKELY (!bgscript->tick())
-		{
-			delete bgscript;
-			bgscript = nullptr;
-		}
-	}
 	{
 		std::lock_guard mtx(running_scripts_mtx);
+		if (bgscript != nullptr)
+		{
+			SOUP_IF_UNLIKELY (!bgscript->tick())
+			{
+				delete bgscript;
+				bgscript = nullptr;
+			}
+		}
 		for (auto i = running_scripts.begin(); i != running_scripts.end(); )
 		{
 			if (!prohibit_scripts && (*i)->tick())
@@ -1116,6 +1116,8 @@ static void start_bgscript()
 		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
 		code = std::string(data, size);
 	}
+
+	std::lock_guard lock(running_scripts_mtx);
 	bgscript = new owfScript();
 	bgscript->loadString(std::move(code));
 	bgscript->tick();
