@@ -70,7 +70,7 @@ commands["/unpause"] = function(text)
 	gGameRules:RequestUnpause()
 end
 commands["/script"] = function(text)
-	local script = text:split(" ")[2]
+	local script = text:sub(text:find(" ") + 1)
 	if script:sub(-6) ~= ".pluto" then
 		script ..= ".pluto"
 	end
