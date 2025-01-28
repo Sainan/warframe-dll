@@ -1951,14 +1951,16 @@ OperationType = {
 
 DamageType = UpgradeType
 
+ivkr_find_builtin = function(name)
+	ivkr_push_string(name)
+	ivkr_gettable(-10002)
+	return ivkr_pop_c_function(1)
+end
+
 package.preload["Lotus.Interface.LotusNetworkUtilities"] = || -> {
 	Host_LoadMission = function(node, missionInfo)
-		ivkr_push_string("require")
-		ivkr_gettable(-10002)
-		local require_fp = ivkr_pop_c_function(1)
-
 		ivkr_push_string("Lotus.Interface.LotusNetworkUtilities")
-		ivkr_call(require_fp, 1)
+		ivkr_call(ivkr_find_builtin("require"), 1)
 		do
 			ivkr_push_string("Host_LoadMission")
 			ivkr_gettable(-2)
