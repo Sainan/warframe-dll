@@ -575,6 +575,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushinteger(L, luau_L->getValue(luaL_checkinteger(L, 1))->type);
+		return 1;
+	});
+	{ ObfusString name("ivkr_type"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushboolean(L, luau_L->getValue(luaL_checkinteger(L, 1))->type == LUAU_TABLE);
 		return 1;
 	});
