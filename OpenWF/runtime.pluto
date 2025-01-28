@@ -10,6 +10,19 @@ class owfClassBase
 	end
 end
 
+class owfUserdata
+	function __gc()
+		ivkr_push_string(tostring(self))
+		ivkr_push_nil()
+		ivkr_settable(-10002)
+	end
+
+	function pushToIvkr()
+		ivkr_push_string(tostring(self))
+		ivkr_gettable(-10002)
+	end
+end
+
 class ObjectType extends owfClassBase
 	__name = "ObjectType"
 
@@ -930,7 +943,7 @@ class RadialSolarMap extends Object
 		ivkr_push_object(self.addr)
 		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
-		return new LotusMissionInfo(ivkr_pop_pointer())
+		return new LotusMissionInfo()
 	end
 
 	function SetLevelStreamingArgs(locationSymbol, openLevelArgs)
@@ -1011,15 +1024,22 @@ class RadialSector extends owfClassBase
 			case "mission":
 				ivkr_push_pointer(self.addr)
 				ivkr_call(ivkr_find_getter("RadialSector", "mission"), 1)
-				return new LotusMissionInfo(ivkr_pop_pointer())
+				return new LotusMissionInfo()
 		end
 		error("Unknown field: "..name)
 	end
 end
 RadialSector.__parent = nil -- Hack so our __index is used
 
-class LotusMissionInfo extends owfClassBase
+class LotusMissionInfo extends owfUserdata
 	__name = "LotusMissionInfo"
+
+	function __construct()
+		ivkr_push_string(tostring(self))
+		ivkr_push_value(-2)
+		ivkr_settable(-10002)
+		ivkr_pop(1)
+	end
 
 	function __index(name)
 		if LotusMissionInfo[name] then
@@ -1029,21 +1049,21 @@ class LotusMissionInfo extends owfClassBase
 			case "missionType":
 			case "minEnemyLevel":
 			case "maxEnemyLevel":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				return math.tointeger(ivkr_pop_number())
 
 			case "goalTag":
 			case "activeMissionTag":
 			case "location":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 				return new Symbol(ivkr_pop_string())
 
 			case "levelOverride":
 			case "gameRules":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				if addr := ivkr_pop_pointer() then 
 					return new ObjectType(addr)
@@ -1055,13 +1075,13 @@ class LotusMissionInfo extends owfClassBase
 	end
 
 	function EncodeAsString()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "EncodeAsString"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetEnemies()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetEnemies"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -1078,7 +1098,7 @@ class LotusMissionInfo extends owfClassBase
 	end
 
 	function GetMissionEventResources()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetMissionEventResources"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -1095,7 +1115,7 @@ class LotusMissionInfo extends owfClassBase
 	end
 
 	function GetExtraMissionEventResources()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetExtraMissionEventResources"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -1112,7 +1132,7 @@ class LotusMissionInfo extends owfClassBase
 	end
 
 	function GetAdvancedAiDirectorSpawns()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetAdvancedAiDirectorSpawns"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -1129,7 +1149,7 @@ class LotusMissionInfo extends owfClassBase
 	end
 
 	function GetCustomAdvancedAiDirectorSpawns()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetCustomAdvancedAiDirectorSpawns"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -1557,24 +1577,13 @@ end
 
 Engine = {}
 
-class Engine.OpenLevelArgs
+class Engine.OpenLevelArgs extends owfUserdata
 	__name = "Engine.OpenLevelArgs"
 
 	function __construct()
 		ivkr_push_string(tostring(self))
 		ivkr_call(ivkr_find_ctor("OpenLevelArgs"), 0)
 		ivkr_settable(-10002)
-	end
-
-	function __gc()
-		ivkr_push_string(tostring(self))
-		ivkr_push_nil()
-		ivkr_settable(-10002)
-	end
-
-	function pushToIvkr()
-		ivkr_push_string(tostring(self))
-		ivkr_gettable(-10002)
 	end
 
 	function SetLevel(level)
@@ -1601,7 +1610,7 @@ class Engine.OpenLevelArgs
 		ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextObject"), 2)
 	end
 end
-setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
+getmetatable(Engine.OpenLevelArgs).__call = || -> new Engine.OpenLevelArgs()
 
 class Symbol
 	__name = "Symbol"
