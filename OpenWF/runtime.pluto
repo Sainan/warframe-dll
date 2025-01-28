@@ -1951,6 +1951,26 @@ OperationType = {
 
 DamageType = UpgradeType
 
+package.preload["Lotus.Interface.LotusNetworkUtilities"] = || -> {
+	Host_LoadMission = function(node, missionInfo)
+		ivkr_push_string("require")
+		ivkr_gettable(-10002)
+		local require_fp = ivkr_pop_c_function(1)
+
+		ivkr_push_string("Lotus.Interface.LotusNetworkUtilities")
+		ivkr_call(require_fp, 1)
+		do
+			ivkr_push_string("Host_LoadMission")
+			ivkr_gettable(-2)
+
+			node:pushToIvkr()
+			missionInfo:pushToIvkr()
+			ivkr_call2(2, 0)
+		end
+		ivkr_pop(1)
+	end
+}
+
 coroutine.sleep = function(ms)
 	local t = os.millis() + ms
 	repeat
