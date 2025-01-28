@@ -61,6 +61,12 @@ static_assert(sizeof(luau_State) == 0x90);
 using luau_CFunction = int(*)(luau_State*);
 using luau_Alloc = void*(*)(void* ud, void* ptr, size_t osize, size_t nsize);
 
+struct luau_Closure
+{
+	PAD(0x00, 0x03) uint8_t isC;
+	PAD(0x04, 0x18) luau_CFunction func;
+};
+
 inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	if (nsize == 0)

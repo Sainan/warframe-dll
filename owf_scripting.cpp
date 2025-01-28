@@ -562,6 +562,19 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		if (luau_L->outtop[-1].type == LUAU_FUNCTION
+			&& reinterpret_cast<luau_Closure*>(luau_L->outtop[-1].value.as_uintptr)->isC
+			)
+		{
+			lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->func));
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("ivkr_pop_c_function"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushboolean(L, luau_L->getValue(luaL_checkinteger(L, 1))->type == LUAU_TABLE);
 		return 1;
 	});
