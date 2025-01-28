@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.8.3"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.8.4"
 
 #define SELF_HOST_CACHE_MANIFEST true
 #define ASK_SERVER_FOR_TUNABLES true
