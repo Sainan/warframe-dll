@@ -1771,6 +1771,10 @@ Engine.INVALID = 14
 
 local { http, json, url } = require "*"
 
+function owf_get_available_scripts()
+	return http.request("http://localhost:61558/scripts") |> json.decode
+end
+
 function owf_get_running_scripts()
 	return (http.request("http://localhost:61558/status") |> json.decode).running_scripts
 end

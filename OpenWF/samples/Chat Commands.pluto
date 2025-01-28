@@ -77,9 +77,11 @@ commands["/script"] = function(text)
 	if script in owf_get_running_scripts() then
 		owf_stop_script(script)
 		chat_system_reply($"Stopped {script}.")
-	else
+	elseif script in owf_get_available_scripts() then
 		owf_start_script(script)
 		chat_system_reply($"Started {script}.")
+	else
+		chat_system_reply($"No such script: {script}")
 	end
 end
 commands["/quit"] = function()
