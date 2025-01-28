@@ -1067,12 +1067,9 @@ LotusMissionInfo.__parent = nil -- Hack so our __index is used
 class StoreManifest extends Object
 	__name = "StoreManifest"
 
-	function GetStoreItemsOfType(weakResource)
+	function GetStoreItemsOfType(objectType)
 		ivkr_push_object(self.addr)
-		do
-			ivkr_push_string(weakResource)
-			ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
-		end
+		ivkr_push_pointer(objectType.addr)
 		ivkr_call(ivkr_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
 		local t = {}
 		local i = 1
@@ -1445,12 +1442,9 @@ class WeaponCustomization
 	function __construct(public ud)
 	end
 
-	function SetSkin(weakResource, i)
+	function SetSkin(objectType, i)
 		ivkr_push_userdata(self.ud)
-		do
-			ivkr_push_string(weakResource)
-			ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
-		end
+		ivkr_push_object(objectType.addr)
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
 	end
@@ -1538,7 +1532,9 @@ function Resource(name)
 end
 
 function WeakResource(name)
-	return name
+	ivkr_push_string(name)
+	ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+	return new ObjectType(ivkr_pop_pointer())
 end
 
 function Range(min, max)

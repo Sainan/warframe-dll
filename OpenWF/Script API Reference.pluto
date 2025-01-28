@@ -195,7 +195,7 @@ class LotusMissionInfo extends owfClassBase
 	function EncodeAsString()
 
 class StoreManifest extends Object
-	function GetStoreItemsOfType(weakResource)
+	function GetStoreItemsOfType(objectType)
 
 class StoreItem extends Object
 	function GetProductCategory()
@@ -271,7 +271,7 @@ class Decoration extends Entity
 	function IsTriggeredAnimationDone()
 
 class WeaponCustomization
-	function SetSkin(weakResource, i)
+	function SetSkin(objectType, i)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)
@@ -291,7 +291,7 @@ function Sleep(ms)
 
 function Type(name)
 function Resource(name)
-function WeakResource(name)
+function WeakResource(name) -- constructs an ObjectType instance
 function Range(min, max)
 function Color(r, g, b, a)
 
