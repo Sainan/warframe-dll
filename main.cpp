@@ -702,49 +702,28 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 }
 
 
-/*static DetourHook get_config_bool_hook;
+static luau_CFunction lua_FlashMgr_GetConfigBool_og;
 
-static int get_config_bool_detour(luau_State* L)
+static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 {
-	SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
+	if (!did_auto_login)
 	{
-		ObfusString str("Client.AutoLogin");
-		if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
+		SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
 		{
-#if LOGGING
-			std::cout << "Reporting Client.AutoLogin as true" << std::endl;
-#endif
-			L->outtop[-1].value.as_bool = true;
-			L->outtop[-1].type = LUA_BOOL;
-			get_config_bool_hook.disable();
-			return 1;
-		}
-	}
-
-	return reinterpret_cast<decltype(&get_config_bool_detour)>(get_config_bool_hook.original)(L);
-}*/
-
-
-static DetourHook get_config_bool_vfunc_hook;
-
-static bool get_config_bool_vfunc_detour(void* a1, const char* name, bool fallback)
-{
-	SOUP_IF_LIKELY (name)
-	{
-		ObfusString str("Client.AutoLogin");
-		SOUP_IF_UNLIKELY (strcmp(name, str.c_str()) == 0)
-		{
-			if (!did_auto_login)
+			ObfusString str("Client.AutoLogin");
+			if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
 			{
 #if LOGGING
 				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
 #endif
-				return true;
+				L->outtop[-1].value.as_bool = true;
+				L->outtop[-1].type = LUAU_BOOL;
+				return 1;
 			}
 		}
 	}
 
-	return reinterpret_cast<decltype(&get_config_bool_vfunc_detour)>(get_config_bool_vfunc_hook.original)(a1, name, fallback);
+	return lua_FlashMgr_GetConfigBool_og(L);
 }
 
 
@@ -1901,44 +1880,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		/*{
-			SIG_INST("4C 8B 89 10 03 00 00 48 8B CE 41 FF D1");
-			auto get_config_bool = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "get_config_bool = " << get_config_bool.as<void*>() << std::endl;
-#endif
-			if (get_config_bool)
-			{
-				if (autologin)
-				{
-					get_config_bool = get_config_bool.sub(0x0000000140F40B8C - 0x0000000140F40B20);
-
-					get_config_bool_hook.detour = reinterpret_cast<void*>(&get_config_bool_detour);
-					get_config_bool_hook.target = get_config_bool.as<void*>();
-					get_config_bool_hook.create();
-					get_config_bool_hook.enable();
-				}
-			}
-			else
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
-		}*/
-
 		{
-			SIG_INST("40 55 56 41 56 48 83 EC 30 41 0F B6 E8");
-			auto get_config_bool_vfunc = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("FC 94 94 BF 00 00 00 00 ? ? ? ? ? ? ? ? C0 99 E8 D0 00 00 00 00");
+			auto lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "get_config_bool_vfunc = " << get_config_bool_vfunc << std::endl;
+			std::cout << "lua_FlashMgr_GetConfigBool_hash = " << lua_FlashMgr_GetConfigBool_hash.as<void*>() << std::endl;
 #endif
-			if (get_config_bool_vfunc)
+			if (lua_FlashMgr_GetConfigBool_hash)
 			{
 				if (autologin)
 				{
-					get_config_bool_vfunc_hook.detour = reinterpret_cast<void*>(&get_config_bool_vfunc_detour);
-					get_config_bool_vfunc_hook.target = get_config_bool_vfunc;
-					get_config_bool_vfunc_hook.create();
-					get_config_bool_vfunc_hook.enable();
+					auto lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_hash.add(8).as<luau_CFunction*>();
+					lua_FlashMgr_GetConfigBool_og = *lua_FlashMgr_GetConfigBool_fp;
+					memGuard::setAllowedAccess(lua_FlashMgr_GetConfigBool_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+					*lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_detour;
 				}
 			}
 			else
