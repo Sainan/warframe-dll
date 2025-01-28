@@ -19,6 +19,8 @@
 
 using namespace soup;
 
+extern void owf_broadcast_message(std::string&& msg);
+
 static uint32_t wf_fnv_32(const char* str) noexcept
 {
 	uint32_t hash = 0xF42E1C3E; // They use this non-standard initial value
@@ -1048,6 +1050,13 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		owf_broadcast_message(pluto_checkstring(L, 1));
+		return 0;
+	});
+	{ ObfusString name("owf_broadcast_message"); lua_setglobal(L, name.c_str()); }
 
 #if PRIVATE
 	lua_pushboolean(L, true);

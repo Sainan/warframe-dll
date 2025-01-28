@@ -1060,6 +1060,10 @@ static bool check_ec(const std::error_code& ec)
 	return true;
 }
 
+static Server serv;
+
+struct owfWebsocketTag {};
+
 static void start_bgscript()
 {
 	std::string code;
@@ -2309,7 +2313,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			Thread thrd([](Capture&&)
 			{
-				Server serv;
 				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 				{
 #if SELF_HOST_CACHE_MANIFEST
@@ -2706,11 +2709,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 					}
 				});
-				srv.should_accept_websocket_connection = [](Socket&, const HttpRequest&, ServerWebService&) { return true; };
+				srv.should_accept_websocket_connection = [](Socket& s, const HttpRequest&, ServerWebService&)
+				{
+					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
+					return true;
+				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
 					auto arr = string::explode(msg.data, '?');
-					ServerWebService::wsSendText(s, get_status_object(arr).encode());
+					auto obj = get_status_object(arr);
+					obj.add(ObfusString("full"), true);
+					ServerWebService::wsSendText(s, obj.encode());
 				};
 				if (serv.bind(61558, &srv))
 				{
@@ -2725,4 +2734,33 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 	}
 	return TRUE;
+}
+
+struct owfBroadcastMessageTask final : public Task
+{
+	const std::string msg;
+
+	owfBroadcastMessageTask(std::string&& msg)
+		: msg(std::move(msg))
+	{
+	}
+
+	void onTick() final
+	{
+		for (const auto& w : Scheduler::get()->workers)
+		{
+			if (w->type == soup::WORKER_TYPE_SOCKET
+				&& static_cast<Socket*>(w.get())->custom_data.isStructInMap(owfWebsocketTag)
+				)
+			{
+				ServerWebService::wsSendText(*static_cast<Socket*>(w.get()), msg);
+			}
+		}
+		setWorkDone();
+	}
+};
+
+void owf_broadcast_message(std::string&& msg)
+{
+	serv.add<owfBroadcastMessageTask>(std::move(msg));
 }

@@ -130,55 +130,72 @@
 			pollStatus();
 		};
 		ws.onmessage = function(e) {
-			const res = JSON.parse(e.data);
-			document.getElementById("console").checked = res.console;
-			if (res.camtype) {
-				document.getElementById("camtype").value = res.camtype;
-			}
-			document.getElementById("pos").value = res.pos ?? "";
+			const obj = JSON.parse(e.data);
 
-			const bgscript_status = res.bgscript_status_string ? JSON.parse(res.bgscript_status_string) : {};
-			bgscript_status.markers ??= [];
-			const marker_set = {};
-			for (const marker of bgscript_status.markers) {
-				if (marker.type != 14) {
-					const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
-					const pos = marker.x + "," + marker.y + "," + marker.z;
-					const slug = marker.type == 49 ? "wp" : pos;
-					marker_set[slug] = true;
-					let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
-					if (!option) {
-						option = document.getElementById("tp-target").appendChild(document.createElement("option"));
-						option.setAttribute("data-slug", slug);
-					}
-					if (option.value != pos) {
-						option.value = pos;
-					}
-					if (option.textContent != name) {
-						option.textContent = name;
-					}
-				}
+			if ("console" in obj) {
+				document.getElementById("console").checked = obj.console;
 			}
-			for (const child of document.getElementById("tp-target").children) {
-				if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
-					document.getElementById("tp-target").removeChild(child);
-					onMarkersChange();
+
+			if ("camtype" in obj) {
+				if (obj.camtype) {
+					document.getElementById("camtype").value = obj.camtype;
 				}
 			}
 
-			for (const script of document.getElementById("scripts-container").children) {
-				const path = script.children[1].getAttribute("data-path");
-				script.children[1].checked = res.running_scripts.find(x => x == path);
+			if ("pos" in obj) {
+				document.getElementById("pos").value = obj.pos ?? "";
 			}
 
-			if (res.script_log_sub) {
-				const log = document.getElementById("script_log");
-				log.textContent += res.script_log_sub;
-				log.scrollTop = log.scrollHeight;
-				status_request_suffix = "?" + res.script_log_len;
+			if ("bgscript_status_string" in obj) {
+				const bgscript_status = obj.bgscript_status_string ? JSON.parse(obj.bgscript_status_string) : {};
+				bgscript_status.markers ??= [];
+				const marker_set = {};
+				for (const marker of bgscript_status.markers) {
+					if (marker.type != 14) {
+						const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
+						const pos = marker.x + "," + marker.y + "," + marker.z;
+						const slug = marker.type == 49 ? "wp" : pos;
+						marker_set[slug] = true;
+						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
+						if (!option) {
+							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
+							option.setAttribute("data-slug", slug);
+						}
+						if (option.value != pos) {
+							option.value = pos;
+						}
+						if (option.textContent != name) {
+							option.textContent = name;
+						}
+					}
+				}
+				for (const child of document.getElementById("tp-target").children) {
+					if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
+						document.getElementById("tp-target").removeChild(child);
+						onMarkersChange();
+					}
+				}
 			}
 
-			setTimeout(pollStatus, 20);
+			if ("running_scripts" in obj) {
+				for (const script of document.getElementById("scripts-container").children) {
+					const path = script.children[1].getAttribute("data-path");
+					script.children[1].checked = obj.running_scripts.find(x => x == path);
+				}
+			}
+
+			if ("script_log_sub" in obj) {
+				if (obj.script_log_sub) {
+					const log = document.getElementById("script_log");
+					log.textContent += obj.script_log_sub;
+					log.scrollTop = log.scrollHeight;
+					status_request_suffix = "?" + obj.script_log_len;
+				}
+			}
+
+			if ("full" in obj) {
+				setTimeout(pollStatus, 20);
+			}
 		};
 		ws.onerror = function(e) {
 			console.error(e);
