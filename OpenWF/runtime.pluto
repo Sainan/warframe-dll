@@ -16,24 +16,24 @@ class ObjectType extends owfClassBase
 	__name = "ObjectType"
 
 	function GetName()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("ObjectType", "GetName"), 1)
-		return luau_pop_string()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("ObjectType", "GetName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetFullName()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("ObjectType", "GetFullName"), 1)
-		return luau_pop_string()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("ObjectType", "GetFullName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetParent()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("ObjectType", "GetParent"), 1)
-		if addr := luau_pop_pointer() then
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("ObjectType", "GetParent"), 1)
+		if addr := ivkr_pop_pointer() then
 			return new ObjectType(addr)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 	end
 
@@ -63,23 +63,23 @@ class Object extends owfClassBase
 	__name = "Object"
 
 	function GetType()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Object", "GetType"), 1)
-		if addr := luau_pop_pointer() then
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Object", "GetType"), 1)
+		if addr := ivkr_pop_pointer() then
 			return new ObjectType(addr)
 		end
 	end
 
 	function GetName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Object", "GetName"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Object", "GetName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetFullName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Object", "GetFullName"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Object", "GetFullName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function IsA(type)
@@ -104,39 +104,39 @@ class Player extends Object
 	end
 
 	function GetPlayerName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "GetPlayerName"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "GetPlayerName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetClanName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "GetClanName"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "GetClanName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetPlayerAccountIDString()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "GetPlayerAccountIDString"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "GetPlayerAccountIDString"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetPlayerMatchMakingString()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "GetPlayerMatchMakingString"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "GetPlayerMatchMakingString"), 1)
+		return ivkr_pop_string()
 	end
 
 	function GetHudStatus()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "GetHudStatus"), 1)
-		return new LotusHudStatus(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "GetHudStatus"), 1)
+		return new LotusHudStatus(ivkr_pop_object())
 	end
 
 	function CameraControl()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Player", "CameraControl"), 1)
-		return new CameraControllerBase(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Player", "CameraControl"), 1)
+		return new CameraControllerBase(ivkr_pop_object())
 	end
 end
 
@@ -144,8 +144,8 @@ class HumanPlayer extends Player
 	__name = "HumanPlayer"
 
 	function ToggleFreeCamera()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
 	end
 
 	function isControllingCamera()
@@ -157,11 +157,11 @@ class HumanPlayer extends Player
 	end
 
 	function AssignAvatar(avatar, b1 = true, b2 = true)
-		luau_push_object(self.addr)
-		luau_push_object(avatar.addr)
-		luau_push_bool(b1)
-		luau_push_bool(b2)
-		luau_call(luau_find_method("HumanPlayer", "AssignAvatar"), 4)
+		ivkr_push_object(self.addr)
+		ivkr_push_object(avatar.addr)
+		ivkr_push_bool(b1)
+		ivkr_push_bool(b2)
+		ivkr_call(ivkr_find_method("HumanPlayer", "AssignAvatar"), 4)
 	end
 end
 
@@ -171,7 +171,7 @@ class BaseEntity extends Object
 end
 
 local function pop_entity()
-	if addr := luau_pop_object() then
+	if addr := ivkr_pop_object() then
 		local obj = new Entity(addr)
 		local type = obj:GetType()
 		repeat
@@ -186,7 +186,7 @@ local function pop_entity()
 		until not type
 		return obj
 	else
-		luau_pop(1)
+		ivkr_pop(1)
 	end
 end
 
@@ -198,16 +198,16 @@ class Entity extends BaseEntity
 	end
 
 	function SetPosition(pos)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("Entity", "GetPosition"), 1)
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
 		end
-		local ud = luau_get_userdata()
+		local ud = ivkr_get_userdata()
 		mem_write_f32(ud + 0x20, pos.x)
 		mem_write_f32(ud + 0x24, pos.y)
 		mem_write_f32(ud + 0x28, pos.z)
-		luau_call(luau_find_method("Entity", "SetPosition"), 2)
+		ivkr_call(ivkr_find_method("Entity", "SetPosition"), 2)
 	end
 
 	function DistanceToEntity(b)
@@ -215,122 +215,122 @@ class Entity extends BaseEntity
 	end
 
 	function GetRotation()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetRotation"), 1)
-		local ud = luau_pop_userdata()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
+		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetRotation(rot)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("Entity", "GetRotation"), 1)
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
 		end
-		local ud = luau_get_userdata()
+		local ud = ivkr_get_userdata()
 		mem_write_f32(ud + 0x20, rot.x)
 		mem_write_f32(ud + 0x24, rot.y)
 		mem_write_f32(ud + 0x28, rot.z)
-		luau_call(luau_find_method("Entity", "SetRotation"), 2)
+		ivkr_call(ivkr_find_method("Entity", "SetRotation"), 2)
 	end
 
 	function GetHealth()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetHealth"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetHealth"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetHealth(health)
-		luau_push_object(self.addr)
-		luau_push_int(health)
-		luau_call(luau_find_method("Entity", "SetHealth"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(health)
+		ivkr_call(ivkr_find_method("Entity", "SetHealth"), 2)
 	end
 
 	function GetDrawOnTop()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetDrawOnTop"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetDrawOnTop"), 1)
+		return ivkr_pop_bool()
 	end
 
 	function SetDrawOnTop(b)
-		luau_push_object(self.addr)
-		luau_push_bool(b)
-		luau_call(luau_find_method("Entity", "SetDrawOnTop"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("Entity", "SetDrawOnTop"), 2)
 	end
 
 	function GetMeshScale()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetMeshScale"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetMeshScale"), 1)
+		return ivkr_pop_number()
 	end
 
 	function SetMeshScale(f)
-		luau_push_object(self.addr)
-		luau_push_float(f)
-		luau_call(luau_find_method("Entity", "SetMeshScale"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_float(f)
+		ivkr_call(ivkr_find_method("Entity", "SetMeshScale"), 2)
 	end
 
 	function SetMesh(object, b1, b2)
-		luau_push_object(self.addr)
-		luau_push_object(object.addr)
-		luau_push_bool(b1)
-		luau_push_bool(b2)
-		luau_call(luau_find_method("Entity", "SetMesh"), 4)
+		ivkr_push_object(self.addr)
+		ivkr_push_object(object.addr)
+		ivkr_push_bool(b1)
+		ivkr_push_bool(b2)
+		ivkr_call(ivkr_find_method("Entity", "SetMesh"), 4)
 	end
 
 	function Attach(type, symbol, optionalPosOffset)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(type)
-			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		(symbol or EMPTY_SYMBOL):pushToLuau()
+		(symbol or EMPTY_SYMBOL):pushToivkr()
 		if optionalPosOffset then
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("Entity", "GetPosition"), 1)
-			local ud = luau_get_userdata()
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
+			local ud = ivkr_get_userdata()
 			mem_write_f32(ud + 0x20, optionalPosOffset.x)
 			mem_write_f32(ud + 0x24, optionalPosOffset.y)
 			mem_write_f32(ud + 0x28, optionalPosOffset.z)
 		end
-		luau_call(luau_find_method("Entity", "Attach"), optionalPosOffset ? 4 : 3)
+		ivkr_call(ivkr_find_method("Entity", "Attach"), optionalPosOffset ? 4 : 3)
 		return pop_entity()
 	end
 
 	function GetAttachment(type)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(type)
-			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("Entity", "GetAttachment"), 2)
+		ivkr_call(ivkr_find_method("Entity", "GetAttachment"), 2)
 		return pop_entity()
 	end
 
 	function GetTag()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetTag"), 1)
-		luau_call(luau_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(luau_pop_string())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetTag"), 1)
+		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(ivkr_pop_string())
 	end
 
 	function FirePort(port)
-		luau_push_object(self.addr)
-		luau_push_string(port)
-		luau_call(luau_find_method("Entity", "FirePort"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_string(port)
+		ivkr_call(ivkr_find_method("Entity", "FirePort"), 2)
 	end
 
 	function SetVisibility(visible, delegateToAttachments = false)
-		luau_push_object(self.addr)
-		luau_push_bool(visible)
-		luau_push_bool(delegateToAttachments)
-		luau_call(luau_find_method("Entity", "SetVisibility"), 3)
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(visible)
+		ivkr_push_bool(delegateToAttachments)
+		ivkr_call(ivkr_find_method("Entity", "SetVisibility"), 3)
 	end
 
 	function GetSpeed()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Entity", "GetSpeed"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "GetSpeed"), 1)
+		return ivkr_pop_number()
 	end
 end
 
@@ -338,22 +338,22 @@ class BaseAvatar extends Entity
 	__name = "BaseAvatar"
 
 	function GetMaxHealth(b = true)
-		luau_push_object(self.addr)
-		luau_push_bool(b)
-		luau_call(luau_find_method("BaseAvatar", "GetMaxHealth"), 2)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetMaxHealth"), 2)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetMaxHealth(health, b = false)
-		luau_push_object(self.addr)
-		luau_push_int(health)
-		luau_push_bool(b)
-		luau_call(luau_find_method("BaseAvatar", "SetMaxHealth"), 3)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(health)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetMaxHealth"), 3)
 	end
 
 	function Suicide()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "Suicide"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "Suicide"), 1)
 	end
 
 	function DamageControl()
@@ -372,123 +372,123 @@ class BaseAvatar extends Entity
 	end
 
 	function InputControl()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "InputControl"), 1)
-		if addr := luau_pop_object() do
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "InputControl"), 1)
+		if addr := ivkr_pop_object() do
 			return new InputController(addr)
 		end
 	end
 
 	function GiveItem(type, b)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(type)
-			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		luau_push_bool(b)
-		luau_pop(luau_call(luau_find_method("BaseAvatar", "GiveItem"), 3))
+		ivkr_push_bool(b)
+		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "GiveItem"), 3))
 	end
 
 	function MotionControl()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "MotionControl"), 1)
-		if addr := luau_pop_object() do
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "MotionControl"), 1)
+		if addr := ivkr_pop_object() do
 			return new MotionControllerBase(addr)
 		end
 	end
 
 	function GetView()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "GetView"), 1)
-		local ud = luau_pop_userdata()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetView"), 1)
+		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetView(rot)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("BaseAvatar", "GetView"), 1)
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("BaseAvatar", "GetView"), 1)
 		end
-		local ud = luau_get_userdata()
+		local ud = ivkr_get_userdata()
 		mem_write_f32(ud + 0x20, rot.x)
 		mem_write_f32(ud + 0x24, rot.y)
 		mem_write_f32(ud + 0x28, rot.z)
-		luau_call(luau_find_method("BaseAvatar", "SetView"), 2)
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetView"), 2)
 	end
 
 	function GetCameraView()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "GetCameraView"), 1)
-		local ud = luau_pop_userdata()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetCameraView"), 1)
+		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetCameraView(rot)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("BaseAvatar", "GetCameraView"), 1)
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("BaseAvatar", "GetCameraView"), 1)
 		end
-		local ud = luau_get_userdata()
+		local ud = ivkr_get_userdata()
 		mem_write_f32(ud + 0x20, rot.x)
 		mem_write_f32(ud + 0x24, rot.y)
 		mem_write_f32(ud + 0x28, rot.z)
-		luau_call(luau_find_method("BaseAvatar", "SetCameraView"), 2)
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetCameraView"), 2)
 	end
 
 	function SetEyePosition(pos)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("Entity", "GetPosition"), 1)
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
 		end
-		local ud = luau_get_userdata()
+		local ud = ivkr_get_userdata()
 		mem_write_f32(ud + 0x20, pos.x)
 		mem_write_f32(ud + 0x24, pos.y)
 		mem_write_f32(ud + 0x28, pos.z)
-		luau_call(luau_find_method("BaseAvatar", "SetEyePosition"), 2)
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetEyePosition"), 2)
 	end
 
 	function GetFaction()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "GetFaction"), 1)
-		luau_call(luau_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(luau_pop_string())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetFaction"), 1)
+		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(ivkr_pop_string())
 	end
 
 	function GetOriginalFaction()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "GetOriginalFaction"), 1)
-		luau_call(luau_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(luau_pop_string())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetOriginalFaction"), 1)
+		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(ivkr_pop_string())
 	end
 
 	function SetFaction(symbol)
-		luau_push_object(self.addr)
-		symbol:pushToLuau()
-		luau_call(luau_find_method("BaseAvatar", "SetFaction"), 2)
+		ivkr_push_object(self.addr)
+		symbol:pushToivkr()
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetFaction"), 2)
 	end
 
 	function GetLocTag()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "GetLocTag"), 1)
-		luau_call(luau_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(luau_pop_string())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetLocTag"), 1)
+		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(ivkr_pop_string())
 	end
 
 	function ClearAgent()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("BaseAvatar", "ClearAgent"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("BaseAvatar", "ClearAgent"), 1)
 	end
 
 	function PushInputFilter(resource)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(resource)
-			luau_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+			ivkr_push_string(resource)
+			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("BaseAvatar", "PushInputFilter"), 2)
+		ivkr_call(ivkr_find_method("BaseAvatar", "PushInputFilter"), 2)
 	end
 end
 
@@ -509,43 +509,43 @@ class LotusAvatar extends Avatar
 	__name = "LotusAvatar"
 
 	function IsAvatarFriendly(other)
-		luau_push_object(self.addr)
-		luau_push_object(other.addr)
-		luau_call(luau_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_push_object(other.addr)
+		ivkr_call(ivkr_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
+		return ivkr_pop_bool()
 	end
 
 	function PlayEmote(resource)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(resource)
-			luau_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+			ivkr_push_string(resource)
+			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("LotusAvatar", "PlayEmote"), 2)
+		ivkr_call(ivkr_find_method("LotusAvatar", "PlayEmote"), 2)
 	end
 
 	function GetUIName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusAvatar", "GetUIName"), 1)
-		return luau_pop_string()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusAvatar", "GetUIName"), 1)
+		return ivkr_pop_string()
 	end
 
 	function SetUIName(str)
-		luau_push_object(self.addr)
-		luau_push_string(str)
-		luau_call(luau_find_method("LotusAvatar", "SetUIName"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_string(str)
+		ivkr_call(ivkr_find_method("LotusAvatar", "SetUIName"), 2)
 	end
 
 	function HasDynamicUIName()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusAvatar", "HasDynamicUIName"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusAvatar", "HasDynamicUIName"), 1)
+		return ivkr_pop_bool()
 	end
 
 	function SetDynamicUIName(b)
-		luau_push_object(self.addr)
-		luau_push_bool(b)
-		luau_call(luau_find_method("LotusAvatar", "SetDynamicUIName"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("LotusAvatar", "SetDynamicUIName"), 2)
 	end
 end
 
@@ -553,64 +553,64 @@ class DamageControllerBase extends Object
 	__name = "DamageControllerBase"
 
 	function GiveTemporaryImmunity(a, b)
-		luau_push_object(self.addr)
-		luau_push_float(a)
-		luau_push_float(b)
-		luau_call(luau_find_method("DamageControllerBase", "GiveTemporaryImmunity"), 3)
+		ivkr_push_object(self.addr)
+		ivkr_push_float(a)
+		ivkr_push_float(b)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GiveTemporaryImmunity"), 3)
 	end
 
 	function HasTemporaryImmunity()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "HasTemporaryImmunity"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "HasTemporaryImmunity"), 1)
+		return ivkr_pop_bool()
 	end
 
 	function RemoveTemporaryImmunity()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "RemoveTemporaryImmunity"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "RemoveTemporaryImmunity"), 1)
 	end
 
 	function GetShield()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "GetShield"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GetShield"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetShield(i)
-		luau_push_object(self.addr)
-		luau_push_int(i)
-		luau_call(luau_find_method("DamageControllerBase", "SetShield"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "SetShield"), 2)
 	end
 
 	function GetMaxShield()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "GetMaxShield"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GetMaxShield"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetMaxShield(i)
-		luau_push_object(self.addr)
-		luau_push_int(i)
-		luau_call(luau_find_method("DamageControllerBase", "SetMaxShield"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "SetMaxShield"), 2)
 	end
 
 	-- compatibility
 	function getOverguard()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function GetOverguardAmount()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function GetOverguardMax()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("DamageControllerBase", "GetOverguardMax"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardMax"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 end
 
@@ -622,15 +622,15 @@ class LotusDamageController extends DamageController
 	__name = "LotusDamageController"
 
 	function GetArmourRating()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusDamageController", "GetArmourRating"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusDamageController", "GetArmourRating"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetArmourRating(i)
-		luau_push_object(self.addr)
-		luau_push_int(i)
-		luau_call(luau_find_method("LotusDamageController", "SetArmourRating"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("LotusDamageController", "SetArmourRating"), 2)
 	end
 end
 
@@ -638,10 +638,10 @@ class InventoryControllerBase extends Object
 	__name = "InventoryControllerBase"
 
 	function RemoveItem(slot, b)
-		luau_push_object(self.addr)
-		luau_push_int(slot)
-		luau_push_bool(b)
-		luau_call(luau_find_method("InventoryControllerBase", "RemoveItem"), 3)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(slot)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("InventoryControllerBase", "RemoveItem"), 3)
 	end
 
 	function GetWeaponInHand(hand)
@@ -651,11 +651,11 @@ class InventoryControllerBase extends Object
 	end
 
 	function AddUpgrade(upgradeType, operationType, value, _, _, damageType = DamageType.DT_ANY)
-		luau_push_object(self.addr)
-		luau_push_int(upgradeType)
-		luau_push_int(operationType)
-		luau_push_float(value)
-		luau_call(luau_find_method("NullInventoryController", "AddUpgrade"), 4)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(upgradeType)
+		ivkr_push_int(operationType)
+		ivkr_push_float(value)
+		ivkr_call(ivkr_find_method("NullInventoryController", "AddUpgrade"), 4)
 	end
 end
 
@@ -669,8 +669,8 @@ class LotusInventoryController extends InventoryControllerBase
 	end
 
 	function DoItemDrop()
-		luau_push_object(self.addr)
-		luau_pop(luau_call(luau_find_method("LotusInventoryController", "DoItemDrop"), 1))
+		ivkr_push_object(self.addr)
+		ivkr_pop(ivkr_call(ivkr_find_method("LotusInventoryController", "DoItemDrop"), 1))
 	end
 end
 
@@ -680,11 +680,11 @@ class Item extends Object
 	function GetAttachmentEntity(category, hand = 4)
 		-- restricting category to avoid access violations
 		if category == 0 or category == 1 then
-			luau_push_object(self.addr)
-			luau_push_int(category)
-			luau_push_int(hand)
-			luau_call(luau_find_method("Item", "GetAttachmentEntity"), 3)
-			if addr := luau_pop_object() then
+			ivkr_push_object(self.addr)
+			ivkr_push_int(category)
+			ivkr_push_int(hand)
+			ivkr_call(ivkr_find_method("Item", "GetAttachmentEntity"), 3)
+			if addr := ivkr_pop_object() then
 				return new Entity(addr)
 			end
 		end
@@ -710,27 +710,27 @@ class LotusWeapon extends WeaponEx
 	__name = "LotusWeapon"
 
 	function GetXP()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusWeapon", "GetXP"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusWeapon", "GetXP"), 1)
+		return ivkr_pop_number()
 	end
 
 	function SetXP(xp)
-		luau_push_object(self.addr)
-		luau_push_int(xp)
-		luau_call(luau_find_method("LotusWeapon", "SetXP"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(xp)
+		ivkr_call(ivkr_find_method("LotusWeapon", "SetXP"), 2)
 	end
 
 	function GetCustomization()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusWeapon", "GetCustomization"), 1)
-		return new WeaponCustomization(luau_pop_userdata())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusWeapon", "GetCustomization"), 1)
+		return new WeaponCustomization(ivkr_pop_userdata())
 	end
 
 	function SetCustomization(cust)
-		luau_push_object(self.addr)
-		luau_push_userdata(cust.ud)
-		luau_call(luau_find_method("LotusWeapon", "SetCustomization"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_userdata(cust.ud)
+		ivkr_call(ivkr_find_method("LotusWeapon", "SetCustomization"), 2)
 	end
 end
 
@@ -745,9 +745,9 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				luau_push_object(self.addr)
-				luau_call(luau_find_getter("WeaponImpactBehavior", name), 1)
-				return luau_pop_number()
+				ivkr_push_object(self.addr)
+				ivkr_call(ivkr_find_getter("WeaponImpactBehavior", name), 1)
+				return ivkr_pop_number()
 		end
 	end
 
@@ -756,9 +756,9 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				luau_push_object(self.addr)
-				luau_push_float(value)
-				luau_call(luau_find_setter("WeaponImpactBehavior", name), 2)
+				ivkr_push_object(self.addr)
+				ivkr_push_float(value)
+				ivkr_call(ivkr_find_setter("WeaponImpactBehavior", name), 2)
 		end
 	end
 end
@@ -768,33 +768,33 @@ class PowerSuit extends LotusWeapon
 	__name = "PowerSuit"
 
 	function SetEnergy(value)
-		luau_push_object(self.addr)
-		luau_push_float(value)
-		luau_call(luau_find_method("PowerSuit", "SetEnergy"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_float(value)
+		ivkr_call(ivkr_find_method("PowerSuit", "SetEnergy"), 2)
 	end
 
 	function SetMaxEnergy(value)
-		luau_push_object(self.addr)
-		luau_push_float(value)
-		luau_call(luau_find_method("PowerSuit", "SetMaxEnergy"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_float(value)
+		ivkr_call(ivkr_find_method("PowerSuit", "SetMaxEnergy"), 2)
 	end
 
 	function GetUnmodifiedMaxEnergy()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"), 1)
+		return ivkr_pop_number()
 	end
 
 	function GetCurEnergy()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("PowerSuit", "GetCurEnergy"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("PowerSuit", "GetCurEnergy"), 1)
+		return ivkr_pop_number()
 	end
 
 	function GetMaxEnergy()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("PowerSuit", "GetMaxEnergy"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("PowerSuit", "GetMaxEnergy"), 1)
+		return ivkr_pop_number()
 	end
 end
 
@@ -807,9 +807,9 @@ class InputController extends InputControllerBase
 	__name = "InputController"
 
 	function SetStopMovement(b)
-		luau_push_object(self.addr)
-		luau_push_bool(b)
-		luau_call(luau_find_method("InputController", "SetStopMovement"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("InputController", "SetStopMovement"), 2)
 	end
 end
 
@@ -817,26 +817,26 @@ class GameRules extends Object
 	__name = "GameRules"
 
 	function IsPauseMenuShowing()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("GameRules", "IsPauseMenuShowing"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("GameRules", "IsPauseMenuShowing"), 1)
+		return ivkr_pop_bool()
 	end
 
 	function RequestPause()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("GameRules", "RequestPause"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("GameRules", "RequestPause"), 1)
 	end
 
 	function RequestUnpause()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("GameRules", "RequestUnpause"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("GameRules", "RequestUnpause"), 1)
 	end
 
 	function RequestResource(name, callbackName)
-		luau_push_object(self.addr)
-		luau_push_string(name)
-		luau_push_string("OWF_"..callbackName) owf_register_callback(callbackName)
-		luau_call(luau_find_method("GameRules", "RequestResource"), 3)
+		ivkr_push_object(self.addr)
+		ivkr_push_string(name)
+		ivkr_push_string("OWF_"..callbackName) owf_register_callback(callbackName)
+		ivkr_call(ivkr_find_method("GameRules", "RequestResource"), 3)
 	end
 end
 
@@ -844,9 +844,9 @@ class GameRulesImpl extends GameRules
 	__name = "GameRulesImpl"
 
 	function SetPauseDisabled(b)
-		luau_push_object(self.addr)
-		luau_push_bool(b)
-		luau_call(luau_find_method("GameRulesImpl", "SetPauseDisabled"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("GameRulesImpl", "SetPauseDisabled"), 2)
 	end
 end
 
@@ -854,15 +854,15 @@ class LotusBaseGameRules extends GameRulesImpl
 	__name = "LotusBaseGameRules"
 
 	function GetCurrentStarChart()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
-		return new RadialSolarMap(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
+		return new RadialSolarMap(ivkr_pop_object())
 	end
 
 	function GetStoreManifest()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusBaseGameRules", "GetStoreManifest"), 1)
-		return new StoreManifest(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetStoreManifest"), 1)
+		return new StoreManifest(ivkr_pop_object())
 	end
 end
 
@@ -870,9 +870,9 @@ class LotusGameRules extends LotusBaseGameRules
 	__name = "LotusGameRules"
 
 	function OpenMissionContinueDialog()
-		luau_push_object(self.addr)
-		luau_push_nil()
-		luau_call(luau_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_nil()
+		ivkr_call(ivkr_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
 	end
 end
 
@@ -880,15 +880,15 @@ class LotusAttractModeGameRules extends GameRulesImpl
 	__name = "LotusAttractModeGameRules"
 
 	function GetStarChart()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
-		return new RadialSolarMap(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
+		return new RadialSolarMap(ivkr_pop_object())
 	end
 
 	function GetStoreManifest()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusAttractModeGameRules", "GetStoreManifest"), 1)
-		return new StoreManifest(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusAttractModeGameRules", "GetStoreManifest"), 1)
+		return new StoreManifest(ivkr_pop_object())
 	end
 end
 
@@ -896,27 +896,27 @@ class RadialSolarMap extends Object
 	__name = "RadialSolarMap"
 
 	function GetRegions()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("RadialSolarMap", "GetRegions"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("RadialSolarMap", "GetRegions"), 1)
 		local t = {}
-		if luau_istable(-1) then
+		if ivkr_istable(-1) then
 			local i = 1
-			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
 				t:insert(new RadialRegion())
 				++i
 			end
-			luau_pop(2)
+			ivkr_pop(2)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 		return t
 	end
 
 	function BuildMissionForLocation(symbol)
-		luau_push_object(self.addr)
-		symbol:pushToLuau()
-		luau_call(luau_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
-		return new LotusMissionInfo(luau_pop_pointer())
+		ivkr_push_object(self.addr)
+		symbol:pushToivkr()
+		ivkr_call(ivkr_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
+		return new LotusMissionInfo(ivkr_pop_pointer())
 	end
 end
 
@@ -924,21 +924,21 @@ class RadialRegion
 	__name = "RadialRegion"
 
 	function __construct()
-		luau_push_value(-1)
-		luau_call(luau_find_getter("RadialRegion", "name"), 1)
-		self.name = luau_pop_string()
+		ivkr_push_value(-1)
+		ivkr_call(ivkr_find_getter("RadialRegion", "name"), 1)
+		self.name = ivkr_pop_string()
 
 		self.sectors = {}
-		luau_call(luau_find_getter("RadialRegion", "sectors"), 1)
-		if luau_istable(-1) then
+		ivkr_call(ivkr_find_getter("RadialRegion", "sectors"), 1)
+		if ivkr_istable(-1) then
 			local i = 1
-			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-				self.sectors:insert(new RadialSector(luau_pop_pointer()))
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				self.sectors:insert(new RadialSector(ivkr_pop_pointer()))
 				++i
 			end
-			luau_pop(2)
+			ivkr_pop(2)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 	end
 end
@@ -952,9 +952,9 @@ class RadialSector extends owfClassBase
 		end
 		switch name do
 			case "unlocked":
-				luau_push_pointer(self.addr)
-				luau_push_bool(value)
-				luau_call(luau_find_setter("RadialSector", "unlocked"), 2)
+				ivkr_push_pointer(self.addr)
+				ivkr_push_bool(value)
+				ivkr_call(ivkr_find_setter("RadialSector", "unlocked"), 2)
 				return
 		end
 		error("Unknown field: "..name)
@@ -966,31 +966,31 @@ class RadialSector extends owfClassBase
 		end
 		switch name do
 			case "name":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("RadialSector", "name"), 1)
-				luau_call(luau_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(luau_pop_string())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("RadialSector", "name"), 1)
+				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(ivkr_pop_string())
 
 			case "unlocked":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("RadialSector", "unlocked"), 1)
-				return luau_pop_bool()
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("RadialSector", "unlocked"), 1)
+				return ivkr_pop_bool()
 
 			case "nodeType":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("RadialSector", "nodeType"), 1)
-				return math.tointeger(luau_pop_number())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("RadialSector", "nodeType"), 1)
+				return math.tointeger(ivkr_pop_number())
 
 			case "missionTag":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("RadialSector", "missionTag"), 1)
-				luau_call(luau_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(luau_pop_string())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("RadialSector", "missionTag"), 1)
+				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(ivkr_pop_string())
 
 			case "mission":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("RadialSector", "mission"), 1)
-				return new LotusMissionInfo(luau_pop_pointer())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("RadialSector", "mission"), 1)
+				return new LotusMissionInfo(ivkr_pop_pointer())
 		end
 		error("Unknown field: "..name)
 	end
@@ -1008,33 +1008,33 @@ class LotusMissionInfo extends owfClassBase
 			case "missionType":
 			case "minEnemyLevel":
 			case "maxEnemyLevel":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("LotusMissionInfo", name), 1)
-				return math.tointeger(luau_pop_number())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
+				return math.tointeger(ivkr_pop_number())
 
 			case "goalTag":
 			case "activeMissionTag":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("LotusMissionInfo", name), 1)
-				luau_call(luau_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(luau_pop_string())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
+				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+				return new Symbol(ivkr_pop_string())
 
 			case "levelOverride":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("LotusMissionInfo", "levelOverride"), 1)
-				if addr := luau_pop_pointer() then 
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", "levelOverride"), 1)
+				if addr := ivkr_pop_pointer() then 
 					return new ObjectType(addr)
 				end
-				luau_pop(1)
+				ivkr_pop(1)
 				return nil
 		end
 		error("Unknown field: "..name)
 	end
 
 	function EncodeAsString()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("LotusMissionInfo", "EncodeAsString"), 1)
-		return luau_pop_string()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "EncodeAsString"), 1)
+		return ivkr_pop_string()
 	end
 end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
@@ -1043,19 +1043,19 @@ class StoreManifest extends Object
 	__name = "StoreManifest"
 
 	function GetStoreItemsOfType(weakResource)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_string(weakResource)
-			luau_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+			ivkr_push_string(weakResource)
+			ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
+		ivkr_call(ivkr_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
 		local t = {}
 		local i = 1
-		while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-			t:insert(new StoreItem(luau_pop_object()))
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new StoreItem(ivkr_pop_object()))
 			++i
 		end
-		luau_pop(2)
+		ivkr_pop(2)
 		return t
 	end
 end
@@ -1064,21 +1064,21 @@ class StoreItem extends Object
 	__name = "StoreItem"
 
 	function GetProductCategory()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("StoreItem", "GetProductCategory"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("StoreItem", "GetProductCategory"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function ExcludeFromCodex()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("StoreItem", "ExcludeFromCodex"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("StoreItem", "ExcludeFromCodex"), 1)
+		return ivkr_pop_bool()
 	end
 
 	function ShowInMarket()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("StoreItem", "ShowInMarket"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("StoreItem", "ShowInMarket"), 1)
+		return ivkr_pop_bool()
 	end
 end
 
@@ -1086,15 +1086,15 @@ class MotionControllerBase extends Object
 	__name = "MotionControllerBase"
 
 	function GetSpeedMultiplier()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("MotionControllerBase", "GetSpeedMultiplier"), 1)
-		return luau_pop_number()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("MotionControllerBase", "GetSpeedMultiplier"), 1)
+		return ivkr_pop_number()
 	end
 
 	function SetSpeedMultiplier(f)
-		luau_push_object(self.addr)
-		luau_push_float(f)
-		luau_call(luau_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_float(f)
+		ivkr_call(ivkr_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
 	end
 end
 
@@ -1102,23 +1102,23 @@ class CameraControllerBase extends Object
 	__name = "CameraControllerBase"
 
 	function implGetVector(funcName)
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("CameraControllerBase", funcName), 1)
-		local ud = luau_pop_userdata()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 1)
+		local ud = ivkr_pop_userdata()
 		return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function implSetVector(funcName, vec)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_object(self.addr)
-			luau_call(luau_find_method("CameraControllerBase", "GetViewOffset"), 1)
-			local ud = luau_get_userdata()
+			ivkr_push_object(self.addr)
+			ivkr_call(ivkr_find_method("CameraControllerBase", "GetViewOffset"), 1)
+			local ud = ivkr_get_userdata()
 			mem_write_f32(ud + 0x20, vec.x)
 			mem_write_f32(ud + 0x24, vec.y)
 			mem_write_f32(ud + 0x28, vec.z)
 		end
-		luau_call(luau_find_method("CameraControllerBase", funcName), 2)
+		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 2)
 	end
 
 	function GetViewOffset()
@@ -1210,37 +1210,37 @@ class NpcManager extends EngineNpcMgr
 	__name = "NpcManager"
 
 	function PauseAllAgents()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("NpcManager", "PauseAllAgents"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("NpcManager", "PauseAllAgents"), 1)
 	end
 
 	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
-			luau_push_object(self.addr)
+			ivkr_push_object(self.addr)
 			do
-				luau_push_string(type)
-				luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+				ivkr_push_string(type)
+				ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 			end
 			do
-				luau_push_object(avatar.addr)
-				luau_call(luau_find_method("Entity", "GetPosition"), 1)
-				local ud = luau_get_userdata()
+				ivkr_push_object(avatar.addr)
+				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
+				local ud = ivkr_get_userdata()
 				mem_write_f32(ud + 0x20, pos.x)
 				mem_write_f32(ud + 0x24, pos.y)
 				mem_write_f32(ud + 0x28, pos.z)
 			end
 			do
-				luau_push_object(avatar.addr)
-				luau_call(luau_find_method("Entity", "GetRotation"), 1)
-				local ud = luau_get_userdata()
+				ivkr_push_object(avatar.addr)
+				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
+				local ud = ivkr_get_userdata()
 				mem_write_f32(ud + 0x20, rot.x)
 				mem_write_f32(ud + 0x24, rot.y)
 				mem_write_f32(ud + 0x28, rot.z)
 			end
-			(optionalSymbol or EMPTY_SYMBOL):pushToLuau()
-			luau_push_int(optionalLevel or 0)
-			luau_call(luau_find_method("NpcManager", "CreateAgentAtPosition"), 6)
-			return new EngineNpcAgent(luau_pop_object())
+			(optionalSymbol or EMPTY_SYMBOL):pushToivkr()
+			ivkr_push_int(optionalLevel or 0)
+			ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
+			return new EngineNpcAgent(ivkr_pop_object())
 		end
 	end
 end
@@ -1249,9 +1249,9 @@ class EngineNpcAgent extends Object
 	__name = "EngineNpcAgent"
 
 	function GetAvatar()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("EngineNpcAgent", "GetAvatar"), 1)
-		return new LotusNpcAvatar(luau_pop_object())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("EngineNpcAgent", "GetAvatar"), 1)
+		return new LotusNpcAvatar(ivkr_pop_object())
 	end
 end
 
@@ -1259,16 +1259,16 @@ class LotusNpcAvatar extends LotusAvatar
 	__name = "LotusNpcAvatar"
 
 	function GetEnhancementCount()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusNpcAvatar", "GetEnhancementCount"), 1)
-		return math.tointeger(luau_pop_number())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusNpcAvatar", "GetEnhancementCount"), 1)
+		return math.tointeger(ivkr_pop_number())
 	end
 
 	function GetEnhancementLocTag()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusNpcAvatar", "GetEnhancementLocTag"), 1)
-		luau_call(luau_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(luau_pop_string())
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusNpcAvatar", "GetEnhancementLocTag"), 1)
+		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+		return new Symbol(ivkr_pop_string())
 	end
 end
 
@@ -1280,15 +1280,15 @@ class LotusHudStatus extends HudStatus
 	__name = "LotusHudStatus"
 
 	function GetFlashMarkers()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
 		local t = {}
 		local i = 1
-		while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-			t:insert(new FlashMarker(luau_pop_object()))
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new FlashMarker(ivkr_pop_object()))
 			++i
 		end
-		luau_pop(2)
+		ivkr_pop(2)
 		return t
 	end
 end
@@ -1297,21 +1297,21 @@ class FlashMarker extends owfClassBase
 	__name = "FlashMarker"
 
 	function ScreenX()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("FlashMarker", "ScreenX"), 1)
-		return luau_pop_number()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("FlashMarker", "ScreenX"), 1)
+		return ivkr_pop_number()
 	end
 
 	function ScreenY()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("FlashMarker", "ScreenY"), 1)
-		return luau_pop_number()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("FlashMarker", "ScreenY"), 1)
+		return ivkr_pop_number()
 	end
 
 	function ScreenZ()
-		luau_push_pointer(self.addr)
-		luau_call(luau_find_method("FlashMarker", "ScreenZ"), 1)
-		return luau_pop_number()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("FlashMarker", "ScreenZ"), 1)
+		return ivkr_pop_number()
 	end
 
 	function __index(name)
@@ -1320,33 +1320,33 @@ class FlashMarker extends owfClassBase
 		end
 		switch name do
 			case "garbage":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("FlashMarker", name), 1)
-				return luau_pop_bool()
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				return ivkr_pop_bool()
 
 			case "markerType":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("FlashMarker", name), 1)
-				return math.tointeger(luau_pop_number())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				return math.tointeger(ivkr_pop_number())
 
 			case "distanceToEye":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("FlashMarker", name), 1)
-				return luau_pop_number()
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				return ivkr_pop_number()
 
 			case "pos":
 				do
-					luau_push_pointer(self.addr)
-					luau_call(luau_find_getter("FlashMarker", name), 1)
-					local addr = mem_read_i64(luau_pop_userdata() + 0x18)
+					ivkr_push_pointer(self.addr)
+					ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+					local addr = mem_read_i64(ivkr_pop_userdata() + 0x18)
 					return new Vector(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
 				end
 				break
 
 			case "baseMarkerInfo":
-				luau_push_pointer(self.addr)
-				luau_call(luau_find_getter("FlashMarker", "baseMarkerInfo"), 1)
-				return new BaseMarkerInfo(luau_pop_object())
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("FlashMarker", "baseMarkerInfo"), 1)
+				return new BaseMarkerInfo(ivkr_pop_object())
 		end
 		error("Unknown field: "..name)
 	end
@@ -1357,19 +1357,19 @@ class BaseMarkerInfo extends Entity
 	__name = "BaseMarkerInfo"
 
 	function SetMarkerType(i)
-		luau_push_object(self.addr)
-		luau_push_int(i)
-		luau_call(luau_find_method("BaseMarkerInfo", "SetMarkerType"), 2)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetMarkerType"), 2)
 	end
 
 	function SetDisplayRange(range)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_float(range.min)
-			luau_push_float(range.max)
-			luau_call(luau_find_ctor("Range"), 2)
+			ivkr_push_float(range.min)
+			ivkr_push_float(range.max)
+			ivkr_call(ivkr_find_ctor("Range"), 2)
 		end
-		luau_call(luau_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
+		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
 	end
 end
 
@@ -1377,15 +1377,15 @@ class LensFlare extends Entity
 	__name = "LensFlare"
 
 	function SetTint(color)
-		luau_push_object(self.addr)
+		ivkr_push_object(self.addr)
 		do
-			luau_push_int(color.r)
-			luau_push_int(color.g)
-			luau_push_int(color.b)
-			luau_push_int(color.a)
-			luau_call(luau_find_ctor("Color"), 4)
+			ivkr_push_int(color.r)
+			ivkr_push_int(color.g)
+			ivkr_push_int(color.b)
+			ivkr_push_int(color.a)
+			ivkr_call(ivkr_find_ctor("Color"), 4)
 		end
-		luau_call(luau_find_method("LensFlare", "SetTint"), 2)
+		ivkr_call(ivkr_find_method("LensFlare", "SetTint"), 2)
 	end
 end
 
@@ -1393,14 +1393,14 @@ class Decoration extends Entity
 	__name = "Decoration"
 
 	function TriggerAnimation()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Decoration", "TriggerAnimation"), 1)
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Decoration", "TriggerAnimation"), 1)
 	end
 
 	function IsTriggeredAnimationDone()
-		luau_push_object(self.addr)
-		luau_call(luau_find_method("Decoration", "IsTriggeredAnimationDone"), 1)
-		return luau_pop_bool()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Decoration", "IsTriggeredAnimationDone"), 1)
+		return ivkr_pop_bool()
 	end
 end
 
@@ -1411,13 +1411,13 @@ class WeaponCustomization
 	end
 
 	function SetSkin(weakResource, i)
-		luau_push_userdata(self.ud)
+		ivkr_push_userdata(self.ud)
 		do
-			luau_push_string(weakResource)
-			luau_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+			ivkr_push_string(weakResource)
+			ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
 		end
-		luau_push_int(i)
-		luau_call(luau_find_method("WeaponCustomization", "SetSkin"), 3)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
 	end
 end
 
@@ -1443,24 +1443,24 @@ class Engine.OpenLevelArgs
 		self.context_tags:insert(tag)
 	end
 
-	function pushToLuau()
-		luau_call(luau_find_ctor("OpenLevelArgs"), 0)
+	function pushToivkr()
+		ivkr_call(ivkr_find_ctor("OpenLevelArgs"), 0)
 
-		luau_push_value(-1)
-		luau_push_string(self.level)
-		luau_call(luau_find_method("OpenLevelArgs", "SetLevel"), 2)
+		ivkr_push_value(-1)
+		ivkr_push_string(self.level)
+		ivkr_call(ivkr_find_method("OpenLevelArgs", "SetLevel"), 2)
 
 		if self.gamerules then
-			luau_push_value(-1)
-			luau_push_string(self.gamerules)
-			luau_call(luau_find_method("OpenLevelArgs", "SetGameRules"), 2)
+			ivkr_push_value(-1)
+			ivkr_push_string(self.gamerules)
+			ivkr_call(ivkr_find_method("OpenLevelArgs", "SetGameRules"), 2)
 		end
 
 		if self.context_tags then
 			for self.context_tags as tag do
-				luau_push_value(-1)
-				luau_push_string(tag)
-				luau_call(luau_find_method("OpenLevelArgs", "AddContextTag"), 2)
+				ivkr_push_value(-1)
+				ivkr_push_string(tag)
+				ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextTag"), 2)
 			end
 		end
 	end
@@ -1485,9 +1485,9 @@ class Symbol
 		return self.name
 	end
 
-	function pushToLuau()
-		luau_push_string(self.name)
-		luau_call(luau_find_ctor("Symbol"), 1)
+	function pushToivkr()
+		ivkr_push_string(self.name)
+		ivkr_call(ivkr_find_ctor("Symbol"), 1)
 	end
 end
 setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
@@ -1519,20 +1519,20 @@ function Color(r, g, b, a)
 end
 
 function Localize(loctag, subs = {})
-	luau_push_string(loctag)
-	luau_newtable()
+	ivkr_push_string(loctag)
+	ivkr_newtable()
 	for k, v in subs do
-		luau_push_string(k)
-		luau_push_string(v)
-		luau_settable(-3)
+		ivkr_push_string(k)
+		ivkr_push_string(v)
+		ivkr_settable(-3)
 	end
-	luau_call(mem_read_i64(mem_scan_exe("AD 36 36 60 00 00 00 00") + 8), 2)
-	return luau_pop_string()
+	ivkr_call(mem_read_i64(mem_scan_exe("AD 36 36 60 00 00 00 00") + 8), 2)
+	return ivkr_pop_string()
 end
 
 function Engine.OpenLevel(args)
-	args:pushToLuau()
-	luau_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
+	args:pushToivkr()
+	ivkr_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
 
 -- compatibility with older versions of OpenWF that had these incorrectly scoped
@@ -1572,108 +1572,108 @@ gRegion = {
 		return obj
 	end,
 	function GetAvatars()
-		luau_push_object(get_regionmgr())
-		luau_call(luau_find_method("RegionMgrImpl", "GetAvatars"), 1)
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetAvatars"), 1)
 		local t = {}
 		local i = 1
-		while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-			t:insert(new LotusAvatar(luau_pop_object()))
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new LotusAvatar(ivkr_pop_object()))
 			++i
 		end
-		luau_pop(2)
+		ivkr_pop(2)
 		return t
 	end,
 	function FindFirstTagged(symbol)
-		luau_push_object(get_regionmgr())
-		symbol:pushToLuau()
-		luau_call(luau_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
-		if obj := luau_pop_object() then
+		ivkr_push_object(get_regionmgr())
+		symbol:pushToivkr()
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
+		if obj := ivkr_pop_object() then
 			return new LotusAvatar(obj)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 	end,
 	function FindTagged(symbol)
-		luau_push_object(get_regionmgr())
-		symbol:pushToLuau()
-		luau_call(luau_find_method("RegionMgrImpl", "FindTagged"), 2)
+		ivkr_push_object(get_regionmgr())
+		symbol:pushToivkr()
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindTagged"), 2)
 		local t = {}
-		if luau_istable(-1) then
+		if ivkr_istable(-1) then
 			local i = 1
-			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
-				t:insert(new LotusAvatar(luau_pop_object()))
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new LotusAvatar(ivkr_pop_object()))
 				++i
 			end
-			luau_pop(2)
+			ivkr_pop(2)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 		return t
 	end,
 	function FindAll(type)
-		luau_push_object(get_regionmgr())
+		ivkr_push_object(get_regionmgr())
 		do
-			luau_push_string(type)
-			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("RegionMgrImpl", "FindAll"), 2)
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindAll"), 2)
 		local t = {}
-		if luau_istable(-1) then
+		if ivkr_istable(-1) then
 			local i = 1
-			while (luau_push_int(i) and nil) or (luau_gettable(-2) > 0) do
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
 				t:insert(pop_entity())
 				++i
 			end
-			luau_pop(2)
+			ivkr_pop(2)
 		else
-			luau_pop(1)
+			ivkr_pop(1)
 		end
 		return t
 	end,
 	function CreateObject(type)
-		luau_push_object(get_regionmgr())
+		ivkr_push_object(get_regionmgr())
 		do
-			luau_push_string(type)
-			luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("RegionMgrImpl", "CreateObject"), 2)
-		return new Object(luau_pop_object())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateObject"), 2)
+		return new Object(ivkr_pop_object())
 	end,
 	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
-			luau_push_object(get_regionmgr())
+			ivkr_push_object(get_regionmgr())
 			do
-				luau_push_string(type)
-				luau_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+				ivkr_push_string(type)
+				ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 			end
 			do
-				luau_push_object(avatar.addr)
-				luau_call(luau_find_method("Entity", "GetPosition"), 1)
+				ivkr_push_object(avatar.addr)
+				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
 				if pos then -- optional for compatibility with older OpenWF versions
-					local ud = luau_get_userdata()
+					local ud = ivkr_get_userdata()
 					mem_write_f32(ud + 0x20, pos.x)
 					mem_write_f32(ud + 0x24, pos.y)
 					mem_write_f32(ud + 0x28, pos.z)
 				end
 			end
 			do
-				luau_push_object(avatar.addr)
-				luau_call(luau_find_method("Entity", "GetRotation"), 1)
+				ivkr_push_object(avatar.addr)
+				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
 				if rot then -- optional for compatibility with older OpenWF versions
-					local ud = luau_get_userdata()
+					local ud = ivkr_get_userdata()
 					mem_write_f32(ud + 0x20, rot.x)
 					mem_write_f32(ud + 0x24, rot.y)
 					mem_write_f32(ud + 0x28, rot.z)
 				end
 			end
-			luau_call(luau_find_method("RegionMgrImpl", "CreateEntity"), 4)
+			ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateEntity"), 4)
 			return pop_entity()
 		end
 	end,
 	function GetNpcMgr()
-		luau_push_object(get_regionmgr())
-		luau_call(luau_find_method("RegionMgrImpl", "GetNpcMgr"), 1)
-		return new NpcManager(luau_pop_object())
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetNpcMgr"), 1)
+		return new NpcManager(ivkr_pop_object())
 	end,
 }
 
@@ -1695,25 +1695,25 @@ setmetatable(_G, {
 
 gFlashMgr = {
 	function ExecuteToolMenuCommand(resource)
-		luau_push_object(get_flashmgr())
+		ivkr_push_object(get_flashmgr())
 		do
-			luau_push_string(resource)
-			luau_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+			ivkr_push_string(resource)
+			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
 		end
-		luau_call(luau_find_method("FlashMgr", "ExecuteToolMenuCommand"), 2)
+		ivkr_call(ivkr_find_method("FlashMgr", "ExecuteToolMenuCommand"), 2)
 	end,
 }
 
 gGameData = {
 	function SyncInventoryFromDB(callbackName)
-		luau_push_object(get_gamedata())
+		ivkr_push_object(get_gamedata())
 		if callbackName then
 			owf_register_callback(callbackName)
-			luau_push_string("OWF_"..callbackName)
+			ivkr_push_string("OWF_"..callbackName)
 		else
-			luau_push_string("WantsEndOfMatchPreview") -- Basically a no-op
+			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
 		end
-		luau_call(luau_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
+		ivkr_call(ivkr_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
 	end,
 }
 
@@ -1767,7 +1767,7 @@ OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
 
 UpgradeType = setmetatable({}, {
-	__index = |t, k| -> rawset(t, k, luau_get_enum_value(k))[k]
+	__index = |t, k| -> rawset(t, k, ivkr_get_enum_value(k))[k]
 })
 
 OperationType = {
