@@ -288,7 +288,7 @@ class Entity extends BaseEntity
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		(symbol or EMPTY_SYMBOL):pushToivkr()
+		(symbol or EMPTY_SYMBOL):pushToIvkr()
 		if optionalPosOffset then
 			ivkr_push_object(self.addr)
 			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
@@ -470,7 +470,7 @@ class BaseAvatar extends Entity
 
 	function SetFaction(symbol)
 		ivkr_push_object(self.addr)
-		symbol:pushToivkr()
+		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetFaction"), 2)
 	end
 
@@ -930,7 +930,7 @@ class RadialSolarMap extends Object
 
 	function BuildMissionForLocation(symbol)
 		ivkr_push_object(self.addr)
-		symbol:pushToivkr()
+		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
 		return new LotusMissionInfo(ivkr_pop_pointer())
 	end
@@ -1253,7 +1253,7 @@ class NpcManager extends EngineNpcMgr
 				mem_write_f32(ud + 0x24, rot.y)
 				mem_write_f32(ud + 0x28, rot.z)
 			end
-			(optionalSymbol or EMPTY_SYMBOL):pushToivkr()
+			(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
 			ivkr_push_int(optionalLevel or 0)
 			ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
 			return new EngineNpcAgent(ivkr_pop_object())
@@ -1469,7 +1469,7 @@ class Engine.OpenLevelArgs
 		self.context_tags:insert(tag)
 	end
 
-	function pushToivkr()
+	function pushToIvkr()
 		ivkr_call(ivkr_find_ctor("OpenLevelArgs"), 0)
 
 		ivkr_push_value(-1)
@@ -1511,7 +1511,7 @@ class Symbol
 		return self.name
 	end
 
-	function pushToivkr()
+	function pushToIvkr()
 		ivkr_push_string(self.name)
 		ivkr_call(ivkr_find_ctor("Symbol"), 1)
 	end
@@ -1557,7 +1557,7 @@ function Localize(loctag, subs = {})
 end
 
 function Engine.OpenLevel(args)
-	args:pushToivkr()
+	args:pushToIvkr()
 	ivkr_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
 
@@ -1611,7 +1611,7 @@ gRegion = {
 	end,
 	function FindFirstTagged(symbol)
 		ivkr_push_object(get_regionmgr())
-		symbol:pushToivkr()
+		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
 		if obj := ivkr_pop_object() then
 			return new LotusAvatar(obj)
@@ -1621,7 +1621,7 @@ gRegion = {
 	end,
 	function FindTagged(symbol)
 		ivkr_push_object(get_regionmgr())
-		symbol:pushToivkr()
+		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindTagged"), 2)
 		local t = {}
 		if ivkr_istable(-1) then
