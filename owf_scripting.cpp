@@ -966,6 +966,34 @@ owfScript::owfScript()
 			return 0;
 		});
 		{ ObfusString name("chat_system_reply"); lua_setglobal(L, name.c_str()); }
+
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto nargs = luaL_checkinteger(L, 1);
+			const auto nresults = luaL_checkinteger(L, 2);
+
+			const auto call_top = luau_L->outtop - (nargs + 1);
+
+			luau_error_msg.clear();
+			__try
+			{
+				luauD_call(luau_L, call_top, nresults);
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER)
+			{
+				if (luau_error_msg.empty())
+				{
+					luau_error_msg = ObfusString("low-level exception").str();
+				}
+			}
+			luau_L->outtop = call_top + nresults;
+			SOUP_IF_UNLIKELY (!luau_error_msg.empty())
+			{
+				luaL_error(L, luau_error_msg.c_str());
+			}
+			return 0;
+		});
+		{ ObfusString name("ivkr_call2"); lua_setglobal(L, name.c_str()); }
 	}
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
