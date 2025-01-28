@@ -3,8 +3,6 @@ Vector3 = Vector
 Rotation = Vector
 
 class owfClassBase
-	__name = "owfClassBase"
-
 	function __construct(addr)
 		assert(addr ~= nil)
 		assert(addr ~= 0)
