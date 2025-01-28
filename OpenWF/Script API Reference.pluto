@@ -193,6 +193,14 @@ class LotusMissionInfo extends owfClassBase
 	levelOverride
 	gameRules
 	function EncodeAsString()
+	function GetEnemies()
+	function GetMissionEventResources()
+	function GetExtraMissionEventResources()
+	function GetAdvancedAiDirectorSpawns()
+	function GetCustomAdvancedAiDirectorSpawns()
+
+class MissionAI extends owfClassBase
+	agent
 
 class StoreManifest extends Object
 	function GetStoreItemsOfType(objectType)
@@ -277,6 +285,7 @@ class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
 	function AddContextTag(tag)
+	function AddContextObject(objectType)
 
 class Symbol
 	function __construct(public name = "")

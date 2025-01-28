@@ -1061,8 +1061,115 @@ class LotusMissionInfo extends owfClassBase
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "EncodeAsString"), 1)
 		return ivkr_pop_string()
 	end
+
+	function GetEnemies()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetEnemies"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new MissionAI(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
+
+	function GetMissionEventResources()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetMissionEventResources"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new ObjectType(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
+
+	function GetExtraMissionEventResources()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetExtraMissionEventResources"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new ObjectType(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
+
+	function GetAdvancedAiDirectorSpawns()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetAdvancedAiDirectorSpawns"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new ObjectType(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
+
+	function GetCustomAdvancedAiDirectorSpawns()
+		ivkr_push_pointer(self.addr)
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetCustomAdvancedAiDirectorSpawns"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new ObjectType(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
 end
 LotusMissionInfo.__parent = nil -- Hack so our __index is used
+
+class MissionAI extends owfClassBase
+	__name = "MissionAI"
+
+	function __index(name)
+		if MissionAI[name] then
+			return MissionAI[name]
+		end
+		switch name do
+			case "agent":
+				ivkr_push_pointer(self.addr)
+				ivkr_call(ivkr_find_getter("MissionAI", name), 1)
+				if addr := ivkr_pop_pointer() then 
+					return new ObjectType(addr)
+				end
+				ivkr_pop(1)
+				return nil
+		end
+		error("Unknown field: "..name)
+	end
+end
+MissionAI.__parent = nil -- Hack so our __index is used
 
 class StoreManifest extends Object
 	__name = "StoreManifest"
@@ -1488,6 +1595,12 @@ class Engine.OpenLevelArgs
 		self:pushToIvkr()
 		ivkr_push_string(tag)
 		ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextTag"), 2)
+	end
+
+	function AddContextObject(objectType)
+		self:pushToIvkr()
+		ivkr_push_pointer(objectType.addr)
+		ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextObject"), 2)
 	end
 end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
