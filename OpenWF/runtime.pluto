@@ -1044,8 +1044,9 @@ class LotusMissionInfo extends owfClassBase
 				return new Symbol(ivkr_pop_string())
 
 			case "levelOverride":
+			case "gameRules":
 				ivkr_push_pointer(self.addr)
-				ivkr_call(ivkr_find_getter("LotusMissionInfo", "levelOverride"), 1)
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				if addr := ivkr_pop_pointer() then 
 					return new ObjectType(addr)
 				end

@@ -191,6 +191,7 @@ class LotusMissionInfo extends owfClassBase
 	activeMissionTag
 	location
 	levelOverride
+	gameRules
 	function EncodeAsString()
 
 class StoreManifest extends Object
