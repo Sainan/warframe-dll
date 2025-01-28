@@ -607,10 +607,22 @@ class DamageControllerBase extends Object
 		return math.tointeger(ivkr_pop_number())
 	end
 
+	function SetOverguardAmount(i)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "SetOverguardAmount"), 2)
+	end
+
 	function GetOverguardMax()
 		ivkr_push_object(self.addr)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardMax"), 1)
 		return math.tointeger(ivkr_pop_number())
+	end
+
+	function SetOverguardMax(i)
+		ivkr_push_object(self.addr)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("DamageControllerBase", "SetOverguardMax"), 2)
 	end
 end
 
