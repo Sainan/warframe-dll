@@ -844,6 +844,7 @@ owfScript::owfScript()
 		{
 			luaL_typeerror(L, 1, lua_typename(L, LUA_TLIGHTUSERDATA));
 		}
+		std::lock_guard lock(owfOverlay::mtx);
 		id->text = pluto_checkstring(L, 2);
 		return 0;
 	});
