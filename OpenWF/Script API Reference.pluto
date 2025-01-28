@@ -238,6 +238,9 @@ class LotusNpcAvatar extends LotusAvatar
 	function GetEnhancementCount()
 	function GetEnhancementLocTag()
 
+class LotusVehicleAvatar extends LotusNpcAvatar
+	function GetRider()
+
 class HudStatus extends Object
 
 class LotusHudStatus extends HudStatus

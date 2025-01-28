@@ -167,24 +167,28 @@ end
 
 class BaseEntity extends Object
 	__name = "BaseEntity"
+end
 
+local function new_entity(addr)
+	local obj = new Entity(addr)
+	local type = obj:GetType()
+	repeat
+		switch type:GetFullName() do
+			case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo(addr)
+			case "/EE/Types/Effects/LensFlare": return new LensFlare(addr)
+			case "/EE/Types/Engine/Decoration": return new Decoration(addr)
+			case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar(addr)
+			case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar(addr)
+			case "/Lotus/Types/Game/LotusVehicleAvatar": return new LotusVehicleAvatar(addr)
+		end
+		type = type:GetParent()
+	until not type
+	return obj
 end
 
 local function pop_entity()
 	if addr := ivkr_pop_object() then
-		local obj = new Entity(addr)
-		local type = obj:GetType()
-		repeat
-			switch type:GetFullName() do
-				case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo(addr)
-				case "/EE/Types/Effects/LensFlare": return new LensFlare(addr)
-				case "/EE/Types/Engine/Decoration": return new Decoration(addr)
-				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar(addr)
-				case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar(addr)
-			end
-			type = type:GetParent()
-		until not type
-		return obj
+		return new_entity(addr)
 	else
 		ivkr_pop(1)
 	end
@@ -1284,6 +1288,16 @@ class LotusNpcAvatar extends LotusAvatar
 	end
 end
 
+class LotusVehicleAvatar extends LotusNpcAvatar
+	__name = "LotusVehicleAvatar"
+
+	function GetRider()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusVehicleAvatar", "GetRider"), 1)
+		return pop_entity()
+	end
+end
+
 class HudStatus extends Object
 	__name = "HudStatus"
 
@@ -1560,7 +1574,7 @@ gRegion = {
 	function GetLocalPlayerAvatar()
 		if player := get_local_player() then
 			if avatar := player_get_avatar(player) then
-				return new LotusAvatar(avatar)
+				return new_entity(avatar)
 			end
 		end
 	end,
