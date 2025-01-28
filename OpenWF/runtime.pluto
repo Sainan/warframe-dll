@@ -1030,6 +1030,7 @@ class LotusMissionInfo extends owfClassBase
 
 			case "goalTag":
 			case "activeMissionTag":
+			case "location":
 				ivkr_push_pointer(self.addr)
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)

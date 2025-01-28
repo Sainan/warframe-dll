@@ -188,6 +188,7 @@ class LotusMissionInfo extends owfClassBase
 	maxEnemyLevel
 	goalTag
 	activeMissionTag
+	location
 	levelOverride
 	function EncodeAsString()
 
