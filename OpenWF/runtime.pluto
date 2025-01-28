@@ -1452,43 +1452,39 @@ Engine = {}
 class Engine.OpenLevelArgs
 	__name = "Engine.OpenLevelArgs"
 
-	private level
-	private gamerules
-	private context_tags
-
-	function SetLevel(level)
-		self.level = level
+	function __construct()
+		ivkr_push_string(tostring(self))
+		ivkr_call(ivkr_find_ctor("OpenLevelArgs"), 0)
+		ivkr_settable(-10002)
 	end
 
-	function SetGameRules(gamerules)
-		self.gamerules = gamerules
-	end
-
-	function AddContextTag(tag)
-		self.context_tags ??= {}
-		self.context_tags:insert(tag)
+	function __gc()
+		ivkr_push_string(tostring(self))
+		ivkr_push_nil()
+		ivkr_settable(-10002)
 	end
 
 	function pushToIvkr()
-		ivkr_call(ivkr_find_ctor("OpenLevelArgs"), 0)
+		ivkr_push_string(tostring(self))
+		ivkr_gettable(-10002)
+	end
 
-		ivkr_push_value(-1)
-		ivkr_push_string(self.level)
+	function SetLevel(level)
+		self:pushToIvkr()
+		ivkr_push_string(level)
 		ivkr_call(ivkr_find_method("OpenLevelArgs", "SetLevel"), 2)
+	end
 
-		if self.gamerules then
-			ivkr_push_value(-1)
-			ivkr_push_string(self.gamerules)
-			ivkr_call(ivkr_find_method("OpenLevelArgs", "SetGameRules"), 2)
-		end
+	function SetGameRules(gamerules)
+		self:pushToIvkr()
+		ivkr_push_string(gamerules)
+		ivkr_call(ivkr_find_method("OpenLevelArgs", "SetGameRules"), 2)
+	end
 
-		if self.context_tags then
-			for self.context_tags as tag do
-				ivkr_push_value(-1)
-				ivkr_push_string(tag)
-				ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextTag"), 2)
-			end
-		end
+	function AddContextTag(tag)
+		self:pushToIvkr()
+		ivkr_push_string(tag)
+		ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextTag"), 2)
 	end
 end
 setmetatable(Engine.OpenLevelArgs, { __call = || -> new Engine.OpenLevelArgs() })
