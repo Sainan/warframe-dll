@@ -49,7 +49,10 @@ struct luau_State
 	PAD(0, 0x08) luau_TValue* outtop;
 	/* 0x10 */ luau_TValue* intop;
 	/* 0x18 */ luau_GlobalState* global_state;
-	PAD(0x20, 0x90);
+	/* 0x20 */ void* ci;
+	/* 0x28 */ luau_TValue* stack_last;
+	/* 0x30 */ luau_TValue* stack;
+	PAD(0x38, 0x90);
 
 	luau_TValue* getValue(int idx)
 	{
