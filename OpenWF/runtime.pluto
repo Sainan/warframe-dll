@@ -934,6 +934,13 @@ class RadialSolarMap extends Object
 		ivkr_call(ivkr_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
 		return new LotusMissionInfo(ivkr_pop_pointer())
 	end
+
+	function SetLevelStreamingArgs(locationSymbol, openLevelArgs)
+		ivkr_push_object(self.addr)
+		locationSymbol:pushToIvkr()
+		openLevelArgs:pushToIvkr()
+		ivkr_call(ivkr_find_method("RadialSolarMap", "SetLevelStreamingArgs"), 3)
+	end
 end
 
 class RadialRegion

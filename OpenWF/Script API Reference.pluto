@@ -170,6 +170,7 @@ class LotusAttractModeGameRules extends GameRulesImpl
 class RadialSolarMap extends Object
 	function GetRegions()
 	function BuildMissionForLocation(symbol)
+	function SetLevelStreamingArgs(locationSymbol, openLevelArgs)
 
 class RadialRegion
 	name
