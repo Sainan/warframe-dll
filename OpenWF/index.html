@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <style>
 	body{font-family:sans-serif;background:#000;filter:invert(1)}
-	p{margin-block-start:0}
 </style>
 <body>
-	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
+	<p style="margin-block-start:0"><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
 	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
@@ -202,7 +201,7 @@
 		};
 		ws.onerror = function(e) {
 			console.error(e);
-			document.body.innerHTML = `<p>` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
+			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
 		};
 
 		function clearScriptLog() {
