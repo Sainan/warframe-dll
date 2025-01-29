@@ -56,8 +56,6 @@ static bool disabled_xp_based_level_cap = false;
 static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 #endif
 static std::string build_hash;
-static bool fallback_language_was_used = false;
-static bool fallback_graphicsDriver_was_used = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 
@@ -505,13 +503,11 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	{
 		arguments->got_language = true;
 		arguments->language.setShortData(fallback_language);
-		fallback_language_was_used = true;
 	}
 	if (!arguments->got_graphicsDriver)
 	{
 		arguments->got_graphicsDriver = true;
 		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
-		fallback_graphicsDriver_was_used = true;
 	}
 	if (!arguments->got_cluster)
 	{
