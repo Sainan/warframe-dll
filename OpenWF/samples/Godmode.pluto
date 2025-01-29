@@ -1,15 +1,15 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
 repeat
-    if avatar := gRegion:GetLocalPlayerAvatar() then
-        if avatar instanceof LotusVehicleAvatar then
-            avatar = avatar:GetRider()
-        end
-        avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
-    end
+	if avatar := gRegion:GetLocalPlayerAvatar() then
+		if avatar instanceof LotusVehicleAvatar then
+			avatar = avatar:GetRider()
+		end
+		avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
+	end
 until not pcall(yield)
 
 local avatar = gRegion:GetLocalPlayerAvatar()
 if avatar instanceof LotusVehicleAvatar then
-    avatar = avatar:GetRider()
+	avatar = avatar:GetRider()
 end
 avatar:DamageControl():RemoveTemporaryImmunity()
