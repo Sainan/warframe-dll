@@ -1,11 +1,15 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
 local commands = {}
 commands["/god"] = function()
-	if gRegion:GetLocalPlayerAvatar():DamageControl():HasTemporaryImmunity() then
-		gRegion:GetLocalPlayerAvatar():DamageControl():RemoveTemporaryImmunity()
+	local avatar = gRegion:GetLocalPlayerAvatar()
+	if avatar instanceof LotusVehicleAvatar then
+		avatar = avatar:GetRider()
+	end
+	if avatar:DamageControl():HasTemporaryImmunity() then
+		avatar:DamageControl():RemoveTemporaryImmunity()
 		chat_system_reply("Removed immunity.")
 	else
-		gRegion:GetLocalPlayerAvatar():DamageControl():GiveTemporaryImmunity(500000, 500000)
+		avatar:DamageControl():GiveTemporaryImmunity(500000, 500000)
 		chat_system_reply("Granted immunity.")
 	end
 end
