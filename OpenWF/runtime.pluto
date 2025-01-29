@@ -1995,14 +1995,24 @@ coroutine.sleep = function(ms)
 	until t <= os.millis()
 end
 
+owf_internal_event_queue = {}
+owf_next_event = || -> owf_internal_event_queue:remove(1)
+
 return function(f)
 	coroutine.yield()
 	coroutine.yield = yield
-	xpcall(f, function(e)
+	local co = coroutine.create(|| -> xpcall(f, function(e)
 		if type(e) == "string" and e:sub(-14) == "Stop requested" then
 			print(e)
 		else
 			print(debug.traceback(e,2))
 		end
-	end)
+	end))
+	while co:status() ~= "dead" do
+		while evt := owf_internal_next_event() do
+			owf_internal_event_queue:insert(evt)
+		end
+		co:resume()
+		yield()
+	end
 end

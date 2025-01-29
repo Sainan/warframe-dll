@@ -1022,7 +1022,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_next_event"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("owf_internal_next_event"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
