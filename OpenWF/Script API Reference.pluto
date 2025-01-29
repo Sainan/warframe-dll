@@ -148,7 +148,7 @@ class GameRules extends Object
 	function IsPauseMenuShowing()
 	function RequestPause()
 	function RequestUnpause()
-	function RequestResource(name, callbackName)
+	function RequestResource(name, callback)
 
 class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
@@ -368,7 +368,7 @@ gFlashMgr
 	function ExecuteToolMenuCommand(resource)
 
 gGameData
-	function SyncInventoryFromDB(callbackName)
+	function SyncInventoryFromDB(callback)
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")

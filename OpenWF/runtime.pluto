@@ -1,4 +1,4 @@
-local { http, json, url, vector3 } = require "*"
+local { http, json, scheduler, url, vector3 } = require "*"
 
 Vector = vector3
 Vector3 = vector3
@@ -861,10 +861,10 @@ class GameRules extends Object
 		ivkr_call(ivkr_find_method("GameRules", "RequestUnpause"), 1)
 	end
 
-	function RequestResource(name, callbackName)
+	function RequestResource(name, callback)
 		ivkr_push_object(self.addr)
 		ivkr_push_string(name)
-		ivkr_push_string("OWF_"..owf_script_get_path()..callbackName) owf_register_callback(owf_script_get_path()..callbackName)
+		ivkr_push_callback(callback)
 		ivkr_call(ivkr_find_method("GameRules", "RequestResource"), 3)
 	end
 end
@@ -1871,11 +1871,10 @@ gFlashMgr = {
 }
 
 gGameData = {
-	function SyncInventoryFromDB(callbackName)
+	function SyncInventoryFromDB(callback)
 		ivkr_push_object(get_gamedata())
-		if callbackName then
-			owf_register_callback(owf_script_get_path()..callbackName)
-			ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
+		if callback then
+			ivkr_push_callback(callback)
 		else
 			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
 		end
@@ -1996,26 +1995,50 @@ coroutine.sleep = function(ms)
 end
 
 owf_internal_event_queue = {}
+owf_lambda_callbacks = {}
 owf_next_event = || -> owf_internal_event_queue:remove(1)
+
+ivkr_push_callback = function(callback)
+	local callbackName = tostring(callback)
+	if type(callback) == "function" then
+		owf_lambda_callbacks[callbackName] = callback
+	end
+	ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
+	owf_register_callback(owf_script_get_path()..callbackName)
+end
 
 return function(f)
 	coroutine.yield()
+
+	local simple_yield = coroutine.yield
 	coroutine.yield = yield
-	local co = coroutine.create(|| -> xpcall(f, function(e)
+
+	local sched = new scheduler()
+	sched.yieldfunc = simple_yield
+	sched.errorfunc = function(e)
 		if type(e) == "string" and e:sub(-14) == "Stop requested" then
 			print(e)
 		else
 			print(debug.traceback(e,2))
 		end
-	end))
-	while co:status() ~= "dead" do
-		while evt := owf_internal_next_event() do
-			if evt.type == OWF_EVT_CALLBACK then
-				evt.name = evt.name:sub(1 + #owf_script_get_path())
-			end
-			owf_internal_event_queue:insert(evt)
-		end
-		co:resume()
-		yield()
 	end
+	local mainco
+	sched:add(function()
+		repeat
+			simple_yield()
+			while evt := owf_internal_next_event() do
+				if evt.type == OWF_EVT_CALLBACK then
+					evt.name = evt.name:sub(1 + #owf_script_get_path())
+					if cb := owf_lambda_callbacks[evt.name] then
+						sched:add(cb)
+						owf_lambda_callbacks[evt.name] = nil
+						continue
+					end
+				end
+				owf_internal_event_queue:insert(evt)
+			end
+		until mainco:status() == "dead" and owf_lambda_callbacks:size() == 0
+	end)
+	mainco = sched:add(f)
+	sched:run()
 end
