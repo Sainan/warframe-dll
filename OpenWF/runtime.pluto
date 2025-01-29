@@ -1,6 +1,8 @@
-Vector = require "pluto:vector3"
-Vector3 = Vector
-Rotation = Vector
+local { http, json, url, vector3 } = require "*"
+
+Vector = vector3
+Vector3 = vector3
+Rotation = vector3
 
 class owfClassBase
 	function __construct(addr)
@@ -1906,8 +1908,6 @@ Engine.SLOT_12 = 11
 Engine.SLOT_13 = 12
 Engine.SLOT_14 = 13
 Engine.INVALID = 14
-
-local { http, json, url } = require "*"
 
 function owf_get_available_scripts()
 	return http.request("http://localhost:61558/scripts") |> json.decode
