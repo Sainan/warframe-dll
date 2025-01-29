@@ -1097,6 +1097,23 @@ class LotusMissionInfo extends owfUserdata
 		return t
 	end
 
+	function GetExtraEnemies()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetExtraEnemies"), 1)
+		local t = {}
+		if ivkr_istable(-1) then
+			local i = 1
+			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+				t:insert(new MissionAI(ivkr_pop_pointer()))
+				++i
+			end
+			ivkr_pop(2)
+		else
+			ivkr_pop(1)
+		end
+		return t
+	end
+
 	function GetMissionEventResources()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetMissionEventResources"), 1)

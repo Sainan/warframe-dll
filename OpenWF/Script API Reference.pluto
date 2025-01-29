@@ -191,6 +191,7 @@ class LotusMissionInfo
 	gameRules
 	function EncodeAsString()
 	function GetEnemies()
+	function GetExtraEnemies()
 	function GetMissionEventResources()
 	function GetExtraMissionEventResources()
 	function GetAdvancedAiDirectorSpawns()
