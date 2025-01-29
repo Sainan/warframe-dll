@@ -1106,6 +1106,13 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("owf_broadcast_message"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		pluto_pushstring(L, static_cast<owfScript*>(L->l_G->user_data)->name);
+		return 1;
+	});
+	{ ObfusString name("owf_script_get_path"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
