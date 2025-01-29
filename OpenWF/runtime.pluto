@@ -1950,6 +1950,32 @@ OperationType = {
 
 DamageType = UpgradeType
 
+local AddHudTracker = function(name, type)
+	ivkr_push_string("_T")
+	ivkr_gettable(-10002)
+
+	ivkr_push_string("AddHudTracker")
+	ivkr_gettable(-2)
+
+	ivkr_push_string(name)
+	ivkr_push_int(type)
+	ivkr_call2(2, 0)
+end
+
+_T = setmetatable({}, {
+	function __index(name)
+		if name == "AddHudTracker" then
+			ivkr_push_string("_T")
+			ivkr_gettable(-10002)
+			ivkr_push_string("AddHudTracker")
+			local ok = ivkr_gettable(-2) > 0
+			ivkr_pop(2)
+			return ok ? AddHudTracker : nil
+		end
+		return rawget(self, name)
+	end
+})
+
 ivkr_find_builtin = function(name)
 	ivkr_push_string(name)
 	ivkr_gettable(-10002)
@@ -1985,6 +2011,31 @@ package.preload["Lotus.Interface.LotusNetworkUtilities"] = || -> {
 		end
 		ivkr_pop(1)
 	end
+}
+
+package.preload["Lotus.Scripts.Libs.ObjectiveText"] = || -> {
+	SetPrimaryObjText = function(text)
+		ivkr_push_string("Lotus.Scripts.Libs.ObjectiveText")
+		ivkr_call(ivkr_find_builtin("require"), 1)
+		do
+			ivkr_push_string("SetPrimaryObjText")
+			ivkr_gettable(-2)
+
+			ivkr_push_string(text)
+			ivkr_call2(1, 0)
+		end
+		ivkr_pop(1)
+	end,
+	ClearPrimaryObjText = function()
+		ivkr_push_string("Lotus.Scripts.Libs.ObjectiveText")
+		ivkr_call(ivkr_find_builtin("require"), 1)
+		do
+			ivkr_push_string("ClearPrimaryObjText")
+			ivkr_gettable(-2)
+			ivkr_call2(0, 0)
+		end
+		ivkr_pop(1)
+	end,
 }
 
 coroutine.sleep = function(ms)
