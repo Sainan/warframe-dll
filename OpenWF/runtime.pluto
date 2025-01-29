@@ -864,7 +864,7 @@ class GameRules extends Object
 	function RequestResource(name, callbackName)
 		ivkr_push_object(self.addr)
 		ivkr_push_string(name)
-		ivkr_push_string("OWF_"..callbackName) owf_register_callback(callbackName)
+		ivkr_push_string("OWF_"..owf_script_get_path()..callbackName) owf_register_callback(owf_script_get_path()..callbackName)
 		ivkr_call(ivkr_find_method("GameRules", "RequestResource"), 3)
 	end
 end
@@ -1874,8 +1874,8 @@ gGameData = {
 	function SyncInventoryFromDB(callbackName)
 		ivkr_push_object(get_gamedata())
 		if callbackName then
-			owf_register_callback(callbackName)
-			ivkr_push_string("OWF_"..callbackName)
+			owf_register_callback(owf_script_get_path()..callbackName)
+			ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
 		else
 			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
 		end
@@ -2010,6 +2010,9 @@ return function(f)
 	end))
 	while co:status() ~= "dead" do
 		while evt := owf_internal_next_event() do
+			if evt.type == OWF_EVT_CALLBACK then
+				evt.name = evt.name:sub(1 + #owf_script_get_path())
+			end
 			owf_internal_event_queue:insert(evt)
 		end
 		co:resume()
