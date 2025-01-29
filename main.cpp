@@ -2687,6 +2687,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
+					case soup::joaat::compileTimeHash("/version"):
+						ServerWebService::sendText(s, ObfusString(BOOTSTRAPPER_TITLE).str());
+						break;
+
 					default:
 						{
 							bool handled = false;
