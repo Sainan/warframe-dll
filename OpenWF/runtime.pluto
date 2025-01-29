@@ -1957,6 +1957,21 @@ ivkr_find_builtin = function(name)
 	return ivkr_pop_c_function(1)
 end
 
+package.preload["EE.Interface.Utilities"] = || -> {
+	ShowMessage = function(str)
+		ivkr_push_string("EE.Interface.Utilities")
+		ivkr_call(ivkr_find_builtin("require"), 1)
+		do
+			ivkr_push_string("ShowMessage")
+			ivkr_gettable(-2)
+
+			ivkr_push_string(str)
+			ivkr_call2(1, 0)
+		end
+		ivkr_pop(1)
+	end
+}
+
 package.preload["Lotus.Interface.LotusNetworkUtilities"] = || -> {
 	Host_LoadMission = function(node, missionInfo)
 		ivkr_push_string("Lotus.Interface.LotusNetworkUtilities")
