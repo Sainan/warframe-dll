@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <style>
 	body{font-family:sans-serif;background:#000;filter:invert(1)}
-	ul{margin-top:0.5rem;padding-inline-start:30px}
+	p,ul{margin-block-start:0;margin-block-end:0}
+	p{margin-bottom:5px}
+	input[type=range]{height:10px}
+	hr{margin:15px 0}
+	ul:has(li){margin-top:2px;padding-inline-start:30px}
 </style>
 <body>
-	<p style="margin-block-start:0"><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
+	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
 	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
@@ -12,7 +16,7 @@
 	<p><label for="pause_always_stops_time"></label> <input id="pause_always_stops_time" type="checkbox" /></p>
 	<p><label for="ee_log_in_console"></label> <input id="ee_log_in_console" type="checkbox" /></p>
 	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
-	<button id="save_config"></button>
+	<p><button id="save_config" style="margin-top:3px"></button></p>
 	<hr>
 	<p><label for="camtype"></label> <select id="camtype"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select></p>
 	<p><label for="pos"></label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
@@ -288,7 +292,7 @@
 				};
 				p.appendChild(input);
 				const button = document.createElement("button");
-				button.style.marginLeft = "10px";
+				button.style.marginLeft = "8px";
 				button.textContent = dict.enable_auto_start;
 				button.onclick = function() {
 					const on = (this.textContent != dict.enable_auto_start);
