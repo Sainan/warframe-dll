@@ -4,7 +4,7 @@ local Shield = Localize("/Lotus/Language/Labels/HUD_COLOR_SHIELD")
 local Armor = Localize("/Lotus/Language/Labels/HUD_COLOR_ARMOR")
 local Overguard = Localize("/Lotus/Language/Labels/HUD_COLOR_PROTECTED_HEALTH")
 repeat
-	for gRegion:FindAll("/Lotus/Types/Game/LotusNpcAvatar") as ent do
+	for gRegion:FindAll(Type("/Lotus/Types/Game/LotusNpcAvatar")) as ent do
 		local dc = ent:DamageControl()
 
 		local name = Localize(ent:GetLocTag():c_str())
