@@ -156,6 +156,8 @@ class GameRulesImpl extends GameRules
 class LotusBaseGameRules extends GameRulesImpl
 	function GetCurrentStarChart()
 	function GetStoreManifest()
+	function AddActiveLevelAuraUpgrade(type)
+	function RemoveActiveLevelAuraUpgrade(type)
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()

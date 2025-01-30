@@ -893,6 +893,24 @@ class LotusBaseGameRules extends GameRulesImpl
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetStoreManifest"), 1)
 		return new StoreManifest(ivkr_pop_object())
 	end
+
+	function AddActiveLevelAuraUpgrade(type)
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "AddActiveLevelAuraUpgrade"), 2)
+	end
+
+	function RemoveActiveLevelAuraUpgrade(type)
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "RemoveActiveLevelAuraUpgrade"), 2)
+	end
 end
 
 class LotusGameRules extends LotusBaseGameRules
