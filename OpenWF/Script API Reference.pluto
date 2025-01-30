@@ -363,6 +363,7 @@ gRegion
 	function CreateObject(type)
 	function CreateEntity(type, pos, rot)
 	function GetNpcMgr()
+	function Raycast(fromPos, toPos, avatar, _reserved_please_set_to_nil, outPos)
 
 gGameRules
 gStarChart

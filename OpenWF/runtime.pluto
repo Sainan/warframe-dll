@@ -1849,6 +1849,37 @@ gRegion = {
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetNpcMgr"), 1)
 		return new NpcManager(ivkr_pop_object())
 	end,
+	function Raycast(fromPos, toPos, avatar, _, outPos)
+		ivkr_call(ivkr_find_ctor("Vector"), 0)
+
+		ivkr_push_object(get_regionmgr())
+		do
+			ivkr_push_float(fromPos.x)
+			ivkr_push_float(fromPos.y)
+			ivkr_push_float(fromPos.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
+		end
+		do
+			ivkr_push_float(toPos.x)
+			ivkr_push_float(toPos.y)
+			ivkr_push_float(toPos.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
+		end
+		ivkr_push_object(avatar.addr)
+		ivkr_push_nil()
+		ivkr_push_value(-6)
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "Raycast"), 6)
+
+		local ok = ivkr_type(-1) > 0
+		ivkr_pop(1)
+
+		local ud = ivkr_pop_userdata()
+		outPos.x = mem_read_f32(ud + 0x20)
+		outPos.y = mem_read_f32(ud + 0x24)
+		outPos.z = mem_read_f32(ud + 0x28)
+
+		return ok
+	end,
 }
 
 setmetatable(_G, {
