@@ -1908,6 +1908,16 @@ Engine.SLOT_13 = 12
 Engine.SLOT_14 = 13
 Engine.INVALID = 14
 
+owf_script_toggles = {}
+function owf_script_add_toggle(name, value = false)
+	local toggle = {
+		name = name,
+		value = value
+	}
+	owf_script_toggles:insert(toggle)
+	return toggle
+end
+
 function owf_get_available_scripts()
 	return http.request("http://localhost:61558/scripts") |> json.decode
 end
@@ -2059,6 +2069,10 @@ ivkr_push_callback = function(callback)
 end
 
 return function(f)
+	owf_script_route_base = owf_script_get_path():sub(7)
+	owf_register_custom_route(owf_script_route_base.."/request_broadcast", "text/plain", "")
+	owf_register_custom_route(owf_script_route_base.."/set_toggle", "text/plain", "")
+
 	coroutine.yield()
 
 	local simple_yield = coroutine.yield
@@ -2078,7 +2092,30 @@ return function(f)
 		repeat
 			simple_yield()
 			while evt := owf_internal_next_event() do
-				if evt.type == OWF_EVT_CALLBACK then
+				if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
+					local path = url.decode(evt.path)
+					if path:sub(1, #owf_script_route_base) == owf_script_route_base then
+						local off = 1 + #owf_script_route_base
+						if path:sub(off) == "/request_broadcast" then
+							owf_broadcast_message(json.encode({
+								from = owf_script_get_path(),
+								script_broadcast = {
+									toggles = owf_script_toggles,
+								},
+							}))
+							continue
+						end
+						if path:sub(off, off + 11) == "/set_toggle?" then
+							local value = path:sub(off + 12, off + 12) == "1"
+							local name = path:sub(off + 13)
+							if toggle := owf_script_toggles:find(|x| -> x.name == name) then
+								toggle.value = value
+							else
+								print("Could not find a toggle called "..name)
+							end
+						end
+					end
+				elseif evt.type == OWF_EVT_CALLBACK then
 					evt.name = evt.name:sub(1 + #owf_script_get_path())
 					if cb := owf_lambda_callbacks[evt.name] then
 						sched:add(cb)

@@ -2372,7 +2372,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						return;
 					}
 #endif
-					const auto route_hash = soup::joaat::hash(arr.at(0));
+					const auto route_hash = soup::joaat::hash(urlenc::decode(arr.at(0)));
 					switch (route_hash)
 					{
 					case soup::joaat::compileTimeHash("/"):

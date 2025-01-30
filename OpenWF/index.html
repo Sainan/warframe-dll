@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <style>
 	body{font-family:sans-serif;background:#000;filter:invert(1)}
+	ul{margin-top:0.5rem;padding-inline-start:30px}
 </style>
 <body>
 	<p style="margin-block-start:0"><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
@@ -125,6 +126,7 @@
 
 		let ws = new WebSocket(location.href);
 		let status_request_suffix = "?0";
+		const script_broadcast_requested = {};
 		function pollStatus() {
 			ws.send("/status" + status_request_suffix);
 		}
@@ -182,7 +184,20 @@
 			if ("running_scripts" in obj) {
 				for (const script of document.getElementById("scripts-container").children) {
 					const path = script.children[1].getAttribute("data-path");
-					script.children[1].checked = obj.running_scripts.find(x => x == path);
+					const running = obj.running_scripts.find(x => x == path);
+					script.children[1].checked = running;
+					if (running) {
+						if (!script_broadcast_requested[path]) {
+							script_broadcast_requested[path] = true;
+							fetch(path.substr(6) + "/request_broadcast");
+						}
+					}
+					else {
+						if (script_broadcast_requested[path]) {
+							script.querySelector("ul").textContent = "";
+							delete script_broadcast_requested[path];
+						}
+					}
 				}
 			}
 
@@ -193,6 +208,34 @@
 					log.scrollTop = log.scrollHeight;
 					status_request_suffix = "?" + obj.script_log_len;
 				}
+			}
+
+			if ("script_broadcast" in obj) {
+				const p = [...document.getElementById("scripts-container").children].find(x => x.children[1].getAttribute("data-path") == obj.from);
+				let ul = p.querySelector("ul");
+				if (!ul) {
+					ul = p.appendChild(document.createElement("ul"));
+				}
+				ul.innerHTML = "";
+				obj.script_broadcast.toggles.forEach(toggle => {
+					const li = document.createElement("li");
+					{
+						const label = document.createElement("label");
+						label.setAttribute("for", obj.from + toggle.name);
+						label.textContent = toggle.name + ": ";
+						li.appendChild(label);
+					}
+					{
+						const input = document.createElement("input");
+						input.id = obj.from + toggle.name;
+						input.type = "checkbox";
+						input.onchange = function() {
+							fetch(obj.from.substr(6) + "/set_toggle?" + (this.checked ? "1" : "0") + encodeURIComponent(toggle.name));
+						};
+						li.appendChild(input);
+					}
+					ul.appendChild(li);
+				});
 			}
 
 			if ("full" in obj) {
