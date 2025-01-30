@@ -1978,6 +1978,10 @@ OperationType = {
 
 DamageType = UpgradeType
 
+mem_rip = function(addr)
+	return addr + mem_read_i32(addr) + 4
+end
+
 ivkr_typename = function(idx)
 	ivkr_push_value(idx)
 	ivkr_call(mem_read_i64(mem_scan_exe("31 FD 5E 4F 00 00 00 00") + 8), 1)
