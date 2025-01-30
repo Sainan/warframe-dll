@@ -217,13 +217,11 @@ class Entity extends BaseEntity
 	function SetPosition(pos)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
+			ivkr_push_float(pos.x)
+			ivkr_push_float(pos.y)
+			ivkr_push_float(pos.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
-		local ud = ivkr_get_userdata()
-		mem_write_f32(ud + 0x20, pos.x)
-		mem_write_f32(ud + 0x24, pos.y)
-		mem_write_f32(ud + 0x28, pos.z)
 		ivkr_call(ivkr_find_method("Entity", "SetPosition"), 2)
 	end
 
@@ -241,13 +239,11 @@ class Entity extends BaseEntity
 	function SetRotation(rot)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
+			ivkr_push_float(rot.x)
+			ivkr_push_float(rot.y)
+			ivkr_push_float(rot.z)
+			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
-		local ud = ivkr_get_userdata()
-		mem_write_f32(ud + 0x20, rot.x)
-		mem_write_f32(ud + 0x24, rot.y)
-		mem_write_f32(ud + 0x28, rot.z)
 		ivkr_call(ivkr_find_method("Entity", "SetRotation"), 2)
 	end
 
@@ -303,12 +299,10 @@ class Entity extends BaseEntity
 		end
 		(symbol or EMPTY_SYMBOL):pushToIvkr()
 		if optionalPosOffset then
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
-			local ud = ivkr_get_userdata()
-			mem_write_f32(ud + 0x20, optionalPosOffset.x)
-			mem_write_f32(ud + 0x24, optionalPosOffset.y)
-			mem_write_f32(ud + 0x28, optionalPosOffset.z)
+			ivkr_push_float(optionalPosOffset.x)
+			ivkr_push_float(optionalPosOffset.y)
+			ivkr_push_float(optionalPosOffset.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
 		ivkr_call(ivkr_find_method("Entity", "Attach"), optionalPosOffset ? 4 : 3)
 		return pop_entity()
@@ -424,13 +418,11 @@ class BaseAvatar extends Entity
 	function SetView(rot)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("BaseAvatar", "GetView"), 1)
+			ivkr_push_float(rot.x)
+			ivkr_push_float(rot.y)
+			ivkr_push_float(rot.z)
+			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
-		local ud = ivkr_get_userdata()
-		mem_write_f32(ud + 0x20, rot.x)
-		mem_write_f32(ud + 0x24, rot.y)
-		mem_write_f32(ud + 0x28, rot.z)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetView"), 2)
 	end
 
@@ -444,26 +436,22 @@ class BaseAvatar extends Entity
 	function SetCameraView(rot)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("BaseAvatar", "GetCameraView"), 1)
+			ivkr_push_float(rot.x)
+			ivkr_push_float(rot.y)
+			ivkr_push_float(rot.z)
+			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
-		local ud = ivkr_get_userdata()
-		mem_write_f32(ud + 0x20, rot.x)
-		mem_write_f32(ud + 0x24, rot.y)
-		mem_write_f32(ud + 0x28, rot.z)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetCameraView"), 2)
 	end
 
 	function SetEyePosition(pos)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
+			ivkr_push_float(pos.x)
+			ivkr_push_float(pos.y)
+			ivkr_push_float(pos.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
-		local ud = ivkr_get_userdata()
-		mem_write_f32(ud + 0x20, pos.x)
-		mem_write_f32(ud + 0x24, pos.y)
-		mem_write_f32(ud + 0x28, pos.z)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetEyePosition"), 2)
 	end
 
@@ -1295,12 +1283,10 @@ class CameraControllerBase extends Object
 	function implSetVector(funcName, vec)
 		ivkr_push_object(self.addr)
 		do
-			ivkr_push_object(self.addr)
-			ivkr_call(ivkr_find_method("CameraControllerBase", "GetViewOffset"), 1)
-			local ud = ivkr_get_userdata()
-			mem_write_f32(ud + 0x20, vec.x)
-			mem_write_f32(ud + 0x24, vec.y)
-			mem_write_f32(ud + 0x28, vec.z)
+			ivkr_push_float(vec.x)
+			ivkr_push_float(vec.y)
+			ivkr_push_float(vec.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
 		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 2)
 	end
@@ -1399,33 +1385,27 @@ class NpcManager extends EngineNpcMgr
 	end
 
 	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
-		if avatar := gRegion:GetLocalPlayerAvatar() then
-			ivkr_push_object(self.addr)
-			do
-				ivkr_push_string(type)
-				ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-			end
-			do
-				ivkr_push_object(avatar.addr)
-				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
-				local ud = ivkr_get_userdata()
-				mem_write_f32(ud + 0x20, pos.x)
-				mem_write_f32(ud + 0x24, pos.y)
-				mem_write_f32(ud + 0x28, pos.z)
-			end
-			do
-				ivkr_push_object(avatar.addr)
-				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
-				local ud = ivkr_get_userdata()
-				mem_write_f32(ud + 0x20, rot.x)
-				mem_write_f32(ud + 0x24, rot.y)
-				mem_write_f32(ud + 0x28, rot.z)
-			end
-			(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
-			ivkr_push_int(optionalLevel or 0)
-			ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
-			return new EngineNpcAgent(ivkr_pop_object())
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
+		do
+			ivkr_push_float(pos.x)
+			ivkr_push_float(pos.y)
+			ivkr_push_float(pos.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
+		end
+		do
+			ivkr_push_float(rot.x)
+			ivkr_push_float(rot.y)
+			ivkr_push_float(rot.z)
+			ivkr_call(ivkr_find_ctor("Rotation"), 3)
+		end
+		(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
+		ivkr_push_int(optionalLevel or 0)
+		ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
+		return new EngineNpcAgent(ivkr_pop_object())
 	end
 end
 
