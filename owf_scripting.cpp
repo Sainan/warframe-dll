@@ -325,6 +325,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		*lua_checkpointer<int64_t*>(L, 1) = luaL_checkinteger(L, 2);
+		return 0;
+	});
+	{ ObfusString name("mem_write_i64"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushnumber(L, *lua_checkpointer<float*>(L, 1));
 		return 1;
 	});
