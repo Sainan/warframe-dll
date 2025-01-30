@@ -1699,6 +1699,16 @@ function Engine.OpenLevel(args)
 	ivkr_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
 end
 
+function AngleToDirection(rot)
+	ivkr_push_float(rot.x)
+	ivkr_push_float(rot.y)
+	ivkr_push_float(rot.z)
+	ivkr_call(ivkr_find_ctor("Rotation"), 3)
+	ivkr_call(mem_read_i64(mem_scan_exe("05 E5 C6 F6 00 00 00 00") + 8), 1)
+	local ud = ivkr_pop_userdata()
+	return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+end
+
 -- compatibility with older versions of OpenWF that had these incorrectly scoped
 OpenLevelArgs = Engine.OpenLevelArgs
 OpenLevel = Engine.OpenLevel
