@@ -194,7 +194,10 @@
 					}
 					else {
 						if (script_broadcast_requested[path]) {
-							script.querySelector("ul").textContent = "";
+							const ul = script.querySelector("ul");
+							if (ul) {
+								ul.innerHTML = "";
+							}
 							delete script_broadcast_requested[path];
 						}
 					}
