@@ -720,40 +720,45 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 }
 
 
-static DetourHook set_lua_global_hook;
+static DetourHook lua_set_global_hook;
 
-static void* set_lua_global_detour(void* a1, Object*** a2, const char* name)
+static void lua_set_global_detour(luau_State* L, const char* name)
 {
-	if (a2 && *a2)
+	switch (soup::joaat::hash(name))
 	{
+	case soup::joaat::compileTimeHash("gRegion"):
+		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(RegionMgr****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << "set_lua_global: " << name << " = " << **a2 << std::endl;
+		std::cout << "lua_set_global: gRegion = " << regionmgr << std::endl;
 #endif
-
-		switch (soup::joaat::hash(name))
+		if (!owfOverlay::isInited())
 		{
-		case soup::joaat::compileTimeHash("gRegion"):
-			regionmgr = static_cast<RegionMgr*>(**a2);
-			if (!owfOverlay::isInited())
-			{
-				owfOverlay::init();
-			}
-			break;
-
-		/*case soup::joaat::compileTimeHash("gGameRules"):
-			gamerules = static_cast<LotusGameRules*>(**a2);
-			break;*/
-
-		case soup::joaat::compileTimeHash("gFlashMgr"):
-			flashmgr = **a2;
-			break;
-
-		case soup::joaat::compileTimeHash("gGameData"):
-			gamedata = **a2;
-			break;
+			owfOverlay::init();
 		}
+		break;
+
+	case soup::joaat::compileTimeHash("gFlashMgr"):
+		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+#if LOGGING
+		std::cout << "lua_set_global: gFlashMgr = " << flashmgr << std::endl;
+#endif
+		break;
+
+	case soup::joaat::compileTimeHash("gGameData"):
+		gamedata = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+#if LOGGING
+		std::cout << "lua_set_global: gGameData = " << gamedata << std::endl;
+#endif
+		break;
+
+	case soup::joaat::compileTimeHash("gMatchingService"):
+		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+#if LOGGING
+		std::cout << "lua_set_global: gMatchingService = " << matchingservice << std::endl;
+#endif
+		break;
 	}
-	return reinterpret_cast<decltype(&set_lua_global_detour)>(set_lua_global_hook.original)(a1, a2, name);
+	return reinterpret_cast<decltype(&lua_set_global_detour)>(lua_set_global_hook.original)(L, name);
 }
 
 
@@ -1900,17 +1905,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("40 53 56 57 48 83 EC 20 48 83 79 20 00 49 8B F8");
-			auto set_lua_global = Module(nullptr).range.scan(sig_inst).as<void*>();
+			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
+			auto lua_set_global = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "set_lua_global = " << set_lua_global << std::endl;
+			std::cout << "lua_set_global = " << lua_set_global << std::endl;
 #endif
-			if (set_lua_global)
+			if (lua_set_global)
 			{
-				set_lua_global_hook.detour = reinterpret_cast<void*>(&set_lua_global_detour);
-				set_lua_global_hook.target = set_lua_global;
-				set_lua_global_hook.create();
-				set_lua_global_hook.enable();
+				lua_set_global_hook.detour = reinterpret_cast<void*>(&lua_set_global_detour);
+				lua_set_global_hook.target = lua_set_global;
+				lua_set_global_hook.create();
+				lua_set_global_hook.enable();
 			}
 			else
 			{

@@ -222,3 +222,4 @@ inline RegionMgr* regionmgr = nullptr;
 //inline LotusGameRules* gamerules;
 inline Object* flashmgr = nullptr;
 inline Object* gamedata = nullptr;
+inline void* matchingservice = nullptr;

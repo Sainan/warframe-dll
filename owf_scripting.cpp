@@ -198,6 +198,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushpointer(L, matchingservice);
+		return 1;
+	});
+	{ ObfusString name("get_matchingservice"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushpointer(L, regionmgr ? regionmgr->GetLocalPlayer() : nullptr);
 		return 1;
 	});
