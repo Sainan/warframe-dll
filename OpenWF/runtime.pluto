@@ -1921,6 +1921,16 @@ gGameData = {
 	end,
 }
 
+gMatchingService = {
+	function SendRelayP2P(target, msg)
+		ivkr_push_pointer(get_matchingservice())
+		ivkr_push_string(target)
+		ivkr_push_string(msg)
+		ivkr_call(ivkr_find_method("MatchingService", "SendRelayP2P"), 3)
+		return ivkr_pop_bool()
+	end
+}
+
 gEntityType = Type("/EE/Types/Engine/Entity")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
