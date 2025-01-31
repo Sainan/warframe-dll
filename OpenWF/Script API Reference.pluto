@@ -72,6 +72,9 @@ class BaseAvatar extends Entity
 	function GetLocTag()
 	function ClearAgent()
 	function PushInputFilter(resource)
+	function SetCustomAnimController(type)
+	function SetCustomMotionController(type)
+	function SetCustomCameraController(type)
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)

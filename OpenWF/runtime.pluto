@@ -495,6 +495,33 @@ class BaseAvatar extends Entity
 		end
 		ivkr_call(ivkr_find_method("BaseAvatar", "PushInputFilter"), 2)
 	end
+
+	function SetCustomAnimController(type)
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomAnimController"), 2))
+	end
+
+	function SetCustomMotionController(type)
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomMotionController"), 2))
+	end
+
+	function SetCustomCameraController(type)
+		ivkr_push_object(self.addr)
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomCameraController"), 2))
+	end
 end
 
 class Avatar extends BaseAvatar
