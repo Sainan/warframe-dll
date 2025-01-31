@@ -305,6 +305,7 @@ function Range(min, max)
 function Color(r, g, b, a)
 
 function Localize(loctag, subs = {})
+function AngleToDirection(rot)
 
 function Engine.OpenLevel(args)
 
