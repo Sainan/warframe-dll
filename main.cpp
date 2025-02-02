@@ -7,6 +7,7 @@
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
+#define VERBOSE_CRC32C false
 
 #include <iostream>
 #include <mutex>
@@ -993,6 +994,18 @@ static int lua_HashCrc32_detour(luau_State* L)
 	lua_HashCrc32_og(L);
 	std::cout << "lua_HashCrc32(" << L->intop[0].getString() << "): returned " << L->outtop[-1].value.as_float << std::endl;
 	return 1;
+}
+#endif
+
+
+#if VERBOSE_CRC32C
+static DetourHook crc32c_impl_hook;
+
+static uint32_t crc32c_impl_detour(uint32_t initial, const char* data, size_t size)
+{
+	auto res = reinterpret_cast<decltype(&crc32c_impl_detour)>(crc32c_impl_hook.original)(initial, data, size);
+	std::cout << "CRC32C: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	return res;
 }
 #endif
 
@@ -2273,6 +2286,27 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				lua_HashCrc32_og = *lua_HashCrc32_fp;
 				memGuard::setAllowedAccess(lua_HashCrc32_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 				*lua_HashCrc32_fp = lua_HashCrc32_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
+
+#if VERBOSE_CRC32C
+		{
+			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 41 56 41 57 48 83 EC 20 83 3D");
+			auto crc32c_impl = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "crc32c_impl = " << crc32c_impl << std::endl;
+#endif
+			if (crc32c_impl)
+			{
+				crc32c_impl_hook.detour = reinterpret_cast<void*>(&crc32c_impl_detour);
+				crc32c_impl_hook.target = crc32c_impl;
+				crc32c_impl_hook.create();
+				crc32c_impl_hook.enable();
 			}
 			else
 			{
