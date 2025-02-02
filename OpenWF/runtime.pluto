@@ -938,6 +938,14 @@ class LotusGameRules extends LotusBaseGameRules
 	end
 end
 
+-- undocumented
+class LotusHubGameRules extends LotusBaseGameRules
+	function ReconnectToHub()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("LotusHubGameRules", "ReconnectToHub"), 1)
+	end
+end
+
 class LotusAttractModeGameRules extends GameRulesImpl
 	__name = "LotusAttractModeGameRules"
 
@@ -1764,6 +1772,9 @@ gRegion = {
 		if type:isNameInHierarchy("LotusAttractModeGameRules") then
 			return new LotusAttractModeGameRules(obj.addr)
 		end
+		if type:isNameInHierarchy("LotusHubGameRules") then
+			return new LotusHubGameRules(obj.addr)
+		end
 		if type:isNameInHierarchy("LotusGameRules") then
 			return new LotusGameRules(obj.addr)
 		end
@@ -1948,6 +1959,7 @@ gGameData = {
 	end,
 }
 
+-- undocumented
 gMatchingService = {
 	function SendRelayP2P(target, msg)
 		ivkr_push_pointer(get_matchingservice())
