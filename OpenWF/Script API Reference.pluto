@@ -4,6 +4,7 @@ Vector = require "pluto:vector3"
 Rotation = require "pluto:vector3"
 
 class ObjectType
+	function __eq(other)
 	function GetName()
 	function GetFullName()
 	function GetParent()
@@ -11,6 +12,7 @@ class ObjectType
 	function getHierarchy()
 
 class Object
+	function __eq(other)
 	function GetType()
 	function GetName()
 	function GetFullName()

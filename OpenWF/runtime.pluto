@@ -39,6 +39,10 @@ end
 class ObjectType extends owfUserdata
 	__name = "ObjectType"
 
+	function __eq(other)
+		return self:GetFullName() == other:GetFullName()
+	end
+
 	function GetName()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("ObjectType", "GetName"), 1)
@@ -85,6 +89,15 @@ end
 
 class Object extends owfUserdata
 	__name = "Object"
+
+	function __eq(other)
+		self:pushToIvkr()
+		if addr := ivkr_pop_object() then
+			other:pushToIvkr()
+			return addr == ivkr_pop_object()
+		end
+		return false
+	end
 
 	function GetType()
 		self:pushToIvkr()
