@@ -2352,9 +2352,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 					auto arr = string::explode(req.path, '?');
 #if SELF_HOST_CACHE_MANIFEST
-					if (ObfusString content_sub("/0"); !owfOverlay::isInited() && arr.at(0).find(content_sub.str()) != std::string::npos)
+					if (!owfOverlay::isInited()
+						&& (arr.at(0).find(ObfusString("/0").str()) != std::string::npos
+							|| arr.at(0).find(ObfusString("/7").str()) != std::string::npos
+							)
+						)
 					{
-						if (ObfusString cache_sub("/0/H.Cache.bin!D_---------------------w"); arr.at(0).find(cache_sub.str()) != std::string::npos)
+						if (arr.at(0).find(ObfusString("/0/H.Cache.bin!D_---------------------w").str()) != std::string::npos)
 						{
 							// Example request: /origin/075B4E6D/0/H.Cache.bin!D_---------------------w
 
@@ -2402,6 +2406,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						else
 						{
 							// Example request when a language is absent: /0_th/Languages.bin!2B_6YcNcvcYL-muKObP94qcog
+							// Example request when graphicsDriver is set to DX11 but the DX11 cache is outdated: /7/EE/Shaders/Particles/LensFlareDistortion.hlsl!18_iw9zmeZqZEKy3SlF8p8O+A
 
 							ObfusString msg("The game is missing some assets required to start. Please verify the language and graphics driver in the launcher match your client_config.json or command line arguments.");
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
