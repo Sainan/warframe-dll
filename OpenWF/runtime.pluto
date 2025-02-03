@@ -2064,7 +2064,7 @@ function owf_get_available_scripts()
 end
 
 function owf_get_running_scripts()
-	return (http.request("http://localhost:61558/status") |> json.decode).running_scripts
+	return (http.request("http://localhost:61558/status") |> json.decode).running_scripts:map(|x| -> x:sub(16))
 end
 
 function owf_start_script(name)
