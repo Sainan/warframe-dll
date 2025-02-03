@@ -172,7 +172,7 @@ static_assert(offsetof(Avatar, followed_by_camera) == 0x511);
 
 struct LotusAvatar : public Avatar
 {
-	INIT_PAD(Avatar, 0x6D8) bool relationship_group; // if equal between two avatars, they are friendlies (IsAvatarFriendly; ee0bc178)
+	INIT_PAD(Avatar, 0x6D8) uint32_t relationship_group; // if equal between two avatars, they are friendlies (IsAvatarFriendly; ee0bc178)
 };
 
 struct Player : public Object
