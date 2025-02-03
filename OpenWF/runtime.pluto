@@ -343,6 +343,11 @@ class Entity extends BaseEntity
 		ivkr_call(ivkr_find_method("Entity", "GetSpeed"), 1)
 		return ivkr_pop_number()
 	end
+
+	function Destroy()
+		ivkr_push_object(self.addr)
+		ivkr_call(ivkr_find_method("Entity", "Destroy"), 1)
+	end
 end
 
 class BaseAvatar extends Entity

@@ -3,6 +3,7 @@ repeat
 	for gRegion:GetLocalPlayer():GetHudStatus():GetFlashMarkers() as marker do
 		if marker.markerType == 49 and not marker.garbage then
 			gRegion:GetLocalPlayerAvatar():SetPosition(marker.baseMarkerInfo:GetPosition())
+			marker.baseMarkerInfo:Destroy()
 		end
 	end
 until yield()
