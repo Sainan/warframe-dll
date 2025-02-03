@@ -4,15 +4,26 @@ Vector = vector3
 Vector3 = vector3
 Rotation = vector3
 
-class owfClassBase
+class owfPointer
 	function __construct(addr)
-		assert(addr ~= nil)
-		assert(addr ~= 0)
+		if addr == nil or addr == 0 then
+			error($"attempt to construct {self.__name} from nil")
+		end
 		rawset(self, "addr", addr)
 	end
 end
 
 class owfUserdata
+	function __construct()
+		if ivkr_type(-1) <= 0 then
+			error($"attempt to construct {self.__name} from nil")
+		end
+		ivkr_push_string(tostring(self))
+		ivkr_push_value(-2)
+		ivkr_settable(-10002)
+		ivkr_pop(1)
+	end
+
 	function __gc()
 		ivkr_push_string(tostring(self))
 		ivkr_push_nil()
@@ -25,25 +36,25 @@ class owfUserdata
 	end
 end
 
-class ObjectType extends owfClassBase
+class ObjectType extends owfUserdata
 	__name = "ObjectType"
 
 	function GetName()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("ObjectType", "GetName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetFullName()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("ObjectType", "GetFullName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetParent()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("ObjectType", "GetParent"), 1)
-		if addr := ivkr_pop_pointer() then
+		if ivkr_type(-1) > 0 then
 			return new ObjectType(addr)
 		else
 			ivkr_pop(1)
@@ -72,25 +83,27 @@ class ObjectType extends owfClassBase
 	end
 end
 
-class Object extends owfClassBase
+class Object extends owfUserdata
 	__name = "Object"
 
 	function GetType()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Object", "GetType"), 1)
-		if addr := ivkr_pop_pointer() then
-			return new ObjectType(addr)
+		if ivkr_type(-1) > 0 then
+			return new ObjectType()
+		else
+			ivkr_pop(1)
 		end
 	end
 
 	function GetName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Object", "GetName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetFullName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Object", "GetFullName"), 1)
 		return ivkr_pop_string()
 	end
@@ -111,45 +124,47 @@ class Player extends Object
 	__name = "Player"
 
 	function GetAvatar()
-		if avatar := player_get_avatar(self.addr) then
-			return new LotusAvatar(avatar)
+		self:pushToIvkr()
+		if avatar := player_get_avatar(ivkr_pop_object()) then
+			ivkr_push_object(avatar)
+			return new LotusAvatar()
 		end
 	end
 
 	function GetPlayerName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "GetPlayerName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetClanName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "GetClanName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetPlayerAccountIDString()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "GetPlayerAccountIDString"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetPlayerMatchMakingString()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "GetPlayerMatchMakingString"), 1)
 		return ivkr_pop_string()
 	end
 
 	function GetHudStatus()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "GetHudStatus"), 1)
-		return new LotusHudStatus(ivkr_pop_object())
+		return new LotusHudStatus()
 	end
 
 	function CameraControl()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Player", "CameraControl"), 1)
-		return new CameraControllerBase(ivkr_pop_object())
+		return new CameraControllerBase()
 	end
 end
 
@@ -157,21 +172,23 @@ class HumanPlayer extends Player
 	__name = "HumanPlayer"
 
 	function ToggleFreeCamera()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
 	end
 
 	function isControllingCamera()
-		return player_get_controlling_camera(self.addr)
+		self:pushToIvkr()
+		return player_get_controlling_camera(ivkr_pop_object())
 	end
 
 	function setControllingCamera(b)
-		player_set_controlling_camera(self.addr, b)
+		self:pushToIvkr()
+		player_set_controlling_camera(ivkr_pop_object(), b)
 	end
 
 	function AssignAvatar(avatar, b1 = true, b2 = true)
-		ivkr_push_object(self.addr)
-		ivkr_push_object(avatar.addr)
+		self:pushToIvkr()
+		avatar:pushToIvkr()
 		ivkr_push_bool(b1)
 		ivkr_push_bool(b2)
 		ivkr_call(ivkr_find_method("HumanPlayer", "AssignAvatar"), 4)
@@ -182,26 +199,23 @@ class BaseEntity extends Object
 	__name = "BaseEntity"
 end
 
-local function new_entity(addr)
-	local obj = new Entity(addr)
-	local type = obj:GetType()
-	repeat
-		switch type:GetFullName() do
-			case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo(addr)
-			case "/EE/Types/Effects/LensFlare": return new LensFlare(addr)
-			case "/EE/Types/Engine/Decoration": return new Decoration(addr)
-			case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar(addr)
-			case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar(addr)
-			case "/Lotus/Types/Game/LotusVehicleAvatar": return new LotusVehicleAvatar(addr)
-		end
-		type = type:GetParent()
-	until not type
-	return obj
-end
-
 local function pop_entity()
-	if addr := ivkr_pop_object() then
-		return new_entity(addr)
+	if ivkr_type(-1) > 0 then
+		ivkr_push_value(-1)
+		ivkr_call(ivkr_find_method("Object", "GetType"), 1)
+		local type = new ObjectType()
+		repeat
+			switch type:GetFullName() do
+				case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo()
+				case "/EE/Types/Effects/LensFlare": return new LensFlare()
+				case "/EE/Types/Engine/Decoration": return new Decoration()
+				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar()
+				case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar()
+				case "/Lotus/Types/Game/LotusVehicleAvatar": return new LotusVehicleAvatar()
+			end
+			type = type:GetParent()
+		until not type
+		return new Entity()
 	else
 		ivkr_pop(1)
 	end
@@ -211,11 +225,12 @@ class Entity extends BaseEntity
 	__name = "Entity"
 
 	function GetPosition()
-		return new Vector(entity_get_pos(self.addr))
+		self:pushToIvkr()
+		return new Vector(entity_get_pos(ivkr_pop_object()))
 	end
 
 	function SetPosition(pos)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(pos.x)
 			ivkr_push_float(pos.y)
@@ -230,14 +245,14 @@ class Entity extends BaseEntity
 	end
 
 	function GetRotation()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
 		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetRotation(rot)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(rot.x)
 			ivkr_push_float(rot.y)
@@ -248,51 +263,51 @@ class Entity extends BaseEntity
 	end
 
 	function GetHealth()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetHealth"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetHealth(health)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(health)
 		ivkr_call(ivkr_find_method("Entity", "SetHealth"), 2)
 	end
 
 	function GetDrawOnTop()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetDrawOnTop"), 1)
 		return ivkr_pop_bool()
 	end
 
 	function SetDrawOnTop(b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("Entity", "SetDrawOnTop"), 2)
 	end
 
 	function GetMeshScale()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetMeshScale"), 1)
 		return ivkr_pop_number()
 	end
 
 	function SetMeshScale(f)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_float(f)
 		ivkr_call(ivkr_find_method("Entity", "SetMeshScale"), 2)
 	end
 
 	function SetMesh(object, b1, b2)
-		ivkr_push_object(self.addr)
-		ivkr_push_object(object.addr)
+		self:pushToIvkr()
+		object:pushToIvkr()
 		ivkr_push_bool(b1)
 		ivkr_push_bool(b2)
 		ivkr_call(ivkr_find_method("Entity", "SetMesh"), 4)
 	end
 
 	function Attach(type, symbol, optionalPosOffset)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -309,7 +324,7 @@ class Entity extends BaseEntity
 	end
 
 	function GetAttachment(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -319,33 +334,33 @@ class Entity extends BaseEntity
 	end
 
 	function GetTag()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetTag"), 1)
 		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(ivkr_pop_string())
 	end
 
 	function FirePort(port)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_string(port)
 		ivkr_call(ivkr_find_method("Entity", "FirePort"), 2)
 	end
 
 	function SetVisibility(visible, delegateToAttachments = false)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(visible)
 		ivkr_push_bool(delegateToAttachments)
 		ivkr_call(ivkr_find_method("Entity", "SetVisibility"), 3)
 	end
 
 	function GetSpeed()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetSpeed"), 1)
 		return ivkr_pop_number()
 	end
 
 	function Destroy()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "Destroy"), 1)
 	end
 end
@@ -354,49 +369,54 @@ class BaseAvatar extends Entity
 	__name = "BaseAvatar"
 
 	function GetMaxHealth(b = true)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetMaxHealth"), 2)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetMaxHealth(health, b = false)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(health)
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetMaxHealth"), 3)
 	end
 
 	function Suicide()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "Suicide"), 1)
 	end
 
 	function DamageControl()
-		if addr := baseavatar_get_damage_controller(self.addr) then
-			return new LotusDamageController(addr)
+		self:pushToIvkr()
+		if addr := baseavatar_get_damage_controller(ivkr_pop_object()) then
+			ivkr_push_object(addr)
+			return new LotusDamageController()
 		end
 	end
 
 	function InventoryControl()
-		if addr := baseavatar_get_inventory_controller(self.addr) then
-			local inventory = new LotusInventoryController(addr)
+		self:pushToIvkr()
+		if addr := baseavatar_get_inventory_controller(ivkr_pop_object()) then
+			ivkr_push_object(addr)
+			local inventory = new LotusInventoryController()
 			if not "NullInventoryController" in inventory:GetFullName() then
-				return new LotusInventoryController(addr)
+				return inventory
 			end
 		end
 	end
 
 	function InputControl()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "InputControl"), 1)
-		if addr := ivkr_pop_object() do
-			return new InputController(addr)
+		if ivkr_type(-1) > 0 do
+			return new InputController()
 		end
+		ivkr_pop(1)
 	end
 
 	function GiveItem(type, b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -406,22 +426,23 @@ class BaseAvatar extends Entity
 	end
 
 	function MotionControl()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "MotionControl"), 1)
-		if addr := ivkr_pop_object() do
-			return new MotionControllerBase(addr)
+		if ivkr_type(-1) > 0 do
+			return new MotionControllerBase()
 		end
+		ivkr_pop(1)
 	end
 
 	function GetView()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetView"), 1)
 		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetView(rot)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(rot.x)
 			ivkr_push_float(rot.y)
@@ -432,14 +453,14 @@ class BaseAvatar extends Entity
 	end
 
 	function GetCameraView()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetCameraView"), 1)
 		local ud = ivkr_pop_userdata()
 		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function SetCameraView(rot)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(rot.x)
 			ivkr_push_float(rot.y)
@@ -450,7 +471,7 @@ class BaseAvatar extends Entity
 	end
 
 	function SetEyePosition(pos)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(pos.x)
 			ivkr_push_float(pos.y)
@@ -461,39 +482,39 @@ class BaseAvatar extends Entity
 	end
 
 	function GetFaction()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetFaction"), 1)
 		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(ivkr_pop_string())
 	end
 
 	function GetOriginalFaction()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetOriginalFaction"), 1)
 		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(ivkr_pop_string())
 	end
 
 	function SetFaction(symbol)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetFaction"), 2)
 	end
 
 	function GetLocTag()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetLocTag"), 1)
 		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(ivkr_pop_string())
 	end
 
 	function ClearAgent()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "ClearAgent"), 1)
 	end
 
 	function PushInputFilter(resource)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(resource)
 			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
@@ -502,7 +523,7 @@ class BaseAvatar extends Entity
 	end
 
 	function SetCustomAnimController(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -511,7 +532,7 @@ class BaseAvatar extends Entity
 	end
 
 	function SetCustomMotionController(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -520,7 +541,7 @@ class BaseAvatar extends Entity
 	end
 
 	function SetCustomCameraController(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -534,11 +555,13 @@ class Avatar extends BaseAvatar
 
 	function ControlCamera(b)
 		-- Original function would write to EE.log but otherwise this is identical
-		avatar_set_followed_by_camera(self.addr, b)
+		self:pushToIvkr()
+		avatar_set_followed_by_camera(ivkr_pop_object(), b)
 	end
 
 	function isFollowedByCamera()
-		return avatar_get_followed_by_camera(self.addr)
+		self:pushToIvkr()
+		return avatar_get_followed_by_camera(ivkr_pop_object())
 	end
 end
 
@@ -546,14 +569,14 @@ class LotusAvatar extends Avatar
 	__name = "LotusAvatar"
 
 	function IsAvatarFriendly(other)
-		ivkr_push_object(self.addr)
-		ivkr_push_object(other.addr)
+		self:pushToIvkr()
+		other:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
 		return ivkr_pop_bool()
 	end
 
 	function PlayEmote(resource)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(resource)
 			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
@@ -562,25 +585,25 @@ class LotusAvatar extends Avatar
 	end
 
 	function GetUIName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusAvatar", "GetUIName"), 1)
 		return ivkr_pop_string()
 	end
 
 	function SetUIName(str)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_string(str)
 		ivkr_call(ivkr_find_method("LotusAvatar", "SetUIName"), 2)
 	end
 
 	function HasDynamicUIName()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusAvatar", "HasDynamicUIName"), 1)
 		return ivkr_pop_bool()
 	end
 
 	function SetDynamicUIName(b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("LotusAvatar", "SetDynamicUIName"), 2)
 	end
@@ -590,74 +613,74 @@ class DamageControllerBase extends Object
 	__name = "DamageControllerBase"
 
 	function GiveTemporaryImmunity(a, b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_float(a)
 		ivkr_push_float(b)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GiveTemporaryImmunity"), 3)
 	end
 
 	function HasTemporaryImmunity()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "HasTemporaryImmunity"), 1)
 		return ivkr_pop_bool()
 	end
 
 	function RemoveTemporaryImmunity()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "RemoveTemporaryImmunity"), 1)
 	end
 
 	function GetShield()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetShield"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetShield(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "SetShield"), 2)
 	end
 
 	function GetMaxShield()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetMaxShield"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetMaxShield(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "SetMaxShield"), 2)
 	end
 
 	-- compatibility
 	function getOverguard()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function GetOverguardAmount()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetOverguardAmount(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "SetOverguardAmount"), 2)
 	end
 
 	function GetOverguardMax()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardMax"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetOverguardMax(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("DamageControllerBase", "SetOverguardMax"), 2)
 	end
@@ -671,13 +694,13 @@ class LotusDamageController extends DamageController
 	__name = "LotusDamageController"
 
 	function GetArmourRating()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusDamageController", "GetArmourRating"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function SetArmourRating(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("LotusDamageController", "SetArmourRating"), 2)
 	end
@@ -687,20 +710,22 @@ class InventoryControllerBase extends Object
 	__name = "InventoryControllerBase"
 
 	function RemoveItem(slot, b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(slot)
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("InventoryControllerBase", "RemoveItem"), 3)
 	end
 
 	function GetWeaponInHand(hand)
-		if weapon := inventory_get_weapon_in_hand(self.addr, hand) then
-			return new LotusWeapon(weapon)
+		self:pushToIvkr()
+		if weapon := inventory_get_weapon_in_hand(ivkr_pop_object(), hand) then
+			ivkr_push_object(weapon)
+			return new LotusWeapon()
 		end
 	end
 
 	function AddUpgrade(upgradeType, operationType, value, _, _, damageType = DamageType.DT_ANY)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(upgradeType)
 		ivkr_push_int(operationType)
 		ivkr_push_float(value)
@@ -712,13 +737,15 @@ class LotusInventoryController extends InventoryControllerBase
 	__name = "LotusInventoryController"
 
 	function GetActivePowerSuit()
-		if addr := inventory_get_active_powersuit(self.addr) then
-			return new PowerSuit(addr)
+		self:pushToIvkr()
+		if addr := inventory_get_active_powersuit(ivkr_pop_object()) then
+			ivkr_push_object(addr)
+			return new PowerSuit()
 		end
 	end
 
 	function DoItemDrop()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_pop(ivkr_call(ivkr_find_method("LotusInventoryController", "DoItemDrop"), 1))
 	end
 end
@@ -729,13 +756,14 @@ class Item extends Object
 	function GetAttachmentEntity(category, hand = 4)
 		-- restricting category to avoid access violations
 		if category == 0 or category == 1 then
-			ivkr_push_object(self.addr)
+			self:pushToIvkr()
 			ivkr_push_int(category)
 			ivkr_push_int(hand)
 			ivkr_call(ivkr_find_method("Item", "GetAttachmentEntity"), 3)
-			if addr := ivkr_pop_object() then
-				return new Entity(addr)
+			if ivkr_type(-1) > 0 do
+				return new Entity()
 			end
+			ivkr_pop(1)
 		end
 	end
 end
@@ -749,8 +777,10 @@ class WeaponEx extends WeaponBase
 	__name = "WeaponEx"
 
 	function GetActiveImpactBehavior()
-		if addr := weaponex_get_active_impact_behavior(self.addr) then
-			return new WeaponImpactBehavior(addr)
+		self:pushToIvkr()
+		if addr := weaponex_get_active_impact_behavior(ivkr_pop_object()) then
+			ivkr_push_object(addr)
+			return new WeaponImpactBehavior()
 		end
 	end
 end
@@ -759,25 +789,25 @@ class LotusWeapon extends WeaponEx
 	__name = "LotusWeapon"
 
 	function GetXP()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusWeapon", "GetXP"), 1)
 		return ivkr_pop_number()
 	end
 
 	function SetXP(xp)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(xp)
 		ivkr_call(ivkr_find_method("LotusWeapon", "SetXP"), 2)
 	end
 
 	function GetCustomization()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusWeapon", "GetCustomization"), 1)
 		return new WeaponCustomization(ivkr_pop_userdata())
 	end
 
 	function SetCustomization(cust)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_userdata(cust.ud)
 		ivkr_call(ivkr_find_method("LotusWeapon", "SetCustomization"), 2)
 	end
@@ -794,7 +824,7 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				ivkr_push_object(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("WeaponImpactBehavior", name), 1)
 				return ivkr_pop_number()
 		end
@@ -805,7 +835,7 @@ class WeaponImpactBehavior extends Object
 			case "criticalHitChance":
 			case "criticalHitDamageMultiplier":
 			case "instantImpulse":
-				ivkr_push_object(self.addr)
+				self:pushToIvkr()
 				ivkr_push_float(value)
 				ivkr_call(ivkr_find_setter("WeaponImpactBehavior", name), 2)
 		end
@@ -816,31 +846,31 @@ class PowerSuit extends LotusWeapon
 	__name = "PowerSuit"
 
 	function SetEnergy(value)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_float(value)
 		ivkr_call(ivkr_find_method("PowerSuit", "SetEnergy"), 2)
 	end
 
 	function SetMaxEnergy(value)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_float(value)
 		ivkr_call(ivkr_find_method("PowerSuit", "SetMaxEnergy"), 2)
 	end
 
 	function GetUnmodifiedMaxEnergy()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("PowerSuit", "GetUnmodifiedMaxEnergy"), 1)
 		return ivkr_pop_number()
 	end
 
 	function GetCurEnergy()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("PowerSuit", "GetCurEnergy"), 1)
 		return ivkr_pop_number()
 	end
 
 	function GetMaxEnergy()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("PowerSuit", "GetMaxEnergy"), 1)
 		return ivkr_pop_number()
 	end
@@ -855,7 +885,7 @@ class InputController extends InputControllerBase
 	__name = "InputController"
 
 	function SetStopMovement(b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("InputController", "SetStopMovement"), 2)
 	end
@@ -865,23 +895,23 @@ class GameRules extends Object
 	__name = "GameRules"
 
 	function IsPauseMenuShowing()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("GameRules", "IsPauseMenuShowing"), 1)
 		return ivkr_pop_bool()
 	end
 
 	function RequestPause()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("GameRules", "RequestPause"), 1)
 	end
 
 	function RequestUnpause()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("GameRules", "RequestUnpause"), 1)
 	end
 
 	function RequestResource(name, callback)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_string(name)
 		ivkr_push_callback(callback)
 		ivkr_call(ivkr_find_method("GameRules", "RequestResource"), 3)
@@ -892,7 +922,7 @@ class GameRulesImpl extends GameRules
 	__name = "GameRulesImpl"
 
 	function SetPauseDisabled(b)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("GameRulesImpl", "SetPauseDisabled"), 2)
 	end
@@ -902,19 +932,19 @@ class LotusBaseGameRules extends GameRulesImpl
 	__name = "LotusBaseGameRules"
 
 	function GetCurrentStarChart()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetCurrentStarChart"), 1)
-		return new RadialSolarMap(ivkr_pop_object())
+		return new RadialSolarMap()
 	end
 
 	function GetStoreManifest()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetStoreManifest"), 1)
-		return new StoreManifest(ivkr_pop_object())
+		return new StoreManifest()
 	end
 
 	function AddActiveLevelAuraUpgrade(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -923,7 +953,7 @@ class LotusBaseGameRules extends GameRulesImpl
 	end
 
 	function RemoveActiveLevelAuraUpgrade(type)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -936,7 +966,7 @@ class LotusGameRules extends LotusBaseGameRules
 	__name = "LotusGameRules"
 
 	function OpenMissionContinueDialog()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_nil()
 		ivkr_call(ivkr_find_method("LotusGameRules", "OpenMissionContinueDialog"), 2)
 	end
@@ -945,7 +975,7 @@ end
 -- undocumented
 class LotusHubGameRules extends LotusBaseGameRules
 	function ReconnectToHub()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusHubGameRules", "ReconnectToHub"), 1)
 	end
 end
@@ -954,15 +984,15 @@ class LotusAttractModeGameRules extends GameRulesImpl
 	__name = "LotusAttractModeGameRules"
 
 	function GetStarChart()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusAttractModeGameRules", "GetStarChart"), 1)
-		return new RadialSolarMap(ivkr_pop_object())
+		return new RadialSolarMap()
 	end
 
 	function GetStoreManifest()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusAttractModeGameRules", "GetStoreManifest"), 1)
-		return new StoreManifest(ivkr_pop_object())
+		return new StoreManifest()
 	end
 end
 
@@ -970,7 +1000,7 @@ class RadialSolarMap extends Object
 	__name = "RadialSolarMap"
 
 	function GetRegions()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "GetRegions"), 1)
 		local t = {}
 		if ivkr_istable(-1) then
@@ -987,14 +1017,14 @@ class RadialSolarMap extends Object
 	end
 
 	function BuildMissionForLocation(symbol)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "BuildMissionForLocation"), 2)
 		return new LotusMissionInfo()
 	end
 
 	function SetLevelStreamingArgs(locationSymbol, openLevelArgs)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		locationSymbol:pushToIvkr()
 		openLevelArgs:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "SetLevelStreamingArgs"), 3)
@@ -1024,7 +1054,7 @@ class RadialRegion
 	end
 end
 
-class RadialSector extends owfClassBase
+class RadialSector extends owfPointer
 	__name = "RadialSector"
 
 	function __newindex(name, value)
@@ -1080,13 +1110,6 @@ end
 class LotusMissionInfo extends owfUserdata
 	__name = "LotusMissionInfo"
 
-	function __construct()
-		ivkr_push_string(tostring(self))
-		ivkr_push_value(-2)
-		ivkr_settable(-10002)
-		ivkr_pop(1)
-	end
-
 	function __index(name)
 		if LotusMissionInfo[name] then
 			return LotusMissionInfo[name]
@@ -1111,8 +1134,8 @@ class LotusMissionInfo extends owfUserdata
 			case "gameRules":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
-				if addr := ivkr_pop_pointer() then 
-					return new ObjectType(addr)
+				if ivkr_type(-1) > 0 then 
+					return new ObjectType()
 				end
 				ivkr_pop(1)
 				return nil
@@ -1167,7 +1190,7 @@ class LotusMissionInfo extends owfUserdata
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType(ivkr_pop_pointer()))
+				t:insert(new ObjectType())
 				++i
 			end
 			ivkr_pop(2)
@@ -1184,7 +1207,7 @@ class LotusMissionInfo extends owfUserdata
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType(ivkr_pop_pointer()))
+				t:insert(new ObjectType())
 				++i
 			end
 			ivkr_pop(2)
@@ -1201,7 +1224,7 @@ class LotusMissionInfo extends owfUserdata
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType(ivkr_pop_pointer()))
+				t:insert(new ObjectType())
 				++i
 			end
 			ivkr_pop(2)
@@ -1218,7 +1241,7 @@ class LotusMissionInfo extends owfUserdata
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType(ivkr_pop_pointer()))
+				t:insert(new ObjectType())
 				++i
 			end
 			ivkr_pop(2)
@@ -1229,7 +1252,7 @@ class LotusMissionInfo extends owfUserdata
 	end
 end
 
-class MissionAI extends owfClassBase
+class MissionAI extends owfPointer
 	__name = "MissionAI"
 
 	function __index(name)
@@ -1240,8 +1263,8 @@ class MissionAI extends owfClassBase
 			case "agent":
 				ivkr_push_pointer(self.addr)
 				ivkr_call(ivkr_find_getter("MissionAI", name), 1)
-				if addr := ivkr_pop_pointer() then 
-					return new ObjectType(addr)
+				if ivkr_type(-1) > 0 then 
+					return new ObjectType()
 				end
 				ivkr_pop(1)
 				return nil
@@ -1254,13 +1277,13 @@ class StoreManifest extends Object
 	__name = "StoreManifest"
 
 	function GetStoreItemsOfType(objectType)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_pointer(objectType.addr)
 		ivkr_call(ivkr_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
 		local t = {}
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-			t:insert(new StoreItem(ivkr_pop_object()))
+			t:insert(new StoreItem())
 			++i
 		end
 		ivkr_pop(2)
@@ -1272,19 +1295,19 @@ class StoreItem extends Object
 	__name = "StoreItem"
 
 	function GetProductCategory()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreItem", "GetProductCategory"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function ExcludeFromCodex()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreItem", "ExcludeFromCodex"), 1)
 		return ivkr_pop_bool()
 	end
 
 	function ShowInMarket()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreItem", "ShowInMarket"), 1)
 		return ivkr_pop_bool()
 	end
@@ -1294,13 +1317,13 @@ class MotionControllerBase extends Object
 	__name = "MotionControllerBase"
 
 	function GetSpeedMultiplier()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("MotionControllerBase", "GetSpeedMultiplier"), 1)
 		return ivkr_pop_number()
 	end
 
 	function SetSpeedMultiplier(f)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_float(f)
 		ivkr_call(ivkr_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
 	end
@@ -1310,14 +1333,14 @@ class CameraControllerBase extends Object
 	__name = "CameraControllerBase"
 
 	function implGetVector(funcName)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 1)
 		local ud = ivkr_pop_userdata()
 		return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 	end
 
 	function implSetVector(funcName, vec)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(vec.x)
 			ivkr_push_float(vec.y)
@@ -1416,12 +1439,12 @@ class NpcManager extends EngineNpcMgr
 	__name = "NpcManager"
 
 	function PauseAllAgents()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("NpcManager", "PauseAllAgents"), 1)
 	end
 
 	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
@@ -1441,7 +1464,7 @@ class NpcManager extends EngineNpcMgr
 		(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
 		ivkr_push_int(optionalLevel or 0)
 		ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
-		return new EngineNpcAgent(ivkr_pop_object())
+		return new EngineNpcAgent()
 	end
 end
 
@@ -1449,9 +1472,9 @@ class EngineNpcAgent extends Object
 	__name = "EngineNpcAgent"
 
 	function GetAvatar()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("EngineNpcAgent", "GetAvatar"), 1)
-		return new LotusNpcAvatar(ivkr_pop_object())
+		return new LotusNpcAvatar()
 	end
 end
 
@@ -1459,13 +1482,13 @@ class LotusNpcAvatar extends LotusAvatar
 	__name = "LotusNpcAvatar"
 
 	function GetEnhancementCount()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusNpcAvatar", "GetEnhancementCount"), 1)
 		return math.tointeger(ivkr_pop_number())
 	end
 
 	function GetEnhancementLocTag()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusNpcAvatar", "GetEnhancementLocTag"), 1)
 		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 		return new Symbol(ivkr_pop_string())
@@ -1476,7 +1499,7 @@ class LotusVehicleAvatar extends LotusNpcAvatar
 	__name = "LotusVehicleAvatar"
 
 	function GetRider()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusVehicleAvatar", "GetRider"), 1)
 		return pop_entity()
 	end
@@ -1490,12 +1513,12 @@ class LotusHudStatus extends HudStatus
 	__name = "LotusHudStatus"
 
 	function GetFlashMarkers()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusHudStatus", "GetFlashMarkers"), 1)
 		local t = {}
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-			t:insert(new FlashMarker(ivkr_pop_object()))
+			t:insert(new FlashMarker())
 			++i
 		end
 		ivkr_pop(2)
@@ -1503,23 +1526,23 @@ class LotusHudStatus extends HudStatus
 	end
 end
 
-class FlashMarker extends owfClassBase
+class FlashMarker extends owfUserdata
 	__name = "FlashMarker"
 
 	function ScreenX()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("FlashMarker", "ScreenX"), 1)
 		return ivkr_pop_number()
 	end
 
 	function ScreenY()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("FlashMarker", "ScreenY"), 1)
 		return ivkr_pop_number()
 	end
 
 	function ScreenZ()
-		ivkr_push_pointer(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("FlashMarker", "ScreenZ"), 1)
 		return ivkr_pop_number()
 	end
@@ -1530,23 +1553,23 @@ class FlashMarker extends owfClassBase
 		end
 		switch name do
 			case "garbage":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
 				return ivkr_pop_bool()
 
 			case "markerType":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
 				return math.tointeger(ivkr_pop_number())
 
 			case "distanceToEye":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
 				return ivkr_pop_number()
 
 			case "pos":
 				do
-					ivkr_push_pointer(self.addr)
+					self:pushToIvkr()
 					ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
 					local addr = mem_read_i64(ivkr_pop_userdata() + 0x18)
 					return new Vector(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
@@ -1554,9 +1577,9 @@ class FlashMarker extends owfClassBase
 				break
 
 			case "baseMarkerInfo":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("FlashMarker", "baseMarkerInfo"), 1)
-				return new BaseMarkerInfo(ivkr_pop_object())
+				return new BaseMarkerInfo()
 		end
 		error("Unknown field: "..name)
 	end
@@ -1566,13 +1589,13 @@ class BaseMarkerInfo extends Entity
 	__name = "BaseMarkerInfo"
 
 	function SetMarkerType(i)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetMarkerType"), 2)
 	end
 
 	function SetDisplayRange(range)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_float(range.min)
 			ivkr_push_float(range.max)
@@ -1586,7 +1609,7 @@ class LensFlare extends Entity
 	__name = "LensFlare"
 
 	function SetTint(color)
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		do
 			ivkr_push_int(color.r)
 			ivkr_push_int(color.g)
@@ -1602,12 +1625,12 @@ class Decoration extends Entity
 	__name = "Decoration"
 
 	function TriggerAnimation()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Decoration", "TriggerAnimation"), 1)
 	end
 
 	function IsTriggeredAnimationDone()
-		ivkr_push_object(self.addr)
+		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Decoration", "IsTriggeredAnimationDone"), 1)
 		return ivkr_pop_bool()
 	end
@@ -1621,7 +1644,7 @@ class WeaponCustomization
 
 	function SetSkin(objectType, i)
 		ivkr_push_userdata(self.ud)
-		ivkr_push_object(objectType.addr)
+		objectType:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
 	end
@@ -1690,6 +1713,11 @@ end
 setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
 
 function IsNull(val)
+	if val instanceof owfUserdata then
+		val:pushToIvkr()
+		ivkr_call(mem_read_i64(mem_scan_exe("33 82 99 7B 00 00 00 00") + 8), 1)
+		return ivkr_pop_bool()
+	end
 	return not val
 end
 
@@ -1706,7 +1734,7 @@ end
 function WeakResource(name)
 	ivkr_push_string(name)
 	ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
-	return new ObjectType(ivkr_pop_pointer())
+	return new ObjectType()
 end
 
 function Range(min, max)
@@ -1751,37 +1779,42 @@ OpenLevel = Engine.OpenLevel
 gRegion = {
 	function GetLocalPlayer()
 		if player := get_local_player() then
-			return new HumanPlayer(player)
+			ivkr_push_object(player)
+			return new HumanPlayer()
 		end
 	end,
 	function GetLocalPlayerAvatar()
 		if player := get_local_player() then
 			if avatar := player_get_avatar(player) then
-				return new_entity(avatar)
+				ivkr_push_object(avatar)
+				return pop_entity()
 			end
 		end
 	end,
 	function GetGameCamera()
 		if camera := get_game_camera() then
-			return new Entity(camera)
+			ivkr_push_object(camera)
+			return new Entity()
 		end
 	end,
 	function GetGameRules()
-		local obj = new Object(get_gamerules())
-		local type = obj:GetType()
+		ivkr_push_object(get_gamerules())
+		ivkr_push_object(get_gamerules())
+		ivkr_call(ivkr_find_method("Object", "GetType"), 1)
+		local type = new ObjectType()
 		if type:isNameInHierarchy("LotusAttractModeGameRules") then
-			return new LotusAttractModeGameRules(obj.addr)
+			return new LotusAttractModeGameRules()
 		end
 		if type:isNameInHierarchy("LotusHubGameRules") then
-			return new LotusHubGameRules(obj.addr)
+			return new LotusHubGameRules()
 		end
 		if type:isNameInHierarchy("LotusGameRules") then
-			return new LotusGameRules(obj.addr)
+			return new LotusGameRules()
 		end
 		if type:isNameInHierarchy("GameRulesImpl") then
-			return new GameRulesImpl(obj.addr)
+			return new GameRulesImpl()
 		end
-		return obj
+		return new Object()
 	end,
 	function GetAvatars()
 		ivkr_push_object(get_regionmgr())
@@ -1789,7 +1822,7 @@ gRegion = {
 		local t = {}
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-			t:insert(new LotusAvatar(ivkr_pop_object()))
+			t:insert(new LotusAvatar())
 			++i
 		end
 		ivkr_pop(2)
@@ -1799,8 +1832,8 @@ gRegion = {
 		ivkr_push_object(get_regionmgr())
 		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
-		if obj := ivkr_pop_object() then
-			return new LotusAvatar(obj)
+		if ivkr_type(-1) > 0 do
+			return new LotusAvatar()
 		else
 			ivkr_pop(1)
 		end
@@ -1813,7 +1846,7 @@ gRegion = {
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new LotusAvatar(ivkr_pop_object()))
+				t:insert(new LotusAvatar())
 				++i
 			end
 			ivkr_pop(2)
@@ -1849,7 +1882,7 @@ gRegion = {
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateObject"), 2)
-		return new Object(ivkr_pop_object())
+		return new Object()
 	end,
 	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
@@ -1859,7 +1892,7 @@ gRegion = {
 				ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 			end
 			do
-				ivkr_push_object(avatar.addr)
+				avatar:pushToIvkr()
 				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
 				if pos then -- optional for compatibility with older OpenWF versions
 					local ud = ivkr_get_userdata()
@@ -1869,7 +1902,7 @@ gRegion = {
 				end
 			end
 			do
-				ivkr_push_object(avatar.addr)
+				avatar:pushToIvkr()
 				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
 				if rot then -- optional for compatibility with older OpenWF versions
 					local ud = ivkr_get_userdata()
@@ -1885,7 +1918,7 @@ gRegion = {
 	function GetNpcMgr()
 		ivkr_push_object(get_regionmgr())
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetNpcMgr"), 1)
-		return new NpcManager(ivkr_pop_object())
+		return new NpcManager()
 	end,
 	function Raycast(fromPos, toPos, avatar, _, outPos)
 		ivkr_call(ivkr_find_ctor("Vector"), 0)
@@ -1903,7 +1936,7 @@ gRegion = {
 			ivkr_push_float(toPos.z)
 			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
-		ivkr_push_object(avatar.addr)
+		avatar:pushToIvkr()
 		ivkr_push_nil()
 		ivkr_push_value(-6)
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "Raycast"), 6)
