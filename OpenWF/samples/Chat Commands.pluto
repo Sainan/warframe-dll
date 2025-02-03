@@ -74,18 +74,18 @@ commands["/unpause"] = function(text)
 	gGameRules:RequestUnpause()
 end
 commands["/script"] = function(text)
-	local script = text:sub(text:find(" ") + 1)
-	if script:sub(-6) ~= ".pluto" then
-		script ..= ".pluto"
+	local query = text:sub(text:find(" ") + 1):lower()
+	if query:sub(-6) ~= ".pluto" then
+		query ..= ".pluto"
 	end
-	if script in owf_get_running_scripts() then
+	if script := owf_get_running_scripts():find(|x| -> x:lower() == query) then
 		owf_stop_script(script)
 		chat_system_reply($"Stopped {script}.")
-	elseif script in owf_get_available_scripts() then
+	elseif script := owf_get_available_scripts():find(|x| -> x:lower() == query) then
 		owf_start_script(script)
 		chat_system_reply($"Started {script}.")
 	else
-		chat_system_reply($"No such script: {script}")
+		chat_system_reply($"No such script: {query}")
 	end
 end
 commands["/quit"] = function()
