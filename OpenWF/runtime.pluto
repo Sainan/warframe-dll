@@ -1738,8 +1738,6 @@ function Type(name)
 	return name
 end
 
-Sleep = coroutine.sleep
-
 function Resource(name)
 	return name
 end
@@ -2198,6 +2196,8 @@ coroutine.sleep = function(ms)
 		yield()
 	until t <= os.millis()
 end
+
+Sleep = coroutine.sleep
 
 owf_internal_event_queue = {}
 owf_lambda_callbacks = {}
