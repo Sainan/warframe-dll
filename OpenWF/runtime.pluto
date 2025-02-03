@@ -1,8 +1,17 @@
 local { http, json, scheduler, url, vector3 } = require "*"
 
 Vector = vector3
-Vector3 = vector3
-Rotation = vector3
+Vector3 = vector3 -- compatibility
+
+class Rotation
+	function __construct(public heading = 0, public pitch = 0, public bank = 0)
+	end
+
+	function __tostring()
+		return $"Rotation({self.heading}, {self.pitch}, {self.bank})"
+	end
+end
+setmetatable(Rotation, { __call = |_, ...| -> new Rotation(...) })
 
 class owfPointer
 	function __construct(addr)
@@ -267,9 +276,9 @@ class Entity extends BaseEntity
 	function SetRotation(rot)
 		self:pushToIvkr()
 		do
-			ivkr_push_float(rot.x)
-			ivkr_push_float(rot.y)
-			ivkr_push_float(rot.z)
+			ivkr_push_float(rot.heading)
+			ivkr_push_float(rot.pitch)
+			ivkr_push_float(rot.bank)
 			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
 		ivkr_call(ivkr_find_method("Entity", "SetRotation"), 2)
@@ -457,9 +466,9 @@ class BaseAvatar extends Entity
 	function SetView(rot)
 		self:pushToIvkr()
 		do
-			ivkr_push_float(rot.x)
-			ivkr_push_float(rot.y)
-			ivkr_push_float(rot.z)
+			ivkr_push_float(rot.heading)
+			ivkr_push_float(rot.pitch)
+			ivkr_push_float(rot.bank)
 			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetView"), 2)
@@ -475,9 +484,9 @@ class BaseAvatar extends Entity
 	function SetCameraView(rot)
 		self:pushToIvkr()
 		do
-			ivkr_push_float(rot.x)
-			ivkr_push_float(rot.y)
-			ivkr_push_float(rot.z)
+			ivkr_push_float(rot.heading)
+			ivkr_push_float(rot.pitch)
+			ivkr_push_float(rot.bank)
 			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetCameraView"), 2)
@@ -1469,9 +1478,9 @@ class NpcManager extends EngineNpcMgr
 			ivkr_call(ivkr_find_ctor("Vector"), 3)
 		end
 		do
-			ivkr_push_float(rot.x)
-			ivkr_push_float(rot.y)
-			ivkr_push_float(rot.z)
+			ivkr_push_float(rot.heading)
+			ivkr_push_float(rot.pitch)
+			ivkr_push_float(rot.bank)
 			ivkr_call(ivkr_find_ctor("Rotation"), 3)
 		end
 		(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
@@ -1774,9 +1783,9 @@ function Engine.OpenLevel(args)
 end
 
 function AngleToDirection(rot)
-	ivkr_push_float(rot.x)
-	ivkr_push_float(rot.y)
-	ivkr_push_float(rot.z)
+	ivkr_push_float(rot.heading)
+	ivkr_push_float(rot.pitch)
+	ivkr_push_float(rot.bank)
 	ivkr_call(ivkr_find_ctor("Rotation"), 3)
 	ivkr_call(mem_read_i64(mem_scan_exe("05 E5 C6 F6 00 00 00 00") + 8), 1)
 	local ud = ivkr_pop_userdata()
@@ -1917,9 +1926,9 @@ gRegion = {
 				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
 				if rot then -- optional for compatibility with older OpenWF versions
 					local ud = ivkr_get_userdata()
-					mem_write_f32(ud + 0x20, rot.x)
-					mem_write_f32(ud + 0x24, rot.y)
-					mem_write_f32(ud + 0x28, rot.z)
+					mem_write_f32(ud + 0x20, rot.heading)
+					mem_write_f32(ud + 0x24, rot.pitch)
+					mem_write_f32(ud + 0x28, rot.bank)
 				end
 			end
 			ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateEntity"), 4)

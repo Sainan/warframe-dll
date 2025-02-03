@@ -1,7 +1,10 @@
 -- Classes
 
 Vector = require "pluto:vector3"
-Rotation = require "pluto:vector3"
+
+class Rotation
+	function __construct(public heading = 0, public pitch = 0, public bank = 0)
+	function __tostring()
 
 class ObjectType
 	function __eq(other)
