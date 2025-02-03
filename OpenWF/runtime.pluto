@@ -811,7 +811,6 @@ class WeaponImpactBehavior extends Object
 		end
 	end
 end
-WeaponImpactBehavior.__parent = nil -- Hack so our __index is used
 
 class PowerSuit extends LotusWeapon
 	__name = "PowerSuit"
@@ -1077,7 +1076,6 @@ class RadialSector extends owfClassBase
 		error("Unknown field: "..name)
 	end
 end
-RadialSector.__parent = nil -- Hack so our __index is used
 
 class LotusMissionInfo extends owfUserdata
 	__name = "LotusMissionInfo"
@@ -1230,7 +1228,6 @@ class LotusMissionInfo extends owfUserdata
 		return t
 	end
 end
-LotusMissionInfo.__parent = nil -- Hack so our __index is used
 
 class MissionAI extends owfClassBase
 	__name = "MissionAI"
@@ -1252,7 +1249,6 @@ class MissionAI extends owfClassBase
 		error("Unknown field: "..name)
 	end
 end
-MissionAI.__parent = nil -- Hack so our __index is used
 
 class StoreManifest extends Object
 	__name = "StoreManifest"
@@ -1565,7 +1561,6 @@ class FlashMarker extends owfClassBase
 		error("Unknown field: "..name)
 	end
 end
-FlashMarker.__parent = nil -- Hack so our __index is used
 
 class BaseMarkerInfo extends Entity
 	__name = "BaseMarkerInfo"
