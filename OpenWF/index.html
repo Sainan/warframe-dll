@@ -8,6 +8,13 @@
 	ul:has(li){margin-top:2px;padding-inline-start:30px}
 </style>
 <body>
+	<p id="checking_updates"></p>
+	<p id="update_check_fail" style="display:none"></p>
+	<p id="no_update" style="display:none"></p>
+	<p id="dll_to_dll_update" style="display:none"></p>
+	<p id="dll_to_hotfix_update" style="display:none"></p>
+	<p id="hotfix_to_hotfix_update" style="display:none"></p>
+	<hr>
 	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
 	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
@@ -36,6 +43,9 @@
 		});
 		document.querySelectorAll("option[value]").forEach(elm => {
 			elm.textContent = dict[elm.value];
+		});
+		document.querySelectorAll("p[id]").forEach(elm => {
+			elm.innerHTML = dict[elm.id];
 		});
 
 		fetch("/server_host").then(res => res.text()).then(res => {
@@ -128,7 +138,7 @@
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "custom" ? "" : "none";
 		}
 
-		let ws = new WebSocket(location.href);
+		let ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
 		let status_request_suffix = "?0";
 		const script_broadcast_requested = {};
 		function pollStatus() {
@@ -136,6 +146,7 @@
 		}
 		ws.onopen = function() {
 			pollStatus();
+			fetch("/request_version_broadcast");
 		};
 		ws.onmessage = function(e) {
 			const obj = JSON.parse(e.data);
@@ -243,6 +254,50 @@
 					}
 					ul.appendChild(li);
 				});
+			}
+
+			if ("version_broadcast" in obj) {
+				document.getElementById("dll_to_hotfix_update").style.display = "none";
+				document.getElementById("hotfix_to_hotfix_update").style.display = "none";
+				document.getElementById("dll_to_dll_update").style.display = "none";
+				document.getElementById("no_update").style.display = "none";
+				document.getElementById("update_check_fail").style.display = "none";
+				document.getElementById("checking_updates").style.display = "none";
+				if ("latest" in obj.version_broadcast) {
+					if (obj.version_broadcast.current) {
+						let local_version_full = obj.version_broadcast.current;
+						if (obj.version_broadcast.hotfix) {
+							local_version_full += " " + obj.version_broadcast.hotfix;
+						}
+						document.querySelectorAll(".local_version").forEach(x => { x.textContent = obj.version_broadcast.current; });
+						document.querySelectorAll(".local_version_full").forEach(x => { x.textContent = local_version_full; });
+						if (obj.version_broadcast.hotfix_available) {
+							document.querySelectorAll(".hotfix_available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
+							if (obj.version_broadcast.hotfix) {
+								document.getElementById("hotfix_to_hotfix_update").style.display = "block";
+							}
+							else {
+								document.getElementById("dll_to_hotfix_update").style.display = "block";
+							}
+						}
+						else if (obj.version_broadcast.latest) {
+							document.getElementById("no_update").style.display = "block";
+						}
+						else {
+							document.getElementById("dll_to_dll_update").style.display = "block";
+						}
+					}
+					else {
+						document.getElementById("update_check_fail").style.display = "block";
+					}
+				}
+				else {
+					document.getElementById("checking_updates").style.display = "block";
+				}
+			}
+
+			if ("reload" in obj) {
+				location.reload();
 			}
 
 			if ("full" in obj) {

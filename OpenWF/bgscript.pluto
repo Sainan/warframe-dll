@@ -1,5 +1,8 @@
 owf_register_custom_route("/teleport", "text/plain", "")
 owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
+owf_register_custom_route("/request_version_broadcast", "text/plain", "")
+owf_register_custom_route("/download_latest_hotfix", "text/plain", "")
+owf_register_custom_route("/check_for_updates", "text/plain", "")
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
 io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
@@ -22,7 +25,58 @@ if true then
 	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))
 end
 
-local json = require"pluto:json"
+local { crypto, http, json } = require "*"
+
+local requested_versions = false
+local current_version = ""
+local version_is_latest = nil
+local current_hotfix = ""
+local hotfix_available = ""
+local hotfix_available_sha256 = ""
+local downloading_hotfix = false
+
+local function send_version_broadcast()
+	owf_broadcast_message(json.encode({
+		version_broadcast = {
+			current = current_version,
+			latest = version_is_latest,
+			hotfix = current_hotfix,
+			hotfix_available = hotfix_available,
+		}
+	}))
+end
+
+local function check_for_updates()
+	owf_create_thread(function()
+		current_version = ""
+		version_is_latest = nil
+		local meta
+		if not OWF_PRIVATE_BUILD then
+			meta = http.request("https://openwf.io/supplementals/client%20drop-in/meta") |> json.decode
+		end
+		version_is_latest = false
+		if meta and meta.manifest then
+			local sha256 = crypto.sha256(io.contents("dwmapi.dll"))
+			local hotfix_sha256 = ""
+			if hotfix_bin := io.contents("OpenWF/Hotfix.bin") then
+				hotfix_sha256 = crypto.sha256(hotfix_bin)
+			end
+			version_is_latest = sha256 == meta.sha256
+			if dll := meta.manifest:find(|x| -> x.sha256 == sha256) then
+				current_version = dll.version
+				hotfix_available_sha256 = dll.latest_hotfix_sha256
+				if dll.latest_hotfix_sha256 ~= hotfix_sha256 then
+					hotfix_available = dll.latest_hotfix
+				end
+				if hotfix := meta.manifest:find(|x| -> x.sha256 == hotfix_sha256) then
+					current_hotfix = hotfix.name
+				end
+			end
+		end
+		send_version_broadcast()
+	end)
+end
+
 while pcall(yield) do
 	local markers = {}
 	if ply := gRegion:GetLocalPlayer() then
@@ -44,11 +98,42 @@ while pcall(yield) do
 	owf_set_bgscript_status_string(json.encode({ markers = markers }))
 	while evt := owf_next_event() do
 		if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
-			if evt.path:sub(1, 10) == "/teleport?" and not owf_get_prohibit_teleport() then
-				local arr = evt.path:sub(11):split(",")
-				if #arr == 3 then
-					gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
+			if evt.path:sub(1, 10) == "/teleport?" then
+				if not owf_get_prohibit_teleport() then
+					local arr = evt.path:sub(11):split(",")
+					if #arr == 3 then
+						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
+					end
 				end
+			elseif evt.path == "/request_version_broadcast" then
+				send_version_broadcast()
+				if not requested_versions then
+					requested_versions = true
+					check_for_updates()
+				end
+			elseif evt.path == "/download_latest_hotfix" then
+				if not downloading_hotfix then
+					downloading_hotfix = true
+					owf_create_thread(function()
+						if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.bin") then
+							if crypto.sha256(bin) == hotfix_available_sha256 then
+								io.contents("OpenWF/Hotfix.bin", bin)
+								http.request("http://localhost:61558/apply_hotfix")
+								current_hotfix = hotfix_available
+								hotfix_available = ""
+								hotfix_available_sha256 = ""
+								owf_broadcast_message[[{"reload":1}]]
+							else
+								print("Downloaded hotfix but checksum mismatches. Discarding it.")
+							end
+						else
+							print("Failed to download hotfix.")
+						end
+						downloading_hotfix = false
+					end)
+				end
+			elseif evt.path == "/check_for_updates" then
+				check_for_updates()
 			end
 		end
 	end
