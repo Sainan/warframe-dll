@@ -2240,6 +2240,7 @@ return function(f)
 			print(debug.traceback(e,2))
 		end
 	end
+	owf_create_thread = |x| -> sched:add(x)
 	local mainco
 	sched:add(function()
 		repeat
