@@ -401,6 +401,12 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 
 static void on_got_server_host()
 {
+	string::lower(server_host);
+	if (server_host.find(ObfusString(".warframe.com").str()) != std::string::npos)
+	{
+		server_host = ObfusString("localhost").str();
+	}
+
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
 	if (autologin && !did_auto_login)
 	{
