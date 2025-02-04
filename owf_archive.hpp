@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include <Mutex.hpp>
+
 struct owfArchive
 {
 	void load(const char* data, size_t size);
@@ -12,4 +14,6 @@ struct owfArchive
 
 	std::string data;
 };
+
+inline soup::Mutex g_archive_mtx;
 inline owfArchive g_archive;

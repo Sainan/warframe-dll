@@ -2715,7 +2715,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								ServerWebService::sendText(s, ObfusString("Reverting to pre-hotfix state").str());
 							}
 
-							g_archive = std::move(archive);
+							{
+								std::lock_guard lock(g_archive_mtx);
+								g_archive = std::move(archive);
+							}
 
 							restart_bgscript();
 						}

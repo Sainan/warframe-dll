@@ -1112,6 +1112,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		std::lock_guard lock(g_archive_mtx);
 		uint32_t size;
 		if (auto data = g_archive.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
 		{
@@ -1147,6 +1148,7 @@ owfScript::owfScript()
 	if (runtime.empty())
 #endif
 	{
+		std::lock_guard lock(g_archive_mtx);
 		uint32_t size;
 		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
 		runtime = std::string(data, size);
