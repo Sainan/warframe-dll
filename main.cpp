@@ -51,6 +51,7 @@ using namespace soup;
 #include "owf_overlay.hpp"
 #include "owf_scripting.hpp"
 #include "owf_structs.hpp"
+#include "owf_tunables.hpp"
 
 static bool disabled_xp_based_level_cap = false;
 #if PROVIDE_VERSION_INFO
@@ -69,6 +70,13 @@ static FARPROC og_WTSRegisterSessionNotification;
 static FARPROC og_WTSUnRegisterSessionNotification;
 extern "C" __declspec(dllexport) void WTSRegisterSessionNotification() { og_WTSRegisterSessionNotification(); }
 extern "C" __declspec(dllexport) void WTSUnRegisterSessionNotification() { og_WTSUnRegisterSessionNotification(); }
+
+
+// Cache tunables for faster access
+static bool prohibit_skip_mission_start_timer = false;
+static bool prohibit_fov_override = false;
+static bool prohibit_freecam = false;
+static bool prohibit_scripts = false;
 
 
 /*struct ParsedUrl
@@ -427,11 +435,24 @@ static void on_got_server_host()
 			jr = json::decode(res->body);
 		}
 
-		prohibit_skip_mission_start_timer = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_skip_mission_start_timer").str());
-		prohibit_fov_override = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_fov_override").str());
-		prohibit_freecam = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_freecam").str());
-		prohibit_teleport = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_teleport").str());
-		prohibit_scripts = jr && jr->isObj() && jr->reinterpretAsObj().contains(ObfusString("prohibit_scripts").str());
+		if (jr && jr->isObj())
+		{
+			std::lock_guard lock(owfTunables::mtx);
+
+			owfTunables::set.clear();
+			for (const auto& e : jr->reinterpretAsObj().children)
+			{
+				if (e.first->isStr())
+				{
+					owfTunables::set.emplace_back(joaat::hash(e.first->reinterpretAsStr().value));
+				}
+			}
+
+			prohibit_skip_mission_start_timer = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
+			prohibit_fov_override = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_fov_override"));
+			prohibit_freecam = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_freecam"));
+			prohibit_scripts = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_scripts"));
+		}
 
 		owfOverlay::redraw();
 	});

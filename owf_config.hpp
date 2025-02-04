@@ -26,10 +26,3 @@ inline bool ee_log_in_console;
 
 inline std::string lang_code;
 inline std::string webui_lang_code;
-
-// Tunables
-inline bool prohibit_skip_mission_start_timer = false;
-inline bool prohibit_fov_override = false;
-inline bool prohibit_freecam = false;
-inline bool prohibit_teleport = false;
-inline bool prohibit_scripts = false;

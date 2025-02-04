@@ -14,6 +14,7 @@ using namespace soup;
 #if !LOGGING
 #include "owf_console.hpp"
 #endif
+#include "owf_tunables.hpp"
 
 static HWND s_game_hwnd = 0;
 static Window w;
@@ -70,58 +71,70 @@ void owfOverlay::init()
 			w.setDrawFunc([](Window w, RenderTarget& rt)
 			{
 				rt.fill(Rgb::MAGENTA);
-
-				if (s_prelogin)
+				try
 				{
-					ObfusString brand("OpenWF");
-					rt.drawText(10 + 2, 10 + 2, brand, RasterFont::simple8(), Rgb::BLACK, 2);
-					rt.drawText(10, 10, brand, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 2);
-
-					std::string at;
-					at.push_back('@');
-					at.push_back(' ');
-					at.append(server_host);
-					rt.drawText(88 + 1, 18 + 1, at, RasterFont::simple8(), Rgb::BLACK, 1);
-					rt.drawText(88, 18, at, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
-
-					std::string banned;
-					if (prohibit_skip_mission_start_timer) { soup::string::listAppend(banned, ObfusString("Skip Mission Start Timer").str()); }
-					if (prohibit_fov_override) { soup::string::listAppend(banned, ObfusString("FOV Override").str()); }
-					if (prohibit_freecam) { soup::string::listAppend(banned, ObfusString("Freecam").str()); }
-					if (prohibit_teleport) { soup::string::listAppend(banned, ObfusString("Teleport").str()); }
-					if (prohibit_scripts) { soup::string::listAppend(banned, ObfusString("Scripts").str()); }
-					if (!banned.empty())
+					if (s_prelogin)
 					{
-						banned.insert(0, ObfusString("This server prohibits: ").str());
-						rt.drawText(10 + 1, 33 + 1, banned, RasterFont::simple8(), Rgb::BLACK, 1);
-						rt.drawText(10, 33, banned, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
-					}
-				}
+						ObfusString brand("OpenWF");
+						rt.drawText(10 + 2, 10 + 2, brand, RasterFont::simple8(), Rgb::BLACK, 2);
+						rt.drawText(10, 10, brand, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 2);
 
-				{
-					std::lock_guard lock(owfOverlay::mtx);
-					if (!owfOverlay::data.empty())
-					{
-						for (const auto& _item : owfOverlay::data)
+						std::string at;
+						at.push_back('@');
+						at.push_back(' ');
+						at.append(server_host);
+						rt.drawText(88 + 1, 18 + 1, at, RasterFont::simple8(), Rgb::BLACK, 1);
+						rt.drawText(88, 18, at, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+
+						std::string banned;
 						{
-							switch (_item->type)
+							std::lock_guard lock(owfTunables::mtx);
+							for (const auto& hash : owfTunables::set)
 							{
-							case DrawItem::RECT:
+								if (auto name = owfTunables::getProhibitionName(hash); !name.empty())
 								{
-									auto& item = static_cast<const owfOverlay::Rect&>(*_item);
-									rt.drawRect(item.x, item.y, item.width, item.height, Rgb{ item.r, item.g, item.b });
+									soup::string::listAppend(banned, std::move(name));
 								}
-								break;
+							}
+						}
+						if (!banned.empty())
+						{
+							banned.insert(0, ObfusString("This server prohibits: ").str());
+							rt.drawText(10 + 1, 33 + 1, banned, RasterFont::simple8(), Rgb::BLACK, 1);
+							rt.drawText(10, 33, banned, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+						}
+					}
 
-							case DrawItem::TEXT:
+					{
+						std::lock_guard lock(owfOverlay::mtx);
+						if (!owfOverlay::data.empty())
+						{
+							for (const auto& _item : owfOverlay::data)
+							{
+								switch (_item->type)
 								{
-									auto& item = static_cast<const owfOverlay::Text&>(*_item);
-									rt.drawText(item.x, item.y, item.text, *item.font, Rgb{ item.r, item.g, item.b }, item.scale);
+								case DrawItem::RECT:
+									{
+										auto& item = static_cast<const owfOverlay::Rect&>(*_item);
+										rt.drawRect(item.x, item.y, item.width, item.height, Rgb{ item.r, item.g, item.b });
+									}
+									break;
+
+								case DrawItem::TEXT:
+									{
+										auto& item = static_cast<const owfOverlay::Text&>(*_item);
+										rt.drawText(item.x, item.y, item.text, *item.font, Rgb{ item.r, item.g, item.b }, item.scale);
+									}
+									break;
 								}
-								break;
 							}
 						}
 					}
+				}
+				catch (const std::exception& e)
+				{
+					rt.fill(Rgb::MAGENTA);
+					rt.drawText(10, 10, e.what(), RasterFont::simple8(), Rgb::RED, 2);
 				}
 			});
 			w.setInvisibleColour(Rgb::MAGENTA);

@@ -115,7 +115,7 @@ while pcall(yield) do
 	while evt := owf_next_event() do
 		if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
 			if evt.path:sub(1, 10) == "/teleport?" then
-				if not owf_get_prohibit_teleport() then
+				if not owf_tunables_has("prohibit_teleport") then
 					local arr = evt.path:sub(11):split(",")
 					if #arr == 3 then
 						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))

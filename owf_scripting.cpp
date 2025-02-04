@@ -17,6 +17,7 @@
 #include "owf_config.hpp"
 #include "owf_luau.hpp"
 #include "owf_structs.hpp"
+#include "owf_tunables.hpp"
 
 using namespace soup;
 
@@ -1063,10 +1064,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushboolean(L, prohibit_teleport);
+		lua_pushboolean(L, owfTunables::has(soup::joaat::hash(luaL_checkstring(L, 1))));
 		return 1;
 	});
-	{ ObfusString name("owf_get_prohibit_teleport"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("owf_tunables_has"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
