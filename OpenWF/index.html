@@ -155,18 +155,10 @@
 				document.getElementById("console").checked = obj.console;
 			}
 
-			if ("camtype" in obj) {
-				if (obj.camtype) {
-					document.getElementById("camtype").value = obj.camtype;
-				}
-			}
-
-			if ("pos" in obj) {
-				document.getElementById("pos").value = obj.pos ?? "";
-			}
-
 			if ("bgscript_status_string" in obj) {
 				const bgscript_status = obj.bgscript_status_string ? JSON.parse(obj.bgscript_status_string) : {};
+				document.getElementById("camtype").value = bgscript_status.camtype ?? "gamecam";
+				document.getElementById("pos").value = bgscript_status.pos ?? "";
 				bgscript_status.markers ??= [];
 				const marker_set = {};
 				for (const marker of bgscript_status.markers) {

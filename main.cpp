@@ -1122,29 +1122,6 @@ static void populate_initial_status(JsonObject& obj)
 
 static void populate_pulled_status(JsonObject& obj, const std::vector<std::string>& arr)
 {
-	if (regionmgr)
-	{
-		if (auto local_player = regionmgr->GetLocalPlayer())
-		{
-			if (auto avatar = local_player->getAvatar())
-			{
-				std::string camtype = ObfusString("gamecam").str();
-				if (!avatar->followed_by_camera)
-				{
-					camtype = local_player->controlling_camera ? ObfusString("freecam").str() : ObfusString("lockcam").str();
-				}
-				obj.add(ObfusString("camtype"), std::move(camtype));
-
-				std::string pos_str;
-				pos_str = std::to_string(avatar->pos_x);
-				pos_str.push_back(',');
-				pos_str.append(std::to_string(avatar->pos_y));
-				pos_str.push_back(',');
-				pos_str.append(std::to_string(avatar->pos_z));
-				obj.add(ObfusString("pos"), std::move(pos_str));
-			}
-		}
-	}
 	{
 		std::lock_guard lock(running_scripts_mtx);
 		auto arr = soup::make_unique<JsonArray>();
