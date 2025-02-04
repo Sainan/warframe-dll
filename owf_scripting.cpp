@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include <joaat.hpp>
+#include <JsonObject.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
@@ -1047,7 +1048,15 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		bgscript_status_string = pluto_checkstring(L, 1);
+		std::string str = pluto_checkstring(L, 1);
+		if (bgscript_status_string != str)
+		{
+			bgscript_status_string = std::move(str);
+
+			JsonObject obj;
+			obj.add(ObfusString("bgscript_status_string").str(), bgscript_status_string);
+			owf_broadcast_message(obj.encode());
+		}
 		return 0;
 	});
 	{ ObfusString name("owf_set_bgscript_status_string"); lua_setglobal(L, name.c_str()); }

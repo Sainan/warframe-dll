@@ -1117,6 +1117,7 @@ static void restart_bgscript()
 static void populate_initial_status(JsonObject& obj)
 {
 	obj.add(ObfusString("console"), owfConsole::active);
+	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
 }
 
 static void populate_pulled_status(JsonObject& obj, const std::vector<std::string>& arr)
@@ -1144,7 +1145,6 @@ static void populate_pulled_status(JsonObject& obj, const std::vector<std::strin
 			}
 		}
 	}
-	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
 	{
 		std::lock_guard lock(running_scripts_mtx);
 		auto arr = soup::make_unique<JsonArray>();
