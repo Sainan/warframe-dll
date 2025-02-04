@@ -8,14 +8,14 @@ repeat
 		if not was_down then
 			was_down = true
 			if gRegion:GetLocalPlayerAvatar():isFollowedByCamera() then
-				print("Normal -> Freecam")
+				-- Normal -> Freecam
 				gRegion:GetLocalPlayer():setControllingCamera(true)
 				gRegion:GetLocalPlayerAvatar():ControlCamera(false)
 			elseif gRegion:GetLocalPlayer():isControllingCamera() then
-				print("Freecam -> Locked In Place")
+				-- Freecam -> Locked In Place
 				gRegion:GetLocalPlayer():setControllingCamera(false)
 			else
-				print("Locked In Place -> Normal")
+				-- Locked In Place -> Normal
 				gRegion:GetLocalPlayer():setControllingCamera(false)
 				gRegion:GetLocalPlayerAvatar():ControlCamera(true)
 			end
