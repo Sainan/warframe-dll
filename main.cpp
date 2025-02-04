@@ -1114,10 +1114,13 @@ static void restart_bgscript()
 	start_bgscript();
 }
 
-static JsonObject get_status_object(const std::vector<std::string>& arr)
+static void populate_initial_status(JsonObject& obj)
 {
-	JsonObject obj;
 	obj.add(ObfusString("console"), owfConsole::active);
+}
+
+static void populate_pulled_status(JsonObject& obj, const std::vector<std::string>& arr)
+{
 	if (regionmgr)
 	{
 		if (auto local_player = regionmgr->GetLocalPlayer())
@@ -1158,7 +1161,6 @@ static JsonObject get_status_object(const std::vector<std::string>& arr)
 		obj.add(ObfusString("script_log_sub"), script_log.substr(i));
 		obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 	}
-	return obj;
 }
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
@@ -2590,7 +2592,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/status"):
-						ServerWebService::sendText(s, get_status_object(arr).encodePretty());
+						{
+							JsonObject obj;
+							populate_initial_status(obj);
+							populate_pulled_status(obj, arr);
+							ServerWebService::sendText(s, obj.encodePretty());
+						}
 						break;
 
 					case soup::joaat::compileTimeHash("/toggle_console"):
@@ -2777,10 +2784,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
 					return true;
 				};
+				srv.on_websocket_connection_established = [](Socket& s, const HttpRequest&, ServerWebService&)
+				{
+					JsonObject obj;
+					populate_initial_status(obj);
+					ServerWebService::wsSendText(s, obj.encode());
+				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
 					auto arr = string::explode(msg.data, '?');
-					auto obj = get_status_object(arr);
+					JsonObject obj;
+					populate_pulled_status(obj, arr);
 					obj.add(ObfusString("full"), true);
 					ServerWebService::wsSendText(s, obj.encode());
 				};
