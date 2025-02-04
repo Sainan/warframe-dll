@@ -1,4 +1,5 @@
 owf_register_custom_route("/teleport", "text/plain", "")
+owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
 io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
