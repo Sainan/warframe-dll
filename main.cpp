@@ -1481,7 +1481,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				internet_connect_hook.detour = reinterpret_cast<void*>(&internet_connect_detour);
 				internet_connect_hook.target = internet_connect;
-				internet_connect_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
+				internet_connect_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 				internet_connect_hook.create();
 				internet_connect_hook.enable();
 
@@ -2160,7 +2160,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 				lua_AvatarEntry_excludedFromSimulacrum_get_hook.detour = reinterpret_cast<void*>(&lua_AvatarEntry_excludedFromSimulacrum_get_detour);
 				lua_AvatarEntry_excludedFromSimulacrum_get_hook.target = lua_AvatarEntry_excludedFromSimulacrum_get;
-				lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = Module(nullptr).range.scan(Pattern("CC CC CC CC CC CC CC CC CC CC CC CC CC")).as<void*>();
+				lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
 				std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = " << lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave << std::endl;
 #endif
