@@ -1071,22 +1071,29 @@ static uint32_t crc32c_impl_detour(uint32_t initial, const char* data, size_t si
 static void save_config()
 {
 	JsonObject config;
-	config.add(ObfusString("server_host"), server_host);
-	config.add(ObfusString("http_port"), http_port);
-	config.add(ObfusString("https_port"), https_port);
+
 	config.add(ObfusString("fallback_language"), fallback_language);
 	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
+
+	config.add(ObfusString("server_host"), server_host);
+	config.add(ObfusString("http_port"), http_port);
+	config.add(ObfusString("https_port"), https_port);
+	config.add(ObfusString("autologin"), autologin);
+	config.add(ObfusString("autologin_email"), autologin_email);
+	config.add(ObfusString("autologin_password"), autologin_password);
+
 	config.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
-	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
-	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
 	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
-	config.add(ObfusString("autologin"), autologin);
-	config.add(ObfusString("autologin_email"), autologin_email);
-	config.add(ObfusString("autologin_password"), autologin_password);
+
+	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
+	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	config.add(ObfusString("fov_override"), fov_override);
+	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
+
 	{
 		auto arr = soup::make_unique<JsonArray>();
 		for (const auto& path : auto_start_scripts)
@@ -1095,8 +1102,7 @@ static void save_config()
 		}
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
-	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
-	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
+
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
 

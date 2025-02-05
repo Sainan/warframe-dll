@@ -11,25 +11,29 @@
 	<h2>client_config.json</h2>
 	<p>The bootstrapper creates a client_config.json in your game folder. It has the following fields:</p>
 	<ul>
-		<li><code>server_host</code> — The hostname or IP address to redirect game traffic to. This should match <code>myAddress</code> in SpaceNinjaServer.</li>
-		<li><code>http_port</code> — The port to use for HTTP traffic. This should match <code>httpPort</code> in SpaceNinjaServer.</li>
-		<li><code>https_port</code> The port to use for HTTPS traffic. This should match <code>httpsPort</code> in SpaceNinjaServer.</li>
 		<li><code>fallback_language</code> — The language to use when Warframe.x64.exe was double-clicked or the argument was simply omitted.</li>
 		<li><code>fallback_graphicsDriver</code> — The graphics driver to use when Warframe.x64.exe was double-clicked or the argument was simply omitted.</li>
 		<li><code>fallback_cluster</code> — The cluster to use when Warframe.x64.exe was double-clicked or the argument was simply omitted. Can be <code>public</code>, <code>test</code>, or <code>dev</code> — the latter two enable some more logging.</li>
+
+		<li><code>server_host</code> — The hostname or IP address to redirect game traffic to. This should match <code>myAddress</code> in SpaceNinjaServer.</li>
+		<li><code>http_port</code> — The port to use for HTTP traffic. This should match <code>httpPort</code> in SpaceNinjaServer.</li>
+		<li><code>https_port</code> The port to use for HTTPS traffic. This should match <code>httpsPort</code> in SpaceNinjaServer.</li>
+		<li><code>autologin</code></li>
+		<li><code>autologin_email</code></li>
+		<li><code>autologin_password</code> — The whirlpool hash of the password to use for autologin. You can simply enter your password and it will automatically be hashed and overwritten.</li>
+
 		<li><code>high_damage_numbers_patch</code> — If true, patches the game to display the exact number of damage that you dealt to fix -2147483648 showing up on high damage.</li>
-		<li><code>skip_mission_start_timer</code> — If true, disables the 5 second wait before a mission starts.</li>
-		<li><code>fov_override</code> — If not 0, overrides the game's FOV setting. You can use any value from 1 to 226.</li>
 		<li><code>simulacrum_blacklisted</code> — If true, blacklisted enemies are shown in the Simulacrum. Defaults to false to match the game.</li>
 		<li><code>simulacrum_whitelisted</code> — If true, whitelisted enemies are shown in the Simulacrum. Defaults to true to match the game.</li>
 		<li><code>pause_always_stops_time</code></li>
 		<li><code>disable_nrs_connection</code> — If true, disables NRS connections, preventing the game from showing "Please ensure that your firewall permits UDP ports 4950 & 4955."</li>
-		<li><code>autologin</code></li>
-		<li><code>autologin_email</code></li>
-		<li><code>autologin_password</code> — The whirlpool hash of the password to use for autologin. You can simply enter your password and it will automatically be hashed and overwritten.</li>
-		<li><code>auto_start_scripts</code> — A list of scripts to automatically start, e.g. <code>["samples/Cycle Camera Hotkey (K).pluto"]</code>.</li>
-		<li><code>forced_profile_dir</code> — An absolute path to a folder that will be used to read and write your game settings. Notably, this can be used to have the same settings regardless of username.</li>
+
 		<li><code>ee_log_in_console</code> — If true, writes everything that gets written to EE.log to the console as well.</li>
+		<li><code>skip_mission_start_timer</code> — If true, disables the 5 second wait before a mission starts.</li>
+		<li><code>fov_override</code> — If not 0, overrides the game's FOV setting. You can use any value from 1 to 226.</li>
+		<li><code>forced_profile_dir</code> — An absolute path to a folder that will be used to read and write your game settings. Notably, this can be used to have the same settings regardless of username.</li>
+
+		<li><code>auto_start_scripts</code> — A list of scripts to automatically start, e.g. <code>["samples/Cycle Camera Hotkey (K).pluto"]</code>.</li>
 	</ul>
 	<h2>HTTP Interface</h2>
 	<p>While the game is running, the you can visit <a href="http://localhost:61558/" target="_blank">http://localhost:61558/</a> to modify some of the above options, access additional features like teleportation, and use scripts.</p>
