@@ -2094,6 +2094,7 @@ gMatchingService = {
 }
 
 gEntityType = Type("/EE/Types/Engine/Entity")
+gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
 gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")
