@@ -1,5 +1,7 @@
 #include "owf_overlay.hpp"
 
+#include <windows.h>
+
 //#include <iostream>
 
 #include <ObfusString.hpp>
@@ -19,11 +21,8 @@ using namespace soup;
 static HWND s_game_hwnd = 0;
 static Window w;
 static bool s_prelogin = true;
-static int s_x = -1;
-static int s_y = -1;
 static unsigned int s_w = -1;
 static unsigned int s_h = -1;
-static bool s_topmost = false;
 
 bool owfOverlay::isInited()
 {
@@ -68,6 +67,8 @@ void owfOverlay::init()
 			//std::cout << "Creating our window..." << std::endl;
 			const auto [width, height] = Window(s_game_hwnd).getSize();
 			w = Window::create(ObfusString("OpenWF Overlay"), width, height);
+			SetParent(w.h, s_game_hwnd);
+			w.setPos(0, 0);
 			w.setDrawFunc([](Window w, RenderTarget& rt)
 			{
 				rt.fill(Rgb::MAGENTA);
@@ -149,22 +150,11 @@ void owfOverlay::init()
 						const auto [width, height] = Window(s_game_hwnd).getSize();
 						const auto topmost = GetForegroundWindow() == s_game_hwnd;
 
-						if (s_x != x || s_y != y)
-						{
-							w.setPos(x, y);
-							s_x = x;
-							s_y = y;
-						}
 						if (s_w != width || s_h != height)
 						{
 							w.setSize(width, height);
 							s_w = width;
 							s_h = height;
-						}
-						if (s_topmost != topmost)
-						{
-							w.setTopmost(topmost);
-							s_topmost = topmost;
 						}
 					}
 				});
