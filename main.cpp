@@ -2704,7 +2704,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/clear_script_log"):
-						script_log.clear();
+						{
+							std::lock_guard lock(script_log_mtx);
+							script_log.clear();
+						}
 						ServerWebService::sendText(s, {});
 						break;
 
