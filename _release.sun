@@ -3,6 +3,8 @@ dynamic
 +*.cpp
 require ../Soup/soup
 require ../Pluto/src
+arg -Wno-invalid-offsetof
+
 arg -O3
 
 arg -DLOGGING=false
