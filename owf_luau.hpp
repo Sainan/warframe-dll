@@ -70,18 +70,18 @@ struct luau_Closure
 	PAD(0x04, 0x18) luau_CFunction func;
 };
 
-inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
+/*inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	if (nsize == 0)
 	{
-		free(ptr);
+		soup::free(ptr);
 		return nullptr;
 	}
 	else
 	{
-		return realloc(ptr, nsize);
+		return soup::realloc(ptr, nsize);
 	}
-}
+}*/
 
 /*using luau_newstate_t = luau_State*(*)(luau_Alloc f, void* ud, char);
 inline luau_newstate_t luau_newstate = nullptr;*/

@@ -25,6 +25,10 @@ if true then
 	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))
 end
 
+if not io.exists("OpenWF/Label Replacements.cat.txt") then
+	io.contents("OpenWF/Label Replacements.cat.txt", "/Menu/ProjectName: Warframe [OpenWF]")
+end
+
 local { crypto, http, json } = require "*"
 
 local requested_versions = false

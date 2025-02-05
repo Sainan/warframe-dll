@@ -13,8 +13,11 @@
 #include <iostream>
 #include <mutex>
 
+#include <alloc.hpp>
+#include <cat.hpp>
 #include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
+#include <FileReader.hpp>
 #include <filesystem.hpp>
 #include <HttpRequest.hpp>
 #include <joaat.hpp>
@@ -1015,6 +1018,58 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 #if LABEL_REPLACEMENTS
 static CompactDetourHook check_string_substitutions_hook;
 
+struct PermanentString
+{
+	size_t size;
+	char data[1];
+};
+static std::unordered_map<uint32_t, PermanentString*> permanent_strings;
+static PermanentString* fossilise_string(const char* data, size_t size)
+{
+	const auto hash = soup::joaat::hashRange(data, size);
+	if (auto e = permanent_strings.find(hash); e != permanent_strings.end())
+	{
+		return e->second;
+	}
+	auto ps = (PermanentString*)soup::malloc(offsetof(PermanentString, data) + size + 1);
+	ps->size = size;
+	memcpy(ps->data, data, size);
+	ps->data[size] = 0;
+	permanent_strings.emplace(hash, ps);
+	return ps;
+}
+
+static uint8_t to_lower_table[256] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255 };
+static uint32_t lower_hash(const char* data, size_t size)
+{
+	uint32_t val = 0;
+	while (size-- != 0)
+	{
+		val += to_lower_table[*(uint8_t*)(data++)];
+		val += (val << 10);
+		val ^= (val >> 6);
+	}
+	return (0x8001 * (((uint32_t)(9 * val) >> 11) ^ (9 * val)));
+}
+
+static Mutex label_replacements_mtx;
+static std::unordered_map<uint32_t, PermanentString*> label_replacements;
+static void load_label_replacements()
+{
+	std::lock_guard lock(label_replacements_mtx);
+	label_replacements.clear();
+	FileReader fr(ObfusString("OpenWF/Label Replacements.cat.txt"));
+	if (auto root = soup::cat::parse(fr))
+	{
+		for (const auto& e : root->children)
+		{
+			const auto hash = lower_hash(e->name.data(), e->name.size());
+			const auto ps = fossilise_string(e->value.data(), e->value.size());
+			label_replacements.emplace(hash, ps);
+		}
+	}
+}
+
 static void check_string_substitutions_detour(GameString* str, void* substitutions, GameString* loctag, bool dont_log)
 {
 	if (dont_resolve_labels)
@@ -1022,10 +1077,14 @@ static void check_string_substitutions_detour(GameString* str, void* substitutio
 		std::swap(*str, *loctag);
 		return;
 	}
-	/*if (loctag->getSize() == 17 && memcmp(loctag->getData(), "/Menu/ProjectName", 17) == 0)
 	{
-		str->setUnownedData("Warframe with OpenWF", 20); // This is fine, but it means we can't ever mutate our replacements.
-	}*/
+		const auto hash = lower_hash(loctag->getData(), loctag->getSize());
+		std::lock_guard lock(label_replacements_mtx);
+		if (auto e = label_replacements.find(hash); e != label_replacements.end())
+		{
+			str->setUnownedData(e->second->data, e->second->size);
+		}
+	}
 	return reinterpret_cast<decltype(&check_string_substitutions_detour)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
 }
 #endif
@@ -2412,6 +2471,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		start_bgscript();
 
+#if LABEL_REPLACEMENTS
+		load_label_replacements();
+#endif
+
 		if (!auto_start_scripts.empty())
 		{
 			ObfusString base_path("OpenWF/scripts/");
@@ -2838,6 +2901,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/version"):
 						ServerWebService::sendText(s, ObfusString(BOOTSTRAPPER_TITLE).str());
 						break;
+
+#if LABEL_REPLACEMENTS
+					case soup::joaat::compileTimeHash("/check_label_replacements"):
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/reload_label_replacements"):
+						load_label_replacements();
+						ServerWebService::send204(s);
+						break;
+#endif
 
 					default:
 						{
