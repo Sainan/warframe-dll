@@ -4,6 +4,7 @@
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
+#define LABEL_REPLACEMENTS true
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
@@ -1011,6 +1012,25 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 }
 
 
+#if LABEL_REPLACEMENTS
+static CompactDetourHook check_string_substitutions_hook;
+
+static void check_string_substitutions_detour(GameString* str, void* substitutions, GameString* loctag, bool dont_log)
+{
+	if (dont_resolve_labels)
+	{
+		std::swap(*str, *loctag);
+		return;
+	}
+	/*if (loctag->getSize() == 17 && memcmp(loctag->getData(), "/Menu/ProjectName", 17) == 0)
+	{
+		str->setUnownedData("Warframe with OpenWF", 20); // This is fine, but it means we can't ever mutate our replacements.
+	}*/
+	return reinterpret_cast<decltype(&check_string_substitutions_detour)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
+}
+#endif
+
+
 #if VERBOSE_RNG
 static int64_t* lua_seed;
 static luau_CFunction lua_SetSeed_og;
@@ -1093,7 +1113,6 @@ static void save_config()
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
-
 	{
 		auto arr = soup::make_unique<JsonArray>();
 		for (const auto& path : auto_start_scripts)
@@ -1102,6 +1121,7 @@ static void save_config()
 		}
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
+	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
@@ -1446,6 +1466,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				ee_log_in_console = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("dont_resolve_labels")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				dont_resolve_labels = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				dont_resolve_labels = false;
 			}
 		}
 		save_config();
@@ -2345,6 +2374,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		{
+			SIG_INST("4C 8B DC 57 41 57 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
+			auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
+			if (check_string_substitutions)
+			{
+				check_string_substitutions_hook.detour = reinterpret_cast<void*>(&check_string_substitutions_detour);
+				check_string_substitutions_hook.target = check_string_substitutions;
+				check_string_substitutions_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+				std::cout << "check_string_substitutions_hook.code_cave = " << check_string_substitutions_hook.code_cave << std::endl;
+#endif
+				check_string_substitutions_hook.create();
+				check_string_substitutions_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
 			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
@@ -2530,6 +2579,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							ee_log_in_console = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(ee_log_in_console));
+						break;
+
+					case soup::joaat::compileTimeHash("/dont_resolve_labels"):
+						if (arr.size() > 1)
+						{
+							dont_resolve_labels = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(dont_resolve_labels));
 						break;
 
 					case soup::joaat::compileTimeHash("/pause_always_stops_time"):

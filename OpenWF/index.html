@@ -22,6 +22,7 @@
 	<p><label for="simulacrum_whitelisted"></label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
 	<p><label for="pause_always_stops_time"></label> <input id="pause_always_stops_time" type="checkbox" /></p>
 	<p><label for="ee_log_in_console"></label> <input id="ee_log_in_console" type="checkbox" /></p>
+	<p><label for="dont_resolve_labels"></label> <input id="dont_resolve_labels" type="checkbox" /></p>
 	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<p><button id="save_config" style="margin-top:3px"></button></p>
 	<hr>
@@ -91,6 +92,13 @@
 		});
 		document.getElementById("ee_log_in_console").onchange = function() {
 			fetch("/ee_log_in_console?" + this.checked);
+		};
+
+		fetch("/dont_resolve_labels").then(res => res.text()).then(res => {
+			document.getElementById("dont_resolve_labels").checked = (res == "1");
+		});
+		document.getElementById("dont_resolve_labels").onchange = function() {
+			fetch("/dont_resolve_labels?" + this.checked);
 		};
 
 		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {
