@@ -62,18 +62,32 @@ static ObfusString runtime_script_name("OpenWF Script Runtime");
 
 static std::unordered_map<uint32_t, uintptr_t> lua_exe_scan_cache;
 
-void owfScript::logNl(const std::string& msg)
+void owfScript::logNl(std::string msg)
 {
-	std::cout << msg << std::endl;
-	std::lock_guard lock(script_log_mtx);
-	script_log.append(msg).push_back('\n');
+	msg.push_back('\n');
+	owfScript::log(std::move(msg));
 }
 
-void owfScript::log(const std::string& msg)
+void owfScript::log(std::string msg)
 {
 	std::cout << msg;
-	std::lock_guard lock(script_log_mtx);
-	script_log.append(msg);
+
+	size_t script_log_olen;
+	size_t script_log_nlen;
+	{
+		std::lock_guard lock(script_log_mtx);
+		script_log_olen = script_log.size();
+		script_log.append(msg);
+		script_log_nlen = script_log.size();
+	}
+
+	{
+		JsonObject obj;
+		obj.add(ObfusString("script_log_olen"), static_cast<int64_t>(script_log_olen));
+		obj.add(ObfusString("script_log_nlen"), static_cast<int64_t>(script_log_nlen));
+		obj.add(ObfusString("script_log_app"), std::move(msg));
+		owf_broadcast_message(obj.encode());
+	}
 }
 
 owfScript::owfScript()

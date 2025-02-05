@@ -50,8 +50,8 @@ struct owfScript
 	std::unordered_set<std::string> callbacks;
 	std::deque<Event> events;
 
-	static void logNl(const std::string& msg);
-	static void log(const std::string& msg);
+	static void logNl(std::string msg);
+	static void log(std::string msg);
 
 	owfScript();
 

@@ -1141,7 +1141,7 @@ static void populate_initial_status(JsonObject& obj)
 	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
 }
 
-static void populate_pulled_status(JsonObject& obj, const std::vector<std::string>& arr)
+static void populate_pulled_status(JsonObject& obj)
 {
 	{
 		std::lock_guard lock(running_scripts_mtx);
@@ -1152,13 +1152,13 @@ static void populate_pulled_status(JsonObject& obj, const std::vector<std::strin
 		}
 		obj.add(ObfusString("running_scripts"), std::move(arr));
 	}
-	if (arr.size() > 1)
-	{
-		const size_t i = strtoull(arr[1].c_str(), nullptr, 0);
-		std::lock_guard lock(script_log_mtx);
-		obj.add(ObfusString("script_log_sub"), script_log.substr(i));
-		obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
-	}
+}
+
+static void populate_full_script_log(JsonObject& obj)
+{
+	std::lock_guard lock(script_log_mtx);
+	obj.add(ObfusString("script_log"), script_log);
+	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 }
 
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
@@ -2593,7 +2593,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							JsonObject obj;
 							populate_initial_status(obj);
-							populate_pulled_status(obj, arr);
+							populate_pulled_status(obj);
+							populate_full_script_log(obj);
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
 						break;
@@ -2708,6 +2709,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							std::lock_guard lock(script_log_mtx);
 							script_log.clear();
 						}
+						{
+							JsonObject obj;
+							populate_full_script_log(obj);
+							owf_broadcast_message(obj.encode());
+						}
 						ServerWebService::sendText(s, {});
 						break;
 
@@ -2792,14 +2798,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				{
 					JsonObject obj;
 					populate_initial_status(obj);
+					populate_full_script_log(obj);
 					ServerWebService::wsSendText(s, obj.encode());
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
-					auto arr = string::explode(msg.data, '?');
 					JsonObject obj;
-					populate_pulled_status(obj, arr);
-					obj.add(ObfusString("full"), true);
+					if (joaat::hash(msg.data) == joaat::compileTimeHash("script_log"))
+					{
+						populate_full_script_log(obj);
+					}
+					else
+					{
+						populate_pulled_status(obj);
+						obj.add(ObfusString("full"), true);
+					}
 					ServerWebService::wsSendText(s, obj.encode());
 				};
 				if (serv.bind(61558, &srv))

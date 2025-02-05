@@ -31,7 +31,7 @@
 	<hr>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
-	<p><button id="clear_script_log" onclick="clearScriptLog()"></button></p>
+	<p><button id="clear_script_log" onclick="fetch('/clear_script_log')"></button></p>
 	<p><label for="console"></label> <input id="console" type="checkbox" /></p>
 	<script src="/dict.js"></script>
 	<script>
@@ -139,10 +139,10 @@
 		}
 
 		let ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
-		let status_request_suffix = "?0";
+		let script_log_len = -1;
 		const script_broadcast_requested = {};
 		function pollStatus() {
-			ws.send("/status" + status_request_suffix);
+			ws.send("status");
 		}
 		ws.onopen = function() {
 			pollStatus();
@@ -211,12 +211,27 @@
 				}
 			}
 
-			if ("script_log_sub" in obj) {
-				if (obj.script_log_sub) {
+			if ("script_log" in obj) {
+				const log = document.getElementById("script_log");
+				log.textContent = obj.script_log;
+				log.scrollTop = log.scrollHeight;
+
+				script_log_len = obj.script_log_len;
+			}
+
+			if ("script_log_app" in obj) {
+				if (script_log_len == obj.script_log_olen) {
+					script_log_len = obj.script_log_nlen;
+
 					const log = document.getElementById("script_log");
-					log.textContent += obj.script_log_sub;
+					log.textContent += obj.script_log_app;
 					log.scrollTop = log.scrollHeight;
-					status_request_suffix = "?" + obj.script_log_len;
+				}
+				else {
+					console.warn("unable to append script log", { script_log_len, obj });
+					if (script_log_len != -1) {
+						ws.send("script_log");
+					}
 				}
 			}
 
@@ -300,14 +315,6 @@
 			console.error(e);
 			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="/">` + dict.err_retry + `</a></p>`;
 		};
-
-		function clearScriptLog() {
-			status_request_suffix = "";
-			fetch("/clear_script_log").then(() => {
-				status_request_suffix = "?0";
-				document.getElementById("script_log").innerHTML = "";
-			});
-		}
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
