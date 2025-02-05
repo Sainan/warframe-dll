@@ -570,6 +570,28 @@ class BaseAvatar extends Entity
 		end
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomCameraController"), 2))
 	end
+
+	function EnableRagdollRecovery(b1, b2)
+		self:pushToIvkr()
+		ivkr_push_bool(b1)
+		ivkr_push_bool(b2)
+		ivkr_call(ivkr_find_method("BaseAvatar", "EnableRagdollRecovery"), 3)
+	end
+
+	function DamageDD(damageData)
+		self:pushToIvkr()
+		damageData:pushToIvkr()
+		ivkr_call(ivkr_find_method("BaseAvatar", "DamageDD"), 2)
+	end
+
+	function GetRagdoll()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetRagdoll"), 1)
+		if ivkr_type(-1) > 0 do
+			return new Ragdoll()
+		end
+		ivkr_pop(1)
+	end
 end
 
 class Avatar extends BaseAvatar
@@ -1658,6 +1680,22 @@ class Decoration extends Entity
 	end
 end
 
+class Ragdoll extends Entity
+	__name = "Ragdoll"
+
+	function ApplyGlobalForce(vec, forceType)
+		self:pushToIvkr()
+		do
+			ivkr_push_float(vec.x)
+			ivkr_push_float(vec.y)
+			ivkr_push_float(vec.z)
+			ivkr_call(ivkr_find_ctor("Vector"), 3)
+		end
+		ivkr_push_int(forceType)
+		ivkr_call(ivkr_find_method("Ragdoll", "ApplyGlobalForce"), 3)
+	end
+end
+
 class WeaponCustomization
 	__name = "WeaponCustomization"
 
@@ -1708,6 +1746,38 @@ class Engine.OpenLevelArgs extends owfUserdata
 	end
 end
 getmetatable(Engine.OpenLevelArgs).__call = || -> new Engine.OpenLevelArgs()
+
+class Engine.DamageData extends owfUserdata
+	__name = "Engine.DamageData"
+
+	function __construct()
+		ivkr_push_string(tostring(self))
+		ivkr_call(ivkr_find_ctor("DamageData"), 0)
+		ivkr_settable(-10002)
+	end
+
+	function __index(name)
+		if Object[name] then
+			return Object[name]
+		end
+		switch name do
+			case "injuryType":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("DamageData", name), 1)
+				return math.tointeger(ivkr_pop_number())
+		end
+	end
+
+	function __newindex(name, value)
+		switch name do
+			case "injuryType":
+				self:pushToIvkr()
+				ivkr_push_int(value)
+				ivkr_call(ivkr_find_setter("DamageData", name), 2)
+		end
+	end
+end
+getmetatable(Engine.DamageData).__call = || -> new Engine.DamageData()
 
 class Symbol
 	__name = "Symbol"
@@ -2100,6 +2170,33 @@ OperationType = {
 }
 
 DamageType = UpgradeType
+
+Injury = {
+	PAIN = 0,
+	INJURY_RESISTED = 1,
+	INJURY_BLOCKED = 2,
+	STAGGER = 3,
+	BIG_STAGGER = 4,
+	STUN = 5,
+	KNOCKDOWN = 6,
+	GROUNDFIRE = 7,
+	THROW = 8,
+	RAGDOLL = 9,
+	PRE_DEATH = 10,
+	DEATH = 11,
+	DEATH_RAGDOLL = 12,
+	DEATH_SLICE = 13,
+	DEATH_SEVER = 14,
+	ANY = 15,
+	MAX_Injury = 16
+}
+
+ForceType = {
+	FT_FORCE = 0,
+	FT_IMPULSE = 1,
+	FT_VELOCITY_CHANGE = 2,
+	FT_ACCELERATION = 3,
+}
 
 mem_rip = function(addr)
 	return addr + mem_read_i32(addr) + 4
