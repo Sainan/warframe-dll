@@ -147,10 +147,8 @@ class Player extends Object
 
 	function GetAvatar()
 		self:pushToIvkr()
-		if avatar := player_get_avatar(ivkr_pop_object()) then
-			ivkr_push_object(avatar)
-			return new LotusAvatar()
-		end
+		ivkr_call(ivkr_find_method("Player", "GetAvatar"), 1)
+		return new LotusAvatar()
 	end
 
 	function GetPlayerName()
@@ -411,20 +409,16 @@ class BaseAvatar extends Entity
 
 	function DamageControl()
 		self:pushToIvkr()
-		if addr := baseavatar_get_damage_controller(ivkr_pop_object()) then
-			ivkr_push_object(addr)
-			return new LotusDamageController()
-		end
+		ivkr_call(ivkr_find_method("BaseAvatar", "DamageControl"), 1)
+		return new LotusDamageController()
 	end
 
 	function InventoryControl()
 		self:pushToIvkr()
-		if addr := baseavatar_get_inventory_controller(ivkr_pop_object()) then
-			ivkr_push_object(addr)
-			local inventory = new LotusInventoryController()
-			if not "NullInventoryController" in inventory:GetFullName() then
-				return inventory
-			end
+		ivkr_call(ivkr_find_method("BaseAvatar", "InventoryControl"), 1)
+		local inventory = new LotusInventoryController()
+		if not "NullInventoryController" in inventory:GetFullName() then
+			return inventory
 		end
 	end
 
@@ -762,10 +756,9 @@ class InventoryControllerBase extends Object
 
 	function GetWeaponInHand(hand)
 		self:pushToIvkr()
-		if weapon := inventory_get_weapon_in_hand(ivkr_pop_object(), hand) then
-			ivkr_push_object(weapon)
-			return new LotusWeapon()
-		end
+		ivkr_push_int(hand)
+		ivkr_call(ivkr_find_method("InventoryControllerBase", "GetWeaponInHand"), 2)
+		return new LotusWeapon()
 	end
 
 	function AddUpgrade(upgradeType, operationType, value, _, _, damageType = DamageType.DT_ANY)
@@ -782,10 +775,8 @@ class LotusInventoryController extends InventoryControllerBase
 
 	function GetActivePowerSuit()
 		self:pushToIvkr()
-		if addr := inventory_get_active_powersuit(ivkr_pop_object()) then
-			ivkr_push_object(addr)
-			return new PowerSuit()
-		end
+		ivkr_call(ivkr_find_method("LotusInventoryController", "GetActivePowerSuit"), 1)
+		return new PowerSuit()
 	end
 
 	function DoItemDrop()
@@ -822,10 +813,8 @@ class WeaponEx extends WeaponBase
 
 	function GetActiveImpactBehavior()
 		self:pushToIvkr()
-		if addr := weaponex_get_active_impact_behavior(ivkr_pop_object()) then
-			ivkr_push_object(addr)
-			return new WeaponImpactBehavior()
-		end
+		ivkr_call(ivkr_find_method("WeaponEx", "GetActiveImpactBehavior"), 1)
+		return new WeaponImpactBehavior()
 	end
 end
 
