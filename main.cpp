@@ -790,6 +790,29 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 }
 
 
+static void populate_running_scripts_locked(JsonObject& obj)
+{
+	auto arr = soup::make_unique<JsonArray>();
+	for (const auto& scr : running_scripts)
+	{
+		arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
+	}
+	obj.add(ObfusString("running_scripts"), std::move(arr));
+}
+
+static void populate_running_scripts(JsonObject& obj)
+{
+	std::lock_guard lock(running_scripts_mtx);
+	return populate_running_scripts_locked(obj);
+}
+
+static void broadcast_running_scripts_locked()
+{
+	JsonObject obj;
+	populate_running_scripts_locked(obj);
+	owf_broadcast_message(obj.encode());
+}
+
 static void start_script_from_file(std::string&& path)
 {
 	auto scr = soup::make_unique<owfScript>();
@@ -797,6 +820,7 @@ static void start_script_from_file(std::string&& path)
 	{
 		std::lock_guard lock(running_scripts_mtx);
 		running_scripts.emplace_back(std::move(scr));
+		broadcast_running_scripts_locked();
 	}
 }
 
@@ -807,6 +831,7 @@ static void start_script_from_string(std::string&& code)
 	{
 		std::lock_guard lock(running_scripts_mtx);
 		running_scripts.emplace_back(std::move(scr));
+		broadcast_running_scripts_locked();
 	}
 }
 
@@ -853,6 +878,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 				bgscript = nullptr;
 			}
 		}
+		bool any_killed = false;
 		for (auto i = running_scripts.begin(); i != running_scripts.end(); )
 		{
 			if (!prohibit_scripts && (*i)->tick())
@@ -862,7 +888,12 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 			else
 			{
 				i = running_scripts.erase(i);
+				any_killed = true;
 			}
+		}
+		SOUP_IF_UNLIKELY (any_killed)
+		{
+			broadcast_running_scripts_locked();
 		}
 	}
 
@@ -1139,19 +1170,6 @@ static void populate_initial_status(JsonObject& obj)
 {
 	obj.add(ObfusString("console"), owfConsole::active);
 	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
-}
-
-static void populate_pulled_status(JsonObject& obj)
-{
-	{
-		std::lock_guard lock(running_scripts_mtx);
-		auto arr = soup::make_unique<JsonArray>();
-		for (const auto& scr : running_scripts)
-		{
-			arr->children.emplace_back(soup::make_unique<JsonString>(std::string(scr->name)));
-		}
-		obj.add(ObfusString("running_scripts"), std::move(arr));
-	}
 }
 
 static void populate_full_script_log(JsonObject& obj)
@@ -2593,7 +2611,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							JsonObject obj;
 							populate_initial_status(obj);
-							populate_pulled_status(obj);
+							populate_running_scripts(obj);
 							populate_full_script_log(obj);
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
@@ -2798,22 +2816,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				{
 					JsonObject obj;
 					populate_initial_status(obj);
+					populate_running_scripts(obj);
 					populate_full_script_log(obj);
 					ServerWebService::wsSendText(s, obj.encode());
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
-					JsonObject obj;
 					if (joaat::hash(msg.data) == joaat::compileTimeHash("script_log"))
 					{
+						JsonObject obj;
 						populate_full_script_log(obj);
+						ServerWebService::wsSendText(s, obj.encode());
 					}
-					else
-					{
-						populate_pulled_status(obj);
-						obj.add(ObfusString("full"), true);
-					}
-					ServerWebService::wsSendText(s, obj.encode());
 				};
 				if (serv.bind(61558, &srv))
 				{

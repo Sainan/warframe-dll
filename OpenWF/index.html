@@ -141,11 +141,7 @@
 		let ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
 		let script_log_len = -1;
 		const script_broadcast_requested = {};
-		function pollStatus() {
-			ws.send("status");
-		}
 		ws.onopen = function() {
-			pollStatus();
 			fetch("/request_version_broadcast");
 		};
 		ws.onmessage = function(e) {
@@ -305,10 +301,6 @@
 
 			if ("reload" in obj) {
 				location.reload();
-			}
-
-			if ("full" in obj) {
-				setTimeout(pollStatus, 20);
 			}
 		};
 		ws.onerror = function(e) {
