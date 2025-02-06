@@ -938,6 +938,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushnumber(L, fov_override);
+		return 1;
+	});
+	{ ObfusString name("owf_config_get_fov_override"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		pause_always_stops_time = lua_toboolean(L, 1);
 		return 0;
 	});
