@@ -2399,5 +2399,6 @@ return function(f)
 		until mainco:status() == "dead" and owf_lambda_callbacks:size() == 0
 	end)
 	mainco = sched:add(f)
+	simple_yield()
 	sched:run()
 end
