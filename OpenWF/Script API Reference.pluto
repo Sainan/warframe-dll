@@ -310,8 +310,13 @@ class Engine.OpenLevelArgs
 	function AddContextTag(tag)
 	function AddContextObject(objectType)
 
-class Engine.DamageData extends owfUserdata
+class Engine.DamageData
 	injuryType
+
+class UISys.ScriptResLoader
+	function IsDone()
+	function SpotLoad()
+	function Abort()
 
 class Symbol
 	function __construct(public name = "")
@@ -334,6 +339,8 @@ function Localize(loctag, subs = {})
 function AngleToDirection(rot)
 
 function Engine.OpenLevel(args)
+
+function UISys.ScriptResLoader_Create(names)
 
 -- OpenWF global functions
 

@@ -1825,6 +1825,28 @@ class Engine.DamageData extends owfUserdata
 end
 getmetatable(Engine.DamageData).__call = || -> new Engine.DamageData()
 
+UISys = {}
+
+class UISys.ScriptResLoader extends owfUserdata
+	__name = "UISys.ScriptResLoader"
+
+	function IsDone()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("ScriptResLoader", "IsDone"), 1)
+		return ivkr_pop_bool()
+	end
+
+	function SpotLoad()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("ScriptResLoader", "SpotLoad"), 1)
+	end
+
+	function Abort()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("ScriptResLoader", "Abort"), 1)
+	end
+end
+
 class Symbol
 	__name = "Symbol"
 
@@ -1896,6 +1918,17 @@ end
 function Engine.OpenLevel(args)
 	args:pushToIvkr()
 	ivkr_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
+end
+
+function UISys.ScriptResLoader_Create(names)
+	ivkr_newtable()
+	for k, v in ipairs(names) do
+		ivkr_push_int(k)
+		ivkr_push_string(v)
+		ivkr_settable(-3)
+	end
+	ivkr_call(mem_read_i64(mem_scan_exe("A3 5D 64 42 00 00 00 00") + 8), 1)
+	return new UISys.ScriptResLoader()
 end
 
 function AngleToDirection(rot)
