@@ -631,6 +631,14 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("ivkr_istable"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto type = luau_L->getValue(luaL_checkinteger(L, 1))->type;
+		lua_pushboolean(L, type == LUAU_LIGHTUSERDATA || type == LUAU_USERDATA);
+		return 1;
+	});
+	{ ObfusString name("ivkr_isuserdata"); lua_setglobal(L, name.c_str()); }
+
 	if (luau_gettable)
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int

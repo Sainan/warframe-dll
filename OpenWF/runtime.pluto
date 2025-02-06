@@ -24,7 +24,7 @@ end
 
 class owfUserdata
 	function __construct()
-		if ivkr_type(-1) <= 0 then
+		if not ivkr_isuserdata(-1) then
 			error($"attempt to construct {self.__name} from nil")
 		end
 		ivkr_push_string(tostring(self))
