@@ -171,6 +171,7 @@ class LotusBaseGameRules extends GameRulesImpl
 	function GetStoreManifest()
 	function AddActiveLevelAuraUpgrade(type)
 	function RemoveActiveLevelAuraUpgrade(type)
+	function GetMission()
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()

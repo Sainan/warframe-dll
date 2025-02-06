@@ -993,6 +993,12 @@ class LotusBaseGameRules extends GameRulesImpl
 		end
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "RemoveActiveLevelAuraUpgrade"), 2)
 	end
+
+	function GetMission()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetMission"), 1)
+		return new LotusMissionInfo()
+	end
 end
 
 class LotusGameRules extends LotusBaseGameRules
