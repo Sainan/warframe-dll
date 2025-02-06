@@ -2944,13 +2944,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 					}
 				});
-				srv.should_accept_websocket_connection = [](Socket& s, const HttpRequest&, ServerWebService&)
-				{
-					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
-					return true;
-				};
 				srv.on_websocket_connection_established = [](Socket& s, const HttpRequest&, ServerWebService&)
 				{
+					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
+
 					JsonObject obj;
 					populate_initial_status(obj);
 					populate_running_scripts(obj);
