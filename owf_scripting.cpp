@@ -334,6 +334,20 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushinteger(L, *lua_checkpointer<int8_t*>(L, 1));
+		return 1;
+	});
+	{ ObfusString name("mem_read_i8"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, *lua_checkpointer<int16_t*>(L, 1));
+		return 1;
+	});
+	{ ObfusString name("mem_read_i16"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushinteger(L, *lua_checkpointer<int32_t*>(L, 1));
 		return 1;
 	});
