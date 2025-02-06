@@ -702,13 +702,6 @@ class DamageControllerBase extends Object
 		ivkr_call(ivkr_find_method("DamageControllerBase", "SetMaxShield"), 2)
 	end
 
-	-- compatibility
-	function getOverguard()
-		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
-		return math.tointeger(ivkr_pop_number())
-	end
-
 	function GetOverguardAmount()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("DamageControllerBase", "GetOverguardAmount"), 1)
@@ -1914,10 +1907,6 @@ function AngleToDirection(rot)
 	local ud = ivkr_pop_userdata()
 	return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
 end
-
--- compatibility with older versions of OpenWF that had these incorrectly scoped
-OpenLevelArgs = Engine.OpenLevelArgs
-OpenLevel = Engine.OpenLevel
 
 gRegion = {
 	function GetLocalPlayer()
