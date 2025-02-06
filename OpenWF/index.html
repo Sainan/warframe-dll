@@ -279,8 +279,8 @@
 						if (obj.version_broadcast.hotfix) {
 							local_version_full += " " + obj.version_broadcast.hotfix;
 						}
-						document.querySelectorAll(".local_version").forEach(x => { x.textContent = obj.version_broadcast.current; });
-						document.querySelectorAll(".local_version_full").forEach(x => { x.textContent = local_version_full; });
+						document.querySelectorAll(".local-version").forEach(x => { x.textContent = obj.version_broadcast.current; });
+						document.querySelectorAll(".local-version-full").forEach(x => { x.textContent = local_version_full; });
 						if (obj.version_broadcast.hotfix_available) {
 							document.querySelectorAll(".hotfix_available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
 							if (obj.version_broadcast.hotfix) {
