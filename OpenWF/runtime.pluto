@@ -1365,6 +1365,36 @@ end
 class CameraControllerBase extends Object
 	__name = "CameraControllerBase"
 
+	function AttenuateFOV(fMul)
+		self:pushToIvkr()
+		ivkr_push_float(fMul)
+		ivkr_call(ivkr_find_method("CameraControllerBase", "AttenuateFOV"), 2)
+	end
+
+	function setFovMultiplier(fMul)
+		self:pushToIvkr()
+		ivkr_push_float(fMul)
+		ivkr_call(ivkr_find_method("CameraControllerBase", "AttenuateFOV"), 2)
+	end
+
+	function getFovMultiplier()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("CameraControllerBase", 0x9A28D48E), 1)
+		return ivkr_pop_number()
+	end
+
+	function SetBaseFovOverride(fov)
+		self:pushToIvkr()
+		ivkr_push_float(fov)
+		ivkr_call(ivkr_find_method("CameraControllerBase", "SetBaseFovOverride"), 2)
+	end
+
+	function GetBaseFovOverride()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("CameraControllerBase", "GetBaseFovOverride"), 1)
+		return ivkr_pop_number()
+	end
+
 	function implGetVector(funcName)
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 1)

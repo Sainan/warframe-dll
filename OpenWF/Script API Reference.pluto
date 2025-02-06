@@ -228,6 +228,10 @@ class MotionControllerBase
 	function SetSpeedMultiplier(f)
 
 class CameraControllerBase extends Object
+	function setFovMultiplier(fMul)
+	function getFovMultiplier()
+	function SetBaseFovOverride(fov)
+	function GetBaseFovOverride()
 	function GetViewOffset()
 	function SetViewOffset(vec)
 	function GetAimViewOffset()
