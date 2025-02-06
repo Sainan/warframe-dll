@@ -1178,6 +1178,24 @@ class LotusMissionInfo extends owfUserdata
 				end
 				ivkr_pop(1)
 				return nil
+
+			case "buddyAgents":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
+				do
+					local t = {}
+					if ivkr_istable(-1) then
+						local i = 1
+						while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+							t:insert(new ObjectType())
+							++i
+						end
+						ivkr_pop(2)
+					else
+						ivkr_pop(1)
+					end
+					return t
+				end
 		end
 		error("Unknown field: "..name)
 	end
