@@ -56,6 +56,7 @@ local function check_for_updates()
 		version_is_latest = nil
 		local meta
 		if not OWF_PRIVATE_BUILD then
+			send_version_broadcast()
 			meta = http.request("https://openwf.io/supplementals/client%20drop-in/meta") |> json.decode
 		end
 		version_is_latest = false
@@ -133,10 +134,11 @@ while pcall(yield) do
 					end
 				end
 			elseif evt.path == "/request_version_broadcast" then
-				send_version_broadcast()
 				if not requested_versions then
 					requested_versions = true
 					check_for_updates()
+				else
+					send_version_broadcast()
 				end
 			elseif evt.path == "/download_latest_hotfix" then
 				if not downloading_hotfix then
