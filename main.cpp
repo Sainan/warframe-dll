@@ -2736,7 +2736,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/start_script"):
 						if (!prohibit_scripts)
 						{
-							start_script_from_file(urlenc::decode(arr[1]));
+							start_script_from_file(urlenc::decode(arr.at(1)));
 							ServerWebService::sendText(s, {});
 						}
 						break;
@@ -2744,7 +2744,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/start_script_inline"):
 						if (!prohibit_scripts)
 						{
-							start_script_from_string(urlenc::decode(arr[1]));
+							start_script_from_string(urlenc::decode(arr.at(1)));
 							ServerWebService::sendText(s, {});
 						}
 						break;
@@ -2752,7 +2752,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/stop_script"):
 						{
 							std::lock_guard lock(running_scripts_mtx);
-							if (auto scr = get_script_by_name(urlenc::decode(arr[1])))
+							if (auto scr = get_script_by_name(urlenc::decode(arr.at(1))))
 							{
 								scr->stop_requested = true;
 							}
@@ -2793,7 +2793,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/add_autostart_script"):
-						if (auto name = urlenc::decode(arr[1]); std::find(auto_start_scripts.begin(), auto_start_scripts.end(), name) == auto_start_scripts.end())
+						if (auto name = urlenc::decode(arr.at(1)); std::find(auto_start_scripts.begin(), auto_start_scripts.end(), name) == auto_start_scripts.end())
 						{
 							auto_start_scripts.emplace_back(std::move(name));
 							save_config();
@@ -2802,7 +2802,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/remove_autostart_script"):
-						if (auto it = std::find(auto_start_scripts.begin(), auto_start_scripts.end(), urlenc::decode(arr[1])); it != auto_start_scripts.end())
+						if (auto it = std::find(auto_start_scripts.begin(), auto_start_scripts.end(), urlenc::decode(arr.at(1))); it != auto_start_scripts.end())
 						{
 							auto_start_scripts.erase(it);
 							save_config();
