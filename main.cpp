@@ -1134,7 +1134,13 @@ static void load_metadata_patches()
 			if (current_patch)
 			{
 				const auto sep = line.find('|', 2);
-				current_patch->replacements.emplace_back(line.substr(2, sep - 2), line.substr(sep + 1, line.size() - (sep + 2)));
+				auto from = line.substr(2, sep - 2);
+				auto to = line.substr(sep + 1, line.size() - (sep + 1));
+				if (!to.empty() && to.back() == '|')
+				{
+					to.pop_back();
+				}
+				current_patch->replacements.emplace_back(std::move(from), std::move(to));
 			}
 			break;
 		}
