@@ -2592,6 +2592,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		// Allow GetOnVehicle with an operator avatar
+		// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
+		{
+			SIG_INST("32 C0 48 8B 5C 24 40 48 8B 74 24 48 48 83 C4 30 5F C3 B2 05");
+			auto operator_mount_fail = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "operator_mount_fail = " << operator_mount_fail.as<void*>() << std::endl;
+#endif
+			if (operator_mount_fail)
+			{
+				memGuard::setAllowedAccess(operator_mount_fail.as<void*>(), 2, memGuard::ACC_RWX);
+				operator_mount_fail.as<uint8_t*>()[0] = 0xb0;
+				operator_mount_fail.as<uint8_t*>()[1] = 0x01;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
 			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
