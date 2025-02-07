@@ -1,10 +1,11 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.9"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.10"
 
 #define SELF_HOST_CACHE_MANIFEST true
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
 #define LABEL_REPLACEMENTS true
+#define METADATA_PATCHES true
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
@@ -14,6 +15,7 @@
 #include <mutex>
 
 #include <alloc.hpp>
+#include <CallsiteHook.hpp>
 #include <cat.hpp>
 #include <CompactDetourHook.hpp>
 #include <DetourHook.hpp>
@@ -1069,6 +1071,121 @@ static void check_string_substitutions_detour(GameString* str, void* substitutio
 		}
 	}
 	return reinterpret_cast<decltype(&check_string_substitutions_detour)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
+}
+#endif
+
+
+#if METADATA_PATCHES
+static StringPoolBucket** string_pool;
+static const char* resolve_string_handle(uint32_t handle)
+{
+	return &(*string_pool)[handle & 0xffff].data[handle >> 16];
+}
+
+struct MetadataPatch
+{
+	std::string prefix;
+	std::vector<std::pair<std::string, std::string>> replacements;
+
+	std::string final_data;
+};
+static Mutex metadata_patches_mtx;
+static std::unordered_map<uint32_t, MetadataPatch> metadata_patches;
+static void load_metadata_patches()
+{
+	std::lock_guard lock(metadata_patches_mtx);
+	metadata_patches.clear();
+	MetadataPatch* current_patch = nullptr;
+	FileReader fr(ObfusString("OpenWF/Metadata Patches.txt"));
+	for (std::string line; fr.getLine(line); )
+	{
+		if (intptr_t start = line.find_first_not_of(" \t"); start > 0)
+		{
+			line.erase(0, start);
+		}
+		switch (line.c_str()[0])
+		{
+		case '#':
+			break;
+
+		case '/':
+			{
+				const auto hash = joaat::hashRange(line.data(), line.size());
+				if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
+				{
+					current_patch = &e->second;
+				}
+				else
+				{
+					current_patch = &metadata_patches.emplace(hash, MetadataPatch{}).first->second;
+				}
+			}
+			break;
+
+		default:
+			if (current_patch && !line.empty())
+			{
+				current_patch->prefix.append(line);
+				current_patch->prefix.push_back('\n');
+			}
+			break;
+
+		case 'r': case 'R':
+			if (current_patch)
+			{
+				const auto sep = line.find('|', 2);
+				current_patch->replacements.emplace_back(line.substr(2, sep - 2), line.substr(sep + 1, line.size() - (sep + 2)));
+			}
+			break;
+		}
+	}
+}
+
+static CallsiteHook serialise_propery_text_hook;
+static void serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
+{
+	ObjectType* objectType;
+	__asm mov objectType, r11;
+
+	/*std::cout << "Reading metadata for ";
+	if (objectType->path_handle)
+	{
+		std::cout << resolve_string_handle(*objectType->path_handle);
+	}
+	std::cout << resolve_string_handle(objectType->name_handle);
+	std::cout << std::endl;*/
+
+	uint32_t hash = 0;
+	if (objectType->path_handle)
+	{
+		hash = joaat::partialStr(resolve_string_handle(*objectType->path_handle), hash);
+	}
+	hash = joaat::partialStr(resolve_string_handle(objectType->name_handle), hash);
+	joaat::finalise(hash);
+
+	std::lock_guard lock(metadata_patches_mtx);
+	if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
+	{
+		auto& patch = e->second;
+		auto& buf = patch.final_data;
+		buf.reserve(patch.prefix.size() + str->getSize());
+		buf.append(patch.prefix);
+		if (patch.replacements.empty())
+		{
+			buf.append(str->getData(), str->getSize());
+		}
+		else
+		{
+			std::string text(str->getData(), str->getSize());
+			for (const auto& replacement : patch.replacements)
+			{
+				string::replaceAll(text, replacement.first, replacement.second);
+			}
+			buf.append(text);
+		}
+		str->setUnownedData(buf.data(), buf.size());
+	}
+	return reinterpret_cast<decltype(&serialise_propery_text_detour)>(serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
 
@@ -2417,6 +2534,58 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+#if METADATA_PATCHES
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
+			auto string_pool_insn = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
+#endif
+			if (string_pool_insn)
+			{
+				string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			//SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 56 57 41 56 48 81 EC A0 00 00 00 0F 29 70 D8");
+			SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
+			auto serialise_propery_text_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "serialise_propery_text_callsite = " << serialise_propery_text_callsite.as<void*>() << std::endl;
+#endif
+			if (serialise_propery_text_callsite && string_pool)
+			{
+				uint8_t detour_bytes[] = {
+					0x49, 0x89, 0xF3, // mov r11, rsi
+					/* 3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					0x41, 0xFF, 0xE2, // jmp r10
+				};
+				*(void**)(detour_bytes + 5) = (void*)serialise_propery_text_detour;
+
+				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
+				memcpy(detour, detour_bytes, sizeof(detour_bytes));
+
+				serialise_propery_text_hook.detour = detour;
+				serialise_propery_text_hook.target = serialise_propery_text_callsite.add(17).as<void*>();
+				serialise_propery_text_hook.code_cave = Module(nullptr).range.scan(CallsiteHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+				std::cout << "serialise_propery_text_hook.code_cave = " << serialise_propery_text_hook.code_cave << std::endl;
+#endif
+				serialise_propery_text_hook.create();
+				serialise_propery_text_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
+
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
 			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
@@ -2437,6 +2606,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if LABEL_REPLACEMENTS
 		load_label_replacements();
+#endif
+
+#if METADATA_PATCHES
+		load_metadata_patches();
 #endif
 
 		if (!auto_start_scripts.empty())
@@ -2872,6 +3045,34 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/reload_label_replacements"):
 						load_label_replacements();
 						ServerWebService::send204(s);
+						break;
+#endif
+
+#if METADATA_PATCHES
+					case soup::joaat::compileTimeHash("/reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
+						load_metadata_patches();
+						ServerWebService::send204(s);
+						break;
+
+					case soup::joaat::compileTimeHash("/get_effective_metadata"):
+						{
+							std::lock_guard lock(metadata_patches_mtx);
+							if (auto e = metadata_patches.find(joaat::hash(urlenc::decode(arr.at(1)))); e != metadata_patches.end())
+							{
+								if (!e->second.final_data.empty())
+								{
+									ServerWebService::sendText(s, e->second.final_data);
+								}
+								else
+								{
+									ServerWebService::sendText(s, ObfusString("patch not applied (yet)").str());
+								}
+							}
+							else
+							{
+								ServerWebService::sendText(s, ObfusString("no such patch").str());
+							}
+						}
 						break;
 #endif
 

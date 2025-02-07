@@ -1,0 +1,13 @@
+# Lines starting with # are a comment.
+#
+# An example patch that renames "Vitality" to "Moar Health" and changes it from +9% to +100%:
+#
+# /Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
+#     LocalizeTag=Moar Health
+#     r|Value=0.090910003|Value=1|
+#
+# When this patch is applied and the type has been loaded by the game, you can get the effective metadata via the http interface:
+# http://localhost:61558/get_effective_metadata?/Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
+# Note that a patch can be empty, allowing for logging only.
+#
+# Modifications to this file will only apply after a restart of the game.

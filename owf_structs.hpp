@@ -70,9 +70,16 @@ union LegacyGameString
 
 // Objects
 
+struct ObjectTypeName
+{
+	uint32_t path_handle;
+	uint32_t name_handle;
+};
+
 struct ObjectType
 {
-	PAD(0, 0x2C) uint32_t unk_name_hash; // 1454702781 for LotusDangerRoomGameRules
+	PAD(0x00, 0x10) uint32_t* path_handle;
+	PAD(0x18, 0x2C) uint32_t name_handle;
 };
 
 struct Object
@@ -177,7 +184,7 @@ struct LotusAvatar : public Avatar
 
 struct Player : public Object
 {
-	PAD(0x020, 0x038) GameString name;
+	INIT_PAD(Object, 0x038) GameString name;
 	PAD(0x048, 0x068) GameString name_with_platform_suffix;
 	PAD(0x078, 0x090) GameString clan_name;
 	PAD(0x0A0, 0x148) Avatar** avatar;
@@ -217,6 +224,13 @@ struct RegionMgr : public Object
 	PAD(0x220, 0x2C8) Camera** game_camera;
 };
 static_assert(sizeof(RegionMgr) == 0x2C8 + 8);
+
+struct StringPoolBucket
+{
+	char* data;
+	size_t unk;
+};
+
 
 inline RegionMgr* regionmgr = nullptr;
 //inline LotusGameRules* gamerules;

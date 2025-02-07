@@ -29,6 +29,10 @@ if not io.exists("OpenWF/Label Replacements.cat.txt") then
 	io.contents("OpenWF/Label Replacements.cat.txt", "/Menu/ProjectName: Warframe [OpenWF]")
 end
 
+if not io.exists("OpenWF/Metadata Patches.txt") then
+	io.contents("OpenWF/Metadata Patches.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
+end
+
 local { crypto, http, json } = require "*"
 
 local requested_versions = false
