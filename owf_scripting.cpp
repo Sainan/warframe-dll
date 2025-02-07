@@ -15,6 +15,7 @@
 
 #include "owf_archive.hpp"
 #include "owf_config.hpp"
+#include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
@@ -1180,6 +1181,46 @@ owfScript::owfScript()
 		return 1;
 	});
 	{ ObfusString name("owf_script_get_path"); lua_setglobal(L, name.c_str()); }
+
+#if LABEL_REPLACEMENTS
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t tag_len;
+		auto tag = luaL_checklstring(L, 1, &tag_len);
+		size_t str_len;
+		auto str = luaL_checklstring(L, 2, &str_len);
+
+		const auto hash = lower_hash(tag, tag_len);
+		const auto ps = fossilise_string(str, str_len);
+
+		std::lock_guard lock(label_replacements_mtx);
+		if (auto e = label_replacements.find(hash); e != label_replacements.end())
+		{
+			e->second = ps;
+		}
+		else
+		{
+			label_replacements.emplace(hash, ps);
+		}
+
+		return 0;
+	});
+	{ ObfusString name("owf_replace_label"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t tag_len;
+		auto tag = luaL_checklstring(L, 1, &tag_len);
+
+		const auto hash = lower_hash(tag, tag_len);
+
+		std::lock_guard lock(label_replacements_mtx);
+		label_replacements.erase(hash);
+
+		return 0;
+	});
+	{ ObfusString name("owf_restore_label"); lua_setglobal(L, name.c_str()); }
+#endif
 
 #if PRIVATE
 	lua_pushboolean(L, true);

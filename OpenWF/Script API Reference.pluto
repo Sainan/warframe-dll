@@ -364,6 +364,8 @@ function owf_get_running_scripts()
 function owf_start_script(name)
 function owf_stop_script(name)
 function owf_create_thread(f)
+function owf_replace_label(tag, str)
+function owf_restore_label(tag)
 
 -- OpenWF events
 
