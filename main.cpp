@@ -1000,8 +1000,6 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 
 
 #if LABEL_REPLACEMENTS
-static CompactDetourHook check_string_substitutions_hook;
-
 struct PermanentString
 {
 	size_t size;
@@ -1054,6 +1052,7 @@ static void load_label_replacements()
 	}
 }
 
+static CompactDetourHook check_string_substitutions_hook;
 static void check_string_substitutions_detour(GameString* str, void* substitutions, GameString* loctag, bool dont_log)
 {
 	if (dont_resolve_labels)
@@ -2396,6 +2395,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+#if LABEL_REPLACEMENTS
 		{
 			SIG_INST("4C 8B DC 57 41 57 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
 			auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2415,6 +2415,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+#endif
 
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
