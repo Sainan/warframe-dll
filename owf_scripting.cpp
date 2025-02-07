@@ -1122,7 +1122,12 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->callbacks.emplace(luaL_checkstring(L, 1));
+		size_t tag_len;
+		auto tag = luaL_checklstring(L, 1, &tag_len);
+
+		std::string name = static_cast<owfScript*>(L->l_G->user_data)->name; // owf_script_get_path
+		name.append(tag, tag_len);
+		static_cast<owfScript*>(L->l_G->user_data)->callbacks.emplace(std::move(name));
 		return 0;
 	});
 	{ ObfusString name("owf_register_callback"); lua_setglobal(L, name.c_str()); }

@@ -2391,7 +2391,7 @@ ivkr_push_callback = function(callback)
 		owf_lambda_callbacks[callbackName] = callback
 	end
 	ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
-	owf_register_callback(owf_script_get_path()..callbackName)
+	owf_register_callback(callbackName)
 end
 
 return function(f)
