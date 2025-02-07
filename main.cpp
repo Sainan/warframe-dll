@@ -9,6 +9,7 @@
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
 #define VERBOSE_CRC32C false
+#define VERBOSE_SERPROPTXT false
 
 #include <iostream>
 #include <mutex>
@@ -1110,8 +1111,8 @@ static void load_metadata_patches()
 	}
 }
 
-static CallsiteHook serialise_propery_text_hook;
-static void serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
+static CallsiteHook object_type_serialise_propery_text_hook;
+static void object_type_serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
 {
 	ObjectType* objectType;
 	__asm mov objectType, r11;
@@ -1154,7 +1155,7 @@ static void serialise_propery_text_detour(void* a1, GameString* str, int a3, cha
 		}
 		str->setUnownedData(buf.data(), buf.size());
 	}
-	return reinterpret_cast<decltype(&serialise_propery_text_detour)>(serialise_propery_text_hook.original)(a1, str, a3, a4);
+	return reinterpret_cast<decltype(&object_type_serialise_propery_text_detour)>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
 
@@ -1212,6 +1213,18 @@ static uint32_t crc32c_impl_detour(uint32_t initial, const char* data, size_t si
 	auto res = reinterpret_cast<decltype(&crc32c_impl_detour)>(crc32c_impl_hook.original)(initial, data, size);
 	std::cout << "CRC32C: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	return res;
+}
+#endif
+
+
+#if VERBOSE_SERPROPTXT
+static DetourHook serialise_propery_text_hook;
+
+static void serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
+{
+	std::cout << "serialise_propery_text: a3 = " << a3 << ", a4 = " << a4 << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	std::cout.write(str->getData(), str->getSize());
+	return reinterpret_cast<decltype(&serialise_propery_text_detour)>(serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
 
@@ -2521,30 +2534,50 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			//SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 56 57 41 56 48 81 EC A0 00 00 00 0F 29 70 D8");
 			SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
-			auto serialise_propery_text_callsite = Module(nullptr).range.scan(sig_inst);
+			auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "serialise_propery_text_callsite = " << serialise_propery_text_callsite.as<void*>() << std::endl;
+			std::cout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
-			if (serialise_propery_text_callsite && string_pool)
+			if (object_type_serialise_propery_text_call && string_pool)
 			{
 				uint8_t detour_bytes[] = {
 					0x49, 0x89, 0xF3, // mov r11, rsi
 					/* 3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
 					0x41, 0xFF, 0xE2, // jmp r10
 				};
-				*(void**)(detour_bytes + 5) = (void*)serialise_propery_text_detour;
+				*(void**)(detour_bytes + 5) = (void*)object_type_serialise_propery_text_detour;
 
 				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
 				memcpy(detour, detour_bytes, sizeof(detour_bytes));
 
-				serialise_propery_text_hook.detour = detour;
-				serialise_propery_text_hook.target = serialise_propery_text_callsite.add(17).as<void*>();
-				serialise_propery_text_hook.code_cave = Module(nullptr).range.scan(CallsiteHook::getCodeCavePattern()).as<void*>();
+				object_type_serialise_propery_text_hook.detour = detour;
+				object_type_serialise_propery_text_hook.target = object_type_serialise_propery_text_call.add(17).as<void*>();
+				object_type_serialise_propery_text_hook.code_cave = Module(nullptr).range.scan(CallsiteHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-				std::cout << "serialise_propery_text_hook.code_cave = " << serialise_propery_text_hook.code_cave << std::endl;
+				std::cout << "object_type_serialise_propery_text_hook.code_cave = " << object_type_serialise_propery_text_hook.code_cave << std::endl;
 #endif
+				object_type_serialise_propery_text_hook.create();
+				object_type_serialise_propery_text_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
+
+#if VERBOSE_SERPROPTXT
+		{
+			SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 56 57 41 56 48 81 EC A0 00 00 00 0F 29 70 D8");
+			auto serialise_propery_text = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "serialise_propery_text = " << serialise_propery_text << std::endl;
+#endif
+			if (serialise_propery_text)
+			{
+				serialise_propery_text_hook.detour = reinterpret_cast<void*>(&serialise_propery_text_detour);
+				serialise_propery_text_hook.target = serialise_propery_text;
 				serialise_propery_text_hook.create();
 				serialise_propery_text_hook.enable();
 			}
