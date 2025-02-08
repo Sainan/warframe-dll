@@ -35,7 +35,6 @@ function add_folder_to_archive($base, $archive_base)
 			add_file_to_archive($path, $archive_path);
 		}
 	}
-
 }
 
 add_folder_to_archive("OpenWF/", "OpenWF/");
