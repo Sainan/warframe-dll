@@ -39,7 +39,7 @@ function add_folder_to_archive($base, $archive_base)
 
 add_folder_to_archive("OpenWF/", "OpenWF/");
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/");
-add_folder_to_archive("../openwf-translations/client-webui/", "OpenWF/webui_dicts/");
+add_folder_to_archive("modules/openwf-translations/client-webui/", "OpenWF/webui_dicts/");
 
 $bin_str = gzcompress($uncompressed);
 file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");

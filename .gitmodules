@@ -1,0 +1,6 @@
+[submodule "Pluto"]
+	path = modules/Pluto
+	url = https://github.com/PlutoLang/Pluto
+[submodule "Translations"]
+	path = modules/openwf-translations
+	url = https://onlyg.it/OpenWF/Translations
