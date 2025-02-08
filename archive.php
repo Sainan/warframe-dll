@@ -2,8 +2,8 @@
 // Do a translation update so all target dicts have all source strings
 {
 	$ogdir = getcwd();
-	chdir("../openwf-translations");
-	require "../openwf-translations/update.php";
+	chdir("modules/openwf-translations");
+	require "modules/openwf-translations/update.php";
 	chdir($ogdir);
 }
 
