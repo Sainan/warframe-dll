@@ -87,7 +87,8 @@ struct Object
 	/* 0x00 */ void* vftable;
 	/* 0x08 */ ObjectType* type;
 	/* 0x10 */ Object** self_pointer;
-	PAD(0x18, 0x20);
+	/* 0x18 */ uint32_t id;
+	/* 0x1C */ uint32_t path_handle;
 };
 
 struct WeaponEx : public Object
@@ -229,6 +230,47 @@ struct StringPoolBucket
 {
 	char* data;
 	size_t unk;
+};
+
+struct TextureLayer
+{
+	/* 0x00 */ void* data;
+	/* 0x08 */ uint32_t depthPitch; // data size
+	/* 0x0C */ uint32_t rowPitch;
+	PAD(0x10, 0x18);
+};
+static_assert(sizeof(TextureLayer) == 0x18);
+
+struct Texture : public Object
+{
+	struct Vftable
+	{
+		PAD(0x000, 0x1B8) uint32_t(*getArraySize)(Texture*);
+	};
+
+	auto getArraySize() { return reinterpret_cast<Vftable*>(vftable)->getArraySize(this); }
+
+	INIT_PAD(Object, 0x60) uint8_t miplevels;
+	PAD(0x61, 0x68) uint16_t width;
+	/* 0x6A */ uint16_t height;
+};
+
+struct DxTexture
+{
+	PAD(0x00, 0x90) Texture** object;
+	/* 0x98 */ uint32_t total_size_bytes;
+	PAD(0x9C, 0xA8) TextureLayer* layers;
+};
+static_assert(sizeof(DxTexture) == 0xB0);
+
+struct CacheReader
+{
+	struct Vtbl
+	{
+		PAD(0, 0x58) void(*read)(CacheReader*, void* data, uint32_t size);
+	};
+
+	Vtbl* vtbl;
 };
 
 
