@@ -3094,19 +3094,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if LABEL_REPLACEMENTS
 					case soup::joaat::compileTimeHash("/check_label_replacements"):
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/reload_label_replacements"):
 						load_label_replacements();
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 #endif
 
 #if METADATA_PATCHES
 					case soup::joaat::compileTimeHash("/reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
 						load_metadata_patches();
-						ServerWebService::send204(s);
+						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/get_effective_metadata"):
