@@ -743,12 +743,15 @@ static DetourHook lua_set_global_hook;
 
 static void lua_set_global_detour(luau_State* L, const char* name)
 {
+#if LOGGING
+	std::cout << "lua_set_global: " << name;
+#endif
 	switch (soup::joaat::hash(name))
 	{
 	case soup::joaat::compileTimeHash("gRegion"):
 		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(RegionMgr****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << "lua_set_global: gRegion = " << regionmgr << std::endl;
+		std::cout << " = " << regionmgr;
 #endif
 		if (!owfOverlay::isInited())
 		{
@@ -759,24 +762,27 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 	case soup::joaat::compileTimeHash("gFlashMgr"):
 		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << "lua_set_global: gFlashMgr = " << flashmgr << std::endl;
+		std::cout << " = " << flashmgr;
 #endif
 		break;
 
 	case soup::joaat::compileTimeHash("gGameData"):
 		gamedata = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << "lua_set_global: gGameData = " << gamedata << std::endl;
+		std::cout << " = " << gamedata;
 #endif
 		break;
 
 	case soup::joaat::compileTimeHash("gMatchingService"):
 		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << "lua_set_global: gMatchingService = " << matchingservice << std::endl;
+		std::cout << " = " << matchingservice;
 #endif
 		break;
 	}
+#if LOGGING
+	std::cout << std::endl;
+#endif
 	return reinterpret_cast<decltype(&lua_set_global_detour)>(lua_set_global_hook.original)(L, name);
 }
 
