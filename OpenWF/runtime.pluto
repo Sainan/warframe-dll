@@ -2189,6 +2189,14 @@ gGameData = {
 	end,
 }
 
+gPlayerProfileMgr = {
+	function IsLoggedIn()
+		ivkr_push_object(get_profilemgr())
+		ivkr_call(ivkr_find_method("PlayerProfileMgr", "IsLoggedIn"), 1)
+		return ivkr_pop_bool()
+	end
+}
+
 -- undocumented
 gMatchingService = {
 	function SendRelayP2P(target, msg)

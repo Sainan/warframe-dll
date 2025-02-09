@@ -215,6 +215,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushpointer(L, profilemgr);
+		return 1;
+	});
+	{ ObfusString name("get_profilemgr"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushpointer(L, matchingservice);
 		return 1;
 	});

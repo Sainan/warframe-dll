@@ -421,6 +421,9 @@ gFlashMgr
 gGameData
 	function SyncInventoryFromDB(callback)
 
+gPlayerProfileMgr
+	function IsLoggedIn()
+
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")

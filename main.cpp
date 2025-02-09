@@ -773,6 +773,13 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #endif
 		break;
 
+	case soup::joaat::compileTimeHash("gPlayerProfileMgr"):
+		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+#if LOGGING
+		std::cout << " = " << profilemgr;
+#endif
+		break;
+
 	case soup::joaat::compileTimeHash("gMatchingService"):
 		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
