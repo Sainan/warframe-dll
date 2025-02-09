@@ -9,6 +9,7 @@
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
 #define VERBOSE_CRC32C false
+#define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
 
 #include <iostream>
@@ -1213,6 +1214,17 @@ static uint32_t crc32c_impl_detour(uint32_t initial, const char* data, size_t si
 	auto res = reinterpret_cast<decltype(&crc32c_impl_detour)>(crc32c_impl_hook.original)(initial, data, size);
 	std::cout << "CRC32C: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	return res;
+}
+#endif
+
+
+#if VERBOSE_MD5
+static DetourHook MD5_append_hook;
+
+static void MD5_append_detour(void* state, const char* data, size_t size)
+{
+	std::cout << "MD5_append: state = " << state << ", data = " << string::bin2hex(std::string(data, size)) << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	return reinterpret_cast<decltype(&MD5_append_detour)>(MD5_append_hook.original)(state, data, size);
 }
 #endif
 
@@ -2486,6 +2498,27 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				crc32c_impl_hook.target = crc32c_impl;
 				crc32c_impl_hook.create();
 				crc32c_impl_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
+
+#if VERBOSE_MD5
+		{
+			SIG_INST("4D 85 C0 0F 84 ? 00 00 00 48 89 6C 24 10");
+			auto MD5_append = Module(nullptr).range.scan(sig_inst).add(9).as<void*>();
+#if LOGGING
+			std::cout << "MD5_append = " << MD5_append << std::endl;
+#endif
+			if (MD5_append != (void*)9)
+			{
+				MD5_append_hook.detour = reinterpret_cast<void*>(&MD5_append_detour);
+				MD5_append_hook.target = MD5_append;
+				MD5_append_hook.create();
+				MD5_append_hook.enable();
 			}
 			else
 			{
