@@ -1563,6 +1563,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_email")); it != config->reinterpretAsObj().end() && it->second->isStr())
 			{
 				autologin_email = it->second->reinterpretAsStr().value;
+				string::lower(autologin_email);
 			}
 			else
 			{
