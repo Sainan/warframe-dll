@@ -109,10 +109,10 @@
 		});
 		document.getElementById("pause_always_stops_time").onchange = function() {
 			if (this.checked) {
-				fetch("/start_script_inline?" + encodeURIComponent(`set_pause_always_stops_time(true)`));
+				fetch("/enable_pause_always_stops_time");
 			}
 			else {
-				fetch("/start_script_inline?" + encodeURIComponent(`gGameRules:RequestUnpause() set_pause_always_stops_time(false)`));
+				fetch("/disable_pause_always_stops_time");
 			}
 		};
 

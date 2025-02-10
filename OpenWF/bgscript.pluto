@@ -1,8 +1,11 @@
 owf_register_custom_route("/teleport", "text/plain", "")
-owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
+owf_register_custom_route("/enable_pause_always_stops_time", "text/plain", "")
+owf_register_custom_route("/disable_pause_always_stops_time", "text/plain", "")
 owf_register_custom_route("/request_version_broadcast", "text/plain", "")
 owf_register_custom_route("/download_latest_hotfix", "text/plain", "")
 owf_register_custom_route("/check_for_updates", "text/plain", "")
+
+owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
 io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
@@ -137,6 +140,11 @@ while pcall(yield) do
 						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
 					end
 				end
+			elseif evt.path == "/enable_pause_always_stops_time" then
+				set_pause_always_stops_time(true)
+			elseif evt.path == "/disable_pause_always_stops_time" then
+				gGameRules:RequestUnpause()
+				set_pause_always_stops_time(false)
 			elseif evt.path == "/request_version_broadcast" then
 				if not requested_versions then
 					requested_versions = true
