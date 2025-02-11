@@ -41,12 +41,19 @@ end
 do
 	local compressed, decompressed_size = owf_find_cache_manifest()
 	if compressed then
-		io.mkdirs("OpenWF/content/0")
-		local bin = "SHCC\x1f\x00\x00\x00"
-		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
-		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
-		bin ..= string.pack("<I4", crc32c(bin))
-		io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bin)
+		if compressed:byte(1) == 0x80 or not io.exists("OpenWF/content/0/H.Cache.bin!D_---------------------w") then
+			io.mkdirs("OpenWF/content/0")
+			local bin = "SHCC\x1f\x00\x00\x00"
+			bin ..= string.pack("<I1I4s4", compressed:byte(1) == 0x80 ? 2 : 0, decompressed_size, compressed)
+			bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
+			bin ..= string.pack("<I4", crc32c(bin))
+			io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bin)
+		end
+		if compressed:byte(1) ~= 0x80 then
+			if require"ffi".open("user32"):wrap("i32", "MessageBoxA", "i32", "str", "str", "i32")(0, "OpenWF found tampered assets. It is highly recommended that you run the Launcher and drop the DLL back in after.\r\n\r\nContinue loading the game?", nil, 0x134) ~= 6 then
+				os.exit(1)
+			end
+		end
 	end
 end
 
