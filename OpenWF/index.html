@@ -282,7 +282,7 @@
 						document.querySelectorAll(".local-version").forEach(x => { x.textContent = obj.version_broadcast.current; });
 						document.querySelectorAll(".local-version-full").forEach(x => { x.textContent = local_version_full; });
 						if (obj.version_broadcast.hotfix_available) {
-							document.querySelectorAll(".hotfix_available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
+							document.querySelectorAll(".hotfix-available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
 							if (obj.version_broadcast.hotfix) {
 								document.getElementById("hotfix_to_hotfix_update").style.display = "block";
 							}
