@@ -1095,20 +1095,17 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 	ObjectType* objectType;
 	__asm mov objectType, r11;
 
-	/*std::cout << "Reading metadata for ";
-	if (objectType->path_handle)
+	const char* path = resolve_string_handle(objectType->getPathHandle());
+	const char* name = resolve_string_handle(objectType->name_handle);
+
+	if (log_all_metadata_reads)
 	{
-		std::cout << resolve_string_handle(*objectType->path_handle);
+		std::cout << ObfusString("Reading metadata for ").str() << path << name << "\n";
 	}
-	std::cout << resolve_string_handle(objectType->name_handle);
-	std::cout << std::endl;*/
 
 	uint32_t hash = 0;
-	if (objectType->path_handle)
-	{
-		hash = joaat::partialStr(resolve_string_handle(*objectType->path_handle), hash);
-	}
-	hash = joaat::partialStr(resolve_string_handle(objectType->name_handle), hash);
+	hash = joaat::partialStr(path, hash);
+	hash = joaat::partialStr(name, hash);
 	joaat::finalise(hash);
 
 	std::lock_guard lock(metadata_patches_mtx);
@@ -1132,6 +1129,12 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 			buf.append(text);
 		}
 		str->setUnownedData(buf.data(), buf.size());
+	}
+	else if (log_all_metadata_reads)
+	{
+		metadata_patches.emplace(hash, MetadataPatch{
+			.final_data = std::string(str->getData(), str->getSize())
+		});
 	}
 	return reinterpret_cast<decltype(&object_type_serialise_propery_text_detour)>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
@@ -1252,6 +1255,7 @@ static void save_config()
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
 	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+	config.add(ObfusString("log_all_metadata_reads"), log_all_metadata_reads);
 
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
@@ -1606,6 +1610,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				dont_resolve_labels = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("log_all_metadata_reads")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				log_all_metadata_reads = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				log_all_metadata_reads = false;
 			}
 		}
 		save_config();
@@ -2759,6 +2772,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							dont_resolve_labels = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(dont_resolve_labels));
+						break;
+
+					case soup::joaat::compileTimeHash("/log_all_metadata_reads"):
+						if (arr.size() > 1)
+						{
+							log_all_metadata_reads = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(log_all_metadata_reads));
 						break;
 
 					case soup::joaat::compileTimeHash("/pause_always_stops_time"):

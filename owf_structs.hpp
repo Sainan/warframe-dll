@@ -80,6 +80,11 @@ struct ObjectType
 {
 	PAD(0x00, 0x10) uint32_t* path_handle;
 	PAD(0x18, 0x2C) uint32_t name_handle;
+
+	uint32_t getPathHandle() const noexcept
+	{
+		return path_handle ? *path_handle : 0;
+	}
 };
 
 struct Object
