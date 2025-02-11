@@ -50,11 +50,13 @@ do
 			if compressed:byte(1) == 0x80 then
 				io.mkdirs("OpenWF/content/0")
 				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bin)
-			elseif bak := io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak") then
-				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bak)
-			else
-				require"ffi".open("user32"):wrap("i32", "MessageBoxA", "i32", "str", "str", "i32")(0, "OpenWF found broken assets. Please run the Launcher and drop the DLL back in after.", nil, 0x10)
-				os.exit(1)
+			elseif not shcc then
+				if bak := io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak") then
+					io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bak)
+				else
+					require"ffi".open("user32"):wrap("i32", "MessageBoxA", "i32", "str", "str", "i32")(0, "OpenWF found broken assets. Please run the Launcher and drop the DLL back in after.", nil, 0x10)
+					os.exit(1)
+				end
 			end
 		elseif shcc and shcc:byte(9) == 0 then
 			if compressed:byte(1) == 0x80 then
