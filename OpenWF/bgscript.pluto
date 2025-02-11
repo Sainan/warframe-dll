@@ -60,6 +60,9 @@ do
 			if compressed:byte(1) == 0x80 then
 				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", bin)
 			end
+			if io.exists("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak") then
+				io.contents("OpenWF/content/0/revert to normal.bat", owf_archive_find("OpenWF/content/revert to normal.bat"))
+			end
 		end
 	end
 end

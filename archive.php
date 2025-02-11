@@ -38,6 +38,7 @@ function add_folder_to_archive($base, $archive_base)
 }
 
 add_folder_to_archive("OpenWF/", "OpenWF/");
+add_folder_to_archive("OpenWF/content/", "OpenWF/content/");
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/");
 add_folder_to_archive("modules/openwf-translations/client-webui/", "OpenWF/webui_dicts/");
 
