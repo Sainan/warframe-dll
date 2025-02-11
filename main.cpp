@@ -782,23 +782,25 @@ static void broadcast_running_scripts_locked()
 static void start_script_from_file(std::string&& path)
 {
 	auto scr = soup::make_unique<owfScript>();
-	if (scr->loadFile(std::move(path)))
+	bool ok = scr->loadFile(std::move(path));
+	std::lock_guard lock(running_scripts_mtx);
+	if (ok)
 	{
-		std::lock_guard lock(running_scripts_mtx);
-		running_scripts.emplace_back(std::move(scr));
-		broadcast_running_scripts_locked();
+		running_scripts.emplace_back(std::move(scr));		
 	}
+	broadcast_running_scripts_locked();
 }
 
 static void start_script_from_string(std::string&& code)
 {
 	auto scr = soup::make_unique<owfScript>();
-	if (scr->loadString(std::move(code)))
+	bool ok = scr->loadString(std::move(code));
+	std::lock_guard lock(running_scripts_mtx);
+	if (ok)
 	{
-		std::lock_guard lock(running_scripts_mtx);
-		running_scripts.emplace_back(std::move(scr));
-		broadcast_running_scripts_locked();
+		running_scripts.emplace_back(std::move(scr));		
 	}
+	broadcast_running_scripts_locked();
 }
 
 static owfScript* get_script_by_name(const std::string& name)
