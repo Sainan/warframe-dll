@@ -41,19 +41,23 @@ end
 do
 	local compressed, decompressed_size = owf_find_cache_manifest()
 	if compressed then
+		local bin = "SHCC\x1f\x00\x00\x00"
+		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
+		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
+		bin ..= string.pack("<I4", crc32c(bin))
 		local shcc = io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w")
 		if not shcc or shcc:byte(9) == 2 then
 			if compressed:byte(1) == 0x80 then
-				local bin = "SHCC\x1f\x00\x00\x00"
-				bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
-				bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
-				bin ..= string.pack("<I4", crc32c(bin))
 				io.mkdirs("OpenWF/content/0")
 				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bin)
 			else
 				if require"ffi".open("user32"):wrap("i32", "MessageBoxA", "i32", "str", "str", "i32")(0, "OpenWF found tampered assets. It is highly recommended that you run the Launcher and drop the DLL back in after.\r\n\r\nContinue loading the game?", nil, 0x134) ~= 6 then
 					os.exit(1)
 				end
+			end
+		elseif shcc and shcc:byte(9) == 0 then
+			if compressed:byte(1) == 0x80 then
+				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", bin)
 			end
 		end
 	end
