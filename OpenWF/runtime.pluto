@@ -910,11 +910,43 @@ class PowerSuit extends LotusWeapon
 		ivkr_call(ivkr_find_method("PowerSuit", "GetMaxEnergy"), 1)
 		return ivkr_pop_number()
 	end
+
+	function GetAbilityByIndex(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("PowerSuit", "GetAbilityByIndex"), 2)
+		return new PowerSuitAbility()
+	end
+end
+
+class PowerSuitAbility extends Item
+	function GetCooldownDuration()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("PowerSuitAbility", "GetCooldownDuration"), 1)
+		return ivkr_pop_number()
+	end
+
+	function SetCooldownDuration(val)
+		self:pushToIvkr()
+		ivkr_push_float(val)
+		ivkr_call(ivkr_find_method("PowerSuitAbility", "SetCooldownDuration"), 2)
+	end
+
+	function GetCooldownTime()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("PowerSuitAbility", "GetCooldownTime"), 1)
+		return ivkr_pop_number()
+	end
+
+	function SetCooldownTime(val)
+		self:pushToIvkr()
+		ivkr_push_float(val)
+		ivkr_call(ivkr_find_method("PowerSuitAbility", "SetCooldownTime"), 2)
+	end
 end
 
 class InputControllerBase extends Object
 	__name = "InputControllerBase"
-
 end
 
 class InputController extends InputControllerBase

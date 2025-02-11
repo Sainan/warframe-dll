@@ -152,6 +152,13 @@ class PowerSuit extends LotusWeapon
 	function GetUnmodifiedMaxEnergy()
 	function GetCurEnergy()
 	function GetMaxEnergy()
+	function GetAbilityByIndex(i)
+
+class PowerSuitAbility extends Item
+	function GetCooldownDuration()
+	function SetCooldownDuration(val)
+	function GetCooldownTime()
+	function SetCooldownTime(val)
 
 class InputControllerBase extends Object
 
