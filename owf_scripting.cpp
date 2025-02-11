@@ -3,6 +3,8 @@
 #include <iostream>
 #include <mutex>
 
+#include <crc32c.hpp>
+#include <filesystem.hpp>
 #include <joaat.hpp>
 #include <JsonObject.hpp>
 #include <Module.hpp>
@@ -14,6 +16,7 @@
 #include <lstate.h>
 
 #include "owf_archive.hpp"
+#include "owf_cache.hpp"
 #include "owf_config.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
@@ -1193,6 +1196,46 @@ owfScript::owfScript()
 		return 1;
 	});
 	{ ObfusString name("owf_script_get_path"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (size_t toc_size; auto toc = (TocFile*)soup::filesystem::createFileMapping(ObfusString("Cache.Windows/H.Misc.toc").str(), toc_size))
+		{
+			const size_t num_entries = (toc_size - sizeof(TocHeader)) / sizeof(TocEntry);
+			const std::string str_H_Cache_bin = ObfusString("H.Cache.bin").str();
+			for (size_t i = 0; i != num_entries; ++i)
+			{
+				if (toc->entries[i].parentDirIndex == 0
+					&& toc->entries[i].timestamp != 0 // Ignore deleted files
+					&& str_H_Cache_bin == toc->entries[i].name
+					)
+				{
+					if (size_t cache_size; auto cache = soup::filesystem::createFileMapping(ObfusString("Cache.Windows/H.Misc.cache").str(), cache_size))
+					{
+						lua_pushlstring(L, (const char*)cache + toc->entries[i].cacheOffset, toc->entries[i].compressedLen);
+						lua_pushinteger(L, toc->entries[i].length);
+						soup::filesystem::destroyFileMapping(cache, cache_size);
+						return 2;
+					}
+					break;
+				}
+			}
+			soup::filesystem::destroyFileMapping(toc, toc_size);
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_find_cache_manifest"); lua_setglobal(L, name.c_str()); }
+
+	// crypto.crc32c will be added in Pluto 0.11.0, but for now...
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t len;
+		const auto text = luaL_checklstring(L, 1, &len);
+		const auto hash = soup::crc32c::hash((const uint8_t*)text, len);
+		lua_pushinteger(L, hash);
+		return 1;
+	});
+	{ ObfusString name("crc32c"); lua_setglobal(L, name.c_str()); }
 
 #if LABEL_REPLACEMENTS
 	lua_pushcfunction(L, [](lua_State* L) -> int
