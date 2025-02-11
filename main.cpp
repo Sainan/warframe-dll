@@ -66,8 +66,6 @@ static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 static std::string build_hash;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
-static bool fallback_language_was_used = false;
-static bool fallback_graphicsDriver_was_used = false;
 
 static HMODULE og_dwmapi;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -517,13 +515,11 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	{
 		arguments->got_language = true;
 		arguments->language.setShortData(fallback_language);
-		fallback_language_was_used = true;
 	}
 	if (!arguments->got_graphicsDriver)
 	{
 		arguments->got_graphicsDriver = true;
 		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
-		fallback_graphicsDriver_was_used = true;
 	}
 	if (!arguments->got_cluster)
 	{
@@ -2682,30 +2678,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							if (req.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
 							{
-								if (fallback_language_was_used)
-								{
-									ObfusString msg("The 'fallback_language' in your client_config.json does not seem to match your game files.");
-									MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-								}
-								else
-								{
-									ObfusString msg("The language that the game was supposed to launch with was is missing or outdated.");
-									MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-								}
+								ObfusString msg("The language that the game was supposed to launch with is missing or outdated.");
+								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+
 								exit(1);
 							}
 							if (req.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
 							{
-								if (fallback_graphicsDriver_was_used)
-								{
-									ObfusString msg("The 'fallback_graphicsDriver' in your client_config.json does not seem to match your game files.");
-									MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-								}
-								else
-								{
-									ObfusString msg("The graphicsDriver that the game was supposed to launch with is missing or outdated.");
-									MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-								}
+								ObfusString msg("The graphicsDriver that the game was supposed to launch with is missing or outdated.");
+								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+
 								exit(1);
 							}
 						}
