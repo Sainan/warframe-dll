@@ -81,7 +81,7 @@ local function check_for_updates()
 				if dll.latest_hotfix_sha256 ~= hotfix_sha256 then
 					hotfix_available = dll.latest_hotfix
 				end
-				if hotfix := meta.manifest:find(|x| -> x.sha256 == hotfix_sha256) then
+				if hotfix := dll.hotfixes:find(|x| -> x.sha256 == hotfix_sha256) then
 					current_hotfix = hotfix.name
 				end
 			end
