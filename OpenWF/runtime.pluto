@@ -839,12 +839,12 @@ class LotusWeapon extends WeaponEx
 	function GetCustomization()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusWeapon", "GetCustomization"), 1)
-		return new WeaponCustomization(ivkr_pop_userdata())
+		return new WeaponCustomization()
 	end
 
 	function SetCustomization(cust)
 		self:pushToIvkr()
-		ivkr_push_userdata(cust.ud)
+		cust:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusWeapon", "SetCustomization"), 2)
 	end
 end
@@ -1805,14 +1805,11 @@ class Ragdoll extends Entity
 	end
 end
 
-class WeaponCustomization
+class WeaponCustomization extends owfUserdata
 	__name = "WeaponCustomization"
 
-	function __construct(public ud)
-	end
-
 	function GetSkin(iSlot)
-		ivkr_push_userdata(self.ud)
+		self:pushToIvkr()
 		ivkr_push_int(iSlot)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "GetSkin"), 2)
 		if ivkr_type(-1) > 0 then
@@ -1823,7 +1820,7 @@ class WeaponCustomization
 	end
 
 	function SetSkin(objectType, iSlot)
-		ivkr_push_userdata(self.ud)
+		self:pushToIvkr()
 		objectType:pushToIvkr()
 		ivkr_push_int(iSlot)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
