@@ -1811,10 +1811,10 @@ class WeaponCustomization
 	function __construct(public ud)
 	end
 
-	function SetSkin(objectType, i)
+	function SetSkin(objectType, iSlot)
 		ivkr_push_userdata(self.ud)
 		objectType:pushToIvkr()
-		ivkr_push_int(i)
+		ivkr_push_int(iSlot)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
 	end
 end
@@ -2343,6 +2343,27 @@ ForceType = {
 	FT_IMPULSE = 1,
 	FT_VELOCITY_CHANGE = 2,
 	FT_ACCELERATION = 3,
+}
+
+-- unsure about the name
+PowerSuitCustomizationSlot = {
+	Helmet = 0,
+	ArmLeft = 1,
+	LegLeft = 2,
+	CustomEmblem = 3,
+	EventEmblem = 4,
+	AnimationSet = 5,
+	Neckwear = 6,
+	BodySkin = 7,
+	Chest = 8,
+	ArmRight = 9,
+	LegRight = 10,
+	Face = 11,
+	SigilChest = 12,
+	SigilBack = 13,
+	SpecialEvent = 14,
+	FxSet = 15,
+	SpecialFxSet = 16,
 }
 
 mem_rip = function(addr)

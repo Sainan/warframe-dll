@@ -314,7 +314,7 @@ class Ragdoll extends Entity
 	function ApplyGlobalForce(vec, forceType)
 
 class WeaponCustomization
-	function SetSkin(objectType, i)
+	function SetSkin(objectType, iSlot)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)
@@ -461,6 +461,7 @@ OperationType = { ADD, ADD_BASE, MULTIPLY, STACKING_MULTIPLY, SET, SET_BASE, SET
 DamageType = { DT_IMPACT, DT_PUNCTURE, DT_SLASH, DT_FIRE, DT_FREEZE, DT_ELECTRICITY, DT_POISON, DT_EXPLOSION, DT_RADIATION, DT_GAS, DT_MAGNETIC, DT_VIRAL, DT_CORROSIVE, DT_RADIANT, DT_SENTIENT, DT_CINEMATIC, DT_SHIELD_DRAIN, DT_HEALTH_DRAIN, DT_ENERGY_DRAIN, DT_FINISHER, DT_SUICIDE, DT_PHYSICAL, DT_INVALID, DT_BASE_ELEMENTAL, DT_COMPOUND_ELEMENTAL, DT_ANY }
 Injury = { PAIN, INJURY_RESISTED, INJURY_BLOCKED, STAGGER, BIG_STAGGER, STUN, KNOCKDOWN, GROUNDFIRE, THROW, RAGDOLL, PRE_DEATH, DEATH, DEATH_RAGDOLL, DEATH_SLICE, DEATH_SEVER, ANY, MAX_Injury }
 ForceType = { FT_FORCE, FT_IMPULSE, FT_VELOCITY_CHANGE, FT_ACCELERATION }
+PowerSuitCustomizationSlot = { Helmet, ArmLeft, LegLeft, CustomEmblem, EventEmblem, AnimationSet, Neckwear, BodySkin, Chest, ArmRight, LegRight, Face, SigilChest, SigilBack, SpecialEvent, FxSet, SpecialFxSet }
 
 -- Preloaded modules
 
