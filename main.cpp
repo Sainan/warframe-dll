@@ -597,10 +597,12 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 
 
 static DetourHook write_to_log_file_hook;
+static void* write_to_log_file_a1 = nullptr;
 static ObfusString log_sep("]: ");
 
 static void write_to_log_file_detour(void* const a1, char* const data, size_t _size)
 {
+	write_to_log_file_a1 = a1;
 	SOUP_IF_LIKELY (_size > 15)
 	{
 		SOUP_IF_LIKELY (auto message = strstr(data + 15, log_sep.c_str()))
@@ -675,6 +677,19 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 		std::cout << std::string(data, _size);
 	}
 	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, _size);
+}
+
+static void write_to_ee_log(const char* data, size_t size)
+{
+	if (write_to_log_file_a1)
+	{
+		reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(write_to_log_file_a1, const_cast<char*>(data), size);
+	}
+}
+
+static void write_to_ee_log(const char* str)
+{
+	return write_to_ee_log(str, strlen(str));
 }
 
 
@@ -1032,6 +1047,7 @@ struct MetadataPatch
 	std::vector<std::pair<std::string, std::string>> replacements;
 
 	std::string final_data;
+	bool is_implicit = false;
 };
 static Mutex metadata_patches_mtx;
 static std::unordered_map<uint32_t, MetadataPatch> metadata_patches;
@@ -1093,15 +1109,13 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 	const char* path = resolve_string_handle(objectType->getPathHandle());
 	const char* name = resolve_string_handle(objectType->name_handle);
 
-	if (log_all_metadata_reads)
-	{
-		std::cout << ObfusString("Reading metadata for ").str() << path << name << "\n";
-	}
-
 	uint32_t hash = 0;
 	hash = joaat::partialStr(path, hash);
 	hash = joaat::partialStr(name, hash);
 	joaat::finalise(hash);
+
+	bool should_write_to_console = write_all_metadata_reads_to_console;
+	bool should_write_to_ee_log = write_all_metadata_reads_to_ee_log;
 
 	std::lock_guard lock(metadata_patches_mtx);
 	if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
@@ -1124,13 +1138,36 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 			buf.append(text);
 		}
 		str->setUnownedData(buf.data(), buf.size());
+
+		if (!patch.is_implicit)
+		{
+			should_write_to_console = write_patched_metadata_reads_to_console;
+			should_write_to_ee_log = write_patched_metadata_reads_to_ee_log;
+		}
 	}
-	else if (log_all_metadata_reads)
+	else if (save_all_metadata)
 	{
 		metadata_patches.emplace(hash, MetadataPatch{
-			.final_data = std::string(str->getData(), str->getSize())
+			.final_data = std::string(str->getData(), str->getSize()),
+			.is_implicit = true,
 		});
 	}
+
+	if (should_write_to_console)
+	{
+		ObfusString prefix("Reading metadata for ");
+		std::cout.write(prefix.data(), prefix.size());
+		std::cout << path << name << "\n";
+	}
+	if (should_write_to_ee_log)
+	{
+		ObfusString prefix("[OpenWF] Reading metadata for ");
+		write_to_ee_log(prefix.data(), prefix.size());
+		write_to_ee_log(path);
+		write_to_ee_log(name);
+		write_to_ee_log("\n", 1);
+	}
+
 	return reinterpret_cast<decltype(&object_type_serialise_propery_text_detour)>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
@@ -1250,7 +1287,11 @@ static void save_config()
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
 	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
-	config.add(ObfusString("log_all_metadata_reads"), log_all_metadata_reads);
+	config.add(ObfusString("save_all_metadata"), save_all_metadata);
+	config.add(ObfusString("write_all_metadata_reads_to_console"), write_all_metadata_reads_to_console);
+	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
+	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
+	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
 
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
@@ -1607,13 +1648,49 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				dont_resolve_labels = false;
 			}
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("log_all_metadata_reads")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("save_all_metadata")); it != config->reinterpretAsObj().end() && it->second->isBool())
 			{
-				log_all_metadata_reads = it->second->reinterpretAsBool().value;
+				save_all_metadata = it->second->reinterpretAsBool().value;
 			}
 			else
 			{
-				log_all_metadata_reads = false;
+				save_all_metadata = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("write_all_metadata_reads_to_console")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				write_all_metadata_reads_to_console = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				write_all_metadata_reads_to_console = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("write_all_metadata_reads_to_ee_log")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				write_all_metadata_reads_to_ee_log = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				write_all_metadata_reads_to_ee_log = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("write_patched_metadata_reads_to_console")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				write_patched_metadata_reads_to_console = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				write_patched_metadata_reads_to_console = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("write_patched_metadata_reads_to_ee_log")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				write_patched_metadata_reads_to_ee_log = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				write_patched_metadata_reads_to_ee_log = false;
 			}
 		}
 		save_config();
@@ -2801,12 +2878,44 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, std::to_string(dont_resolve_labels));
 						break;
 
-					case soup::joaat::compileTimeHash("/log_all_metadata_reads"):
+					case soup::joaat::compileTimeHash("/save_all_metadata"):
 						if (arr.size() > 1)
 						{
-							log_all_metadata_reads = (arr[1].size() == 4);
+							save_all_metadata = (arr[1].size() == 4);
 						}
-						ServerWebService::sendText(s, std::to_string(log_all_metadata_reads));
+						ServerWebService::sendText(s, std::to_string(save_all_metadata));
+						break;
+
+					case soup::joaat::compileTimeHash("/write_all_metadata_reads_to_console"):
+						if (arr.size() > 1)
+						{
+							write_all_metadata_reads_to_console = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(write_all_metadata_reads_to_console));
+						break;
+
+					case soup::joaat::compileTimeHash("/write_all_metadata_reads_to_ee_log"):
+						if (arr.size() > 1)
+						{
+							write_all_metadata_reads_to_ee_log = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(write_all_metadata_reads_to_ee_log));
+						break;
+
+					case soup::joaat::compileTimeHash("/write_patched_metadata_reads_to_console"):
+						if (arr.size() > 1)
+						{
+							write_patched_metadata_reads_to_console = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(write_patched_metadata_reads_to_console));
+						break;
+
+					case soup::joaat::compileTimeHash("/write_patched_metadata_reads_to_ee_log"):
+						if (arr.size() > 1)
+						{
+							write_patched_metadata_reads_to_ee_log = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(write_patched_metadata_reads_to_ee_log));
 						break;
 
 					case soup::joaat::compileTimeHash("/pause_always_stops_time"):

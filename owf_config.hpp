@@ -32,7 +32,11 @@ inline float fov_override;
 inline std::string forced_profile_dir;
 inline std::vector<std::string> auto_start_scripts;
 inline bool dont_resolve_labels;
-inline bool log_all_metadata_reads;
+inline bool save_all_metadata;
+inline bool write_all_metadata_reads_to_console;
+inline bool write_all_metadata_reads_to_ee_log;
+inline bool write_patched_metadata_reads_to_console;
+inline bool write_patched_metadata_reads_to_ee_log;
 
 
 // Effective arguments (not in client_config.json)

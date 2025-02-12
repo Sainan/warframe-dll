@@ -58,7 +58,11 @@ void owfOverlay::init()
 			}
 
 #if !LOGGING
-			if (!ee_log_in_console && !log_all_metadata_reads && owfConsole::active)
+			if (!ee_log_in_console
+				&& !write_all_metadata_reads_to_console
+				&& !write_patched_metadata_reads_to_console
+				&& owfConsole::active
+				)
 			{
 				owfConsole::deactivate();
 			}
