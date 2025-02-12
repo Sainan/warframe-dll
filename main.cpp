@@ -2590,6 +2590,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		// Needed to make RequestSlomo work outside of Captura
+		{
+			SIG_INST("FF 90 ? ? 00 00 84 C0 74 ? F3 0F 11 73");
+			auto RequestSlomo_cond = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "RequestSlomo_cond = " << RequestSlomo_cond.as<void*>() << std::endl;
+#endif
+			if (RequestSlomo_cond)
+			{
+				memGuard::setAllowedAccess(RequestSlomo_cond.add(8).as<void*>(), 2, memGuard::ACC_RWX);
+				RequestSlomo_cond.as<uint8_t*>()[8] = 0x90;
+				RequestSlomo_cond.as<uint8_t*>()[9] = 0x90;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/hotfix.bin").str()); !hotfix.empty())
 		{
 			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))

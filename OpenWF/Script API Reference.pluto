@@ -170,6 +170,11 @@ class GameRules extends Object
 	function RequestPause()
 	function RequestUnpause()
 	function RequestResource(name, callback)
+	function RequestSlomo(f)
+	function CancelSlomo()
+	function IsSlomo()
+	function getSlomoltiplier()
+	function setSlomoltiplier(f)
 
 class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)

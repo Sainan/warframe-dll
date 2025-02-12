@@ -984,6 +984,37 @@ class GameRules extends Object
 		ivkr_push_callback(callback)
 		ivkr_call(ivkr_find_method("GameRules", "RequestResource"), 3)
 	end
+
+	function RequestSlomo(f)
+		self:pushToIvkr()
+		if f then
+			ivkr_push_float(f)
+		end
+		ivkr_call(ivkr_find_method("GameRules", "RequestSlomo"), f ? 2 : 1)
+	end
+
+	function CancelSlomo()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("GameRules", "CancelSlomo"), 1)
+	end
+
+	function IsSlomo()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("GameRules", "IsSlomo"), 1)
+		return ivkr_pop_bool()
+	end
+
+	function getSlomoltiplier()
+		self:pushToIvkr()
+		--return mem_read_f32(ivkr_pop_object() + 0x54)
+		ivkr_call(ivkr_find_method("GameRules", 0xA3993EEA), 1)
+		return ivkr_pop_number()
+	end
+
+	function setSlomoltiplier(f)
+		self:pushToIvkr()
+		mem_write_f32(ivkr_pop_object() + 0x54, f)
+	end
 end
 
 class GameRulesImpl extends GameRules
