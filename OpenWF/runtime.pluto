@@ -1811,6 +1811,17 @@ class WeaponCustomization
 	function __construct(public ud)
 	end
 
+	function GetSkin(iSlot)
+		ivkr_push_userdata(self.ud)
+		ivkr_push_int(iSlot)
+		ivkr_call(ivkr_find_method("WeaponCustomization", "GetSkin"), 2)
+		if ivkr_type(-1) > 0 then
+			return new ObjectType(addr)
+		else
+			ivkr_pop(1)
+		end
+	end
+
 	function SetSkin(objectType, iSlot)
 		ivkr_push_userdata(self.ud)
 		objectType:pushToIvkr()

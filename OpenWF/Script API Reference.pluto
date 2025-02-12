@@ -314,6 +314,7 @@ class Ragdoll extends Entity
 	function ApplyGlobalForce(vec, forceType)
 
 class WeaponCustomization
+	function GetSkin(iSlot)
 	function SetSkin(objectType, iSlot)
 
 class Engine.OpenLevelArgs
