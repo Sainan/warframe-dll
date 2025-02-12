@@ -53,6 +53,8 @@ struct owfScript
 	static void logNl(std::string msg);
 	static void log(std::string msg);
 
+	static void openLibs(lua_State* L);
+
 	owfScript();
 
 	bool loadFile(std::string&& path);

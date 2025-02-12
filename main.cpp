@@ -47,6 +47,8 @@
 
 #include "whirlpool.hpp"
 
+#include <lauxlib.h>
+
 using namespace soup;
 
 #include "owf_archive.hpp"
@@ -1033,60 +1035,53 @@ struct MetadataPatch
 };
 static Mutex metadata_patches_mtx;
 static std::unordered_map<uint32_t, MetadataPatch> metadata_patches;
+static MetadataPatch* current_patch = nullptr;
 static void load_metadata_patches()
 {
 	std::lock_guard lock(metadata_patches_mtx);
 	metadata_patches.clear();
-	MetadataPatch* current_patch = nullptr;
-	FileReader fr(ObfusString("OpenWF/Metadata Patches.txt"));
-	for (std::string line; fr.getLine(line); )
+
+	auto L = luaL_newstate();
+	owfScript::openLibs(L);
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (intptr_t start = line.find_first_not_of(" \t"); start > 0)
+		size_t len;
+		const char* str = luaL_checklstring(L, 1, &len);
+		const auto hash = soup::joaat::hashRange(str, len);
+		if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
 		{
-			line.erase(0, start);
+			current_patch = &e->second;
 		}
-		switch (line.c_str()[0])
+		else
 		{
-		case '#':
-			break;
-
-		case '/':
-			{
-				const auto hash = joaat::hashRange(line.data(), line.size());
-				if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
-				{
-					current_patch = &e->second;
-				}
-				else
-				{
-					current_patch = &metadata_patches.emplace(hash, MetadataPatch{}).first->second;
-				}
-			}
-			break;
-
-		default:
-			if (current_patch && !line.empty())
-			{
-				current_patch->prefix.append(line);
-				current_patch->prefix.push_back('\n');
-			}
-			break;
-
-		case 'r': case 'R':
-			if (current_patch)
-			{
-				const auto sep = line.find('|', 2);
-				auto from = line.substr(2, sep - 2);
-				auto to = line.substr(sep + 1, line.size() - (sep + 1));
-				if (!to.empty() && to.back() == '|')
-				{
-					to.pop_back();
-				}
-				current_patch->replacements.emplace_back(std::move(from), std::move(to));
-			}
-			break;
+			current_patch = &metadata_patches.emplace(hash, MetadataPatch{}).first->second;
 		}
+		current_patch->prefix.append(pluto_checkstring(L, 2));
+		return 0;
+	});
+	{ ObfusString name("new_patch"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (current_patch)
+		{
+			current_patch->replacements.emplace_back(pluto_checkstring(L, 1), pluto_checkstring(L, 2));
+		}
+		return 0;
+	});
+	{ ObfusString name("add_replacement"); lua_setglobal(L, name.c_str()); }
+
+	uint32_t size;
+	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/load_metadata_patches.pluto"), size);
+	if (luaL_loadbuffer(L, data, size, nullptr) != LUA_OK
+		|| lua_pcall(L, 0, 0, 0) != LUA_OK
+		)
+	{
+		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error while loading metadata patches").str());
 	}
+
+	lua_close(L);
 }
 
 static CallsiteHook object_type_serialise_propery_text_hook;

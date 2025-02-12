@@ -94,11 +94,8 @@ void owfScript::log(std::string msg)
 	}
 }
 
-owfScript::owfScript()
+void owfScript::openLibs(lua_State* L)
 {
-	auto L = luaL_newstate();
-	this->main = L;
-	L->l_G->user_data = this;
 	luaL_openlibs(L);
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -142,6 +139,20 @@ owfScript::owfScript()
 		return 0;
 	});
 	lua_settable(L, -3);
+
+#if PRIVATE
+	lua_pushboolean(L, true);
+	lua_setglobal(L, "OWF_PRIVATE_BUILD");
+#endif
+}
+
+owfScript::owfScript()
+{
+	auto L = luaL_newstate();
+	this->main = L;
+	L->l_G->user_data = this;
+
+	owfScript::openLibs(L);
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1275,11 +1286,6 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_restore_label"); lua_setglobal(L, name.c_str()); }
-#endif
-
-#if PRIVATE
-	lua_pushboolean(L, true);
-	lua_setglobal(L, "OWF_PRIVATE_BUILD");
 #endif
 
 	std::string runtime;

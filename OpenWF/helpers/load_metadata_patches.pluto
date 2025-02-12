@@ -1,0 +1,70 @@
+function parse_metadata_patches(str)
+	local patches = {}
+	local patch = { keys = {}, suffix = "", replacements = {} }
+	local ampersand = false
+	local function delimit_patch()
+		if #patch.keys ~= 0 then
+			patches:insert(patch)
+		end
+		patch = { keys = {}, suffix = "", replacements = {} }
+	end
+	for str:split("\n") as line do
+		if line[1] == "/" then
+			if ampersand then
+				ampersand = false
+			else
+				delimit_patch()
+			end
+			if line[-1] == "&" then
+				ampersand = true
+				line = line:sub(1, -2):strip()
+			end
+			for line:split("&") as key do
+				patch.keys:insert(key:strip())
+			end
+			continue
+		end
+		line = line:strip()
+		ampersand = false
+		if line[1] == "&" then
+			ampersand = true
+			if line[-1] == "&" then
+				ampersand = true
+				line = line:sub(1, -2):strip()
+			end
+			line = line:sub(2):strip()
+			patch.keys:insert(line)
+		elseif line[1] == ">" then
+			delimit_patch()
+			line = line:sub(2):strip()
+			if line[-1] == "&" then
+				ampersand = true
+				line = line:sub(1, -2):strip()
+			end
+			for line:split("&") as key do
+				patch.keys:insert(key:strip())
+			end
+		elseif line:sub(1, 2) == "r|" or line:sub(1, 2) == "R|" then
+			local sep = line:find("|", 3)
+			patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+		elseif #line ~= 0 and line[1] ~= "#" then
+			patch.suffix = patch.suffix .. line .. "\n"
+		end
+	end
+	if #patch.keys ~= 0 then
+		patches:insert(patch)
+	end
+	if OWF_PRIVATE_BUILD then
+		print(dumpvar(patches))
+	end
+	return patches
+end
+
+for parse_metadata_patches(io.contents("OpenWF/Metadata Patches.txt")) as patch do
+	for patch.keys as k do
+		new_patch(k, patch.suffix)
+	end
+	for k, v in patch.replacements do
+		add_replacement(k, v)
+	end
+end
