@@ -1874,8 +1874,8 @@ class Engine.DamageData extends owfUserdata
 	end
 
 	function __index(name)
-		if Object[name] then
-			return Object[name]
+		if owfUserdata[name] then
+			return owfUserdata[name]
 		end
 		switch name do
 			case "injuryType":
