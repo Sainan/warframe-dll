@@ -1079,6 +1079,13 @@ end
 
 -- undocumented
 class LotusHubGameRules extends LotusBaseGameRules
+	function GetAccountFromAvatar(avatar)
+		self:pushToIvkr()
+		avatar:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusHubGameRules", "GetAccountFromAvatar"), 2)
+		return ivkr_pop_string()
+	end
+
 	function ReconnectToHub()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusHubGameRules", "ReconnectToHub"), 1)
@@ -1923,6 +1930,17 @@ class CustomizationColorPalette extends owfUserdata
 	end
 end
 
+-- undocumented
+class RelayHub extends Object end
+class LotusHub extends RelayHub
+	function getNameFromAccount(oid)
+		self:pushToIvkr()
+		ivkr_push_string(oid)
+		ivkr_call(ivkr_find_method("LotusHub", 0x654FB7FB), 2)
+		return ivkr_pop_string()
+	end
+end
+
 Engine = {}
 
 class Engine.OpenLevelArgs extends owfUserdata
@@ -2360,6 +2378,11 @@ gMatchingService = {
 		ivkr_push_string(msg)
 		ivkr_call(ivkr_find_method("MatchingService", "SendRelayP2P"), 3)
 		return ivkr_pop_bool()
+	end,
+	function getHub()
+		ivkr_push_pointer(get_matchingservice())
+		ivkr_call(ivkr_find_method("MatchingService", 0x0441ACA2), 1)
+		return new LotusHub()
 	end
 }
 
