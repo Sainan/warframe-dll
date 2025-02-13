@@ -149,7 +149,7 @@
 		let script_log_len = -1;
 		const script_broadcast_requested = {};
 		ws.onopen = function() {
-			fetch("/request_version_broadcast");
+			fetch("/request_bgscript_broadcasts");
 		};
 		ws.onmessage = function(e) {
 			const obj = JSON.parse(e.data);

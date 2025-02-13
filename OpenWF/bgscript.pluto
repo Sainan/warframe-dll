@@ -1,7 +1,7 @@
 owf_register_custom_route("/teleport", "text/plain", "")
 owf_register_custom_route("/enable_pause_always_stops_time", "text/plain", "")
 owf_register_custom_route("/disable_pause_always_stops_time", "text/plain", "")
-owf_register_custom_route("/request_version_broadcast", "text/plain", "")
+owf_register_custom_route("/request_bgscript_broadcasts", "text/plain", "")
 owf_register_custom_route("/download_latest_hotfix", "text/plain", "")
 owf_register_custom_route("/check_for_updates", "text/plain", "")
 
@@ -122,10 +122,17 @@ local function check_for_updates()
 	end)
 end
 
-local last_status_report = 0
+local last_status_update = 0
+local last_status_string
+
+local function send_status_broadcast()
+	owf_broadcast_message(json.encode({
+		bgscript_status_string = last_status_string
+	}))
+end
 
 while pcall(yield) do
-	if os.millis() - last_status_report >= 20 then
+	if os.millis() - last_status_update >= 20 then
 		local status = {
 			camtype = "gamecam",
 			pos = "",
@@ -154,8 +161,12 @@ while pcall(yield) do
 				end
 			end
 		end
-		owf_set_bgscript_status_string(json.encode(status))
-		last_status_report = os.millis()
+		local status_string = json.encode(status)
+		if status_string ~= last_status_string then
+			last_status_string = status_string
+			send_status_broadcast()
+		end
+		last_status_update = os.millis()
 	end
 	if (fov_override := owf_config_get_fov_override()) ~= 0 then
 		if not owf_tunables_has("prohibit_fov_override") then
@@ -178,7 +189,8 @@ while pcall(yield) do
 			elseif evt.path == "/disable_pause_always_stops_time" then
 				gGameRules:RequestUnpause()
 				set_pause_always_stops_time(false)
-			elseif evt.path == "/request_version_broadcast" then
+			elseif evt.path == "/request_bgscript_broadcasts" then
+				send_status_broadcast()
 				if not requested_versions then
 					requested_versions = true
 					check_for_updates()

@@ -1365,7 +1365,6 @@ static void restart_bgscript()
 static void populate_initial_status(JsonObject& obj)
 {
 	obj.add(ObfusString("console"), owfConsole::active);
-	obj.add(ObfusString("bgscript_status_string"), bgscript_status_string);
 }
 
 static void populate_full_script_log(JsonObject& obj)
