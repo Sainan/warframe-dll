@@ -1763,13 +1763,7 @@ class LensFlare extends Entity
 
 	function SetTint(color)
 		self:pushToIvkr()
-		do
-			ivkr_push_int(color.r)
-			ivkr_push_int(color.g)
-			ivkr_push_int(color.b)
-			ivkr_push_int(color.a)
-			ivkr_call(ivkr_find_ctor("Color"), 4)
-		end
+		color:pushToIvkr()
 		ivkr_call(ivkr_find_method("LensFlare", "SetTint"), 2)
 	end
 end
@@ -1824,6 +1818,108 @@ class WeaponCustomization extends owfUserdata
 		objectType:pushToIvkr()
 		ivkr_push_int(iSlot)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetSkin"), 3)
+	end
+
+	function GetColors(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("WeaponCustomization", "GetColors"), 2)
+		return new CustomizationColorPalette()
+	end
+
+	function SetColors(i, v)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		v:pushToIvkr()
+		ivkr_call(ivkr_find_method("WeaponCustomization", "SetColors"), 3)
+	end
+end
+
+local function pop_color()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "red"), 1)
+	local red = math.tointeger(ivkr_pop_number())
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "green"), 1)
+	local green = math.tointeger(ivkr_pop_number())
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "blue"), 1)
+	local blue = math.tointeger(ivkr_pop_number())
+	ivkr_call(ivkr_find_getter("Color", "alpha"), 1)
+	local alpha = math.tointeger(ivkr_pop_number())
+	return new Color(red, green, blue, alpha)
+end
+
+class CustomizationColorPalette extends owfUserdata
+	__name = "CustomizationColorPalette"
+
+	function __index(name)
+		if CustomizationColorPalette[name] then
+			return CustomizationColorPalette[name]
+		end
+		switch name do
+			case "mTintColor0":
+			case "mTintColor1":
+			case "mTintColor2":
+			case "mTintColor3":
+			case "mEmissiveColor0":
+			case "mEmissiveColor1":
+			case "mEnergyColor":
+			case "mEnergyColor1":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("CustomizationColorPalette", name), 1)
+				return pop_color()
+		end
+		error("Unknown field: "..name)
+	end
+
+	function __newindex(name, value)
+		if owfUserdata[name] then
+			return owfUserdata[name]
+		end
+		switch name do
+			case "mTintColor0":
+			case "mTintColor1":
+			case "mTintColor2":
+			case "mTintColor3":
+			case "mEmissiveColor0":
+			case "mEmissiveColor1":
+			case "mEnergyColor":
+			case "mEnergyColor1":
+				self:pushToIvkr()
+				value:pushToIvkr()
+				ivkr_call(ivkr_find_setter("CustomizationColorPalette", name), 2)
+				return
+		end
+		error("Unknown field: "..name)
+	end
+
+	function GetColor(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("CustomizationColorPalette", "GetColor"), 2)
+		return pop_color()
+	end
+
+	function SetColor(i, c)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		c:pushToIvkr()
+		ivkr_call(ivkr_find_method("CustomizationColorPalette", "SetColor"), 3)
+	end
+
+	function Initialized(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("CustomizationColorPalette", "Initialized"), 2)
+		return ivkr_pop_bool()
+	end
+
+	function SetInitialized(i, b)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("CustomizationColorPalette", "SetInitialized"), 3)
 	end
 end
 
@@ -1943,6 +2039,30 @@ class Symbol
 end
 setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
 
+class Color
+	__name = "Color"
+
+	function __construct(public red, public green, public blue, public alpha = 255)
+	end
+
+	function __tostring()
+		return $"Color({self.red}, {self.green}, {self.blue}, {self.alpha})"
+	end
+
+	function pushToIvkr()
+		ivkr_push_int(self.red)
+		ivkr_push_int(self.green)
+		ivkr_push_int(self.blue)
+		ivkr_push_int(self.alpha)
+		ivkr_call(ivkr_find_ctor("Color"), 4)
+	end
+
+	function GetUInt()
+		return (self.red << 16) | (self.green << 8) | self.blue
+	end
+end
+setmetatable(Color, { __call = |_, ...| -> new Color(...) })
+
 function IsNull(val)
 	if val instanceof owfUserdata then
 		val:pushToIvkr()
@@ -1968,10 +2088,6 @@ end
 
 function Range(min, max)
 	return { min = min, max = max }
-end
-
-function Color(r, g, b, a)
-	return { r = r, g = g, b = b, a = a }
 end
 
 function Localize(loctag, subs = {})

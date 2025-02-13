@@ -316,6 +316,22 @@ class Ragdoll extends Entity
 class WeaponCustomization
 	function GetSkin(iSlot)
 	function SetSkin(objectType, iSlot)
+	function GetColors(i)
+	function SetColors(i, v)
+
+class CustomizationColorPalette
+	mTintColor0
+	mTintColor1
+	mTintColor2
+	mTintColor3
+	mEmissiveColor0
+	mEmissiveColor1
+	mEnergyColor
+	mEnergyColor1
+	function GetColor(i)
+	function SetColor(i, c)
+	function Initialized(i)
+	function SetInitialized(i, b)
 
 class Engine.OpenLevelArgs
 	function SetLevel(level)
@@ -337,6 +353,11 @@ class Symbol
 	function __tostring()
 	function c_str()
 
+class Color
+	function __construct(public red, public green, public blue, public alpha = 255)
+	function __tostring()
+	function GetUInt()
+
 -- Global functions
 
 function IsNull(val)
@@ -346,7 +367,6 @@ function Type(name)
 function Resource(name)
 function WeakResource(name) -- constructs an ObjectType instance
 function Range(min, max)
-function Color(r, g, b, a)
 
 function Localize(loctag, subs = {})
 function AngleToDirection(rot)
