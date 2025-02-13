@@ -1,12 +1,12 @@
 function parse_metadata_patches(str)
 	local patches = {}
-	local patch = { keys = {}, suffix = "", replacements = {} }
+	local patch = { keys = {}, prefix = "", replacements = {} }
 	local ampersand = false
 	local function delimit_patch()
 		if #patch.keys ~= 0 then
 			patches:insert(patch)
 		end
-		patch = { keys = {}, suffix = "", replacements = {} }
+		patch = { keys = {}, prefix = "", replacements = {} }
 	end
 	for str:split("\n") as line do
 		if line[1] == "/" then
@@ -48,7 +48,7 @@ function parse_metadata_patches(str)
 			local sep = line:find("|", 3)
 			patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 		elseif #line ~= 0 and line[1] ~= "#" then
-			patch.suffix = patch.suffix .. line .. "\n"
+			patch.prefix = patch.prefix .. line .. "\n"
 		end
 	end
 	if #patch.keys ~= 0 then
@@ -62,7 +62,7 @@ end
 
 for parse_metadata_patches(io.contents("OpenWF/Metadata Patches.txt")) as patch do
 	for patch.keys as k do
-		new_patch(k, patch.suffix)
+		new_patch(k, patch.prefix)
 	end
 	for k, v in patch.replacements do
 		add_replacement(k, v)
