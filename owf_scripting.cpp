@@ -1195,6 +1195,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		int ret = 0;
 		if (size_t toc_size; auto toc = (TocFile*)soup::filesystem::createFileMapping(ObfusString("Cache.Windows/H.Misc.toc").str(), toc_size))
 		{
 			const size_t num_entries = (toc_size - sizeof(TocHeader)) / sizeof(TocEntry);
@@ -1211,14 +1212,14 @@ owfScript::owfScript()
 						lua_pushlstring(L, (const char*)cache + toc->entries[i].cacheOffset, toc->entries[i].compressedLen);
 						lua_pushinteger(L, toc->entries[i].length);
 						soup::filesystem::destroyFileMapping(cache, cache_size);
-						return 2;
+						ret = 2;
 					}
 					break;
 				}
 			}
 			soup::filesystem::destroyFileMapping(toc, toc_size);
 		}
-		return 0;
+		return ret;
 	});
 	{ ObfusString name("owf_find_cache_manifest"); lua_setglobal(L, name.c_str()); }
 
