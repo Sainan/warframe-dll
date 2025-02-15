@@ -333,6 +333,12 @@ class CustomizationColorPalette
 	function Initialized(i)
 	function SetInitialized(i, b)
 
+class OverlayBase extends Object
+
+class FlashInstance extends OverlayBase
+	function AttachToEntity(ent, off, rot, vecScale)
+	function Execute(func, str)
+
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
@@ -443,6 +449,7 @@ gStarChart
 
 gFlashMgr
 	function ExecuteToolMenuCommand(resource)
+	function GotoMovie(resource)
 
 gGameData
 	function SyncInventoryFromDB(callback)
