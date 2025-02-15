@@ -88,6 +88,7 @@ class ObjectType extends owfUserdata
 		end
 	end
 
+	-- used to be documented, but trying to get rid of this as non-full names are not necessarily unique
 	function isNameInHierarchy(name)
 		local type = self
 		repeat
