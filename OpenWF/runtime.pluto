@@ -20,6 +20,13 @@ class Rotation
 end
 setmetatable(Rotation, { __call = |_, ...| -> new Rotation(...) })
 
+function ivkr_push_rotation(rot)
+	ivkr_push_float(rot.heading)
+	ivkr_push_float(rot.pitch)
+	ivkr_push_float(rot.bank)
+	ivkr_call(ivkr_find_ctor("Rotation"), 3)
+end
+
 class owfPointer
 	function __construct(addr)
 		if addr == nil or addr == 0 then
@@ -285,12 +292,7 @@ class Entity extends BaseEntity
 
 	function SetRotation(rot)
 		self:pushToIvkr()
-		do
-			ivkr_push_float(rot.heading)
-			ivkr_push_float(rot.pitch)
-			ivkr_push_float(rot.bank)
-			ivkr_call(ivkr_find_ctor("Rotation"), 3)
-		end
+		ivkr_push_rotation(rot)
 		ivkr_call(ivkr_find_method("Entity", "SetRotation"), 2)
 	end
 
@@ -468,12 +470,7 @@ class BaseAvatar extends Entity
 
 	function SetView(rot)
 		self:pushToIvkr()
-		do
-			ivkr_push_float(rot.heading)
-			ivkr_push_float(rot.pitch)
-			ivkr_push_float(rot.bank)
-			ivkr_call(ivkr_find_ctor("Rotation"), 3)
-		end
+		ivkr_push_rotation(rot)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetView"), 2)
 	end
 
@@ -486,12 +483,7 @@ class BaseAvatar extends Entity
 
 	function SetCameraView(rot)
 		self:pushToIvkr()
-		do
-			ivkr_push_float(rot.heading)
-			ivkr_push_float(rot.pitch)
-			ivkr_push_float(rot.bank)
-			ivkr_call(ivkr_find_ctor("Rotation"), 3)
-		end
+		ivkr_push_rotation(rot)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetCameraView"), 2)
 	end
 
@@ -1599,13 +1591,8 @@ class NpcManager extends EngineNpcMgr
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
 		ivkr_push_vector(pos)
-		do
-			ivkr_push_float(rot.heading)
-			ivkr_push_float(rot.pitch)
-			ivkr_push_float(rot.bank)
-			ivkr_call(ivkr_find_ctor("Rotation"), 3)
-		end
-		(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
+		ivkr_push_rotation(rot)
+		;(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
 		ivkr_push_int(optionalLevel or 0)
 		ivkr_call(ivkr_find_method("NpcManager", "CreateAgentAtPosition"), 6)
 		return new EngineNpcAgent()
@@ -2116,10 +2103,7 @@ function UISys.ScriptResLoader_Create(names)
 end
 
 function AngleToDirection(rot)
-	ivkr_push_float(rot.heading)
-	ivkr_push_float(rot.pitch)
-	ivkr_push_float(rot.bank)
-	ivkr_call(ivkr_find_ctor("Rotation"), 3)
+	ivkr_push_rotation(rot)
 	ivkr_call(mem_read_i64(mem_scan_exe("05 E5 C6 F6 00 00 00 00") + 8), 1)
 	local ud = ivkr_pop_userdata()
 	return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
