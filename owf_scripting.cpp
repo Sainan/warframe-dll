@@ -94,26 +94,31 @@ void owfScript::log(std::string msg)
 	}
 }
 
+static std::string concat_arguments(lua_State* L)
+{
+	std::string msg;
+	const int n = lua_gettop(L);
+	for (int i = 0; i++ != n; )
+	{
+		size_t len;
+		const char* str = luaL_tolstring(L, i, &len);
+		msg.append(str, len);
+		msg.push_back('\t');
+	}
+	if (!msg.empty())
+	{
+		msg.pop_back();
+	}
+	return msg;
+}
+
 void owfScript::openLibs(lua_State* L)
 {
 	luaL_openlibs(L);
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		std::string msg;
-		const int n = lua_gettop(L);
-		for (int i = 0; i++ != n; )
-		{
-			size_t len;
-			const char* str = luaL_tolstring(L, i, &len);
-			msg.append(str, len);
-			msg.push_back('\t');
-		}
-		if (!msg.empty())
-		{
-			msg.pop_back();
-		}
-		owfScript::logNl(msg);
+		owfScript::logNl(concat_arguments(L));
 		return 0;
 	});
 	{ ObfusString name("print"); lua_setglobal(L, name.c_str()); }
@@ -122,23 +127,24 @@ void owfScript::openLibs(lua_State* L)
 	{ ObfusString name("write"); lua_pushlstring(L, name.data(), name.size()); }
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		std::string msg;
-		const int n = lua_gettop(L);
-		for (int i = 0; i++ != n; )
-		{
-			size_t len;
-			const char* str = luaL_tolstring(L, i, &len);
-			msg.append(str, len);
-			msg.push_back('\t');
-		}
-		if (!msg.empty())
-		{
-			msg.pop_back();
-		}
-		owfScript::log(msg);
+		owfScript::log(concat_arguments(L));
 		return 0;
 	});
 	lua_settable(L, -3);
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		std::cout << concat_arguments(L);
+		return 0;
+	});
+	{ ObfusString name("write_to_console"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		std::cout << concat_arguments(L) << '\n';
+		return 0;
+	});
+	{ ObfusString name("print_to_console"); lua_setglobal(L, name.c_str()); }
 
 #if PRIVATE
 	lua_pushboolean(L, true);
