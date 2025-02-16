@@ -10,6 +10,7 @@
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
+#include <SharedLibrary.hpp>
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -1224,6 +1225,27 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_cache_find"); lua_setglobal(L, name.c_str()); }
+
+	// ffi.alloc & ffi.read will be added in Pluto 0.11.0, but for now...
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t compressed_len;
+		const char* compressed = luaL_checklstring(L, 1, &compressed_len);
+		const size_t decompressed_size = luaL_checkinteger(L, 2);
+
+		SharedLibrary lib(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll"));
+		using OodleLZ_Decompress_t = int(*)(const char* inputData, size_t inputLen, void* outputData, size_t outputLen, int a5, int a6, int a7, size_t a8, size_t a9, size_t a10, size_t a11, size_t a12, size_t a13, int a14);
+		SOUP_IF_LIKELY (auto OodleLZ_Decompress = (OodleLZ_Decompress_t)lib.getAddress(ObfusString("OodleLZ_Decompress")))
+		{
+			auto decompressed = soup::malloc(decompressed_size);
+			OodleLZ_Decompress(compressed, compressed_len, decompressed, decompressed_size, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
+			lua_pushlstring(L, (const char*)decompressed, decompressed_size);
+			soup::free(decompressed);
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("oodle_decompress"); lua_setglobal(L, name.c_str()); }
 
 	// crypto.crc32c will be added in Pluto 0.11.0, but for now...
 	lua_pushcfunction(L, [](lua_State* L) -> int
