@@ -1201,33 +1201,29 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		int ret = 0;
-		if (size_t toc_size; auto toc = (TocFile*)soup::filesystem::createFileMapping(ObfusString("Cache.Windows/H.Misc.toc").str(), toc_size))
+		const auto cachename = pluto_checkstring(L, 1);
+
+		size_t pathlen;
+		const char* path = luaL_checklstring(L, 2, &pathlen);
+
+		ObfusString base("Cache.Windows/");
+		ObfusString ext_toc(".toc");
+		ObfusString ext_cache(".cache");
+
+		TocFileMapping tfm(base.str() + cachename + ext_toc.str());
+		if (auto entry = tfm.findEntry(path, pathlen))
 		{
-			const size_t num_entries = (toc_size - sizeof(TocHeader)) / sizeof(TocEntry);
-			const std::string str_H_Cache_bin = ObfusString("H.Cache.bin").str();
-			for (size_t i = 0; i != num_entries; ++i)
+			if (size_t cache_size; auto cache = soup::filesystem::createFileMapping(base.str() + cachename + ext_cache.str(), cache_size))
 			{
-				if (toc->entries[i].parentDirIndex == 0
-					&& toc->entries[i].timestamp != 0 // Ignore deleted files
-					&& str_H_Cache_bin == toc->entries[i].name
-					)
-				{
-					if (size_t cache_size; auto cache = soup::filesystem::createFileMapping(ObfusString("Cache.Windows/H.Misc.cache").str(), cache_size))
-					{
-						lua_pushlstring(L, (const char*)cache + toc->entries[i].cacheOffset, toc->entries[i].compressedLen);
-						lua_pushinteger(L, toc->entries[i].length);
-						soup::filesystem::destroyFileMapping(cache, cache_size);
-						ret = 2;
-					}
-					break;
-				}
+				lua_pushlstring(L, (const char*)cache + entry->cacheOffset, entry->compressedLen);
+				lua_pushinteger(L, entry->length);
+				soup::filesystem::destroyFileMapping(cache, cache_size);
+				return 2;
 			}
-			soup::filesystem::destroyFileMapping(toc, toc_size);
 		}
-		return ret;
+		return 0;
 	});
-	{ ObfusString name("owf_find_cache_manifest"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("owf_cache_find"); lua_setglobal(L, name.c_str()); }
 
 	// crypto.crc32c will be added in Pluto 0.11.0, but for now...
 	lua_pushcfunction(L, [](lua_State* L) -> int

@@ -39,7 +39,7 @@ if not io.exists("OpenWF/Metadata Patches.txt") then
 end
 
 do
-	local compressed, decompressed_size = owf_find_cache_manifest()
+	local compressed, decompressed_size = owf_cache_find("H.Misc", "/H.Cache.bin")
 	if compressed then
 		local bin = "SHCC\x1f\x00\x00\x00"
 		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
