@@ -197,6 +197,7 @@ do
 		if cont := io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))) then
 			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
 
+			local paths = {}
 			for io.listdir("OpenWF/content (managed)/0", true) as file do
 				if io.isfile(file) then
 					file = file:sub(27):replace("\\", "/")
@@ -206,7 +207,13 @@ do
 					io.copy("OpenWF/content (managed)/0"..file, "OpenWF/content/0"..file)
 
 					local path = file:split("!")[1]
-					main_manifest:setHash(path, b64m_decode(file:split("!")[2]:split("_")[2]))
+					if hash := paths[path] then
+						print_to_console("Ignoring "..file.." in favor of "..hash)
+						continue
+					end
+					local hash = file:split("!")[2]:split("_")[2]
+					paths[path] = hash
+					main_manifest:setHash(path, b64m_decode(hash))
 
 					local compressed, decompressed_size = owf_cache_find("H.Misc", path)
 					local B_cache = "B.Misc"
