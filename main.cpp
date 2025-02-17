@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.10.1"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.10.2"
 
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
