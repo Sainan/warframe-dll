@@ -38,40 +38,220 @@ if not io.exists("OpenWF/Metadata Patches.txt") then
 	io.contents("OpenWF/Metadata Patches.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
 end
 
+local { base64, crypto, http, json } = require "*"
+
 do
-	local compressed, decompressed_size = owf_cache_find("H.Misc", "/H.Cache.bin")
-	if compressed then
+	local function b64m_encode(data)
+		return base64.encode(data, false):replace("/", "-")
+	end
+
+	local function b64m_decode(data)
+		return base64.decode(data:replace("-", "/"))
+	end
+
+	local function shcc_decompress_chunk_oodle(bin, i, decompressed_size)
+		local decompressed = ""
+		while #decompressed < decompressed_size do
+			local block_info = bin:sub(i, i + 7)
+			i += 8
+			assert(block_info:byte(1) == 0x80)
+			assert((block_info:byte(8) & 0x0F) == 0x01)
+			local num1 = (block_info:byte(1) << 24) | (block_info:byte(2) << 16) | (block_info:byte(3) << 8) | block_info:byte(4)
+			local num2 = (block_info:byte(5) << 24) | (block_info:byte(6) << 16) | (block_info:byte(7) << 8) | block_info:byte(8)
+			local block_compressed_size = (num1 >> 2) & 0xFFFFFF
+			local block_decompressed_size = (num2 >> 5) & 0xFFFFFF
+			assert(bin:byte(i) == 0x8C)
+			decompressed ..= oodle_decompress(bin:sub(i, i + block_compressed_size - 1), block_decompressed_size)
+			i += block_compressed_size
+		end
+		return decompressed, i
+	end
+
+	local function shcc_decompress_chunk(bin, i)
+		local chunk_type, decompressed_size, compressed_size
+		chunk_type, i = string.unpack("<I1", bin, i)	
+		decompressed_size, i = string.unpack("<I4", bin, i)
+		compressed_size, i = string.unpack("<I4", bin, i)
+		if chunk_type == 0 then
+			assert(compressed_size == decompressed_size)
+			local data = bin:sub(i, i + compressed_size - 1)
+			i += decompressed_size
+			return data, i
+		end
+		assert(chunk_type == 2)
+		return shcc_decompress_chunk_oodle(bin, i, decompressed_size)
+	end
+
+	local function shcc_unpack(bin)
+		local i = 1
+		i += 8
+		local data = {}
+		data.H, i = shcc_decompress_chunk(bin, i)
+		try
+			data.B, i = shcc_decompress_chunk(bin, i)
+		catch _ then
+		end
+		return data
+	end
+
+	local class CacheManifest
+		function __construct(public bin)
+			self.i = 1
+			self.i += 20
+			self.entry_i = 0
+			self.num_entries, self.i = string.unpack("<I4", self.bin, self.i)
+			if self.num_entries == 0 then
+				self.num_entries, self.i = string.unpack("<I4", self.bin, self.i)
+			end
+			self.paths = {}
+			self.hashes = {}
+			self.unks = {}
+		end
+
+		function seek(opt_stop_at_path)
+			while self.entry_i ~= self.num_entries do
+				self.entry_i += 1
+				local path, hash, unk
+				path, self.i = string.unpack("<s4", self.bin, self.i)
+				hash = self.bin:sub(self.i, self.i + 15)
+				unk = self.bin:sub(self.i + 16, self.i + 19)
+				self.i += 20
+				self.paths:insert(path)
+				self.hashes[path] = hash
+				self.unks[path] = unk
+				if path == opt_stop_at_path then
+					return hash
+				end
+			end
+		end
+
+		function getHash(path)
+			if hash := self.hashes[path] then
+				return hash
+			end
+			return self:seek(path)
+		end
+
+		function setHash(path, hash)
+			assert(#hash == 16)
+			self:seek(path)
+			self.hashes[path] = hash
+		end
+
+		function pack()
+			self:seek()
+			local bin = { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".."\x0D\x00\x00\x00".."\x00\x00\x00\x00" }
+			bin:insert(string.pack("<I4", #self.paths))
+			for self.paths as path do
+				bin:insert(string.pack("<s4", path))
+				bin:insert(self.hashes[path])
+				bin:insert(self.unks[path])
+			end
+			return bin:concat()
+		end
+	end
+
+	local function shcc_pack_H(compressed, decompressed_size)
 		local bin = "SHCC\x1f\x00\x00\x00"
 		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
 		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
+		return bin .. string.pack("<I4", crc32c(bin))
+	end
+
+	local function shcc_pack_HB(H_compressed, H_decompressed_size, B_compressed, B_decompressed_size)
+		local bin = "SHCC\x1f\x00\x00\x00"
+		bin ..= string.pack("<I1I4s4", 2, H_decompressed_size, H_compressed)
+		bin ..= string.pack("<I1I4s4", 2, B_decompressed_size, B_compressed)
+		bin ..= "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x52"
+		return bin .. string.pack("<I4", crc32c(bin))
+	end
+
+	-- Pluto 0.11.0 will add a 'binary' argument to crypto.md5, but for now...
+	local function md5bin(str)
+		return crypto.md5(str):gsub("..", |x| -> string.char(tonumber(x, 16)))
+	end
+
+	local function shcc_pack_H_mod(data)
+		local bin = "SHCC\x1f\x00\x00\x00"
+		local hash = md5bin("SHCC\x1f\x00\x00\x00"..data:sub(17))
+
+		bin ..= "\x00"
+		bin ..= string.pack("<I4I4", #data, #data)
+		bin ..= hash
+		bin ..= data:sub(17)
+
+		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
 		bin ..= string.pack("<I4", crc32c(bin))
-		local shcc = io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w")
-		if not shcc or shcc:byte(9) == 2 then
+
+		return bin, hash
+	end
+
+	io.mkdirs("OpenWF/content/0")
+	do
+		local compressed, decompressed_size = owf_cache_find("H.Misc", "/H.Cache.bin")
+		if compressed then
 			if compressed:byte(1) == 0x80 then
-				io.mkdirs("OpenWF/content/0")
-				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bin)
-			elseif not shcc then
-				if bak := io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak") then
-					io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", bak)
-				else
-					require"ffi".open("user32"):wrap("i32", "MessageBoxA", "i32", "str", "str", "i32")(0, "OpenWF found broken assets. Please run the Launcher and drop the DLL back in after.", nil, 0x10)
-					os.exit(1)
-				end
-			end
-			os.remove("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak")
-			os.remove("OpenWF/content/0/revert to normal.bat")
-		elseif shcc and shcc:byte(9) == 0 then
-			if compressed:byte(1) == 0x80 then
-				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", bin)
-			end
-			if io.exists("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak") then
-				io.contents("OpenWF/content/0/revert to normal.bat", owf_archive_find("OpenWF/content/revert to normal.bat"))
+				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
 			end
 		end
 	end
-end
 
-local { crypto, http, json } = require "*"
+	local any_mods = false
+	if io.isdir("OpenWF/content (managed)/0") then
+		do
+			local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
+			if compressed:byte(1) == 0x80 then
+				io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_H(compressed, decompressed_size))
+			end
+		end
+
+		local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak")).H)
+		if cont := io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))) then
+			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
+
+			for io.listdir("OpenWF/content (managed)/0", true) as file do
+				if io.isfile(file) then
+					file = file:sub(27):replace("\\", "/")
+					any_mods = true
+
+					io.mkdirs(io.part("OpenWF/content/0"..file, "parent"))
+					io.copy("OpenWF/content (managed)/0"..file, "OpenWF/content/0"..file)
+
+					local path = file:split("!")[1]
+					main_manifest:setHash(path, b64m_decode(file:split("!")[2]:split("_")[2]))
+
+					local compressed, decompressed_size = owf_cache_find("H.Misc", path)
+					local B_cache = "B.Misc"
+					if not compressed then
+						compressed, decompressed_size = owf_cache_find("H.Texture", path)
+						B_cache = "B.Texture"
+					end
+					if compressed then
+						if compressed:byte(1) == 0x80 then
+							local B_compressed, B_decompressed_size = owf_cache_find(B_cache, path)
+							io.contents("OpenWF/content/0"..path.."!"..file:split("!")[2]:split("_")[1].."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_HB(compressed, decompressed_size, B_compressed, B_decompressed_size))
+						end
+					else
+						print_to_console("Could not create backup for "..path)
+					end
+				end
+			end
+
+			if any_mods then
+				local bin, hash = shcc_pack_H_mod(main_manifest:pack())
+				io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(hash), bin)
+				meta_manifest:setHash("/B.Cache.Windows.bin", hash)
+				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
+			end
+		else
+			print_to_console("Unable to manage content: Original cache manifest not found")
+		end
+	end
+
+	if not any_mods then
+		io.copy("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", "OpenWF/content/0/H.Cache.bin!D_---------------------w")
+	end
+end
 
 local requested_versions = false
 local current_version = ""
