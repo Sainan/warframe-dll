@@ -95,51 +95,39 @@ do
 	end
 
 	local class CacheManifest
-		function __construct(public bin)
-			self.i = 1
-			self.i += 20
-			self.entry_i = 0
-			self.num_entries, self.i = string.unpack("<I4", self.bin, self.i)
-			if self.num_entries == 0 then
-				self.num_entries, self.i = string.unpack("<I4", self.bin, self.i)
-			end
+		function __construct(bin)
 			self.paths = {}
 			self.hashes = {}
 			self.unks = {}
-		end
 
-		function seek(opt_stop_at_path)
-			while self.entry_i ~= self.num_entries do
-				self.entry_i += 1
+			local num_entries, i = string.unpack("<I4", bin, 21)
+			if num_entries == 0 then
+				num_entries, i = string.unpack("<I4", bin, i)
+			end
+			local entry_i = 0
+			while entry_i ~= num_entries do
+				entry_i += 1
 				local path, hash, unk
-				path, self.i = string.unpack("<s4", self.bin, self.i)
-				hash = self.bin:sub(self.i, self.i + 15)
-				unk = self.bin:sub(self.i + 16, self.i + 19)
-				self.i += 20
+				path, i = string.unpack("<s4", bin, i)
+				hash = bin:sub(i, i + 15)
+				unk = bin:sub(i + 16, i + 19)
+				i += 20
 				self.paths:insert(path)
 				self.hashes[path] = hash
 				self.unks[path] = unk
-				if path == opt_stop_at_path then
-					return hash
-				end
 			end
 		end
 
 		function getHash(path)
-			if hash := self.hashes[path] then
-				return hash
-			end
-			return self:seek(path)
+			return self.hashes[path]
 		end
 
 		function setHash(path, hash)
 			assert(#hash == 16)
-			self:seek(path)
 			self.hashes[path] = hash
 		end
 
 		function pack()
-			self:seek()
 			local bin = { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".."\x0D\x00\x00\x00".."\x00\x00\x00\x00" }
 			bin:insert(string.pack("<I4", #self.paths))
 			for self.paths as path do
