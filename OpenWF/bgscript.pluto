@@ -185,6 +185,7 @@ do
 	end
 
 	local any_mods = false
+	io.mkdir("OpenWF/content (managed)")
 	if io.isdir("OpenWF/content (managed)/0") then
 		do
 			local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
