@@ -147,6 +147,19 @@ void owfScript::openLibs(lua_State* L)
 	});
 	{ ObfusString name("print_to_console"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		std::lock_guard lock(g_archive_mtx);
+		uint32_t size;
+		if (auto data = g_archive.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
+		{
+			lua_pushlstring(L, data, size);
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
@@ -1172,19 +1185,6 @@ owfScript::owfScript()
 		return 1;
 	});
 	{ ObfusString name("fltm_float_mul"); lua_setglobal(L, name.c_str()); }
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		std::lock_guard lock(g_archive_mtx);
-		uint32_t size;
-		if (auto data = g_archive.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
-		{
-			lua_pushlstring(L, data, size);
-			return 1;
-		}
-		return 0;
-	});
-	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
