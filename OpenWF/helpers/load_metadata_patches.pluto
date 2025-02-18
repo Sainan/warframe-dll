@@ -44,7 +44,7 @@ function parse_metadata_patches(str)
 			for line:split("&") as key do
 				patch.keys:insert(key:strip())
 			end
-		elseif line:sub(1, 2) == "r|" or line:sub(1, 2) == "R|" then
+		elseif line:sub(1, 2) == "r|" then
 			local sep = line:find("|", 3)
 			patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 		elseif #line ~= 0 and line[1] ~= "#" then
