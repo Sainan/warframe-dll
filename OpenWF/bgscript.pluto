@@ -8,6 +8,7 @@ owf_register_custom_route("/check_for_updates", "text/plain", "")
 owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
+io.contents("OpenWF/Reference Manual.html", owf_archive_find("OpenWF/bootstrapper-manual.html"))
 io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
 if true then
 	io.mkdirs("OpenWF/scripts/samples")
