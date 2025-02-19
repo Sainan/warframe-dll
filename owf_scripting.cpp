@@ -1282,8 +1282,9 @@ owfScript::owfScript()
 		cm->entries.reserve(num_entries);
 		for (uint32_t i = 0; i != num_entries; ++i)
 		{
-			auto& e = cm->entries.emplace_back();
-			mr.str_lp<u32le_t>(e.path);
+			std::string path;
+			mr.str_lp<u32le_t>(path);
+			CacheManifest::Entry& e = cm->entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
 			mr.str(sizeof(e.hash), e.hash);
 			mr.str(sizeof(e.unk), e.unk);
 		}
@@ -1294,14 +1295,10 @@ owfScript::owfScript()
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		const auto target = pluto_checkstring(L, 2);
-		for (auto& e : cm->entries)
+		if (auto e = cm->entries.find(pluto_checkstring(L, 2)); e != cm->entries.end())
 		{
-			if (target == e.path)
-			{
-				lua_pushlstring(L, e.hash, sizeof(e.hash));
-				return 1;
-			}
+			lua_pushlstring(L, e->second.hash, sizeof(e->second.hash));
+			return 1;
 		}
 		return 0;
 	});
@@ -1310,18 +1307,13 @@ owfScript::owfScript()
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		const auto target = pluto_checkstring(L, 2);
 		size_t size;
 		const auto data = luaL_checklstring(L, 3, &size);
-		if (size == 16)
+		if (auto e = cm->entries.find(pluto_checkstring(L, 2)); e != cm->entries.end())
 		{
-			for (auto& e : cm->entries)
+			if (size == 16)
 			{
-				if (target == e.path)
-				{
-					memcpy(e.hash, data, size);
-					break;
-				}
+				memcpy(e->second.hash, data, size);
 			}
 		}
 		return 0;
@@ -1336,9 +1328,9 @@ owfScript::owfScript()
 		sw.u32le(num_entries);
 		for (auto& e : cm->entries)
 		{
-			sw.str_lp<u32le_t>(e.path);
-			sw.str(sizeof(e.hash), e.hash);
-			sw.str(sizeof(e.unk), e.unk);
+			sw.str_lp<u32le_t>(e.first);
+			sw.str(sizeof(e.second.hash), e.second.hash);
+			sw.str(sizeof(e.second.unk), e.second.unk);
 		}
 		pluto_pushstring(L, sw.data);
 		return 1;

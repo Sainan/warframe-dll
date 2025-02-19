@@ -89,10 +89,9 @@ struct CacheManifest
 {
 	struct Entry
 	{
-		std::string path;
 		char hash[16];
 		char unk[4];
 	};
 
-	std::vector<Entry> entries;
+	std::unordered_map<std::string, Entry> entries;
 };
