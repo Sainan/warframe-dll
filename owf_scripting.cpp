@@ -1202,29 +1202,54 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		const auto cachename = pluto_checkstring(L, 1);
-
+		const auto cp_name = pluto_checkstring(L, 1);
+		const auto cp_hash = joaat::hash(cp_name);
 		size_t pathlen;
 		const char* path = luaL_checklstring(L, 2, &pathlen);
 
-		ObfusString base("Cache.Windows/");
-		ObfusString ext_toc(".toc");
-		ObfusString ext_cache(".cache");
-
-		TocFileMapping tfm(base.str() + cachename + ext_toc.str());
-		if (auto entry = tfm.findEntry(path, pathlen))
+		CachePair* cp;
+		if (auto e = open_cache_pairs.find(cp_hash); e != open_cache_pairs.end())
 		{
-			if (size_t cache_size; auto cache = soup::filesystem::createFileMapping(base.str() + cachename + ext_cache.str(), cache_size))
+			cp = e->second;
+		}
+		else
+		{
+			try
 			{
-				lua_pushlstring(L, (const char*)cache + entry->cacheOffset, entry->compressedLen);
-				lua_pushinteger(L, entry->length);
-				soup::filesystem::destroyFileMapping(cache, cache_size);
-				return 2;
+				cp = new CachePair(ObfusString("Cache.Windows/").str() + cp_name);
 			}
+			catch (const std::bad_alloc&)
+			{
+				cp = nullptr;
+			}
+			SOUP_IF_UNLIKELY (!cp || !cp->toc || !cp->cache)
+			{
+				delete cp;
+				luaL_error(L, ObfusString("failed to open cache pair '%s'"), cp_name.c_str());
+			}
+			open_cache_pairs.emplace(cp_hash, cp);
+		}
+
+		if (auto entry = cp->findEntry(path, pathlen))
+		{
+			lua_pushlstring(L, (const char*)cp->cache + entry->cacheOffset, entry->compressedLen);
+			lua_pushinteger(L, entry->length);
+			return 2;
 		}
 		return 0;
 	});
 	{ ObfusString name("owf_cache_find"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		for (auto& e : open_cache_pairs)
+		{
+			delete e.second;
+		}
+		open_cache_pairs.clear();
+		return 0;
+	});
+	{ ObfusString name("owf_cache_close"); lua_setglobal(L, name.c_str()); }
 
 	// ffi.alloc & ffi.read will be added in Pluto 0.11.0, but for now...
 	lua_pushcfunction(L, [](lua_State* L) -> int

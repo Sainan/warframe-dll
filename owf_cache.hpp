@@ -25,20 +25,23 @@ struct TocFile
 	TocEntry entries[1];
 };
 
-struct TocFileMapping
+struct CachePair
 {
 	TocFile* toc;
 	size_t toc_size;
+	void* cache;
+	size_t cache_size;
 
-	TocFileMapping(const std::filesystem::path& path)
-		: toc((TocFile*)soup::filesystem::createFileMapping(path, toc_size))
+	CachePair(const std::string& base)
+		: toc((TocFile*)soup::filesystem::createFileMapping(base + soup::ObfusString(".toc").str(), toc_size)),
+		  cache(soup::filesystem::createFileMapping(base + soup::ObfusString(".cache").str(), cache_size))
 	{
-		SOUP_ASSERT(toc != nullptr);
 	}
 
-	~TocFileMapping()
+	~CachePair()
 	{
 		soup::filesystem::destroyFileMapping(toc, toc_size);
+		soup::filesystem::destroyFileMapping(cache, cache_size);
 	}
 
 	[[nodiscard]] uint32_t findIndex(const char* name, size_t len, uint32_t parent) const noexcept
@@ -80,3 +83,4 @@ struct TocFileMapping
 		return nullptr;
 	}
 };
+inline std::unordered_map<uint32_t, CachePair*> open_cache_pairs;
