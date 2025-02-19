@@ -1000,9 +1000,16 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 #if LABEL_REPLACEMENTS
 static void load_label_replacements()
 {
+	const auto path = ObfusString("OpenWF/Label Replacements.cat.txt").str();
+
+	if (!std::filesystem::exists(path))
+	{
+		string::toFile(path, ObfusString("/Menu/ProjectName: Warframe [OpenWF]").str());
+	}
+
 	std::lock_guard lock(label_replacements_mtx);
 	label_replacements.clear();
-	FileReader fr(ObfusString("OpenWF/Label Replacements.cat.txt"));
+	FileReader fr(path);
 	if (auto root = soup::cat::parse(fr))
 	{
 		for (const auto& e : root->children)
