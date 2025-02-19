@@ -69,6 +69,7 @@ static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 static std::string build_hash;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
+static bool metadata_patches_in_use = false;
 
 static HMODULE og_dwmapi;
 static FARPROC og_DwmGetCompositionTimingInfo;
@@ -293,6 +294,10 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 		}
 		uri.query.append(ObfusString("&clientMod=").str());
 		uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
+		if (metadata_patches_in_use)
+		{
+			uri.query.append(ObfusString("&metadataPatchesInUse=1").str());
+		}
 #endif
 	}
 	else if (uri.path == ObfusString("/api/inbox.php").str())
@@ -1083,6 +1088,7 @@ static void load_metadata_patches()
 			current_patch = &metadata_patches.emplace(hash, MetadataPatch{}).first->second;
 		}
 		current_patch->prefix.append(pluto_checkstring(L, 2));
+		metadata_patches_in_use = true;
 		return 0;
 	});
 	{ ObfusString name("new_patch"); lua_setglobal(L, name.c_str()); }
