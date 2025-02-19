@@ -84,3 +84,15 @@ struct CachePair
 	}
 };
 inline std::unordered_map<uint32_t, CachePair*> open_cache_pairs;
+
+struct CacheManifest
+{
+	struct Entry
+	{
+		std::string path;
+		char hash[16];
+		char unk[4];
+	};
+
+	std::vector<Entry> entries;
+};

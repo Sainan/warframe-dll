@@ -7,10 +7,12 @@
 #include <filesystem.hpp>
 #include <joaat.hpp>
 #include <JsonObject.hpp>
+#include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <SharedLibrary.hpp>
+#include <StringWriter.hpp>
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -1250,6 +1252,98 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_cache_close"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t size;
+		const char* data = luaL_checklstring(L, 1, &size);
+		auto cm = new (lua_newuserdata(L, sizeof(CacheManifest))) CacheManifest{};
+		{
+			lua_newtable(L);
+			{
+				pluto_pushstring(L, ObfusString("__gc").str());
+				lua_pushcfunction(L, [](lua_State* L) -> int
+				{
+					std::destroy_at<>((CacheManifest*)lua_touserdata(L, 1));
+					return 0;
+				});
+				lua_settable(L, -3);
+			}
+			lua_setmetatable(L, -2);
+		}
+		MemoryRefReader mr(data, size);
+		mr.skip(20);
+		uint32_t num_entries;
+		mr.u32le(num_entries);
+		if (num_entries == 0)
+		{
+			mr.u32le(num_entries);
+		}
+		cm->entries.reserve(num_entries);
+		for (uint32_t i = 0; i != num_entries; ++i)
+		{
+			auto& e = cm->entries.emplace_back();
+			mr.str_lp<u32le_t>(e.path);
+			mr.str(sizeof(e.hash), e.hash);
+			mr.str(sizeof(e.unk), e.unk);
+		}
+		return 1;
+	});
+	{ ObfusString name("owf_cachemanifest_new"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto cm = (CacheManifest*)lua_touserdata(L, 1);
+		const auto target = pluto_checkstring(L, 2);
+		for (auto& e : cm->entries)
+		{
+			if (target == e.path)
+			{
+				lua_pushlstring(L, e.hash, sizeof(e.hash));
+				return 1;
+			}
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_cachemanifest_get_hash"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto cm = (CacheManifest*)lua_touserdata(L, 1);
+		const auto target = pluto_checkstring(L, 2);
+		size_t size;
+		const auto data = luaL_checklstring(L, 3, &size);
+		if (size == 16)
+		{
+			for (auto& e : cm->entries)
+			{
+				if (target == e.path)
+				{
+					memcpy(e.hash, data, size);
+					break;
+				}
+			}
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_cachemanifest_set_hash"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto cm = (CacheManifest*)lua_touserdata(L, 1);
+		StringWriter sw;
+		uint32_t num_entries = cm->entries.size();
+		sw.u32le(num_entries);
+		for (auto& e : cm->entries)
+		{
+			sw.str_lp<u32le_t>(e.path);
+			sw.str(sizeof(e.hash), e.hash);
+			sw.str(sizeof(e.unk), e.unk);
+		}
+		pluto_pushstring(L, sw.data);
+		return 1;
+	});
+	{ ObfusString name("owf_cachemanifest_pack_entries"); lua_setglobal(L, name.c_str()); }
 
 	// ffi.alloc & ffi.read will be added in Pluto 0.11.0, but for now...
 	lua_pushcfunction(L, [](lua_State* L) -> int

@@ -93,46 +93,19 @@ do
 
 	local class CacheManifest
 		function __construct(bin)
-			self.paths = {}
-			self.hashes = {}
-			self.unks = {}
-
-			local num_entries, i = string.unpack("<I4", bin, 21)
-			if num_entries == 0 then
-				num_entries, i = string.unpack("<I4", bin, i)
-			end
-			local entry_i = 0
-			while entry_i ~= num_entries do
-				entry_i += 1
-				local path, hash, unk
-				path, i = string.unpack("<s4", bin, i)
-				hash = bin:sub(i, i + 15)
-				unk = bin:sub(i + 16, i + 19)
-				i += 20
-				self.paths:insert(path)
-				self.hashes[path] = hash
-				self.unks[path] = unk
-			end
+			self.inst = owf_cachemanifest_new(bin)
 		end
 
 		function getHash(path)
-			return self.hashes[path]
+			return owf_cachemanifest_get_hash(self.inst, path)
 		end
 
 		function setHash(path, hash)
-			assert(#hash == 16)
-			self.hashes[path] = hash
+			owf_cachemanifest_set_hash(self.inst, path, hash)
 		end
 
 		function pack()
-			local bin = { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".."\x0D\x00\x00\x00".."\x00\x00\x00\x00" }
-			bin:insert(string.pack("<I4", #self.paths))
-			for self.paths as path do
-				bin:insert(string.pack("<s4", path))
-				bin:insert(self.hashes[path])
-				bin:insert(self.unks[path])
-			end
-			return bin:concat()
+			return "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".."\x0D\x00\x00\x00".."\x00\x00\x00\x00"..owf_cachemanifest_pack_entries(self.inst)
 		end
 	end
 
