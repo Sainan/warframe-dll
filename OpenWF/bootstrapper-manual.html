@@ -138,6 +138,7 @@
 		<li>If the line starts with <code>&</code>, that character is removed from the line and the rest of the line is assumed to be an absolute path to be added to the current patch.</li>
 		<li>If the line starts with <code>></code>, that character is removed from the line and the rest of the line is assumed to be an absolute path for which a new patch is created.</li>
 		<li>If the line starts with <code>r|</code>, a replacement is added to the current patch in the form <code>r|A|Z</code> which means <code>A</code> in the metadata will be replaced with <code>Z</code>.</li>
+		<li>If the line starts with <code>s|</code>, a regex substitution is added to the current patch, e.g. <code>s|(.+)=1|$1=0</code> would change <code>HasCooldown=1</code> to be <code>HasCooldown=0</code>.</li>
 		<li>The line is added as a metadata prefix to the current patch. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
 	</ol>
 	<p>If multiple patches affect the same absolute path, they are combined.</p>

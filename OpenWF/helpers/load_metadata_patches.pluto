@@ -1,12 +1,12 @@
 function parse_metadata_patches(str)
 	local patches = {}
-	local patch = { keys = {}, prefix = "", replacements = {} }
+	local patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
 	local ampersand = false
 	local function delimit_patch()
 		if #patch.keys ~= 0 then
 			patches:insert(patch)
 		end
-		patch = { keys = {}, prefix = "", replacements = {} }
+		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
 	end
 	for str:split("\n") as line do
 		if line[1] == "/" then
@@ -47,6 +47,9 @@ function parse_metadata_patches(str)
 		elseif line:sub(1, 2) == "r|" then
 			local sep = line:find("|", 3)
 			patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+		elseif line:sub(1, 2) == "s|" then
+			local sep = line:find("|", 3)
+			patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 		elseif #line ~= 0 and line[1] ~= "#" then
 			patch.prefix = patch.prefix .. line .. "\n"
 		end
@@ -63,6 +66,9 @@ function load_metadata_patches(str)
 			new_patch(key, patch.prefix)
 			for k, v in patch.replacements do
 				add_replacement(k, v)
+			end
+			for k, v in patch.substitutions do
+				add_substitution(k, v)
 			end
 		end
 	end

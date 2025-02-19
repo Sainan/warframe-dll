@@ -31,6 +31,7 @@
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
+#include <Regex.hpp>
 #include <ReplacementHook.hpp>
 #include <Server.hpp>
 #include <ServerWebService.hpp>
@@ -1045,6 +1046,7 @@ struct MetadataPatch
 {
 	std::string prefix;
 	std::vector<std::pair<std::string, std::string>> replacements;
+	std::vector<std::pair<soup::Regex, std::string>> substitutions;
 
 	std::string final_data;
 	bool is_implicit = false;
@@ -1088,6 +1090,16 @@ static void load_metadata_patches()
 	});
 	{ ObfusString name("add_replacement"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (current_patch)
+		{
+			current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1)), pluto_checkstring(L, 2));
+		}
+		return 0;
+	});
+	{ ObfusString name("add_substitution"); lua_setglobal(L, name.c_str()); }
+
 	uint32_t size;
 	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/load_metadata_patches.pluto"), size);
 	if (luaL_loadbuffer(L, data, size, nullptr) != LUA_OK
@@ -1124,7 +1136,7 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 		auto& buf = patch.final_data;
 		buf.reserve(patch.prefix.size() + str->getSize());
 		buf.append(patch.prefix);
-		if (patch.replacements.empty())
+		if (patch.replacements.empty() && patch.substitutions.empty())
 		{
 			buf.append(str->getData(), str->getSize());
 		}
@@ -1134,6 +1146,10 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 			for (const auto& replacement : patch.replacements)
 			{
 				string::replaceAll(text, replacement.first, replacement.second);
+			}
+			for (const auto& substitution : patch.substitutions)
+			{
+				text = substitution.first.substituteAll(text, substitution.second);
 			}
 			buf.append(text);
 		}
