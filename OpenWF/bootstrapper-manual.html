@@ -129,5 +129,17 @@
 		<li>login.php requests also have an extra <code>clientMod</code> parameter to indicate that the OpenWF Bootstrapper is being used and what version of it.</li>
 		<li>inventory.php & missionInventoryUpdate.php requests have the extra query parameter <code>xpBasedLevelCapDisabled</code> to indicate that the client has been patched to accept any PlayerLevel and doesn't need XPInfo to match.</li>
 	</ul>
+	<h2>Metadata Patches</h2>
+	<p>Metadata patches are generally parsed line by line, with roughly the following steps being taken for each line:</p>
+	<ol>
+		<li>If the line starts with <code>/</code>, a new patch for the given absolute path is started. If the line ends on <code>&</code>, the next line that also starts with <code>/</code> will be added to this patch instead of creating a new patch.</li>
+		<li>Leading and trailing tabs and spaces are removed from the line.</li>
+		<li>If the line starts with <code>&</code>, that character is removed from the line and the rest of the line is assumed to be an absolute path to be added to the current patch.</li>
+		<li>If the line starts with <code>></code>, that character is removed from the line and the rest of the line is assumed to be an absolute path for which a new patch is created.</li>
+		<li>If the line starts with <code>r|</code>, a replacement is added to the current patch in the form <code>r|A|Z</code> which means <code>A</code> in the metadata will be replaced with <code>Z</code>.</li>
+		<li>The line is added as a metadata prefix to the current patch. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
+	</ol>
+	<p>If multiple patches affect the same absolute path, they are combined.</p>
+	<br>
 </body>
 </html>
