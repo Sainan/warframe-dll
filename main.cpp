@@ -2746,8 +2746,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 					std::cout << "Request to builtin HTTP server: " << req.path << std::endl;
 #endif
-					if (req.path.find(ObfusString("/0").str()) != std::string::npos
-						|| req.path.find(ObfusString("/7").str()) != std::string::npos
+					if (joaat::hash(req.path.substr(0, 8)) == joaat::compileTimeHash("/origin/"))
+					{
+						req.path.erase(0, 16);
+					}
+					if (req.path.size() > 1
+						&& (req.path[1] == '0'
+							|| req.path[1] == '7'
+							)
 						)
 					{
 						// Try to locate file locally
