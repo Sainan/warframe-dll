@@ -188,6 +188,8 @@ do
 	local any_mods = false
 	io.mkdir("OpenWF/content (managed)")
 	if io.isdir("OpenWF/content (managed)/0") then
+		local t = os.millis()
+
 		do
 			local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
 			if compressed:byte(1) == 0x80 then
@@ -240,6 +242,8 @@ do
 				meta_manifest:setHash("/B.Cache.Windows.bin", hash)
 				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
 			end
+
+			print_to_console("Managed content in "..(os.millis() - t).." ms")
 		else
 			print_to_console("Unable to manage content: Original cache manifest not found")
 		end
