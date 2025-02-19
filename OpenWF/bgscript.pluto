@@ -37,7 +37,7 @@ end
 
 local { base64, crypto, http, json } = require "*"
 
-do
+if owf_overlay_get_size() == 0xFFFFFFFF then
 	local function b64m_encode(data)
 		return base64.encode(data, false):replace("/", "-")
 	end
