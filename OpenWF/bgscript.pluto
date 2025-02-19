@@ -167,7 +167,8 @@ if owf_overlay_get_size() == 0xFFFFFFFF then
 		end
 
 		local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak")).H)
-		if cont := io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))) then
+		local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
+		if cont := io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..og_cache_manifest_hash) then
 			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
 
 			local paths = {}
@@ -207,9 +208,19 @@ if owf_overlay_get_size() == 0xFFFFFFFF then
 
 			if any_mods then
 				local bin, hash = shcc_pack_H_mod(main_manifest:pack())
-				io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..b64m_encode(hash), bin)
 				meta_manifest:setHash("/B.Cache.Windows.bin", hash)
+				hash = b64m_encode(hash)
+				io.contents("OpenWF/content/0/B.Cache.Windows.bin!D_"..hash, bin)
 				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
+
+				for io.listdir("OpenWF/content/0") as path do
+					local file = path:sub(18)
+					if #file == 44 and file:sub(1, 22) == "B.Cache.Windows.bin!D_"
+						and file:sub(23) ~= hash and file:sub(23) ~= og_cache_manifest_hash
+					then
+						os.remove(path)
+					end
+				end
 			end
 
 			print_to_console("Managed content in "..(os.millis() - t).." ms")
