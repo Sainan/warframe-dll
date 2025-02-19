@@ -130,7 +130,8 @@
 		<li>inventory.php & missionInventoryUpdate.php requests have the extra query parameter <code>xpBasedLevelCapDisabled</code> to indicate that the client has been patched to accept any PlayerLevel and doesn't need XPInfo to match.</li>
 	</ul>
 	<h2>Metadata Patches</h2>
-	<p>Metadata patches are generally parsed line by line, with roughly the following steps being taken for each line:</p>
+	<p>Metadata Patches are loaded from <code>OpenWF/Metadata Patches.txt</code>, although you can also create a <code>OpenWF/Metadata Patches/</code> folder and any text file inside of that will be loaded as well.</p>
+	<p>They are generally parsed line by line, with roughly the following steps being taken for each line:</p>
 	<ol>
 		<li>If the line starts with <code>/</code>, a new patch for the given absolute path is started. If the line ends on <code>&</code>, the next line that also starts with <code>/</code> will be added to this patch instead of creating a new patch.</li>
 		<li>Leading and trailing tabs and spaces are removed from the line.</li>

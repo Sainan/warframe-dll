@@ -57,11 +57,24 @@ function parse_metadata_patches(str)
 	return patches
 end
 
-for parse_metadata_patches(io.contents("OpenWF/Metadata Patches.txt")) as patch do
-	for patch.keys as key do
-		new_patch(key, patch.prefix)
-		for k, v in patch.replacements do
-			add_replacement(k, v)
+function load_metadata_patches(str)
+	for parse_metadata_patches(str) as patch do
+		for patch.keys as key do
+			new_patch(key, patch.prefix)
+			for k, v in patch.replacements do
+				add_replacement(k, v)
+			end
+		end
+	end
+end
+
+if str := io.contents("OpenWF/Metadata Patches.txt") then
+	load_metadata_patches(str)
+end
+if io.exists("OpenWF/Metadata Patches/") then
+	for io.listdir("OpenWF/Metadata Patches/") as path do
+		if str := io.contents(path) then
+			load_metadata_patches(str)
 		end
 	end
 end
