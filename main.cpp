@@ -2758,7 +2758,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					{
 						// Try to locate file locally
 						{
-							std::string local_path = ObfusString("OpenWF/content"); // TODO: Autocreate this directory with H.Cache.bin
+							std::string local_path = ObfusString("OpenWF/content");
 							if (auto cache_req_path = ObfusString("/0/H.Cache.bin!D_---------------------w").str();
 								req.path.find(cache_req_path) != std::string::npos
 								)
