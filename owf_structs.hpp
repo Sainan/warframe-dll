@@ -296,4 +296,5 @@ inline RegionMgr* regionmgr = nullptr;
 inline Object* flashmgr = nullptr;
 inline Object* gamedata = nullptr;
 inline Object* profilemgr = nullptr;
+inline Object* gClient = nullptr;
 inline void* matchingservice = nullptr;

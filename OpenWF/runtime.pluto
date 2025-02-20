@@ -1918,6 +1918,19 @@ class FlashInstance extends OverlayBase
 	end
 end
 
+class OverlayMgr extends owfUserdata
+	__name = "OverlayMgr"
+
+	function SetSelectedStyle(resource)
+		self:pushToIvkr()
+		do
+			ivkr_push_string(resource)
+			ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+		end
+		ivkr_pop(ivkr_call(ivkr_find_method("OverlayMgr", "SetSelectedStyle"), 2))
+	end
+end
+
 -- undocumented
 class RelayHub extends Object end
 class LotusHub extends RelayHub
@@ -2351,6 +2364,14 @@ gPlayerProfileMgr = {
 		ivkr_push_object(get_profilemgr())
 		ivkr_call(ivkr_find_method("PlayerProfileMgr", "IsLoggedIn"), 1)
 		return ivkr_pop_bool()
+	end
+}
+
+gClient = {
+	function GetOverlayMgr()
+		ivkr_push_object(get_client())
+		ivkr_call(ivkr_find_method("Client", "GetOverlayMgr"), 1)
+		return new OverlayMgr()
 	end
 }
 

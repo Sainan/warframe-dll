@@ -338,6 +338,9 @@ class FlashInstance extends OverlayBase
 	function AttachToEntity(ent, off, rot, vecScale)
 	function Execute(func, str)
 
+class OverlayMgr
+	function SetSelectedStyle(resource)
+
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
@@ -457,6 +460,9 @@ gGameData
 
 gPlayerProfileMgr
 	function IsLoggedIn()
+
+gClient
+	function GetOverlayMgr()
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
