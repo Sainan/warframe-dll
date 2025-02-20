@@ -21,6 +21,7 @@
 #include <FileReader.hpp>
 #include <filesystem.hpp>
 #include <HttpRequest.hpp>
+#include <HttpRequestTask.hpp>
 #include <joaat.hpp>
 #include <json.hpp>
 #include <memGuard.hpp>
@@ -1398,6 +1399,64 @@ static bool check_ec(const std::error_code& ec)
 static Server serv;
 
 struct owfWebsocketTag {};
+
+struct owfContentTask : public Task
+{
+	SharedPtr<Worker> s;
+	HttpRequestTask hrt;
+
+	owfContentTask(Socket& _s, HttpRequest&& hr)
+		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr))
+	{
+		ServerWebService::setKeepAlive(_s, true);
+	}
+
+	void onTick()
+	{
+		if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
+		{
+#if LOGGING
+			std::cout << "owfContentTask: client socket is gone, aborting" << std::endl;
+#endif
+			setWorkDone();
+		}
+		else if (hrt.tickUntilDone())
+		{
+			if (hrt.result.has_value() && hrt.result->status_code == 200)
+			{
+#if LOGGING
+				std::cout << "owfContentTask: 200" << std::endl;
+#endif
+				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), std::move(*hrt.result));
+			}
+			else
+			{
+#if LOGGING
+				std::cout << "owfContentTask: 404" << std::endl;
+#endif
+				if (!owfOverlay::isInited())
+				{
+					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
+					{
+						ObfusString msg("The language that the game was supposed to launch with is missing or outdated.");
+						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+
+						exit(1);
+					}
+					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
+					{
+						ObfusString msg("The graphicsDriver that the game was supposed to launch with is missing or outdated.");
+						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+
+						exit(1);
+					}
+				}
+				ServerWebService::send404(*static_cast<Socket*>(s.get()));
+			}
+			setWorkDone();
+		}
+	}
+};
 
 static void start_bgscript()
 {
@@ -2874,40 +2933,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 						}
 
-						// Ask SNS as a fallback
-						{
-							HttpRequest hr(server_host, req.path);
-							hr.port = http_port;
-							hr.use_tls = false;
-							hr.path_is_encoded = true;
-							if (auto res = hr.execute())
-							{
-								if (res->status_code == 200)
-								{
-									ServerWebService::sendText(s, std::move(res->body));
-									return;
-								}
-							}
-						}
+						// Continue in task to ask SNS
+						HttpRequest hr(server_host, req.path);
+						hr.port = http_port;
+						hr.use_tls = false;
+						hr.path_is_encoded = true;
+						Scheduler::get()->add<owfContentTask>(s, std::move(hr));
 
-						if (!owfOverlay::isInited())
-						{
-							if (req.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
-							{
-								ObfusString msg("The language that the game was supposed to launch with is missing or outdated.");
-								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-
-								exit(1);
-							}
-							if (req.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
-							{
-								ObfusString msg("The graphicsDriver that the game was supposed to launch with is missing or outdated.");
-								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-
-								exit(1);
-							}
-						}
-						ServerWebService::send404(s);
 						return;
 					}
 					auto arr = string::explode(req.path, '?');
