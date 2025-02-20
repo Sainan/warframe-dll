@@ -2856,8 +2856,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				if (!logout_on_request_failure)
 				{
 					auto lua_WebSubscribeToFailure_code = *lua_WebSubscribeToFailure_hash.add(8).as<uint8_t**>();
-					memGuard::setAllowedAccess(lua_WebSubscribeToFailure_code, 1, memGuard::ACC_RWX);
-					*lua_WebSubscribeToFailure_code = 0xC3;
+					memGuard::setAllowedAccess(lua_WebSubscribeToFailure_code, 3, memGuard::ACC_RWX);
+					lua_WebSubscribeToFailure_code[0] = 0x31;
+					lua_WebSubscribeToFailure_code[1] = 0xC0;
+					lua_WebSubscribeToFailure_code[2] = 0xC3;
 				}
 			}
 			else
