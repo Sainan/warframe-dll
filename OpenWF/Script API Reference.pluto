@@ -54,6 +54,7 @@ class Entity extends BaseEntity
 	function Attach(type, symbol, optionalPosOffset)
 	function GetAttachment(type)
 	function GetTag()
+	function SetTag(symbol)
 	function FirePort(port)
 	function SetVisibility(visible, delegateToAttachments = false)
 	function GetSpeed()

@@ -372,6 +372,12 @@ class Entity extends BaseEntity
 		return new Symbol(ivkr_pop_string())
 	end
 
+	function SetTag(symbol)
+		self:pushToIvkr()
+		symbol:pushToIvkr()
+		ivkr_call(ivkr_find_method("Entity", "SetTag"), 2)
+	end
+
 	function FirePort(port)
 		self:pushToIvkr()
 		ivkr_push_string(port)
