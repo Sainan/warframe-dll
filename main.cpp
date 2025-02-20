@@ -1206,7 +1206,7 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 
 static DetourHook ScriptMgr_startInstance_hook;
 
-static void ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, void* a3, void* a4*/)
+static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, void* a3, void* a4*/)
 {
 	if (inst->script_type)
 	{
@@ -1242,7 +1242,7 @@ static void ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 		}
 		SOUP_IF_UNLIKELY (block)
 		{
-			return;
+			return false;
 		}
 	}
 
@@ -2787,8 +2787,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			//SIG_INST("48 89 6C 24 18 57 41 56 41 57 48 83 EC 30 4C 8B F1 4D 8B F9 48 8B CA 49 8B F8 48 8B EA E8"); // startInstance (4 arguments)
-			SIG_INST("48 89 5C 24 20 55 56 57 48 83 EC 30 48 8B E9 48 8B FA 48 8D 0D"); //startInstanceInternal (2 arguments)
+			//SIG_INST("48 89 6C 24 18 57 41 56 41 57 48 83 EC 30 4C 8B F1 4D 8B F9 48 8B CA 49 8B F8 48 8B EA E8"); // startInstance (4 arguments, void return)
+			SIG_INST("48 89 5C 24 20 55 56 57 48 83 EC 30 48 8B E9 48 8B FA 48 8D 0D"); // startInstanceInternal (2 arguments, bool return)
 			auto ScriptMgr_startInstance = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "ScriptMgr_startInstance = " << ScriptMgr_startInstance << std::endl;
