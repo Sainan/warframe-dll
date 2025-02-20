@@ -162,6 +162,16 @@ void owfScript::openLibs(lua_State* L)
 	});
 	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
 
+	if (string_pool)
+	{
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_pushstring(L, resolve_string_handle(luaL_checkinteger(L, 1)));
+			return 1;
+		});
+		{ ObfusString name("resolve_string_handle"); lua_setglobal(L, name.c_str()); }
+	}
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");

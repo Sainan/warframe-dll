@@ -1048,12 +1048,6 @@ static void check_string_substitutions_detour(GameString* str, void* substitutio
 
 
 #if METADATA_PATCHES
-static StringPoolBucket** string_pool;
-static const char* resolve_string_handle(uint32_t handle)
-{
-	return &(*string_pool)[handle & 0xffff].data[handle >> 16];
-}
-
 struct MetadataPatch
 {
 	std::string prefix;
@@ -2598,7 +2592,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-#if METADATA_PATCHES
 		{
 			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
 			auto string_pool_insn = Module(nullptr).range.scan(sig_inst);
@@ -2615,6 +2608,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if METADATA_PATCHES
 		{
 			SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
 			auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
