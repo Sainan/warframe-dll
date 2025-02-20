@@ -28,6 +28,7 @@ inline bool disable_nrs_connection;
 // Features
 inline bool ee_log_in_console;
 inline bool skip_mission_start_timer;
+inline bool logout_on_request_failure;
 inline float fov_override;
 inline std::string forced_profile_dir;
 inline std::vector<std::string> auto_start_scripts;

@@ -1345,6 +1345,7 @@ static void save_config()
 
 	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	config.add(ObfusString("logout_on_request_failure"), logout_on_request_failure);
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
 	{
@@ -1565,6 +1566,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				skip_mission_start_timer = false;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("logout_on_request_failure")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				logout_on_request_failure = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				logout_on_request_failure = true;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fov_override")); it != config->reinterpretAsObj().end())
@@ -2762,6 +2772,27 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				memGuard::setAllowedAccess(RequestSlomo_cond.add(8).as<void*>(), 2, memGuard::ACC_RWX);
 				RequestSlomo_cond.as<uint8_t*>()[8] = 0x90;
 				RequestSlomo_cond.as<uint8_t*>()[9] = 0x90;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("8D 25 CF A6 00 00 00 00");
+			auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_WebSubscribeToFailure_hash = " << lua_WebSubscribeToFailure_hash.as<void*>() << std::endl;
+#endif
+			if (lua_WebSubscribeToFailure_hash)
+			{
+				if (!logout_on_request_failure)
+				{
+					auto lua_WebSubscribeToFailure_code = *lua_WebSubscribeToFailure_hash.add(8).as<uint8_t**>();
+					memGuard::setAllowedAccess(lua_WebSubscribeToFailure_code, 1, memGuard::ACC_RWX);
+					*lua_WebSubscribeToFailure_code = 0xC3;
+				}
 			}
 			else
 			{
