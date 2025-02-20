@@ -79,21 +79,9 @@ void owfScript::log(std::string msg)
 {
 	std::cout << msg;
 
-	size_t script_log_olen;
-	size_t script_log_nlen;
 	{
 		std::lock_guard lock(script_log_mtx);
-		script_log_olen = script_log.size();
 		script_log.append(msg);
-		script_log_nlen = script_log.size();
-	}
-
-	{
-		JsonObject obj;
-		obj.add(ObfusString("script_log_olen"), static_cast<int64_t>(script_log_olen));
-		obj.add(ObfusString("script_log_nlen"), static_cast<int64_t>(script_log_nlen));
-		obj.add(ObfusString("script_log_app"), std::move(msg));
-		owf_broadcast_message(obj.encode());
 	}
 }
 
@@ -148,6 +136,29 @@ void owfScript::openLibs(lua_State* L)
 		return 0;
 	});
 	{ ObfusString name("print_to_console"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		std::lock_guard lock(script_log_mtx);
+		lua_pushinteger(L, script_log.size());
+		return 1;
+	});
+	{ ObfusString name("owf_get_script_log_len"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto i = luaL_checkinteger(L, 1);
+		std::lock_guard lock(script_log_mtx);
+		const auto data = script_log.data();
+		const auto size = script_log.size();
+		if (i < size)
+		{
+			lua_pushlstring(L, data + i, size - i);
+			return 1;
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_get_script_log_sub"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
