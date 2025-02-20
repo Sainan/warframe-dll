@@ -188,6 +188,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushboolean(L, reinterpret_cast<owfScript*>(L->l_G->user_data)->stop_requested);
+		return 1;
+	});
+	{ ObfusString name("owf_get_stop_requested"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		SOUP_IF_UNLIKELY (reinterpret_cast<owfScript*>(L->l_G->user_data)->stop_requested)
 		{
 			ObfusString err("Stop requested");

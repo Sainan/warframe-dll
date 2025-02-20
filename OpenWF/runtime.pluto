@@ -2679,7 +2679,7 @@ return function(f)
 				end
 				owf_internal_event_queue:insert(evt)
 			end
-		until mainco:status() == "dead" and owf_lambda_callbacks:size() == 0
+		until mainco:status() == "dead" and (owf_lambda_callbacks:size() == 0 or owf_get_stop_requested())
 	end)
 	mainco = sched:add(f)
 	simple_yield()
