@@ -360,6 +360,9 @@
 					document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = dict.disable_auto_start;
 				});
 			});
+			if (ws.readyState == 1) {
+				ws.send("running_scripts");
+			}
 		});
 	</script>
 </body>

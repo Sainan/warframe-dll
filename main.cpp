@@ -3414,7 +3414,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
-					if (joaat::hash(msg.data) == joaat::compileTimeHash("script_log"))
+					if (joaat::hash(msg.data) == joaat::compileTimeHash("running_scripts"))
+					{
+						JsonObject obj;
+						populate_running_scripts(obj);
+						ServerWebService::wsSendText(s, obj.encode());
+					}
+					else if (joaat::hash(msg.data) == joaat::compileTimeHash("script_log"))
 					{
 						JsonObject obj;
 						populate_full_script_log(obj);
