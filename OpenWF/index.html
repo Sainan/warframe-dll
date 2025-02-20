@@ -310,7 +310,7 @@
 				location.reload();
 			}
 		};
-		ws.onerror = function(e) {
+		ws.onclose = ws.onerror = function(e) {
 			console.error(e);
 			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
 		};
