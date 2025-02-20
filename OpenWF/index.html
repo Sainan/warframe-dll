@@ -145,175 +145,186 @@
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "custom" ? "" : "none";
 		}
 
-		let ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
-		let script_log_len = -1;
-		const script_broadcast_requested = {};
-		ws.onopen = function() {
-			fetch("/request_bgscript_broadcasts");
-		};
-		ws.onmessage = function(e) {
-			const obj = JSON.parse(e.data);
+		function openWebSocket() {
+			window.ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
+			let script_log_len = -1;
+			const script_broadcast_requested = {};
+			ws.onopen = function() {
+				fetch("/request_bgscript_broadcasts");
+			};
+			ws.onmessage = function(e) {
+				const obj = JSON.parse(e.data);
 
-			if ("console" in obj) {
-				document.getElementById("console").checked = obj.console;
-			}
-
-			if ("bgscript_status_string" in obj) {
-				const bgscript_status = obj.bgscript_status_string ? JSON.parse(obj.bgscript_status_string) : {};
-				document.getElementById("camtype").value = bgscript_status.camtype ?? "gamecam";
-				document.getElementById("pos").value = bgscript_status.pos ?? "";
-				bgscript_status.markers ??= [];
-				const marker_set = {};
-				for (const marker of bgscript_status.markers) {
-					if (marker.type != 14) {
-						const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
-						const pos = marker.x + "," + marker.y + "," + marker.z;
-						const slug = marker.type == 49 ? "wp" : pos;
-						marker_set[slug] = true;
-						let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
-						if (!option) {
-							option = document.getElementById("tp-target").appendChild(document.createElement("option"));
-							option.setAttribute("data-slug", slug);
-						}
-						if (option.value != pos) {
-							option.value = pos;
-						}
-						if (option.textContent != name) {
-							option.textContent = name;
-						}
-					}
+				if ("console" in obj) {
+					document.getElementById("console").checked = obj.console;
 				}
-				for (const child of document.getElementById("tp-target").children) {
-					if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
-						document.getElementById("tp-target").removeChild(child);
-						onMarkersChange();
-					}
-				}
-			}
 
-			if ("running_scripts" in obj) {
-				for (const script of document.getElementById("scripts-container").children) {
-					const path = script.children[1].getAttribute("data-path");
-					const running = obj.running_scripts.find(x => x == path);
-					script.children[1].checked = running;
-					if (running) {
-						if (!script_broadcast_requested[path]) {
-							script_broadcast_requested[path] = true;
-							fetch(path.substr(6) + "/request_broadcast");
-						}
-					}
-					else {
-						if (script_broadcast_requested[path]) {
-							const ul = script.querySelector("ul");
-							if (ul) {
-								ul.innerHTML = "";
+				if ("bgscript_status_string" in obj) {
+					const bgscript_status = obj.bgscript_status_string ? JSON.parse(obj.bgscript_status_string) : {};
+					document.getElementById("camtype").value = bgscript_status.camtype ?? "gamecam";
+					document.getElementById("pos").value = bgscript_status.pos ?? "";
+					bgscript_status.markers ??= [];
+					const marker_set = {};
+					for (const marker of bgscript_status.markers) {
+						if (marker.type != 14) {
+							const name = dict.marker.split("|TYPE|").join(marker.type in marker_types ? marker_types[marker.type] : dict.marker_unk).split("|DIST|").join(marker.dist);
+							const pos = marker.x + "," + marker.y + "," + marker.z;
+							const slug = marker.type == 49 ? "wp" : pos;
+							marker_set[slug] = true;
+							let option = document.querySelector("#tp-target [data-slug='"+slug+"']");
+							if (!option) {
+								option = document.getElementById("tp-target").appendChild(document.createElement("option"));
+								option.setAttribute("data-slug", slug);
 							}
-							delete script_broadcast_requested[path];
-						}
-					}
-				}
-			}
-
-			if ("script_log" in obj) {
-				const log = document.getElementById("script_log");
-				log.textContent = obj.script_log;
-				log.scrollTop = log.scrollHeight;
-
-				script_log_len = obj.script_log_len;
-			}
-
-			if ("script_log_app" in obj) {
-				if (script_log_len == obj.script_log_olen) {
-					script_log_len = obj.script_log_nlen;
-
-					const log = document.getElementById("script_log");
-					log.textContent += obj.script_log_app;
-					log.scrollTop = log.scrollHeight;
-				}
-				else {
-					console.warn("unable to append script log", { script_log_len, obj });
-					if (script_log_len != -1) {
-						ws.send("script_log");
-					}
-				}
-			}
-
-			if ("script_broadcast" in obj) {
-				const p = [...document.getElementById("scripts-container").children].find(x => x.children[1].getAttribute("data-path") == obj.from);
-				let ul = p.querySelector("ul");
-				if (!ul) {
-					ul = p.appendChild(document.createElement("ul"));
-				}
-				ul.innerHTML = "";
-				obj.script_broadcast.toggles.forEach(toggle => {
-					const li = document.createElement("li");
-					{
-						const label = document.createElement("label");
-						label.setAttribute("for", obj.from + toggle.name);
-						label.textContent = toggle.name + ": ";
-						li.appendChild(label);
-					}
-					{
-						const input = document.createElement("input");
-						input.id = obj.from + toggle.name;
-						input.type = "checkbox";
-						input.onchange = function() {
-							fetch(obj.from.substr(6) + "/set_toggle?" + (this.checked ? "1" : "0") + encodeURIComponent(toggle.name));
-						};
-						li.appendChild(input);
-					}
-					ul.appendChild(li);
-				});
-			}
-
-			if ("version_broadcast" in obj) {
-				document.getElementById("dll_to_hotfix_update").style.display = "none";
-				document.getElementById("hotfix_to_hotfix_update").style.display = "none";
-				document.getElementById("dll_to_dll_update").style.display = "none";
-				document.getElementById("no_update").style.display = "none";
-				document.getElementById("update_check_fail").style.display = "none";
-				document.getElementById("checking_updates").style.display = "none";
-				if ("latest" in obj.version_broadcast) {
-					if (obj.version_broadcast.current) {
-						let local_version_full = obj.version_broadcast.current;
-						if (obj.version_broadcast.hotfix) {
-							local_version_full += " " + obj.version_broadcast.hotfix;
-						}
-						document.querySelectorAll(".local-version").forEach(x => { x.textContent = obj.version_broadcast.current; });
-						document.querySelectorAll(".local-version-full").forEach(x => { x.textContent = local_version_full; });
-						if (obj.version_broadcast.hotfix_available) {
-							document.querySelectorAll(".hotfix-available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
-							if (obj.version_broadcast.hotfix) {
-								document.getElementById("hotfix_to_hotfix_update").style.display = "block";
+							if (option.value != pos) {
+								option.value = pos;
 							}
-							else {
-								document.getElementById("dll_to_hotfix_update").style.display = "block";
+							if (option.textContent != name) {
+								option.textContent = name;
 							}
 						}
-						else if (obj.version_broadcast.latest) {
-							document.getElementById("no_update").style.display = "block";
+					}
+					for (const child of document.getElementById("tp-target").children) {
+						if (child.value != "custom" && !(child.getAttribute("data-slug") in marker_set)) {
+							document.getElementById("tp-target").removeChild(child);
+							onMarkersChange();
+						}
+					}
+				}
+
+				if ("running_scripts" in obj) {
+					for (const script of document.getElementById("scripts-container").children) {
+						const path = script.children[1].getAttribute("data-path");
+						const running = obj.running_scripts.find(x => x == path);
+						script.children[1].checked = running;
+						if (running) {
+							if (!script_broadcast_requested[path]) {
+								script_broadcast_requested[path] = true;
+								fetch(path.substr(6) + "/request_broadcast");
+							}
 						}
 						else {
-							document.getElementById("dll_to_dll_update").style.display = "block";
+							if (script_broadcast_requested[path]) {
+								const ul = script.querySelector("ul");
+								if (ul) {
+									ul.innerHTML = "";
+								}
+								delete script_broadcast_requested[path];
+							}
+						}
+					}
+				}
+
+				if ("script_log" in obj) {
+					const log = document.getElementById("script_log");
+					log.textContent = obj.script_log;
+					log.scrollTop = log.scrollHeight;
+
+					script_log_len = obj.script_log_len;
+				}
+
+				if ("script_log_app" in obj) {
+					if (script_log_len == obj.script_log_olen) {
+						script_log_len = obj.script_log_nlen;
+
+						const log = document.getElementById("script_log");
+						log.textContent += obj.script_log_app;
+						log.scrollTop = log.scrollHeight;
+					}
+					else {
+						console.warn("unable to append script log", { script_log_len, obj });
+						if (script_log_len != -1) {
+							ws.send("script_log");
+						}
+					}
+				}
+
+				if ("script_broadcast" in obj) {
+					const p = [...document.getElementById("scripts-container").children].find(x => x.children[1].getAttribute("data-path") == obj.from);
+					let ul = p.querySelector("ul");
+					if (!ul) {
+						ul = p.appendChild(document.createElement("ul"));
+					}
+					ul.innerHTML = "";
+					obj.script_broadcast.toggles.forEach(toggle => {
+						const li = document.createElement("li");
+						{
+							const label = document.createElement("label");
+							label.setAttribute("for", obj.from + toggle.name);
+							label.textContent = toggle.name + ": ";
+							li.appendChild(label);
+						}
+						{
+							const input = document.createElement("input");
+							input.id = obj.from + toggle.name;
+							input.type = "checkbox";
+							input.onchange = function() {
+								fetch(obj.from.substr(6) + "/set_toggle?" + (this.checked ? "1" : "0") + encodeURIComponent(toggle.name));
+							};
+							li.appendChild(input);
+						}
+						ul.appendChild(li);
+					});
+				}
+
+				if ("version_broadcast" in obj) {
+					document.getElementById("dll_to_hotfix_update").style.display = "none";
+					document.getElementById("hotfix_to_hotfix_update").style.display = "none";
+					document.getElementById("dll_to_dll_update").style.display = "none";
+					document.getElementById("no_update").style.display = "none";
+					document.getElementById("update_check_fail").style.display = "none";
+					document.getElementById("checking_updates").style.display = "none";
+					if ("latest" in obj.version_broadcast) {
+						if (obj.version_broadcast.current) {
+							let local_version_full = obj.version_broadcast.current;
+							if (obj.version_broadcast.hotfix) {
+								local_version_full += " " + obj.version_broadcast.hotfix;
+							}
+							document.querySelectorAll(".local-version").forEach(x => { x.textContent = obj.version_broadcast.current; });
+							document.querySelectorAll(".local-version-full").forEach(x => { x.textContent = local_version_full; });
+							if (obj.version_broadcast.hotfix_available) {
+								document.querySelectorAll(".hotfix-available").forEach(x => { x.textContent = obj.version_broadcast.hotfix_available; });
+								if (obj.version_broadcast.hotfix) {
+									document.getElementById("hotfix_to_hotfix_update").style.display = "block";
+								}
+								else {
+									document.getElementById("dll_to_hotfix_update").style.display = "block";
+								}
+							}
+							else if (obj.version_broadcast.latest) {
+								document.getElementById("no_update").style.display = "block";
+							}
+							else {
+								document.getElementById("dll_to_dll_update").style.display = "block";
+							}
+						}
+						else {
+							document.getElementById("update_check_fail").style.display = "block";
 						}
 					}
 					else {
-						document.getElementById("update_check_fail").style.display = "block";
+						document.getElementById("checking_updates").style.display = "block";
 					}
 				}
-				else {
-					document.getElementById("checking_updates").style.display = "block";
-				}
-			}
 
-			if ("reload" in obj) {
-				location.reload();
-			}
-		};
-		ws.onclose = ws.onerror = function(e) {
-			console.error(e);
-			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
-		};
+				if ("reload" in obj) {
+					location.reload();
+				}
+			};
+			ws.onerror = function(e) {
+				console.error(e);
+				document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
+			};
+			ws.onclose = function() {
+				fetch("/ping").then(() => {
+					console.warn("The browser just dropped the WebSocket connection for no reason");
+					openWebSocket();
+				}).catch(() => {
+					document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
+				});
+			};
+		}
+		openWebSocket();
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
