@@ -2186,7 +2186,7 @@ gRegion = {
 		symbol:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindFirstTagged"), 2)
 		if ivkr_type(-1) > 0 do
-			return new LotusAvatar()
+			return pop_entity()
 		else
 			ivkr_pop(1)
 		end
@@ -2199,7 +2199,7 @@ gRegion = {
 		if ivkr_istable(-1) then
 			local i = 1
 			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new LotusAvatar())
+				t:insert(pop_entity())
 				++i
 			end
 			ivkr_pop(2)
