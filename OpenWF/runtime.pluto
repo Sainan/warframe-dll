@@ -1899,6 +1899,8 @@ end
 
 class OverlayBase extends Object end
 class FlashInstance extends OverlayBase
+	__name = "FlashInstance"
+
 	function AttachToEntity(ent, off, rot, vecScale)
 		self:pushToIvkr()
 		ent:pushToIvkr()
