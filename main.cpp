@@ -1196,6 +1196,52 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 #endif
 
 
+static DetourHook ScriptMgr_startInstance_hook;
+
+static void ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, void* a3, void* a4*/)
+{
+	if (inst->script_type)
+	{
+		const char* path = resolve_string_handle(inst->script_type->getPathHandle());
+		const char* name = resolve_string_handle(inst->script_type->name_handle);
+		const char* func_name = resolve_string_handle(inst->func_name_handle);
+
+#if LOGGING
+		//std::cout << "ScriptMgr_startInstance: " << path << name << ", " << func_name << "\n";
+#endif
+
+		uint32_t hash = 0;
+		hash = joaat::partialStr(path, hash);
+		hash = joaat::partialStr(name, hash);
+		hash = joaat::partialStr(func_name, hash);
+		joaat::finalise(hash);
+
+		bool block = false;
+		{
+			std::lock_guard lock(running_scripts_mtx);
+			for (auto& scr : running_scripts)
+			{
+				if (auto e = scr->findSubscribedScriptTrigger(hash))
+				{
+					block |= *e;
+					std::string data = path;
+					data.append(name);
+					data.push_back(':');
+					data.append(func_name);
+					scr->events.emplace_back(OWF_EVT_SCRIPT_TRIGGERED, std::move(data));
+				}
+			}
+		}
+		SOUP_IF_UNLIKELY (block)
+		{
+			return;
+		}
+	}
+
+	return reinterpret_cast<decltype(&ScriptMgr_startInstance_detour)>(ScriptMgr_startInstance_hook.original)(_this, inst/*, a3, a4*/);
+}
+
+
 #if VERBOSE_RNG
 static int64_t* lua_seed;
 static luau_CFunction lua_SetSeed_og;
@@ -2663,6 +2709,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 #endif
+
+		{
+			//SIG_INST("48 89 6C 24 18 57 41 56 41 57 48 83 EC 30 4C 8B F1 4D 8B F9 48 8B CA 49 8B F8 48 8B EA E8"); // startInstance (4 arguments)
+			SIG_INST("48 89 5C 24 20 55 56 57 48 83 EC 30 48 8B E9 48 8B FA 48 8D 0D"); //startInstanceInternal (2 arguments)
+			auto ScriptMgr_startInstance = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "ScriptMgr_startInstance = " << ScriptMgr_startInstance << std::endl;
+#endif
+			if (ScriptMgr_startInstance)
+			{
+				ScriptMgr_startInstance_hook.detour = reinterpret_cast<void*>(&ScriptMgr_startInstance_detour);
+				ScriptMgr_startInstance_hook.target = ScriptMgr_startInstance;
+				ScriptMgr_startInstance_hook.create();
+				ScriptMgr_startInstance_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
 
 		// Allow GetOnVehicle with an operator avatar
 		// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable

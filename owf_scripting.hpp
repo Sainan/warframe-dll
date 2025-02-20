@@ -22,6 +22,7 @@ enum owfScriptEventType : uint8_t
 	OWF_EVT_BLOCKED_CHAT_MESSAGE = 1,
 	OWF_EVT_CUSTOM_ROUTE_SERVED = 2,
 	OWF_EVT_CALLBACK = 3,
+	OWF_EVT_SCRIPT_TRIGGERED = 4,
 };
 
 struct owfScript
@@ -46,6 +47,7 @@ struct owfScript
 	std::unordered_set<std::string> blocked_chat_prefixes;
 	std::unordered_map<uint32_t, CustomRoute> custom_routes;
 	std::unordered_set<std::string> callbacks;
+	std::unordered_map<uint32_t, bool> subscribed_script_triggers;
 	std::deque<Event> events;
 
 	static void logNl(std::string msg);
@@ -75,6 +77,15 @@ struct owfScript
 	const CustomRoute* findCustomRoute(uint32_t hash) const noexcept
 	{
 		if (auto e = custom_routes.find(hash); e != custom_routes.end())
+		{
+			return &e->second;
+		}
+		return nullptr;
+	}
+
+	const bool* findSubscribedScriptTrigger(uint32_t hash) const noexcept
+	{
+		if (auto e = subscribed_script_triggers.find(hash); e != subscribed_script_triggers.end())
 		{
 			return &e->second;
 		}

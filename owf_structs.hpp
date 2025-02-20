@@ -242,6 +242,13 @@ inline const char* resolve_string_handle(uint32_t handle)
 	return &(*string_pool)[handle & 0xffff].data[handle >> 16];
 }
 
+struct ScriptInstance
+{
+	/* 0x00 */ void* vftable;
+	/* 0x08 */ ObjectType* script_type;
+	PAD(0x10, 0x20) uint32_t func_name_handle;
+};
+
 struct TextureLayer
 {
 	/* 0x00 */ void* data;

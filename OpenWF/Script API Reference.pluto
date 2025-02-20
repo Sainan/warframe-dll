@@ -396,6 +396,7 @@ function chat_block_prefix(prefix)
 function chat_unblock_prefix(prefix)
 function chat_system_reply(text)
 function owf_register_custom_route(path, mime, content)
+function owf_subscribe_to_script_trigger(script, func, block)
 function owf_script_add_toggle(name, value = false)
 function owf_get_available_scripts()
 function owf_get_running_scripts()
@@ -410,6 +411,7 @@ function owf_restore_label(tag)
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
+OWF_EVT_SCRIPT_TRIGGERED = 4
 
 function owf_next_event()
 

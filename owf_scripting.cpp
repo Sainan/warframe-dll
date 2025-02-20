@@ -1120,15 +1120,31 @@ owfScript::owfScript()
 				lua_pushinteger(L, scr->events.front().type);
 				lua_settable(L, -3);
 			}
+			switch (scr->events.front().type)
 			{
-				switch (scr->events.front().type)
-				{
-				case OWF_EVT_BLOCKED_CHAT_MESSAGE: pluto_pushstring(L, ObfusString("text").str()); break;
-				case OWF_EVT_CUSTOM_ROUTE_SERVED: pluto_pushstring(L, ObfusString("path").str()); break;
-				case OWF_EVT_CALLBACK: pluto_pushstring(L, ObfusString("name").str()); break;
-				}
+			case OWF_EVT_BLOCKED_CHAT_MESSAGE:
+				pluto_pushstring(L, ObfusString("text").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
+				break;
+
+			case OWF_EVT_CUSTOM_ROUTE_SERVED:
+				pluto_pushstring(L, ObfusString("path").str());
+				pluto_pushstring(L, scr->events.front().data);
+				lua_settable(L, -3);
+				break;
+
+			case OWF_EVT_CALLBACK:
+				pluto_pushstring(L, ObfusString("name").str());
+				pluto_pushstring(L, scr->events.front().data);
+				lua_settable(L, -3);
+				break;
+
+			case OWF_EVT_SCRIPT_TRIGGERED:
+				pluto_pushstring(L, ObfusString("data").str());
+				pluto_pushstring(L, scr->events.front().data);
+				lua_settable(L, -3);
+				break;
 			}
 			scr->events.pop_front();
 			return 1;
@@ -1169,6 +1185,23 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_register_callback"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto script = luaL_checkstring(L, 1);
+		const auto func = luaL_checkstring(L, 2);
+		const auto block = lua_toboolean(L, 3);
+
+		uint32_t hash = 0;
+		hash = joaat::partialStr(script, hash);
+		hash = joaat::partialStr(func, hash);
+		joaat::finalise(hash);
+
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_script_triggers.emplace(hash, block);
+
+		return 0;
+	});
+	{ ObfusString name("owf_subscribe_to_script_trigger"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

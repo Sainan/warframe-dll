@@ -2429,6 +2429,7 @@ owf_overlay_set_color = owf_overlay_set_colour
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
+OWF_EVT_SCRIPT_TRIGGERED = 4
 
 UpgradeType = setmetatable({}, {
 	__index = |t, k| -> rawset(t, k, ivkr_get_enum_value(k))[k]
@@ -2670,6 +2671,11 @@ return function(f)
 						owf_lambda_callbacks[evt.name] = nil
 						continue
 					end
+				elseif evt.type == OWF_EVT_SCRIPT_TRIGGERED then
+					local arr = evt.data:split(":")
+					evt.script = arr[1]
+					evt.func = arr[2]
+					evt.data = nil
 				end
 				owf_internal_event_queue:insert(evt)
 			end
