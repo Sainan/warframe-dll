@@ -94,4 +94,5 @@ struct CacheManifest
 	};
 
 	std::unordered_map<std::string, Entry> entries;
+	std::unordered_map<std::string, Entry> stripped_entries;
 };

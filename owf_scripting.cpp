@@ -1325,16 +1325,22 @@ owfScript::owfScript()
 		mr.skip(20);
 		uint32_t num_entries;
 		mr.u32le(num_entries);
-		if (num_entries == 0)
-		{
-			mr.u32le(num_entries);
-		}
 		cm->entries.reserve(num_entries);
 		for (uint32_t i = 0; i != num_entries; ++i)
 		{
 			std::string path;
 			mr.str_lp<u32le_t>(path);
 			CacheManifest::Entry& e = cm->entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
+			mr.str(sizeof(e.hash), e.hash);
+			mr.str(sizeof(e.unk), e.unk);
+		}
+		mr.u32le(num_entries);
+		cm->stripped_entries.reserve(num_entries);
+		for (uint32_t i = 0; i != num_entries; ++i)
+		{
+			std::string path;
+			mr.str_lp<u32le_t>(path);
+			CacheManifest::Entry& e = cm->stripped_entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
 			mr.str(sizeof(e.hash), e.hash);
 			mr.str(sizeof(e.unk), e.unk);
 		}
@@ -1345,7 +1351,13 @@ owfScript::owfScript()
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		if (auto e = cm->entries.find(pluto_checkstring(L, 2)); e != cm->entries.end())
+		const auto path = pluto_checkstring(L, 2);
+		if (auto e = cm->entries.find(path); e != cm->entries.end())
+		{
+			lua_pushlstring(L, e->second.hash, sizeof(e->second.hash));
+			return 1;
+		}
+		if (auto e = cm->stripped_entries.find(path); e != cm->stripped_entries.end())
 		{
 			lua_pushlstring(L, e->second.hash, sizeof(e->second.hash));
 			return 1;
@@ -1357,11 +1369,16 @@ owfScript::owfScript()
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		auto cm = (CacheManifest*)lua_touserdata(L, 1);
+		const auto path = pluto_checkstring(L, 2);
 		size_t size;
 		const auto data = luaL_checklstring(L, 3, &size);
-		if (auto e = cm->entries.find(pluto_checkstring(L, 2)); e != cm->entries.end())
+		if (size == 16)
 		{
-			if (size == 16)
+			if (auto e = cm->entries.find(path); e != cm->entries.end())
+			{
+				memcpy(e->second.hash, data, size);
+			}
+			else if (auto e = cm->stripped_entries.find(path); e != cm->stripped_entries.end())
 			{
 				memcpy(e->second.hash, data, size);
 			}
@@ -1377,6 +1394,14 @@ owfScript::owfScript()
 		uint32_t num_entries = cm->entries.size();
 		sw.u32le(num_entries);
 		for (auto& e : cm->entries)
+		{
+			sw.str_lp<u32le_t>(e.first);
+			sw.str(sizeof(e.second.hash), e.second.hash);
+			sw.str(sizeof(e.second.unk), e.second.unk);
+		}
+		num_entries = cm->stripped_entries.size();
+		sw.u32le(num_entries);
+		for (auto& e : cm->stripped_entries)
 		{
 			sw.str_lp<u32le_t>(e.first);
 			sw.str(sizeof(e.second.hash), e.second.hash);
