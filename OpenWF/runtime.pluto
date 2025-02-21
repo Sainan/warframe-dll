@@ -341,13 +341,13 @@ class Entity extends BaseEntity
 		ivkr_call(ivkr_find_method("Entity", "SetMesh"), 4)
 	end
 
-	function Attach(type, symbol, optionalPosOffset)
+	function Attach(type, optionalBoneSymbol, optionalPosOffset)
 		self:pushToIvkr()
 		do
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
-		(symbol or EMPTY_SYMBOL):pushToIvkr()
+		(optionalBoneSymbol or EMPTY_SYMBOL):pushToIvkr()
 		if optionalPosOffset then
 			ivkr_push_vector(optionalPosOffset)
 		end
