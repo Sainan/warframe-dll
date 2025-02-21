@@ -245,6 +245,8 @@ class MissionReward
 	credits
 	xp
 	items
+	countedItems
+	countedStoreItems
 
 class MissionAI
 	agent
@@ -256,6 +258,14 @@ class StoreItem extends Object
 	function GetProductCategory()
 	function ExcludeFromCodex()
 	function ShowInMarket()
+
+class CountedItem
+	mItemType
+	mItemCount
+
+class CountedStoreItem
+	mStoreItem
+	mItemCount
 
 class MotionControllerBase
 	function GetSpeedMultiplier()

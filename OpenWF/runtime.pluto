@@ -1431,6 +1431,16 @@ class MissionReward extends owfUserdata
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
 				return ivkr_pop_array(StoreItem)
+
+			case "countedItems":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
+				return ivkr_pop_array(CountedItem)
+
+			case "countedStoreItems":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
+				return ivkr_pop_array(CountedStoreItem)
 		end
 		error("Unknown field: "..name)
 	end
@@ -1494,6 +1504,38 @@ class StoreItem extends Object
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreItem", "ShowInMarket"), 1)
 		return ivkr_pop_bool()
+	end
+end
+
+class CountedItem extends owfUserdata
+	__name = "CountedItem"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("CountedItem", "mItemType"), 1)
+		self.mItemType = new ObjectType()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("CountedItem", "mItemCount"), 1)
+		self.mItemCount = math.tointeger(ivkr_pop_number())
+	end
+end
+
+class CountedStoreItem extends owfUserdata
+	__name = "CountedStoreItem"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("CountedStoreItem", "mStoreItem"), 1)
+		self.mStoreItem = new StoreItem()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("CountedStoreItem", "mItemCount"), 1)
+		self.mItemCount = math.tointeger(ivkr_pop_number())
 	end
 end
 
