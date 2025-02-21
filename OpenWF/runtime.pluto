@@ -1262,6 +1262,17 @@ class LotusMissionInfo extends owfUserdata
 					end
 					return t
 				end
+				break
+
+			case "missionReward":
+			case "missionRewardExtra":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
+				if ivkr_type(-1) > 0 then 
+					return new MissionReward()
+				end
+				ivkr_pop(1)
+				return nil
 		end
 		error("Unknown field: "..name)
 	end
@@ -1372,6 +1383,42 @@ class LotusMissionInfo extends owfUserdata
 			ivkr_pop(1)
 		end
 		return t
+	end
+end
+
+class MissionReward extends owfUserdata
+	__name = "MissionReward"
+
+	function __index(name)
+		if MissionReward[name] then
+			return MissionReward[name]
+		end
+		switch name do
+			case "credits":
+			case "xp":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
+				return math.tointeger(ivkr_pop_number())
+
+			case "items":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
+				do
+					local t = {}
+					if ivkr_istable(-1) then
+						local i = 1
+						while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+							t:insert(new StoreItem())
+							++i
+						end
+						ivkr_pop(2)
+					else
+						ivkr_pop(1)
+					end
+					return t
+				end
+		end
+		error("Unknown field: "..name)
 	end
 end
 

@@ -218,6 +218,8 @@ class LotusMissionInfo
 	location
 	levelOverride
 	gameRules
+	missionReward
+	missionRewardExtra
 	buddyAgents
 	function EncodeAsString()
 	function GetEnemies()
@@ -226,6 +228,11 @@ class LotusMissionInfo
 	function GetExtraMissionEventResources()
 	function GetAdvancedAiDirectorSpawns()
 	function GetCustomAdvancedAiDirectorSpawns()
+
+class MissionReward
+	credits
+	xp
+	items
 
 class MissionAI
 	agent
