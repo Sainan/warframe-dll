@@ -6,6 +6,17 @@ class Rotation
 	function __construct(public heading = 0, public pitch = 0, public bank = 0)
 	function __tostring()
 
+class Symbol
+	function __construct(public name = "")
+	function __eq(b)
+	function __tostring()
+	function c_str()
+
+class Color
+	function __construct(public red, public green, public blue, public alpha = 255)
+	function __tostring()
+	function GetUInt()
+
 class ObjectType
 	function __eq(other)
 	function GetName()
@@ -363,17 +374,6 @@ class UISys.ScriptResLoader
 	function IsDone()
 	function SpotLoad()
 	function Abort()
-
-class Symbol
-	function __construct(public name = "")
-	function __eq(b)
-	function __tostring()
-	function c_str()
-
-class Color
-	function __construct(public red, public green, public blue, public alpha = 255)
-	function __tostring()
-	function GetUInt()
 
 -- Global functions
 

@@ -27,6 +27,70 @@ function ivkr_push_rotation(rot)
 	ivkr_call(ivkr_find_ctor("Rotation"), 3)
 end
 
+class Symbol
+	__name = "Symbol"
+
+	function __construct(public name = "")
+	end
+
+	function __eq(b)
+		return self.name == b.name
+	end
+
+	function __tostring()
+		return self.name
+	end
+
+	function c_str()
+		return self.name
+	end
+
+	function pushToIvkr()
+		ivkr_push_string(self.name)
+		ivkr_call(ivkr_find_ctor("Symbol"), 1)
+	end
+end
+setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
+
+class Color
+	__name = "Color"
+
+	function __construct(public red, public green, public blue, public alpha = 255)
+	end
+
+	function __tostring()
+		return $"Color({self.red}, {self.green}, {self.blue}, {self.alpha})"
+	end
+
+	function pushToIvkr()
+		ivkr_push_int(self.red)
+		ivkr_push_int(self.green)
+		ivkr_push_int(self.blue)
+		ivkr_push_int(self.alpha)
+		ivkr_call(ivkr_find_ctor("Color"), 4)
+	end
+
+	function GetUInt()
+		return (self.red << 16) | (self.green << 8) | self.blue
+	end
+end
+setmetatable(Color, { __call = |_, ...| -> new Color(...) })
+
+function ivkr_pop_color()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "red"), 1)
+	local red = math.tointeger(ivkr_pop_number())
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "green"), 1)
+	local green = math.tointeger(ivkr_pop_number())
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Color", "blue"), 1)
+	local blue = math.tointeger(ivkr_pop_number())
+	ivkr_call(ivkr_find_getter("Color", "alpha"), 1)
+	local alpha = math.tointeger(ivkr_pop_number())
+	return new Color(red, green, blue, alpha)
+end
+
 class owfPointer
 	function __construct(addr)
 		if addr == nil or addr == 0 then
@@ -1881,21 +1945,6 @@ class WeaponCustomization extends owfUserdata
 	end
 end
 
-function ivkr_pop_color()
-	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Color", "red"), 1)
-	local red = math.tointeger(ivkr_pop_number())
-	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Color", "green"), 1)
-	local green = math.tointeger(ivkr_pop_number())
-	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Color", "blue"), 1)
-	local blue = math.tointeger(ivkr_pop_number())
-	ivkr_call(ivkr_find_getter("Color", "alpha"), 1)
-	local alpha = math.tointeger(ivkr_pop_number())
-	return new Color(red, green, blue, alpha)
-end
-
 class CustomizationColorPalette extends owfUserdata
 	__name = "CustomizationColorPalette"
 
@@ -2104,55 +2153,6 @@ class UISys.ScriptResLoader extends owfUserdata
 		ivkr_call(ivkr_find_method("ScriptResLoader", "Abort"), 1)
 	end
 end
-
-class Symbol
-	__name = "Symbol"
-
-	function __construct(public name = "")
-	end
-
-	function __eq(b)
-		return self.name == b.name
-	end
-
-	function __tostring()
-		return self.name
-	end
-
-	function c_str()
-		return self.name
-	end
-
-	function pushToIvkr()
-		ivkr_push_string(self.name)
-		ivkr_call(ivkr_find_ctor("Symbol"), 1)
-	end
-end
-setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
-
-class Color
-	__name = "Color"
-
-	function __construct(public red, public green, public blue, public alpha = 255)
-	end
-
-	function __tostring()
-		return $"Color({self.red}, {self.green}, {self.blue}, {self.alpha})"
-	end
-
-	function pushToIvkr()
-		ivkr_push_int(self.red)
-		ivkr_push_int(self.green)
-		ivkr_push_int(self.blue)
-		ivkr_push_int(self.alpha)
-		ivkr_call(ivkr_find_ctor("Color"), 4)
-	end
-
-	function GetUInt()
-		return (self.red << 16) | (self.green << 8) | self.blue
-	end
-end
-setmetatable(Color, { __call = |_, ...| -> new Color(...) })
 
 function IsNull(val)
 	if val instanceof owfUserdata then
