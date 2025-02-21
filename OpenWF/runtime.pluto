@@ -2571,6 +2571,17 @@ ForceType = {
 }
 
 -- unsure about the name
+ColorCustomizationSlot = {
+	PrimaryColors = 0,
+	Attachments = 1,
+	Sigil = 2,
+	Eyes = 3,
+	Facial = 4,
+	Clothing = 5,
+	Syandana = 6,
+}
+
+-- unsure about the name
 PowerSuitCustomizationSlot = {
 	Helmet = 0,
 	ArmLeft = 1,
