@@ -797,11 +797,28 @@ class Item extends Object
 			ivkr_pop(1)
 		end
 	end
+
+	function GetEnergyColor(outColor, secondary = false)
+		ivkr_call(ivkr_find_ctor("Color"), 0)
+
+		self:pushToIvkr()
+		ivkr_push_value(-2)
+		ivkr_push_bool(secondary)
+		ivkr_call(ivkr_find_method("Item", "GetEnergyColor"), 3)
+		local b = ivkr_pop_bool()
+
+		local c = ivkr_pop_color()
+		outColor.red = c.red
+		outColor.green = c.green
+		outColor.blue = c.blue
+		outColor.alpha = c.alpha
+
+		return b
+	end
 end
 
 class WeaponBase extends Item
 	__name = "WeaponBase"
-
 end
 
 class WeaponEx extends WeaponBase
@@ -1864,7 +1881,7 @@ class WeaponCustomization extends owfUserdata
 	end
 end
 
-local function pop_color()
+function ivkr_pop_color()
 	ivkr_push_value(-1)
 	ivkr_call(ivkr_find_getter("Color", "red"), 1)
 	local red = math.tointeger(ivkr_pop_number())
@@ -1897,7 +1914,7 @@ class CustomizationColorPalette extends owfUserdata
 			case "mEnergyColor1":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("CustomizationColorPalette", name), 1)
-				return pop_color()
+				return ivkr_pop_color()
 		end
 		error("Unknown field: "..name)
 	end
@@ -1927,7 +1944,7 @@ class CustomizationColorPalette extends owfUserdata
 		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("CustomizationColorPalette", "GetColor"), 2)
-		return pop_color()
+		return ivkr_pop_color()
 	end
 
 	function SetColor(i, c)

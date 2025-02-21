@@ -129,6 +129,7 @@ class LotusInventoryController extends InventoryControllerBase
 
 class Item extends Object
 	function GetAttachmentEntity(category, hand = 4)
+	function GetEnergyColor(outColor, secondary = false)
 
 class WeaponBase extends Item
 
