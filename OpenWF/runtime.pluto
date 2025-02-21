@@ -123,6 +123,21 @@ class owfUserdata
 	end
 end
 
+function ivkr_pop_array(mt)
+	local t = {}
+	if ivkr_istable(-1) then
+		local i = 1
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new mt())
+			++i
+		end
+		ivkr_pop(2)
+	else
+		ivkr_pop(1)
+	end
+	return t
+end
+
 class ObjectType extends owfUserdata
 	__name = "ObjectType"
 
@@ -1188,18 +1203,7 @@ class RadialSolarMap extends Object
 	function GetRegions()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("RadialSolarMap", "GetRegions"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new RadialRegion())
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(RadialRegion)
 	end
 
 	function BuildMissionForLocation(symbol)
@@ -1329,21 +1333,7 @@ class LotusMissionInfo extends owfUserdata
 			case "buddyAgents":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
-				do
-					local t = {}
-					if ivkr_istable(-1) then
-						local i = 1
-						while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-							t:insert(new ObjectType())
-							++i
-						end
-						ivkr_pop(2)
-					else
-						ivkr_pop(1)
-					end
-					return t
-				end
-				break
+				return ivkr_pop_array(ObjectType)
 
 			case "missionReward":
 			case "missionRewardExtra":
@@ -1401,69 +1391,25 @@ class LotusMissionInfo extends owfUserdata
 	function GetMissionEventResources()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetMissionEventResources"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType())
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(ObjectType)
 	end
 
 	function GetExtraMissionEventResources()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetExtraMissionEventResources"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType())
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(ObjectType)
 	end
 
 	function GetAdvancedAiDirectorSpawns()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetAdvancedAiDirectorSpawns"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType())
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(ObjectType)
 	end
 
 	function GetCustomAdvancedAiDirectorSpawns()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetCustomAdvancedAiDirectorSpawns"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new ObjectType())
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(ObjectType)
 	end
 end
 
@@ -1484,20 +1430,7 @@ class MissionReward extends owfUserdata
 			case "items":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
-				do
-					local t = {}
-					if ivkr_istable(-1) then
-						local i = 1
-						while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-							t:insert(new StoreItem())
-							++i
-						end
-						ivkr_pop(2)
-					else
-						ivkr_pop(1)
-					end
-					return t
-				end
+				return ivkr_pop_array(StoreItem)
 		end
 		error("Unknown field: "..name)
 	end
