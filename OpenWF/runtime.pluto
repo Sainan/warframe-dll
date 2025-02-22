@@ -91,15 +91,6 @@ function ivkr_pop_color()
 	return new Color(red, green, blue, alpha)
 end
 
-class owfPointer
-	function __construct(addr)
-		if addr == nil or addr == 0 then
-			error($"attempt to construct {self.__name} from nil")
-		end
-		rawset(self, "addr", addr)
-	end
-end
-
 class owfUserdata
 	function __construct()
 		if not ivkr_isuserdata(-1) then
@@ -1273,22 +1264,13 @@ class RadialRegion extends owfUserdata
 			case "sectors":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialRegion", "sectors"), 1)
-				if ivkr_istable(-1) then
-					local i = 1
-					while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-						self.sectors:insert(new RadialSector(ivkr_pop_pointer()))
-						++i
-					end
-					ivkr_pop(2)
-				else
-					ivkr_pop(1)
-				end
+				return ivkr_pop_array(RadialSector)
 		end
 		error("Unknown field: "..name)
 	end
 end
 
-class RadialSector extends owfPointer
+class RadialSector extends owfUserdata
 	__name = "RadialSector"
 
 	function __newindex(name, value)
@@ -1297,7 +1279,7 @@ class RadialSector extends owfPointer
 		end
 		switch name do
 			case "unlocked":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_push_bool(value)
 				ivkr_call(ivkr_find_setter("RadialSector", "unlocked"), 2)
 				return
@@ -1311,29 +1293,29 @@ class RadialSector extends owfPointer
 		end
 		switch name do
 			case "name":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "name"), 1)
 				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 				return new Symbol(ivkr_pop_string())
 
 			case "unlocked":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "unlocked"), 1)
 				return ivkr_pop_bool()
 
 			case "nodeType":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "nodeType"), 1)
 				return math.tointeger(ivkr_pop_number())
 
 			case "missionTag":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "missionTag"), 1)
 				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
 				return new Symbol(ivkr_pop_string())
 
 			case "mission":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "mission"), 1)
 				return new LotusMissionInfo()
 		end
@@ -1401,35 +1383,13 @@ class LotusMissionInfo extends owfUserdata
 	function GetEnemies()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetEnemies"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new MissionAI(ivkr_pop_pointer()))
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(MissionAI)
 	end
 
 	function GetExtraEnemies()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusMissionInfo", "GetExtraEnemies"), 1)
-		local t = {}
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				t:insert(new MissionAI(ivkr_pop_pointer()))
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
-		end
-		return t
+		return ivkr_pop_array(MissionAI)
 	end
 
 	function GetMissionEventResources()
@@ -1490,7 +1450,7 @@ class MissionReward extends owfUserdata
 	end
 end
 
-class MissionAI extends owfPointer
+class MissionAI extends owfUserdata
 	__name = "MissionAI"
 
 	function __index(name)
@@ -1499,7 +1459,7 @@ class MissionAI extends owfPointer
 		end
 		switch name do
 			case "agent":
-				ivkr_push_pointer(self.addr)
+				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("MissionAI", name), 1)
 				if ivkr_type(-1) > 0 then 
 					return new ObjectType()
