@@ -64,6 +64,7 @@ class Entity extends BaseEntity
 	function SetMesh(object, b1, b2)
 	function Attach(type, optionalBoneSymbol, optionalPosOffset)
 	function GetAttachment(type)
+	function GetAllAttachments(type)
 	function GetTag()
 	function SetTag(symbol)
 	function FirePort(port)

@@ -459,6 +459,16 @@ class Entity extends BaseEntity
 		return ivkr_pop_entity()
 	end
 
+	function GetAllAttachments(type)
+		self:pushToIvkr()
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_call(ivkr_find_method("Entity", "GetAllAttachments"), 2)
+		return ivkr_pop_entity_array()
+	end
+
 	function GetTag()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetTag"), 1)
