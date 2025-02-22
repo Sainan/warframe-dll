@@ -1257,26 +1257,34 @@ class RadialSolarMap extends Object
 	end
 end
 
-class RadialRegion
+class RadialRegion extends owfUserdata
 	__name = "RadialRegion"
 
-	function __construct()
-		ivkr_push_value(-1)
-		ivkr_call(ivkr_find_getter("RadialRegion", "name"), 1)
-		self.name = ivkr_pop_string()
-
-		self.sectors = {}
-		ivkr_call(ivkr_find_getter("RadialRegion", "sectors"), 1)
-		if ivkr_istable(-1) then
-			local i = 1
-			while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-				self.sectors:insert(new RadialSector(ivkr_pop_pointer()))
-				++i
-			end
-			ivkr_pop(2)
-		else
-			ivkr_pop(1)
+	function __index(name)
+		if RadialRegion[name] then
+			return RadialRegion[name]
 		end
+		switch name do
+			case "name":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialRegion", name), 1)
+				return ivkr_pop_string()
+
+			case "sectors":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialRegion", "sectors"), 1)
+				if ivkr_istable(-1) then
+					local i = 1
+					while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+						self.sectors:insert(new RadialSector(ivkr_pop_pointer()))
+						++i
+					end
+					ivkr_pop(2)
+				else
+					ivkr_pop(1)
+				end
+		end
+		error("Unknown field: "..name)
 	end
 end
 
