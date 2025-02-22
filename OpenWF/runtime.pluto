@@ -152,7 +152,7 @@ class ObjectType extends owfUserdata
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("ObjectType", "GetParent"), 1)
 		if ivkr_type(-1) > 0 then
-			return new ObjectType(addr)
+			return new ObjectType()
 		else
 			ivkr_pop(1)
 		end
@@ -1929,7 +1929,7 @@ class WeaponCustomization extends owfUserdata
 		ivkr_push_int(iSlot)
 		ivkr_call(ivkr_find_method("WeaponCustomization", "GetSkin"), 2)
 		if ivkr_type(-1) > 0 then
-			return new ObjectType(addr)
+			return new ObjectType()
 		else
 			ivkr_pop(1)
 		end
