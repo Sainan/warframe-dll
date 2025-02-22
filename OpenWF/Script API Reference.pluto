@@ -215,6 +215,9 @@ class RadialSolarMap extends Object
 class RadialRegion
 	name
 	sectors
+	droneDamage
+	damageChance
+	resources
 
 class RadialSector
 	name
@@ -268,6 +271,11 @@ class CountedItem
 class CountedStoreItem
 	mStoreItem
 	mItemCount
+
+class PickUpTypeRarity
+	mStoreItem
+	mItemType
+	mRarity
 
 class MotionControllerBase
 	function GetSpeedMultiplier()
@@ -395,7 +403,7 @@ function Sleep(ms)
 function Type(name)
 function Resource(name)
 function WeakResource(name) -- constructs an ObjectType instance
-function Range(min, max)
+function Range(minValue, maxValue)
 
 function Localize(loctag, subs = {})
 function AngleToDirection(rot)

@@ -1263,8 +1263,23 @@ class RadialRegion extends owfUserdata
 
 			case "sectors":
 				self:pushToIvkr()
-				ivkr_call(ivkr_find_getter("RadialRegion", "sectors"), 1)
+				ivkr_call(ivkr_find_getter("RadialRegion", name), 1)
 				return ivkr_pop_array(RadialSector)
+
+			case "droneDamage":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialRegion", name), 1)
+				return ivkr_pop_range()
+
+			case "damageChance":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialRegion", name), 1)
+				return ivkr_pop_number()
+
+			case "resources":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialRegion", name), 1)
+				return ivkr_pop_array(PickUpTypeRarity)
 		end
 		error("Unknown field: "..name)
 	end
@@ -1540,6 +1555,26 @@ class CountedStoreItem extends owfUserdata
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CountedStoreItem", "mItemCount"), 1)
 		self.mItemCount = math.tointeger(ivkr_pop_number())
+	end
+end
+
+class PickUpTypeRarity extends owfUserdata
+	__name = "PickUpTypeRarity"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("PickUpTypeRarity", "mStoreItem"), 1)
+		self.mStoreItem = new StoreItem()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("PickUpTypeRarity", "mItemType"), 1)
+		self.mItemType = new ObjectType()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("PickUpTypeRarity", "mRarity"), 1)
+		self.mRarity = math.tointeger(ivkr_pop_number())
 	end
 end
 
@@ -1842,8 +1877,8 @@ class BaseMarkerInfo extends Entity
 	function SetDisplayRange(range)
 		self:pushToIvkr()
 		do
-			ivkr_push_float(range.min)
-			ivkr_push_float(range.max)
+			ivkr_push_float(range.minValue)
+			ivkr_push_float(range.maxValue)
 			ivkr_call(ivkr_find_ctor("Range"), 2)
 		end
 		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
@@ -2156,8 +2191,17 @@ function WeakResource(name)
 	return new ObjectType()
 end
 
-function Range(min, max)
-	return { min = min, max = max }
+function Range(minValue, maxValue)
+	return { minValue = minValue, maxValue = maxValue }
+end
+
+function ivkr_pop_range()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Range", "minValue"), 1)
+	local minValue = ivkr_pop_number()
+	ivkr_call(ivkr_find_getter("Range", "maxValue"), 1)
+	local maxValue = ivkr_pop_number()
+	return Range(minValue, maxValue)
 end
 
 function Localize(loctag, subs = {})
