@@ -608,91 +608,89 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_BOOL)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_BOOL)
 		{
-			lua_pushboolean(L, (--luau_L->outtop)->value.as_bool);
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushboolean(L, (--luau_L->outtop)->value.as_bool);
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_bool"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_NUMBER)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_NUMBER)
 		{
-			lua_pushnumber(L, (--luau_L->outtop)->value.as_float);
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushnumber(L, (--luau_L->outtop)->value.as_float);
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_number"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_STRING)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_STRING)
 		{
-			lua_pushstring(L, (--luau_L->outtop)->getString());
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushstring(L, (--luau_L->outtop)->getString());
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_string"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_USERDATA)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)
 		{
-			lua_pushinteger(L, (--luau_L->outtop)->value.as_uintptr);
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushinteger(L, (--luau_L->outtop)->value.as_uintptr);
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_userdata"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_USERDATA)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)
 		{
-			lua_pushinteger(L, luau_L->outtop[-1].value.as_uintptr);
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushinteger(L, luau_L->outtop[-1].value.as_uintptr);
+		return 1;
 	});
 	{ ObfusString name("ivkr_get_userdata"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_USERDATA)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)
 		{
-			lua_pushpointer(L, *(void**)((--luau_L->outtop)->value.as_uintptr + 0x18));
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushpointer(L, *(void**)((--luau_L->outtop)->value.as_uintptr + 0x18));
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_pointer"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_USERDATA)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)
 		{
-			lua_pushpointer(L, ***(void****)((--luau_L->outtop)->value.as_uintptr + 0x18));
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushpointer(L, ***(void****)((--luau_L->outtop)->value.as_uintptr + 0x18));
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_object"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		if (luau_L->outtop[-1].type == LUAU_FUNCTION
-			&& reinterpret_cast<luau_Closure*>(luau_L->outtop[-1].value.as_uintptr)->isC
-			)
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_FUNCTION || !reinterpret_cast<luau_Closure*>(luau_L->outtop[-1].value.as_uintptr)->isC)
 		{
-			lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->func));
-			return 1;
+			luaL_error(L, ObfusString("unexpected type"));
 		}
-		return 0;
+		lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->func));
+		return 1;
 	});
 	{ ObfusString name("ivkr_pop_c_function"); lua_setglobal(L, name.c_str()); }
 
