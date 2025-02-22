@@ -462,6 +462,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->type = LUAU_NIL;
 		luau_L->outtop++;
 		return 0;
@@ -470,6 +474,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->value.as_bool = lua_toboolean(L, 1);
 		luau_L->outtop->type = LUAU_BOOL;
 		luau_L->outtop++;
@@ -479,6 +487,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->value.as_float = static_cast<float>(luaL_checkinteger(L, 1));
 		luau_L->outtop->type = LUAU_NUMBER;
 		luau_L->outtop++;
@@ -488,6 +500,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->value.as_float = static_cast<float>(luaL_checknumber(L, 1));
 		luau_L->outtop->type = LUAU_NUMBER;
 		luau_L->outtop++;
@@ -499,6 +515,10 @@ owfScript::owfScript()
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
+			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+			{
+				luaL_error(L, ObfusString("insufficient space"));
+			}
 			const char* str = luaL_checkstring(L, 1);
 			luau_pushstring(luau_L, str);
 			return 0;
@@ -510,6 +530,10 @@ owfScript::owfScript()
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
+			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+			{
+				luaL_error(L, ObfusString("insufficient space"));
+			}
 			luau_pushpointer(luau_L, reinterpret_cast<void*>(luaL_checkinteger(L, 1)));
 			return 0;
 		});
@@ -520,6 +544,10 @@ owfScript::owfScript()
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
+			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+			{
+				luaL_error(L, ObfusString("insufficient space"));
+			}
 			auto obj = reinterpret_cast<Object*>(luaL_checkinteger(L, 1));
 			luau_pushobject(luau_L, obj);
 			/*luau_obj_buf[3] = &obj->self_pointer;
@@ -538,6 +566,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->value.as_uintptr = luaL_checkinteger(L, 1);
 		luau_L->outtop->type = LUAU_USERDATA;
 		luau_L->outtop++;
@@ -547,6 +579,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		luau_L->outtop->value.as_uintptr = luaL_checkinteger(L, 1);
 		luau_L->outtop->type = LUAU_LIGHTUSERDATA;
 		luau_L->outtop++;
@@ -556,6 +592,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
 		*luau_L->outtop = *luau_L->getValue(luaL_checkinteger(L, 1));
 		luau_L->outtop++;
 		return 0;
