@@ -480,6 +480,17 @@ class Entity extends BaseEntity
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "Destroy"), 1)
 	end
+
+	function SetMaterialParam(symbol, f1, f2 = 3.4028235e38, f3 = 3.4028235e38, f4 = 3.4028235e38, b = false)
+		self:pushToIvkr()
+		symbol:pushToIvkr()
+		ivkr_push_float(f1)
+		ivkr_push_float(f2)
+		ivkr_push_float(f3)
+		ivkr_push_float(f4)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("Entity", "SetMaterialParam"), 7)
+	end
 end
 
 class BaseAvatar extends Entity
@@ -2464,6 +2475,24 @@ Engine.SLOT_12 = 11
 Engine.SLOT_13 = 12
 Engine.SLOT_14 = 13
 Engine.INVALID = 14
+
+Lotus_Game = {}
+Lotus_Game.EMISSIVE_MAP_ATTEN = Symbol("EmissiveMapAtten")
+Lotus_Game.TINT_COLOR = Symbol("TintColor")
+Lotus_Game.UNLIT_ATTEN = Symbol("UnlitAtten")
+Lotus_Game.ALPHA_ATTEN = Symbol("AlphaAtten")
+Lotus_Game.CLOAK = Symbol("Cloak")
+Lotus_Game.V_SCALES = Symbol("vScales")
+Lotus_Game.V_SCALES_FADE = Symbol("vScalesFade")
+Lotus_Game.EMISSIVE_TINT_COLOR = Symbol("EmissiveTintColor")
+Lotus_Game.EMISSIVE_TINT_COLOR_HI = Symbol("EmissiveTintColorHi")
+Lotus_Game.EMISSIVE_TINT_COLOR_LO = Symbol("EmissiveTintColorLo")
+Lotus_Game.LOW_COLOR = Symbol("LowColor")
+Lotus_Game.HIGH_COLOR = Symbol("HighColor")
+Lotus_Game.TINT_COLOR0 = Symbol("TintColor0")
+Lotus_Game.TINT_COLOR1 = Symbol("TintColor1")
+Lotus_Game.TINT_COLOR2 = Symbol("TintColor2")
+Lotus_Game.TINT_COLOR3 = Symbol("TintColor3")
 
 owf_script_toggles = {}
 function owf_script_add_toggle(name, value = false)
