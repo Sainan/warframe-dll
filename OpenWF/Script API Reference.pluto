@@ -61,6 +61,7 @@ class Entity extends BaseEntity
 	function SetDrawOnTop(b)
 	function GetMeshScale()
 	function SetMeshScale(f)
+	function GetMesh()
 	function SetMesh(object, b1, b2)
 	function Attach(type, optionalBoneSymbol, optionalPosOffset)
 	function GetAttachment(type)
@@ -139,6 +140,10 @@ class InventoryControllerBase extends Object
 class LotusInventoryController extends InventoryControllerBase
 	function GetActivePowerSuit()
 	function DoItemDrop()
+
+class ResourceBase extends Object
+
+class Mesh extends ResourceBase
 
 class Item extends Object
 	function GetAttachmentEntity(category, hand = 4)

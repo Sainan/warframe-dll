@@ -418,6 +418,15 @@ class Entity extends BaseEntity
 		ivkr_call(ivkr_find_method("Entity", "SetMeshScale"), 2)
 	end
 
+	function GetMesh()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("Entity", "GetMesh"), 1)
+		if ivkr_type(-1) > 0 do
+			return new Mesh()
+		end
+		ivkr_pop(1)
+	end
+
 	function SetMesh(object, b1, b2)
 		self:pushToIvkr()
 		object:pushToIvkr()
@@ -885,6 +894,14 @@ class LotusInventoryController extends InventoryControllerBase
 		self:pushToIvkr()
 		ivkr_pop(ivkr_call(ivkr_find_method("LotusInventoryController", "DoItemDrop"), 1))
 	end
+end
+
+class ResourceBase extends Object
+	__name = "ResourceBase"
+end
+
+class Mesh extends ResourceBase
+	__name = "Mesh"
 end
 
 class Item extends Object
