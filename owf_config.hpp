@@ -43,3 +43,4 @@ inline bool write_patched_metadata_reads_to_ee_log;
 // Effective arguments (not in client_config.json)
 inline std::string lang_code;
 inline std::string webui_lang_code;
+inline std::string graphics_driver;

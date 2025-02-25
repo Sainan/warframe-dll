@@ -537,6 +537,7 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 	}
 
 	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
+	graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
 }
 
 
@@ -1445,14 +1446,18 @@ struct owfContentTask : public Task
 				{
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
 					{
-						ObfusString msg("The language that the game was supposed to launch with is missing or outdated.");
+						auto msg = ObfusString("The language that the game was supposed to launch with (").str();
+						msg.append(lang_code);
+						msg.append(ObfusString(") is missing or outdated.").str());
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
 						exit(1);
 					}
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
 					{
-						ObfusString msg("The graphicsDriver that the game was supposed to launch with is missing or outdated.");
+						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (").str();
+						msg.append(graphics_driver);
+						msg.append(ObfusString(") is missing or outdated.").str());
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
 						exit(1);
