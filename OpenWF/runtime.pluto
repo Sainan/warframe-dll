@@ -1800,6 +1800,23 @@ class LotusVehicleAvatar extends LotusNpcAvatar
 		ivkr_call(ivkr_find_method("LotusVehicleAvatar", "GetRider"), 1)
 		return ivkr_pop_entity()
 	end
+
+	function GetTrickController()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusVehicleAvatar", "GetTrickController"), 1)
+		if ivkr_type(-1) > 0 then
+			return new TrickController()
+		end
+		ivkr_pop(1)
+	end
+end
+
+class TrickController extends Object
+	function SetMaxPointsPerCombo(pts)
+		self:pushToIvkr()
+		ivkr_push_int(pts)
+		ivkr_call(ivkr_find_method("TrickController", "SetMaxPointsPerCombo"), 2)
+	end
 end
 
 class HudStatus extends Object
@@ -2483,6 +2500,7 @@ gMatchingService = {
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
+gLotusVehicleAvatarType = Type("/Lotus/Types/Game/LotusVehicleAvatar")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
 gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")

@@ -327,6 +327,10 @@ class LotusNpcAvatar extends LotusAvatar
 
 class LotusVehicleAvatar extends LotusNpcAvatar
 	function GetRider()
+	function GetTrickController()
+
+class TrickController extends Object
+	function SetMaxPointsPerCombo(pts)
 
 class HudStatus extends Object
 
@@ -500,6 +504,7 @@ gClient
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
+gLotusVehicleAvatarType = Type("/Lotus/Types/Game/LotusVehicleAvatar")
 gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
 gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")
