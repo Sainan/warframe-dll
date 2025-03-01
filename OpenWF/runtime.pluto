@@ -2555,19 +2555,19 @@ function owf_script_add_toggle(name, value = false)
 end
 
 function owf_get_available_scripts()
-	return http.request("http://localhost:61558/scripts") |> json.decode
+	return http.request("http://localhost:6155/scripts") |> json.decode
 end
 
 function owf_get_running_scripts()
-	return (http.request("http://localhost:61558/status") |> json.decode).running_scripts:map(|x| -> x:sub(16))
+	return (http.request("http://localhost:6155/status") |> json.decode).running_scripts:map(|x| -> x:sub(16))
 end
 
 function owf_start_script(name)
-	http.request("http://localhost:61558/start_script?"..url.encode("OpenWF/scripts/"..name))
+	http.request("http://localhost:6155/start_script?"..url.encode("OpenWF/scripts/"..name))
 end
 
 function owf_stop_script(name)
-	http.request("http://localhost:61558/stop_script?"..url.encode("OpenWF/scripts/"..name))
+	http.request("http://localhost:6155/stop_script?"..url.encode("OpenWF/scripts/"..name))
 end
 
 OWF_FONT_SIMPLE8 = 8

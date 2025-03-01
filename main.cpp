@@ -144,7 +144,7 @@ static void internet_connect_detour(uintptr_t a1)
 	*reinterpret_cast<HINTERNET*>(a1 + 104) = InternetConnectA(
 		*reinterpret_cast<HINTERNET*>(a1 + 96),
 		localhost.c_str(),
-		61558,
+		6155,
 		"",
 		"",
 		INTERNET_SERVICE_HTTP,
@@ -200,7 +200,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 	ObfusString localhost("localhost");
 	host_1 = localhost.c_str();
-	port = 61558;
+	port = 6155;
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, host_1, port, nullptr, nullptr);
 }
@@ -3434,13 +3434,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::wsSendText(s, obj.encode());
 					}
 				};
-				if (serv.bind(61558, &srv))
+				serv.bind(61558, &srv);
+				if (serv.bind(6155, &srv))
 				{
 					serv.run();
 				}
 				else
 				{
-					std::cout << ObfusString("Failed to bind TCP/61558. The game will fail to start. Try temporarily closing your web browser if this persists.").str() << std::endl;
+					std::cout << ObfusString("Failed to bind TCP/6155. The game will fail to start.").str() << std::endl;
 				}
 			});
 			thrd.detach();

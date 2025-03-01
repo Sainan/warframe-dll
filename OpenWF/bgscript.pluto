@@ -381,7 +381,7 @@ while pcall(yield) do
 						if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.bin") then
 							if crypto.sha256(bin) == hotfix_available_sha256 then
 								io.contents("OpenWF/Hotfix.bin", bin)
-								http.request("http://localhost:61558/apply_hotfix")
+								http.request("http://localhost:6155/apply_hotfix")
 								current_hotfix = hotfix_available
 								hotfix_available = ""
 								hotfix_available_sha256 = ""
