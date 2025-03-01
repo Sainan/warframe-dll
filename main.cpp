@@ -3339,6 +3339,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, ObfusString(BOOTSTRAPPER_TITLE).str());
 						break;
 
+					case soup::joaat::compileTimeHash("/game_version"):
+						{
+							JsonObject obj;
+#if PROVIDE_VERSION_INFO
+							obj.add(ObfusString("build_label"), std::string(build_label, 16));
+#endif
+							obj.add(ObfusString("build_hash"), build_hash);
+							ServerWebService::sendText(s, obj.encodePretty());
+						}
+						break;
+
 #if LABEL_REPLACEMENTS
 					case soup::joaat::compileTimeHash("/check_label_replacements"):
 						ServerWebService::sendText(s, {});
