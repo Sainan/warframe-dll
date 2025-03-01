@@ -1,5 +1,6 @@
 #define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.10.3"
 
+#define REDIRECT_REQUESTS true
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
@@ -226,9 +227,9 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	}*/
 #endif
 
-	std::string body_buf;
-
 	Uri uri((const char*)request->url.getData());
+#if REDIRECT_REQUESTS
+	std::string body_buf;
 	uri.host = server_host;
 	if (uri.scheme.size() == 4) // "http"
 	{
@@ -321,14 +322,15 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	{
 		owfOverlay::setPrelogin(true);
 	}
-#if PRIVATE
-	/*else if (uri.path == "/api/heartbeat.php")
-	{
-		MessageBoxA(0, "ANTI-CHEAT TRIGGERED", "ANTI-CHEAT TRIGGERED", 0);
-	}*/
-#endif
 	std::string url_buf = uri.toString();
 	request->url.setUnownedData(url_buf.data(), url_buf.size());
+#else
+	if (uri.path == "/api/heartbeat.php")
+	{
+		MessageBoxA(0, "Anti-cheat has been triggered. The game will be put down.", BOOTSTRAPPER_TITLE, 0);
+		exit(1);
+	}
+#endif
 
 	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, request, a3);
 
