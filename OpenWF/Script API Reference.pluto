@@ -410,7 +410,7 @@ function IsNull(val)
 function Sleep(ms)
 
 function Type(name)
-function Resource(name)
+function Resource(name) -- constructs an Object instance
 function WeakResource(name) -- constructs an ObjectType instance
 function Range(minValue, maxValue)
 
