@@ -317,18 +317,27 @@
 			};
 			ws.onerror = function(e) {
 				console.error(e);
-				document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
+				onConnectionLost();
 			};
 			ws.onclose = function() {
 				fetch("/ping").then(() => {
 					console.warn("The browser just dropped the WebSocket connection for no reason");
 					openWebSocket();
 				}).catch(() => {
-					document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
+					onConnectionLost();
 				});
 			};
 		}
 		openWebSocket();
+
+		function onConnectionLost() {
+			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
+			setInterval(function() {
+				fetch("/ping").then(() => {
+					location.reload();
+				});
+			}, 10_000);
+		}
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
