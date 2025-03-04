@@ -2099,6 +2099,16 @@ class LotusHub extends RelayHub
 	end
 end
 
+-- undocumented
+class PlayerProfile extends owfUserdata
+	function GetGameSpecificData()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("PlayerProfile", "GetGameSpecificData"), 1)
+		return new LotusProfileData()
+	end
+end
+class LotusProfileData extends owfUserdata end
+
 Engine = {}
 
 class Engine.OpenLevelArgs extends owfUserdata
@@ -2455,7 +2465,13 @@ gPlayerProfileMgr = {
 		ivkr_push_object(get_profilemgr())
 		ivkr_call(ivkr_find_method("PlayerProfileMgr", "IsLoggedIn"), 1)
 		return ivkr_pop_bool()
-	end
+	end,
+	function GetPlayerProfile(i) -- undocumented
+		ivkr_push_object(get_profilemgr())
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("PlayerProfileMgr", "GetPlayerProfile"), 2)
+		return new PlayerProfile()
+	end,
 }
 
 gClient = {
