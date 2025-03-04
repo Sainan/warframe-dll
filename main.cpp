@@ -850,15 +850,35 @@ static owfScript* get_script_by_name(const std::string& name)
 }
 
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
+
+using raise_script_error_t = bool(*)(const char** err);
+static raise_script_error_t* raise_script_error_fp = nullptr;
+
 static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 {
 	const auto og_outtop = L->outtop;
 	const auto og_intop = L->intop;
 	const auto og_lngjmp = L->global_state->error_longjump_data;
 	const auto og_panic = L->global_state->panic_func;
+	raise_script_error_t og_raise;
 
 	luau_L = L;
 	L->global_state->error_longjump_data = nullptr;
+	if (raise_script_error_fp)
+	{
+		og_raise = *raise_script_error_fp;
+		*raise_script_error_fp = [](const char** err) -> bool
+		{
+#if LOGGING
+			std::cout << "raise_script_error called" << std::endl;
+#endif
+			luau_error_msg = *err;
+#if LOGGING
+			std::cout << luau_error_msg << std::endl;
+#endif
+			throw 0;
+		};
+	}
 	L->global_state->panic_func = [](luau_State* L, int)
 	{
 #if LOGGING
@@ -870,6 +890,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 #endif
 		throw 0;
 	};
+
 	{
 		std::lock_guard mtx(running_scripts_mtx);
 		if (bgscript != nullptr)
@@ -909,6 +930,10 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	L->intop = og_intop;
 	L->global_state->error_longjump_data = og_lngjmp;
 	L->global_state->panic_func = og_panic;
+	if (raise_script_error_fp)
+	{
+		*raise_script_error_fp = og_raise;
+	}
 
 	return lua_LotusHudStatus_UpdateFlashMarkers_og(L);
 }
@@ -2311,6 +2336,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				lua_LotusHudStatus_UpdateFlashMarkers_og = *lua_LotusHudStatus_UpdateFlashMarkers_fp;
 				memGuard::setAllowedAccess(lua_LotusHudStatus_UpdateFlashMarkers_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 				*lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_detour;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
+			auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "raise_script_error_fp_mov = " << raise_script_error_fp_mov.as<void*>() << std::endl;
+#endif
+			if (raise_script_error_fp_mov)
+			{
+				raise_script_error_fp = raise_script_error_fp_mov.add(3).rip().as<raise_script_error_t*>();
 			}
 			else
 			{
