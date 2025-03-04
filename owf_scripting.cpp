@@ -79,9 +79,22 @@ void owfScript::log(std::string msg)
 {
 	std::cout << msg;
 
+	size_t script_log_olen;
+	size_t script_log_nlen;
 	{
 		std::lock_guard lock(script_log_mtx);
+		script_log_olen = script_log.size();
 		script_log.append(msg);
+		script_log_nlen = script_log.size();
+	}
+
+	if (!bgscript)
+	{
+		JsonObject obj;
+		obj.add(ObfusString("script_log_olen"), static_cast<int64_t>(script_log_olen));
+		obj.add(ObfusString("script_log_nlen"), static_cast<int64_t>(script_log_nlen));
+		obj.add(ObfusString("script_log_app"), std::move(msg));
+		owf_broadcast_message(obj.encode());
 	}
 }
 
