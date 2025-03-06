@@ -1177,6 +1177,7 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 	{
 		auto& patch = e->second;
 		auto& buf = patch.final_data;
+		buf.clear();
 		buf.reserve(patch.prefix.size() + str->getSize());
 		buf.append(patch.prefix);
 		if (patch.replacements.empty() && patch.substitutions.empty())
