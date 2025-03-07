@@ -12,6 +12,9 @@
 #define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
 
+// Writes all IRC traffic to EE.log
+#define VERBOSE_IRC false
+
 #include <iostream>
 #include <mutex>
 
@@ -1276,6 +1279,17 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 	}
 
 	return reinterpret_cast<decltype(&ScriptMgr_startInstance_detour)>(ScriptMgr_startInstance_hook.original)(_this, inst/*, a3, a4*/);
+}
+
+
+static DetourHook irc_send_raw_hook;
+
+static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
+{
+#if VERBOSE_IRC
+	bLogIt = true;
+#endif
+	return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, str, bLogIt);
 }
 
 
@@ -2854,6 +2868,45 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
+
+#if VERBOSE_IRC
+		{
+			SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
+			auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "irc_send_raw = " << irc_send_raw << std::endl;
+#endif
+			if (irc_send_raw)
+			{
+				irc_send_raw_hook.detour = reinterpret_cast<void*>(&irc_send_raw_detour);
+				irc_send_raw_hook.target = irc_send_raw;
+				irc_send_raw_hook.create();
+				irc_send_raw_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("80 3D ? ? ? ? 00 74 ? 40 84 FF 74 ? B2 05");
+			auto irc_log_in_cond = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "irc_log_in_cond = " << irc_log_in_cond.as<void*>() << std::endl;
+#endif
+			if (irc_log_in_cond)
+			{
+				memGuard::setAllowedAccess(irc_log_in_cond.add(12).as<void*>(), 2, memGuard::ACC_RWX);
+				*irc_log_in_cond.add(12).as<uint8_t*>() = 0x90;
+				*irc_log_in_cond.add(13).as<uint8_t*>() = 0x90;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+#endif
 
 		// Allow GetOnVehicle with an operator avatar
 		// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
