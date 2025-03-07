@@ -1,7 +1,8 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
 repeat
-	local suit = gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit()
-	for i = 0, 3 do
-		suit:GetAbilityByIndex(i):SetCooldownTime(0)
+	if suit := gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit() then
+		for i = 0, 3 do
+			suit:GetAbilityByIndex(i):SetCooldownTime(0)
+		end
 	end
 until yield()

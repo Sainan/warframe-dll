@@ -878,7 +878,10 @@ class LotusInventoryController extends InventoryControllerBase
 	function GetActivePowerSuit()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusInventoryController", "GetActivePowerSuit"), 1)
-		return new PowerSuit()
+		if ivkr_type(-1) > 0 then
+			return new PowerSuit()
+		end
+		ivkr_pop(1)
 	end
 
 	function DoItemDrop()
