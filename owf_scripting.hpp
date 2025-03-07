@@ -114,5 +114,5 @@ struct owfScript
 };
 
 inline soup::RecursiveMutex running_scripts_mtx;
-inline std::vector<soup::UniquePtr<owfScript>> running_scripts;
+inline std::vector<owfScript*> running_scripts;
 inline owfScript* bgscript = nullptr;

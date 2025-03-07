@@ -818,24 +818,24 @@ static void broadcast_running_scripts_locked()
 
 static void start_script_from_file(std::string&& path)
 {
-	auto scr = soup::make_unique<owfScript>();
+	auto scr = new owfScript();
 	bool ok = scr->loadFile(std::move(path));
 	std::lock_guard lock(running_scripts_mtx);
 	if (ok)
 	{
-		running_scripts.emplace_back(std::move(scr));		
+		running_scripts.emplace_back(scr);
 	}
 	broadcast_running_scripts_locked();
 }
 
 static void start_script_from_string(std::string&& code)
 {
-	auto scr = soup::make_unique<owfScript>();
+	auto scr = new owfScript();
 	bool ok = scr->loadString(std::move(code));
 	std::lock_guard lock(running_scripts_mtx);
 	if (ok)
 	{
-		running_scripts.emplace_back(std::move(scr));		
+		running_scripts.emplace_back(scr);
 	}
 	broadcast_running_scripts_locked();
 }
@@ -846,7 +846,7 @@ static owfScript* get_script_by_name(const std::string& name)
 	{
 		if (scr->name == name)
 		{
-			return scr.get();
+			return scr;
 		}
 	}
 	return nullptr;
@@ -913,6 +913,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 			}
 			else
 			{
+				delete &**i; static_assert(std::is_same_v<decltype(&**i), owfScript*>);
 				i = running_scripts.erase(i);
 				any_killed = true;
 			}
@@ -989,7 +990,7 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 			{
 				if (scr->isBlockingMessage(current_draft))
 				{
-					blocking_script = scr.get();
+					blocking_script = scr;
 					break;
 				}
 			}
