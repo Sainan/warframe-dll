@@ -1289,6 +1289,20 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 #if VERBOSE_IRC
 	bLogIt = true;
 #endif
+#if REDIRECT_REQUESTS
+	if (str->getSize() > 36 && soup::joaat::hashRange(str->getData(), 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
+	{
+		std::string buf(str->getData(), str->getSize() - 40); // Copy everything except the 'realname' part
+		auto arr = string::explode(auth_query, '&');
+		if (arr.size() > 1)
+		{
+			buf.append(arr[1]);
+		}
+		GameString tmp;
+		tmp.setUnownedData(buf.data(), buf.size());
+		return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
+	}
+#endif
 	return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, str, bLogIt);
 }
 
@@ -2869,7 +2883,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-#if VERBOSE_IRC
 		{
 			SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
 			auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2889,6 +2902,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if VERBOSE_IRC
 		{
 			SIG_INST("80 3D ? ? ? ? 00 74 ? 40 84 FF 74 ? B2 05");
 			auto irc_log_in_cond = Module(nullptr).range.scan(sig_inst);
