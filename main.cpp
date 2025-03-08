@@ -93,6 +93,51 @@ static bool prohibit_freecam = false;
 static bool prohibit_scripts = false;
 
 
+static void save_config()
+{
+	JsonObject config;
+
+	config.add(ObfusString("fallback_language"), fallback_language);
+	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
+	config.add(ObfusString("fallback_cluster"), fallback_cluster);
+
+	config.add(ObfusString("server_host"), server_host);
+	config.add(ObfusString("http_port"), http_port);
+	config.add(ObfusString("https_port"), https_port);
+	config.add(ObfusString("autologin"), autologin);
+	config.add(ObfusString("autologin_email"), autologin_email);
+	config.add(ObfusString("autologin_password"), autologin_password);
+
+	config.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
+	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
+	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
+
+	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
+	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	config.add(ObfusString("logout_on_request_failure"), logout_on_request_failure);
+	config.add(ObfusString("fov_override"), fov_override);
+	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
+	{
+		auto arr = soup::make_unique<JsonArray>();
+		for (const auto& path : auto_start_scripts)
+		{
+			arr->children.emplace_back(soup::make_unique<JsonString>(path));
+		}
+		config.add(ObfusString("auto_start_scripts"), std::move(arr));
+	}
+	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+	config.add(ObfusString("save_all_metadata"), save_all_metadata);
+	config.add(ObfusString("write_all_metadata_reads_to_console"), write_all_metadata_reads_to_console);
+	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
+	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
+	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
+
+	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
+}
+
+
 /*struct ParsedUrl
 {
 	char pad[16];
@@ -282,6 +327,7 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 					if (it->second->reinterpretAsStr().value.c_str()[0] == '@')
 					{
 						server_host = it->second->reinterpretAsStr().value.substr(1);
+						save_config();
 						owfOverlay::redraw();
 						on_got_server_host();
 						return nullptr;
@@ -1387,50 +1433,6 @@ static void serialise_propery_text_detour(void* a1, GameString* str, int a3, cha
 }
 #endif
 
-
-static void save_config()
-{
-	JsonObject config;
-
-	config.add(ObfusString("fallback_language"), fallback_language);
-	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
-	config.add(ObfusString("fallback_cluster"), fallback_cluster);
-
-	config.add(ObfusString("server_host"), server_host);
-	config.add(ObfusString("http_port"), http_port);
-	config.add(ObfusString("https_port"), https_port);
-	config.add(ObfusString("autologin"), autologin);
-	config.add(ObfusString("autologin_email"), autologin_email);
-	config.add(ObfusString("autologin_password"), autologin_password);
-
-	config.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
-	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
-	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
-	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
-	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
-
-	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
-	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
-	config.add(ObfusString("logout_on_request_failure"), logout_on_request_failure);
-	config.add(ObfusString("fov_override"), fov_override);
-	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);
-	{
-		auto arr = soup::make_unique<JsonArray>();
-		for (const auto& path : auto_start_scripts)
-		{
-			arr->children.emplace_back(soup::make_unique<JsonString>(path));
-		}
-		config.add(ObfusString("auto_start_scripts"), std::move(arr));
-	}
-	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
-	config.add(ObfusString("save_all_metadata"), save_all_metadata);
-	config.add(ObfusString("write_all_metadata_reads_to_console"), write_all_metadata_reads_to_console);
-	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
-	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
-	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
-
-	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
-}
 
 #define CONFIG_LOADED_ONLY_ONCE true
 
