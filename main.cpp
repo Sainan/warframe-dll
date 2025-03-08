@@ -2615,6 +2615,26 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		// Disabling OpenWebBrowser so we don't attempt to open warframe.com with invalid credentials or something else.
+		// Maybe a config option to disable this patch, but meh.
+		{
+			SIG_INST("A0 F4 CB 14 00 00 00 00");
+			auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_OpenWebBrowser_hash = " << lua_OpenWebBrowser_hash.as<void*>() << std::endl;
+#endif
+			if (lua_OpenWebBrowser_hash)
+			{
+				auto lua_OpenWebBrowser = *lua_OpenWebBrowser_hash.add(8).as<uint8_t**>();
+				memGuard::setAllowedAccess(lua_OpenWebBrowser, 1, memGuard::ACC_RWX);
+				*lua_OpenWebBrowser = 0xC3;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
 #if VERBOSE_RNG
 		{
 			SIG_INST("48 89 1D ? ? ? ? 85 C0 74 27 48 B9 2D 7F 95 4C 2D F4 51 58");
