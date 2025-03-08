@@ -102,6 +102,9 @@ commands["/script"] = function(text)
 		chat_system_reply($"No such script: {query}")
 	end
 end
+commands["/sync"] = function()
+	gGameData:SyncInventoryFromDB()
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
