@@ -197,6 +197,8 @@ class GameRules extends Object
 
 class GameRulesImpl extends GameRules
 	function SetPauseDisabled(b)
+	function CanUnstick()
+	function UnstickLocalPlayer()
 
 class LotusBaseGameRules extends GameRulesImpl
 	function GetCurrentStarChart()

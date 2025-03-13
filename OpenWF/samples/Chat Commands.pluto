@@ -105,6 +105,9 @@ end
 commands["/sync"] = function()
 	gGameData:SyncInventoryFromDB()
 end
+commands["/unstick"] = function()
+	gGameRules:UnstickLocalPlayer()
+end
 commands["/quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end

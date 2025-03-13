@@ -1152,6 +1152,17 @@ class GameRulesImpl extends GameRules
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("GameRulesImpl", "SetPauseDisabled"), 2)
 	end
+
+	function CanUnstick()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("GameRulesImpl", "CanUnstick"), 1)
+		return ivkr_pop_bool()
+	end
+
+	function UnstickLocalPlayer()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("GameRulesImpl", "UnstickLocalPlayer"), 1)
+	end
 end
 
 class LotusBaseGameRules extends GameRulesImpl
