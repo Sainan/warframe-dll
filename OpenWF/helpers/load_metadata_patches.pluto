@@ -45,11 +45,17 @@ function parse_metadata_patches(str)
 				patch.keys:insert(key:strip())
 			end
 		elseif line:sub(1, 2) == "r|" then
-			local sep = line:find("|", 3)
-			patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+			if sep := line:find("|", 3) then
+				patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+			else
+				print("[Metadata Patches] Ignoring malformed line: "..line)
+			end
 		elseif line:sub(1, 2) == "s|" then
-			local sep = line:find("|", 3)
-			patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+			if sep := line:find("|", 3) then
+				patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+			else
+				print("[Metadata Patches] Ignoring malformed line: "..line)
+			end
 		elseif #line ~= 0 and line[1] ~= "#" then
 			patch.prefix = patch.prefix .. line .. "\n"
 		end
