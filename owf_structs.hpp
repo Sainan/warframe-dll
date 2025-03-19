@@ -290,6 +290,12 @@ struct CacheReader
 	Vtbl* vtbl;
 };
 
+// 38.5.0
+struct EncryptedString
+{
+	PAD(0, 0x58) GameString out_buf;
+};
+
 
 inline RegionMgr* regionmgr = nullptr;
 //inline LotusGameRules* gamerules;

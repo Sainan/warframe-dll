@@ -395,6 +395,57 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 }
 
 
+static DetourHook encstr_append_range_hook;
+//static EncryptedString* last_enc_str = nullptr;
+static std::string dec_buf;
+
+static void encstr_append_range_detour(EncryptedString* a1, const char* data, size_t size)
+{
+	//std::cout << "encstr_append_range: " << (void*)a1 << ", " << (void*)a1->out_buf.getData() << ", " << std::string(data, size) << std::endl;
+	/*if (last_enc_str != a1)
+	{
+		last_enc_str = a1;
+		dec_buf.clear();
+	}*/
+	dec_buf.append(data, size);
+	return reinterpret_cast<decltype(&encstr_append_range_detour)>(encstr_append_range_hook.original)(a1, data, size);
+}
+
+
+static DetourHook encstr_discharge_hook;
+
+static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
+{
+#if REDIRECT_REQUESTS
+	// Maybe not the most memory efficient approach but should be fine for now.
+	auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
+	out->setUnownedData(ps->data, ps->size);
+#else
+	reinterpret_cast<decltype(&encstr_discharge_detour)>(encstr_discharge_hook.original)(a1, out);
+#endif
+
+	dec_buf.clear();
+}
+
+
+/*static DetourHook queue_http_request_internal_hook;
+
+// called multiple times if flags=6
+static void queue_http_request_internal_detour(void* a1, GameString* url, GameString* body, const char* encoding, void* callback_data, int flags)
+{
+	std::cout << "queue_http_request_internal: url=" << url->getData() << ", encoding=" << (encoding ? encoding : "NULL") << std::endl;
+	if (encoding)
+	{
+		// TODO: Maybe tag this somehow so that game_http_request_detour will be able to free the memory.
+		auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
+		body->setUnownedData(ps->data, ps->size);
+		std::cout << "Decrypted body: " << std::string(body->getData(), body->getSize()) << std::endl;
+	}
+	reinterpret_cast<decltype(&queue_http_request_internal_detour)>(queue_http_request_internal_hook.original)(a1, url, body, encoding, callback_data, flags);
+	dec_buf.clear();
+}*/
+
+
 static DetourHook Curl_resolv_hook;
 
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
@@ -2011,6 +2062,84 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			game_http_request_hook.create();
 			game_http_request_hook.enable();
 		}
+
+		// 38.5.0
+		/*{
+			SIG_INST("74 11 44 38 2D ? ? ? ? 74 08");
+			auto WebGet_EncryptPost_cmp = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "WebGet_EncryptPost_cmp = " << WebGet_EncryptPost_cmp.as<void*>() << std::endl;
+#endif
+			if (WebGet_EncryptPost_cmp)
+			{
+				auto WebGet_EncryptPost = WebGet_EncryptPost_cmp.add(5).rip().as<bool*>();
+				*WebGet_EncryptPost = false;
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}*/
+
+		// 38.5.0
+		{
+			SIG_INST("40 53 56 48 83 EC 48 8B 41 18 BE 00 FF 00 00");
+			auto encstr_append_range = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "encstr_append_range = " << encstr_append_range << std::endl;
+#endif
+			if (encstr_append_range)
+			{
+				encstr_append_range_hook.detour = reinterpret_cast<void*>(&encstr_append_range_detour);
+				encstr_append_range_hook.target = encstr_append_range;
+				encstr_append_range_hook.create();
+				encstr_append_range_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		// 38.5.0
+		{
+			SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 8B 41 18");
+			auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
+#endif
+			if (encstr_discharge)
+			{
+				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
+				encstr_discharge_hook.target = encstr_discharge;
+				encstr_discharge_hook.create();
+				encstr_discharge_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		// 38.5.0
+		/*{
+			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 30 01 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 20 01 00 00");
+			auto queue_http_request_internal = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "queue_http_request_internal = " << queue_http_request_internal << std::endl;
+#endif
+			if (queue_http_request_internal)
+			{
+				queue_http_request_internal_hook.detour = reinterpret_cast<void*>(&queue_http_request_internal_detour);
+				queue_http_request_internal_hook.target = queue_http_request_internal;
+				queue_http_request_internal_hook.create();
+				queue_http_request_internal_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}*/
 
 		if (!is_legacy)
 		{
