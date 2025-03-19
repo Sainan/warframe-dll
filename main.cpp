@@ -2615,7 +2615,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB 02 33 FF E8 ? ? ? ? 48 8B C8");
+			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			Pointer res[20];
 			int nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
 			for (int i = 0; i != nres; ++i)
@@ -2641,6 +2641,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			if (nres == 0)
 			{
+#if LOGGING
+				std::cout << "No results for swig types" << std::endl;
+#endif
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
@@ -2656,6 +2659,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			if (nres == 0)
 			{
+#if LOGGING
+				std::cout << "No results for swig enums" << std::endl;
+#endif
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
 		}
