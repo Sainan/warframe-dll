@@ -2796,6 +2796,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			SIG_INST("4C 8B DC 57 41 57 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
 			auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "check_string_substitutions = " << check_string_substitutions << std::endl;
+#endif
 			if (check_string_substitutions)
 			{
 				check_string_substitutions_hook.detour = reinterpret_cast<void*>(&check_string_substitutions_detour);
