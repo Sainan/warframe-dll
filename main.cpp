@@ -427,8 +427,9 @@ static ReplacementHook Curl_ossl_verifyhost_hook;
 
 static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
 {
-	//auto ret = reinterpret_cast<decltype(&Curl_ossl_verifyhost_detour)>(Curl_ossl_verifyhost_hook.original)(a1, a2);
-	//std::cout << "Curl_ossl_verifyhost returned " << ret << std::endl;
+	//std::cout << "Curl_ossl_verifyhost_detour called" << std::endl;
+	/*auto ret = reinterpret_cast<decltype(&Curl_ossl_verifyhost_detour)>(Curl_ossl_verifyhost_hook.original)(a1, a2);
+	std::cout << "Curl_ossl_verifyhost returned " << ret << std::endl;*/
 	return 0;
 }
 
@@ -2051,7 +2052,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		if (!is_legacy)
 		{
 			//SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
-			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05");
+			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
 			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
