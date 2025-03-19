@@ -2586,17 +2586,24 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("E8 ? ? ? ? 4C 8B C5 48 8B D7 48 8B CE E8 ? ? ? ? BA FE FF FF FF 48 8B CE E8 ? ? ? ? BA FC FF FF FF 48 8B CE E8");
-			auto luau_createtable_callsite = Module(nullptr).range.scan(sig_inst);
+			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
+			luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
 #if LOGGING
-			std::cout << "luau_createtable_callsite = " << luau_createtable_callsite.as<void*>() << std::endl;
+			std::cout << "luau_createtable = " << (void*)luau_createtable << std::endl;
 #endif
-			if (luau_createtable_callsite)
+			if (!luau_createtable)
 			{
-				luau_createtable = luau_createtable_callsite.add(1).rip().as<luau_createtable_t>();
-				luau_settable = luau_createtable_callsite.add(41).rip().as<luau_settable_t>();
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
-			else
+		}
+
+		{
+			SIG_INST("40 53 48 83 EC 20 4C 8B D1 85 D2 7E");
+			luau_settable = Module(nullptr).range.scan(sig_inst).as<luau_settable_t>();
+#if LOGGING
+			std::cout << "luau_settable = " << (void*)luau_settable << std::endl;
+#endif
+			if (!luau_settable)
 			{
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
