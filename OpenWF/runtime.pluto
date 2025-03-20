@@ -1311,9 +1311,6 @@ class RadialSector extends owfUserdata
 	__name = "RadialSector"
 
 	function __newindex(name, value)
-		if RadialSector[name] then
-			return rawset(self, name, value)
-		end
 		switch name do
 			case "unlocked":
 				self:pushToIvkr()
@@ -1325,8 +1322,8 @@ class RadialSector extends owfUserdata
 	end
 
 	function __index(name)
-		if RadialSector[name] then
-			return rawget(self, name)
+		if name == "pushToIvkr" then
+			return owfUserdata.pushToIvkr
 		end
 		switch name do
 			case "name":
