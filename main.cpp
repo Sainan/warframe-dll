@@ -2086,8 +2086,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-		// 38.5.0
 		{
+			SIG_INST("E8 ? ? ? ? 48 8B 8B ? ? 00 00 48 8D BB ? ? 00 00 48 8B D7 E8");
+			auto encstr_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "encstr_callsite = " << encstr_callsite.as<void*>() << std::endl;
+#endif
+			if (encstr_callsite)
+			{
+				encstr_append_range_hook.detour = reinterpret_cast<void*>(&encstr_append_range_detour);
+				encstr_append_range_hook.target = encstr_callsite.add(1).rip().as<void*>();
+				encstr_append_range_hook.create();
+				encstr_append_range_hook.enable();
+
+				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
+				encstr_discharge_hook.target = encstr_callsite.add(23).rip().as<void*>();
+				encstr_discharge_hook.create();
+				encstr_discharge_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}
+
+		// 38.5.0
+		/*{
 			SIG_INST("40 53 56 48 83 EC 48 8B 41 18 BE 00 FF 00 00");
 			auto encstr_append_range = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
@@ -2104,11 +2128,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
-		}
+		}*/
 
 		// 38.5.0
-		{
-			SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 8B 41 18");
+		/*{
+			SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 ? ? ? 4C 8B F2");
 			auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
@@ -2124,7 +2148,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 			}
-		}
+		}*/
 
 		// 38.5.0
 		/*{
