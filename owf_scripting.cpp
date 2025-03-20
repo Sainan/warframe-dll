@@ -372,14 +372,14 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera = lua_toboolean(L, 2);
+		reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera() = lua_toboolean(L, 2);
 		return 0;
 	});
 	{ ObfusString name("avatar_set_followed_by_camera"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushboolean(L, reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera);
+		lua_pushboolean(L, reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera());
 		return 1;
 	});
 	{ ObfusString name("avatar_get_followed_by_camera"); lua_setglobal(L, name.c_str()); }
@@ -714,6 +714,7 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("ivkr_get_userdata"); lua_setglobal(L, name.c_str()); }
 
+	// Unused
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)
@@ -731,7 +732,7 @@ owfScript::owfScript()
 		{
 			luaL_error(L, ObfusString("unexpected type"));
 		}
-		lua_pushpointer(L, ***(void****)((--luau_L->outtop)->value.as_uintptr + 0x18));
+		lua_pushpointer(L, (--luau_L->outtop)->getObject());
 		return 1;
 	});
 	{ ObfusString name("ivkr_pop_object"); lua_setglobal(L, name.c_str()); }

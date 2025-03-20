@@ -2,6 +2,8 @@
 
 #include <structing.hpp>
 
+inline bool is_38_5_0_or_above = false;
+
 union GameString
 {
 	struct
@@ -174,14 +176,23 @@ struct BaseAvatar : public Entity
 
 struct Avatar : public BaseAvatar
 {
-	INIT_PAD(BaseAvatar, 0x500) float head_pos_x;
-	/* 0x504 */ float head_pos_y;
-	/* 0x508 */ float head_pos_z;
-	PAD(0x50C, 0x511) bool followed_by_camera;
-	PAD(0x512, 0x679) uint8_t movement_flags; // 2 = sprinting, 4 = crouching, 5 = sliding
-	PAD(0x67A, 0x6A0) bool render_above_everything;
+	// 38.0.x
+	// INIT_PAD(BaseAvatar, 0x500) float head_pos_x;
+	// /* 0x504 */ float head_pos_y;
+	// /* 0x508 */ float head_pos_z;
+	// PAD(0x50C, 0x511) bool followed_by_camera;
+	// PAD(0x512, 0x679) uint8_t movement_flags; // 2 = sprinting, 4 = crouching, 5 = sliding
+	// PAD(0x67A, 0x6A0) bool render_above_everything;
+
+	[[nodiscard]] SOUP_PURE bool& followed_by_camera() noexcept
+	{
+		if (is_38_5_0_or_above)
+		{
+			return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x4C1);
+		}
+		return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x511);
+	}
 };
-static_assert(offsetof(Avatar, followed_by_camera) == 0x511);
 
 struct LotusAvatar : public Avatar
 {

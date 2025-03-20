@@ -30,29 +30,65 @@ struct luau_TValue
 	{
 		return reinterpret_cast<char*>(value.as_uintptr + 0x18);
 	}
+
+	[[nodiscard]] Object* getObject() const noexcept
+	{
+		if (is_38_5_0_or_above)
+		{
+			return **(Object***)(value.as_uintptr + 0x18);
+		}
+		return ***(Object****)(value.as_uintptr + 0x18);
+	}
 };
 static_assert(sizeof(luau_TValue) == 0x10);
 
 struct luau_State;
 
-struct luau_GlobalState
+// 38.0.x
+struct luau_GlobalState_38_0_x
 {
 	PAD(0x000, 0x018) void* ud;
 	PAD(0x020, 0xC10) void* error_longjump_data;
 	PAD(0xC18, 0xC50) void(*panic_func)(luau_State* L, int status);
 	PAD(0xC58, 0x1168);
 };
-static_assert(sizeof(luau_GlobalState) == 0x1168);
+static_assert(sizeof(luau_GlobalState_38_0_x) == 0x1168);
+
+// 38.5.0
+struct luau_GlobalState_38_5_0
+{
+	PAD(0x000, 0x018) void* ud;
+	PAD(0x020, 0xCA8) void* error_longjump_data;
+	PAD(0xCA8 + 8, 0xCE8) void(*panic_func)(luau_State* L, int status);
+};
 
 struct luau_State
 {
 	PAD(0, 0x08) luau_TValue* outtop;
 	/* 0x10 */ luau_TValue* intop;
-	/* 0x18 */ luau_GlobalState* global_state;
+	/* 0x18 */ void* global_state;
 	/* 0x20 */ void* ci;
 	/* 0x28 */ luau_TValue* stack_last;
 	/* 0x30 */ luau_TValue* stack;
 	PAD(0x38, 0x90);
+
+	[[nodiscard]] SOUP_PURE void*& global_state_error_longjump_data() noexcept
+	{
+		if (is_38_5_0_or_above)
+		{
+			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->error_longjump_data;
+		}
+		return reinterpret_cast<luau_GlobalState_38_0_x*>(global_state)->error_longjump_data;
+	}
+
+	[[nodiscard]] SOUP_PURE auto& global_state_panic_func() noexcept
+	{
+		if (is_38_5_0_or_above)
+		{
+			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->panic_func;
+		}
+		return reinterpret_cast<luau_GlobalState_38_0_x*>(global_state)->panic_func;
+	}
 
 	luau_TValue* getValue(int idx)
 	{

@@ -46,6 +46,7 @@
 #include <Thread.hpp>
 #include <Uri.hpp>
 #include <urlenc.hpp>
+#include <version_compare.hpp>
 #include <WebSocketMessage.hpp>
 
 //#include <wininet.h>
@@ -68,9 +69,7 @@ using namespace soup;
 #include "owf_tunables.hpp"
 
 static bool disabled_xp_based_level_cap = false;
-#if PROVIDE_VERSION_INFO
 static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
-#endif
 static std::string build_hash;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
@@ -729,14 +728,16 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 					owfOverlay::setPrelogin(false);
 					break;
 
-#if PROVIDE_VERSION_INFO
 				case soup::joaat::compileTimeHash("Build Labe"):
 					if (size >= 29)
 					{
 						memcpy(build_label, message + 13, 16);
+						if (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0)
+						{
+							is_38_5_0_or_above = true;
+						}
 					}
 					break;
-#endif
 
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
 					if (size == 43)
@@ -836,10 +837,11 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #if LOGGING
 	std::cout << "lua_set_global: " << name;
 #endif
+#if true
 	switch (soup::joaat::hash(name))
 	{
 	case soup::joaat::compileTimeHash("gRegion"):
-		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(RegionMgr****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? static_cast<RegionMgr*>(L->outtop[-1].getObject()) : nullptr;
 #if LOGGING
 		std::cout << " = " << regionmgr;
 #endif
@@ -850,28 +852,28 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 		break;
 
 	case soup::joaat::compileTimeHash("gFlashMgr"):
-		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " = " << flashmgr;
 #endif
 		break;
 
 	case soup::joaat::compileTimeHash("gGameData"):
-		gamedata = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+		gamedata = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " = " << gamedata;
 #endif
 		break;
 
 	case soup::joaat::compileTimeHash("gPlayerProfileMgr"):
-		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " = " << profilemgr;
 #endif
 		break;
 
 	case soup::joaat::compileTimeHash("gClient"):
-		gClient = L->outtop[-1].type == LUAU_USERDATA ? ***(Object****)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
+		gClient = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " = " << gClient;
 #endif
@@ -884,6 +886,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #endif
 		break;
 	}
+#endif
 #if LOGGING
 	std::cout << std::endl;
 #endif
@@ -957,14 +960,15 @@ static raise_script_error_t* raise_script_error_fp = nullptr;
 
 static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 {
+#if true
 	const auto og_outtop = L->outtop;
 	const auto og_intop = L->intop;
-	const auto og_lngjmp = L->global_state->error_longjump_data;
-	const auto og_panic = L->global_state->panic_func;
+	const auto og_lngjmp = L->global_state_error_longjump_data();
+	const auto og_panic = L->global_state_panic_func();
 	raise_script_error_t og_raise;
 
 	luau_L = L;
-	L->global_state->error_longjump_data = nullptr;
+	L->global_state_error_longjump_data() = nullptr;
 	if (raise_script_error_fp)
 	{
 		og_raise = *raise_script_error_fp;
@@ -980,7 +984,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 			throw 0;
 		};
 	}
-	L->global_state->panic_func = [](luau_State* L, int)
+	L->global_state_panic_func() = [](luau_State* L, int)
 	{
 #if LOGGING
 		std::cout << "LuaU is panicking" << std::endl;
@@ -1030,12 +1034,13 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 #endif
 	L->outtop = og_outtop;
 	L->intop = og_intop;
-	L->global_state->error_longjump_data = og_lngjmp;
-	L->global_state->panic_func = og_panic;
+	L->global_state_error_longjump_data() = og_lngjmp;
+	L->global_state_panic_func() = og_panic;
 	if (raise_script_error_fp)
 	{
 		*raise_script_error_fp = og_raise;
 	}
+#endif
 
 	return lua_LotusHudStatus_UpdateFlashMarkers_og(L);
 }
@@ -3420,7 +3425,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = true;
-								local_player->getAvatar()->followed_by_camera = false;
+								local_player->getAvatar()->followed_by_camera() = false;
 							}
 						}
 						ServerWebService::sendText(s, {});
@@ -3432,7 +3437,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera = false;
+								local_player->getAvatar()->followed_by_camera() = false;
 							}
 						}
 						ServerWebService::sendText(s, {});
@@ -3444,7 +3449,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							if (auto local_player = regionmgr->GetLocalPlayer())
 							{
 								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera = true;
+								local_player->getAvatar()->followed_by_camera() = true;
 							}
 						}
 						ServerWebService::sendText(s, {});
@@ -3622,9 +3627,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/game_version"):
 						{
 							JsonObject obj;
-#if PROVIDE_VERSION_INFO
 							obj.add(ObfusString("build_label"), std::string(build_label, 16));
-#endif
 							obj.add(ObfusString("build_hash"), build_hash);
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
