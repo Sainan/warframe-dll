@@ -262,7 +262,10 @@ local function check_for_updates()
 		local meta
 		if not OWF_PRIVATE_BUILD then
 			send_version_broadcast()
-			meta = http.request("https://openwf.io/supplementals/client%20drop-in/meta") |> json.decode
+			meta = http.request("https://openwf.io/supplementals/client%20drop-in/meta")
+			if meta then
+				meta = json.decode(meta)
+			end
 		end
 		version_is_latest = false
 		if meta and meta.manifest then
