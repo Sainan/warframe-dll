@@ -736,6 +736,11 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 						if (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0)
 						{
 							is_38_5_0_or_above = true;
+							if (!encstr_append_hook.target || !encstr_discharge_hook.target)
+							{
+								ObfusString msg("Failed to disable request encryption. This is required for 38.5.0 and above.");
+								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+							}
 						}
 					}
 					break;
