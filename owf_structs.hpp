@@ -301,11 +301,20 @@ struct CacheReader
 	Vtbl* vtbl;
 };
 
-// 38.5.0
+
+// Added in 38.5.0
 struct EncryptedString
 {
-	PAD(0, 0x58) GameString out_buf;
+	struct AppendData
+	{
+		/* 0x00 */ const char* data;
+		/* 0x08 */ uint32_t size;
+	};
+
+	/* 0x00 */ AppendData* app;
+	PAD(0x08, 0x58) GameString out_buf;
 };
+static_assert(offsetof(EncryptedString, out_buf) == 0x58);
 
 
 inline RegionMgr* regionmgr = nullptr;

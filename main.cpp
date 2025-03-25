@@ -394,20 +394,20 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 }
 
 
-static DetourHook encstr_append_range_hook;
-//static EncryptedString* last_enc_str = nullptr;
+static DetourHook encstr_append_hook;
+static EncryptedString::AppendData* last_enc_str = nullptr;
 static std::string dec_buf;
 
-static void encstr_append_range_detour(EncryptedString* a1, const char* data, size_t size)
+static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 {
-	//std::cout << "encstr_append_range: " << (void*)a1 << ", " << (void*)a1->out_buf.getData() << ", " << std::string(data, size) << std::endl;
-	/*if (last_enc_str != a1)
+	//std::cout << "encstr_append: " << (void*)a1 << ", " << std::string(a1->data, a1->size) << std::endl;
+	if (last_enc_str != a1)
 	{
 		last_enc_str = a1;
 		dec_buf.clear();
-	}*/
-	dec_buf.append(data, size);
-	return reinterpret_cast<decltype(&encstr_append_range_detour)>(encstr_append_range_hook.original)(a1, data, size);
+	}
+	dec_buf.append(a1->data, a1->size);
+	return reinterpret_cast<decltype(&encstr_append_detour)>(encstr_append_hook.original)(a1, a2);
 }
 
 
@@ -415,6 +415,7 @@ static DetourHook encstr_discharge_hook;
 
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
+	//std::cout << "encstr_discharge: " << (void*)a1->app << std::endl;
 #if REDIRECT_REQUESTS
 	// Maybe not the most memory efficient approach but should be fine for now.
 	auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
@@ -2086,69 +2087,60 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
+		// Disable request encryption for 38.5.0 and above
+		if (!is_legacy)
 		{
-			SIG_INST("E8 ? ? ? ? 48 8B 8B ? ? 00 00 48 8D BB ? ? 00 00 48 8B D7 E8");
-			auto encstr_callsite = Module(nullptr).range.scan(sig_inst);
+			{
+				SIG_INST("40 53 57 41 54 48 83 EC 20 44 8B E2 48 8B F9 48 85 C9"); // 38.5.0, 38.5.2, 38.5.3
+				auto encstr_append = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "encstr_callsite = " << encstr_callsite.as<void*>() << std::endl;
+				std::cout << "encstr_append = " << encstr_append << std::endl;
 #endif
-			if (encstr_callsite)
-			{
-				encstr_append_range_hook.detour = reinterpret_cast<void*>(&encstr_append_range_detour);
-				encstr_append_range_hook.target = encstr_callsite.add(1).rip().as<void*>();
-				encstr_append_range_hook.create();
-				encstr_append_range_hook.enable();
-
-				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
-				encstr_discharge_hook.target = encstr_callsite.add(23).rip().as<void*>();
-				encstr_discharge_hook.create();
-				encstr_discharge_hook.enable();
+				if (encstr_append)
+				{
+					encstr_append_hook.detour = reinterpret_cast<void*>(&encstr_append_detour);
+					encstr_append_hook.target = encstr_append;
+					encstr_append_hook.create();
+					encstr_append_hook.enable();
+				}
 			}
-			else
+
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				SIG_INST("48 8B C4 48 89 50 10 53 55 41 56 48 83 EC 50 48 89 70 18"); // 38.5.3
+				auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+				std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
+#endif
+				if (encstr_discharge)
+				{
+					encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
+					encstr_discharge_hook.target = encstr_discharge;
+					encstr_discharge_hook.create();
+					encstr_discharge_hook.enable();
+				}
+			}
+
+			if (!encstr_discharge_hook.target)
+			{
+				SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 ? ? ? 4C 8B F2"); // 38.5.0, 38.5.2
+				auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+				std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
+#endif
+				if (encstr_discharge)
+				{
+					encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
+					encstr_discharge_hook.target = encstr_discharge;
+					encstr_discharge_hook.create();
+					encstr_discharge_hook.enable();
+				}
+			}
+
+			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
+			{
+				std::cout << ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.") << std::endl;
 			}
 		}
-
-		// 38.5.0
-		/*{
-			SIG_INST("40 53 56 48 83 EC 48 8B 41 18 BE 00 FF 00 00");
-			auto encstr_append_range = Module(nullptr).range.scan(sig_inst).as<void*>();
-#if LOGGING
-			std::cout << "encstr_append_range = " << encstr_append_range << std::endl;
-#endif
-			if (encstr_append_range)
-			{
-				encstr_append_range_hook.detour = reinterpret_cast<void*>(&encstr_append_range_detour);
-				encstr_append_range_hook.target = encstr_append_range;
-				encstr_append_range_hook.create();
-				encstr_append_range_hook.enable();
-			}
-			else
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
-		}*/
-
-		// 38.5.0
-		/*{
-			SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 ? ? ? 4C 8B F2");
-			auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
-#if LOGGING
-			std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
-#endif
-			if (encstr_discharge)
-			{
-				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
-				encstr_discharge_hook.target = encstr_discharge;
-				encstr_discharge_hook.create();
-				encstr_discharge_hook.enable();
-			}
-			else
-			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-			}
-		}*/
 
 		// 38.5.0
 		/*{
