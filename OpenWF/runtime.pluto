@@ -1510,7 +1510,7 @@ class StoreManifest extends Object
 
 	function GetStoreItemsOfType(objectType)
 		self:pushToIvkr()
-		ivkr_push_pointer(objectType.addr)
+		objectType:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreManifest", "GetStoreItemsOfType"), 2)
 		local t = {}
 		local i = 1
@@ -2157,7 +2157,7 @@ class Engine.OpenLevelArgs extends owfUserdata
 
 	function AddContextObject(objectType)
 		self:pushToIvkr()
-		ivkr_push_pointer(objectType.addr)
+		objectType:pushToIvkr()
 		ivkr_call(ivkr_find_method("OpenLevelArgs", "AddContextObject"), 2)
 	end
 end
