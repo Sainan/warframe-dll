@@ -392,6 +392,9 @@ class FlashInstance extends OverlayBase
 class OverlayMgr
 	function SetSelectedStyle(resource)
 
+class PlayerProfile
+	function GetAccountIDString()
+
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
@@ -500,6 +503,7 @@ gGameData
 
 gPlayerProfileMgr
 	function IsLoggedIn()
+	function GetPlayerProfile(i)
 
 gClient
 	function GetOverlayMgr()
