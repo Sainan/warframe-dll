@@ -319,20 +319,6 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 				body_buf = jr->encode();
 				request->body.setUnownedData(body_buf.data(), body_buf.size());
 			}
-			else
-			{
-				if (auto it = jr->reinterpretAsObj().findIt(ObfusString("email").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
-				{
-					if (it->second->reinterpretAsStr().value.c_str()[0] == '@')
-					{
-						server_host = it->second->reinterpretAsStr().value.substr(1);
-						save_config();
-						owfOverlay::redraw();
-						on_got_server_host();
-						return nullptr;
-					}
-				}
-			}
 		}
 #if PROVIDE_VERSION_INFO
 		if (build_label[0] && !build_hash.empty())
