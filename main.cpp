@@ -1068,6 +1068,26 @@ static bool is_pause_allowed_detour(void* gamerules)
 		;
 }
 
+
+static luau_CFunction lua_OpenWebBrowser_og;
+
+static int lua_OpenWebBrowser_detour(luau_State* L)
+{
+#if LOGGING
+	std::cout << "lua_OpenWebBrowser: " << L->intop[0].getString() << std::endl;
+#endif
+	ObfusString sub1(".warframe.com");
+	ObfusString sub2("/warframe.com");
+	if (strstr(L->intop[0].getString(), sub1.c_str()) == nullptr
+		&& strstr(L->intop[0].getString(), sub2.c_str()) == nullptr
+		)
+	{
+		return lua_OpenWebBrowser_og(L);
+	}
+	return 0;
+}
+
+
 static luau_CFunction lua_FlashInstance_GetStringVariable_og;
 
 static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
@@ -2772,8 +2792,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		// Disabling OpenWebBrowser so we don't attempt to open warframe.com with invalid credentials or something else.
-		// Maybe a config option to disable this patch, but meh.
 		{
 			SIG_INST("A0 F4 CB 14 00 00 00 00");
 			auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(sig_inst);
@@ -2782,9 +2800,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (lua_OpenWebBrowser_hash)
 			{
-				auto lua_OpenWebBrowser = *lua_OpenWebBrowser_hash.add(8).as<uint8_t**>();
-				memGuard::setAllowedAccess(lua_OpenWebBrowser, 1, memGuard::ACC_RWX);
-				*lua_OpenWebBrowser = 0xC3;
+				auto lua_OpenWebBrowser_fp = lua_OpenWebBrowser_hash.add(8).as<luau_CFunction*>();
+				lua_OpenWebBrowser_og = *lua_OpenWebBrowser_fp;
+				memGuard::setAllowedAccess(lua_OpenWebBrowser_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_OpenWebBrowser_fp = lua_OpenWebBrowser_detour;
 			}
 			else
 			{
