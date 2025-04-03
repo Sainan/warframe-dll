@@ -1404,6 +1404,11 @@ class LotusMissionInfo extends owfUserdata
 				end
 				ivkr_pop(1)
 				return nil
+
+			case "miscItemFee":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
+				return new CountedItem()
 		end
 		error("Unknown field: "..name)
 	end
@@ -1553,7 +1558,11 @@ class CountedItem extends owfUserdata
 
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CountedItem", "mItemType"), 1)
-		self.mItemType = new ObjectType()
+		if ivkr_type(-1) > 0 then
+			self.mItemType = new ObjectType()
+		else
+			ivkr_pop(1)
+		end
 
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CountedItem", "mItemCount"), 1)
