@@ -1070,6 +1070,12 @@ class PowerSuitAbility extends Item
 		ivkr_push_float(val)
 		ivkr_call(ivkr_find_method("PowerSuitAbility", "SetCooldownTime"), 2)
 	end
+
+	function AllowReactivate(b)
+		self:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("PowerSuitAbility", "AllowReactivate"), 2)
+	end
 end
 
 class InputControllerBase extends Object

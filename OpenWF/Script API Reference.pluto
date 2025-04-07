@@ -178,6 +178,7 @@ class PowerSuitAbility extends Item
 	function SetCooldownDuration(val)
 	function GetCooldownTime()
 	function SetCooldownTime(val)
+	function AllowReactivate(b)
 
 class InputControllerBase extends Object
 
