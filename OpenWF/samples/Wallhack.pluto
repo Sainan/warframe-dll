@@ -1,0 +1,11 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+repeat
+	local npcAvatars = gRegion:FindAll(gLotusNpcAvatarType)
+	for npcAvatars as avatar do
+		if IsNull(avatar:GetAttachment(Type("/Lotus/Fx/Gameplay/Fishing/FishHighlightVision"))) then
+			local proj = avatar:Attach(Type("/Lotus/Fx/Gameplay/Fishing/FishHighlightVision"), EMPTY_SYMBOL, ZERO_VECTOR, ZERO_ROTATION)
+			proj:SetTint(Color(255, 0, 0))
+			proj:SetMaterialParam(Symbol("FadeParams"), 0, 100)
+		end
+	end
+until yield()
