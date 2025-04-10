@@ -355,6 +355,9 @@ class BaseMarkerInfo extends Entity
 	function SetMarkerType(i)
 	function SetDisplayRange(range)
 
+class Effect extends Entity
+	function SetTint(color)
+
 class LensFlare extends Entity
 	function SetTint(color)
 

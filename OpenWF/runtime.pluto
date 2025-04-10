@@ -319,6 +319,7 @@ function ivkr_pop_entity()
 		repeat
 			switch type:GetFullName() do
 				case "/EE/Types/Engine/BaseMarkerInfo": return new BaseMarkerInfo()
+				case "/EE/Types/Engine/Effect": return new Effect()
 				case "/EE/Types/Effects/LensFlare": return new LensFlare()
 				case "/EE/Types/Engine/Decoration": return new Decoration()
 				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar()
@@ -1933,6 +1934,16 @@ class BaseMarkerInfo extends Entity
 			ivkr_call(ivkr_find_ctor("Range"), 2)
 		end
 		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
+	end
+end
+
+class Effect extends Entity
+	__name = "Effect"
+
+	function SetTint(color)
+		self:pushToIvkr()
+		color:pushToIvkr()
+		ivkr_call(ivkr_find_method("Effect", "SetTint"), 2)
 	end
 end
 
