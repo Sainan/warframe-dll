@@ -1491,8 +1491,49 @@ class MissionReward extends owfUserdata
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
 				return ivkr_pop_array(CountedStoreItem)
+
+			case "randomizedItems":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("MissionReward", name), 1)
+				return new MissionRewardItemManifest()
 		end
 		error("Unknown field: "..name)
+	end
+end
+
+class MissionRewardItemManifest extends ResourceBase
+	__name = "MissionRewardItemManifest"
+
+	function GetMaxAvailableTier()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("MissionRewardItemManifest", "GetMaxAvailableTier"), 1)
+		return math.tointeger(ivkr_pop_number())
+	end
+
+	function PickRandomItemIndex(tier, f)
+		self:pushToIvkr()
+		ivkr_push_int(tier)
+		ivkr_push_float(f)
+		ivkr_call(ivkr_find_method("MissionRewardItemManifest", "PickRandomItemIndex"), 3)
+		return math.tointeger(ivkr_pop_number())
+	end
+
+	function GetTieredItem(tier, i)
+		self:pushToIvkr()
+		ivkr_push_int(tier)
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("MissionRewardItemManifest", "GetTieredItem"), 3)
+		return new MissionRewardItem()
+	end
+end
+
+class MissionRewardItem extends owfUserdata
+	__name = "MissionRewardItem"
+
+	function GetStoreItem()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("MissionRewardItem", "GetStoreItem"), 1)
+		return new StoreItem()
 	end
 end
 

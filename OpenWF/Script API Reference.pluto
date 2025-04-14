@@ -261,6 +261,15 @@ class MissionReward
 	items
 	countedItems
 	countedStoreItems
+	randomizedItems
+
+class MissionRewardItemManifest extends ResourceBase
+	function GetMaxAvailableTier()
+	function PickRandomItemIndex(tier, f)
+	function GetTieredItem(tier, i)
+
+class MissionRewardItem
+	function GetStoreItem()
 
 class MissionAI
 	agent
