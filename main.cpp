@@ -1525,7 +1525,7 @@ static bool check_ec(const std::error_code& ec)
 {
 	if (ec)
 	{
-		ObfusString msg("Filesystem error. It's likely your anti-virus is interfering; please ensure the game folder excluded from it.");
+		ObfusString msg("Filesystem error. It's likely your anti-virus is interfering; please ensure the game folder is excluded from it.");
 		MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 		return false;
 	}
