@@ -2,7 +2,9 @@
 repeat
 	if suit := gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit() then
 		for i = 0, 3 do
-			suit:GetAbilityByIndex(i):SetCooldownTime(0)
+			if ability := suit:GetAbilityByIndex(i) then
+				ability:SetCooldownTime(0)
+			end
 		end
 	end
 until yield()

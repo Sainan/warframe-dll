@@ -1043,7 +1043,11 @@ class PowerSuit extends LotusWeapon
 		self:pushToIvkr()
 		ivkr_push_int(i)
 		ivkr_call(ivkr_find_method("PowerSuit", "GetAbilityByIndex"), 2)
-		return new PowerSuitAbility()
+		if ivkr_type(-1) > 0 then
+			return new PowerSuitAbility()
+		end
+		ivkr_pop(1)
+		return nil
 	end
 end
 
