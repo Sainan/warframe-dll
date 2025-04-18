@@ -337,17 +337,17 @@ while pcall(yield) do
 			last_status_string = status_string
 			send_status_broadcast()
 		end
-		last_status_update = os.millis()
-	end
-	if (script_log_nlen := owf_get_script_log_len()) ~= script_log_len then
-		if script_log_nlen > script_log_len then
-			owf_broadcast_message(json.encode({
-				script_log_olen = script_log_len,
-				script_log_nlen = script_log_nlen,
-				script_log_app = owf_get_script_log_sub(script_log_len),
-			}))
+		if (script_log_nlen := owf_get_script_log_len()) ~= script_log_len then
+			if script_log_nlen > script_log_len then
+				owf_broadcast_message(json.encode({
+					script_log_olen = script_log_len,
+					script_log_nlen = script_log_nlen,
+					script_log_app = owf_get_script_log_sub(script_log_len),
+				}))
+			end
+			script_log_len = script_log_nlen
 		end
-		script_log_len = script_log_nlen
+		last_status_update = os.millis()
 	end
 	if (fov_override := owf_config_get_fov_override()) ~= 0 then
 		if not owf_tunables_has("prohibit_fov_override") then
