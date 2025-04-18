@@ -692,6 +692,7 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("ivkr_pop_string"); lua_setglobal(L, name.c_str()); }
 
+	// Unused
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_USERDATA)

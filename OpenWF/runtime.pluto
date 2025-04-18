@@ -10,6 +10,18 @@ function ivkr_push_vector(vec)
 	ivkr_call(ivkr_find_ctor("Vector"), 3)
 end
 
+function ivkr_pop_vector()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Vector", "x"), 1)
+	local x = ivkr_pop_number()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Vector", "y"), 1)
+	local y = ivkr_pop_number()
+	ivkr_call(ivkr_find_getter("Vector", "z"), 1)
+	local z = ivkr_pop_number()
+	return new Vector(x, y, z)
+end
+
 class Rotation
 	function __construct(public heading = 0, public pitch = 0, public bank = 0)
 	end
@@ -25,6 +37,18 @@ function ivkr_push_rotation(rot)
 	ivkr_push_float(rot.pitch)
 	ivkr_push_float(rot.bank)
 	ivkr_call(ivkr_find_ctor("Rotation"), 3)
+end
+
+function ivkr_pop_rotation()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Rotation", "heading"), 1)
+	local heading = ivkr_pop_number()
+	ivkr_push_value(-1)
+	ivkr_call(ivkr_find_getter("Rotation", "pitch"), 1)
+	local pitch = ivkr_pop_number()
+	ivkr_call(ivkr_find_getter("Rotation", "bank"), 1)
+	local bank = ivkr_pop_number()
+	return new Rotation(heading, pitch, bank)
 end
 
 class Symbol
@@ -370,8 +394,7 @@ class Entity extends BaseEntity
 	function GetRotation()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
-		local ud = ivkr_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return ivkr_pop_rotation()
 	end
 
 	function SetRotation(rot)
@@ -584,8 +607,7 @@ class BaseAvatar extends Entity
 	function GetView()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetView"), 1)
-		local ud = ivkr_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return ivkr_pop_rotation()
 	end
 
 	function SetView(rot)
@@ -597,8 +619,7 @@ class BaseAvatar extends Entity
 	function GetCameraView()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetCameraView"), 1)
-		local ud = ivkr_pop_userdata()
-		return new Rotation(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return ivkr_pop_rotation()
 	end
 
 	function SetCameraView(rot)
@@ -1710,8 +1731,7 @@ class CameraControllerBase extends Object
 	function implGetVector(funcName)
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("CameraControllerBase", funcName), 1)
-		local ud = ivkr_pop_userdata()
-		return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+		return ivkr_pop_vector()
 	end
 
 	function implSetVector(funcName, vec)
@@ -1948,8 +1968,7 @@ class FlashMarker extends owfUserdata
 				do
 					self:pushToIvkr()
 					ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
-					local addr = mem_read_i64(ivkr_pop_userdata() + 0x18)
-					return new Vector(mem_read_f32(addr + 0x18), mem_read_f32(addr + 0x10), mem_read_f32(addr + 0x14))
+					return ivkr_pop_vector()
 				end
 				break
 
@@ -2357,8 +2376,7 @@ end
 function AngleToDirection(rot)
 	ivkr_push_rotation(rot)
 	ivkr_call(mem_read_i64(mem_scan_exe("05 E5 C6 F6 00 00 00 00") + 8), 1)
-	local ud = ivkr_pop_userdata()
-	return new Vector(mem_read_f32(ud + 0x20), mem_read_f32(ud + 0x24), mem_read_f32(ud + 0x28))
+	return ivkr_pop_vector()
 end
 
 gRegion = {
@@ -2497,10 +2515,10 @@ gRegion = {
 		local ok = ivkr_type(-1) > 0
 		ivkr_pop(1)
 
-		local ud = ivkr_pop_userdata()
-		outPos.x = mem_read_f32(ud + 0x20)
-		outPos.y = mem_read_f32(ud + 0x24)
-		outPos.z = mem_read_f32(ud + 0x28)
+		local vec = ivkr_pop_vector()
+		outPos.x = vec.x
+		outPos.y = vec.y
+		outPos.z = vec.z
 
 		return ok
 	end,
