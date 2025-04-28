@@ -2472,15 +2472,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("4C 89 44 24 18 48 89 54 24 10 53 48 83 EC 50 48 8D 59 48");
-			auto write_to_log_file = Module(nullptr).range.scan(sig_inst).as<void*>();
+			// "Sys [Error]: Could not write to "
+			SIG_INST("48 8B 0D ? ? ? ? 48 85 C9 74 14 41 B8 20 00 00 00 48 8D 15 ? ? ? ? E8");
+			auto write_to_log_file_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "write_to_log_file = " << write_to_log_file << std::endl;
+			std::cout << "write_to_log_file_callsite = " << write_to_log_file_callsite.as<void*>() << std::endl;
 #endif
-			if (write_to_log_file)
+			if (write_to_log_file_callsite)
 			{
 				write_to_log_file_hook.detour = reinterpret_cast<void*>(&write_to_log_file_detour);
-				write_to_log_file_hook.target = write_to_log_file;
+				write_to_log_file_hook.target = write_to_log_file_callsite.add(26).rip().as<void*>();
 				write_to_log_file_hook.create();
 				write_to_log_file_hook.enable();
 			}
