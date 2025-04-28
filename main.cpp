@@ -2147,10 +2147,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 			}
 
-			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
+			/*if (!encstr_append_hook.target || !encstr_discharge_hook.target)
 			{
 				std::cout << ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.") << std::endl;
-			}
+			}*/
 		}
 
 		// 38.5.0
