@@ -2334,7 +2334,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to disable XP-based level cap.") << std::endl;
 			}
 		}
 #endif
@@ -2440,7 +2440,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.") << std::endl;
 			}
 		}
 
@@ -2500,7 +2500,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
 			}
 		}
 
@@ -2816,7 +2816,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up \"pause always stops time\". This option will be non-functional.") << std::endl;
 			}
 		}
 
@@ -3033,7 +3033,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up Label Replacements.") << std::endl;
 			}
 		}
 #endif
@@ -3050,7 +3050,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
+#if !METADATA_PATCHES
 				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+#endif
 			}
 		}
 
@@ -3084,7 +3086,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up Metadata Patches.") << std::endl;
 			}
 		}
 #endif
@@ -3172,6 +3174,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Allow GetOnVehicle with an operator avatar
 		// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
 		{
+			// "an operator is trying to ride "
 			SIG_INST("32 C0 48 8B 5C 24 40 48 8B 74 24 48 48 83 C4 30 5F C3 B2 05");
 			auto operator_mount_fail = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
@@ -3227,7 +3230,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up \"logout on request failure\". This option will be non-functional.") << std::endl;
 			}
 		}
 
