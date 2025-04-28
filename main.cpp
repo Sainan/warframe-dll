@@ -643,7 +643,7 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 }
 
 
-static DetourHook SquadSetCountdownTimer_hook;
+/*static DetourHook SquadSetCountdownTimer_hook;
 
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
@@ -653,6 +653,17 @@ static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 		seconds = 0.0f;
 	}
 	return reinterpret_cast<decltype(&SquadSetCountdownTimer_detour)>(SquadSetCountdownTimer_hook.original)(a1, seconds);
+}*/
+
+static luau_CFunction lua_SquadSetCountdownTimer_og;
+
+static int lua_SquadSetCountdownTimer_detour(luau_State* L)
+{
+	if (skip_mission_start_timer && !prohibit_skip_mission_start_timer && L->intop[1].type == LUAU_NUMBER && L->intop[1].value.as_float == 5.9f)
+	{
+		L->intop[1].value.as_float = 0.0f;
+	}
+	return lua_SquadSetCountdownTimer_og(L);
 }
 
 
@@ -2328,7 +2339,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-		{
+		/*{
 			//SIG_INST("48 89 5C 24 18 48 89 74 24 20 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
 			SIG_INST("48 89 5C 24 10 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
 			auto SquadSetCountdownTimer = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2341,6 +2352,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
 				SquadSetCountdownTimer_hook.create();
 				SquadSetCountdownTimer_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
+		}*/
+
+		{
+			SIG_INST("98 76 66 8E 00 00 00 00");
+			auto lua_SquadSetCountdownTimer_hash = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_SquadSetCountdownTimer_hash = " << lua_SquadSetCountdownTimer_hash.as<void*>() << std::endl;
+#endif
+			if (lua_SquadSetCountdownTimer_hash)
+			{
+				auto lua_SquadSetCountdownTimer_fp = lua_SquadSetCountdownTimer_hash.add(8).as<luau_CFunction*>();
+				lua_SquadSetCountdownTimer_og = *lua_SquadSetCountdownTimer_fp;
+				memGuard::setAllowedAccess(lua_SquadSetCountdownTimer_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_SquadSetCountdownTimer_fp = lua_SquadSetCountdownTimer_detour;
 			}
 			else
 			{
