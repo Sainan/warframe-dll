@@ -126,6 +126,7 @@ static void save_config()
 		}
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
+	config.add(ObfusString("alternative_loading"), alternative_loading);
 	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 	config.add(ObfusString("save_all_metadata"), save_all_metadata);
 	config.add(ObfusString("write_all_metadata_reads_to_console"), write_all_metadata_reads_to_console);
@@ -825,15 +826,29 @@ static luau_CFunction lua_FlashMgr_GetConfigBool_og;
 
 static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 {
-	if (!did_auto_login)
+	SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
 	{
-		SOUP_IF_LIKELY (L->intop[1].type == LUAU_STRING)
+		if (autologin && !did_auto_login)
 		{
 			ObfusString str("Client.AutoLogin");
 			if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
 			{
 #if LOGGING
 				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
+#endif
+				L->outtop[-1].value.as_bool = true;
+				L->outtop[-1].type = LUAU_BOOL;
+				return 1;
+			}
+		}
+
+		if (alternative_loading)
+		{
+			ObfusString str("Server.FastLoad");
+			if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
+			{
+#if LOGGING
+				std::cout << "Reporting Server.FastLoad as true" << std::endl;
 #endif
 				L->outtop[-1].value.as_bool = true;
 				L->outtop[-1].type = LUAU_BOOL;
@@ -1940,6 +1955,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				ee_log_in_console = false;
 			}
 
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("alternative_loading")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				alternative_loading = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				alternative_loading = false;
+			}
+
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("dont_resolve_labels")); it != config->reinterpretAsObj().end() && it->second->isBool())
 			{
 				dont_resolve_labels = it->second->reinterpretAsBool().value;
@@ -2532,13 +2556,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (lua_FlashMgr_GetConfigBool_hash)
 			{
-				if (autologin)
-				{
-					auto lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_hash.add(8).as<luau_CFunction*>();
-					lua_FlashMgr_GetConfigBool_og = *lua_FlashMgr_GetConfigBool_fp;
-					memGuard::setAllowedAccess(lua_FlashMgr_GetConfigBool_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
-					*lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_detour;
-				}
+				auto lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_hash.add(8).as<luau_CFunction*>();
+				lua_FlashMgr_GetConfigBool_og = *lua_FlashMgr_GetConfigBool_fp;
+				memGuard::setAllowedAccess(lua_FlashMgr_GetConfigBool_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+				*lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_detour;
 			}
 			else
 			{
@@ -3400,6 +3421,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							ee_log_in_console = (arr[1].size() == 4);
 						}
 						ServerWebService::sendText(s, std::to_string(ee_log_in_console));
+						break;
+
+					case soup::joaat::compileTimeHash("/alternative_loading"):
+						if (arr.size() > 1)
+						{
+							alternative_loading = (arr[1].size() == 4);
+						}
+						ServerWebService::sendText(s, std::to_string(alternative_loading));
 						break;
 
 					case soup::joaat::compileTimeHash("/dont_resolve_labels"):

@@ -21,6 +21,7 @@
 	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
 	<p><label for="simulacrum_whitelisted"></label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
 	<p><label for="pause_always_stops_time"></label> <input id="pause_always_stops_time" type="checkbox" /></p>
+	<p><label for="alternative_loading"></label> <input id="alternative_loading" type="checkbox" /></p>
 	<p><label for="ee_log_in_console"></label> <input id="ee_log_in_console" type="checkbox" /></p>
 	<p><label for="dont_resolve_labels"></label> <input id="dont_resolve_labels" type="checkbox" /></p>
 	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
@@ -92,6 +93,13 @@
 		});
 		document.getElementById("simulacrum_whitelisted").onchange = function() {
 			fetch("/simulacrum_whitelisted?" + this.checked);
+		};
+
+		fetch("/alternative_loading").then(res => res.text()).then(res => {
+			document.getElementById("alternative_loading").checked = (res == "1");
+		});
+		document.getElementById("alternative_loading").onchange = function() {
+			fetch("/alternative_loading?" + this.checked);
 		};
 
 		fetch("/ee_log_in_console").then(res => res.text()).then(res => {

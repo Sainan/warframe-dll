@@ -32,6 +32,7 @@ inline bool logout_on_request_failure;
 inline float fov_override;
 inline std::string forced_profile_dir;
 inline std::vector<std::string> auto_start_scripts;
+inline bool alternative_loading;
 inline bool dont_resolve_labels;
 inline bool save_all_metadata;
 inline bool write_all_metadata_reads_to_console;
