@@ -2491,9 +2491,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (nrs_jnz)
 			{
-				memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
-				nrs_jnz.as<uint8_t*>()[0] = 0x90;
-				nrs_jnz.as<uint8_t*>()[1] = 0xE9;
+				if (disable_nrs_connection)
+				{
+					memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
+					nrs_jnz.as<uint8_t*>()[0] = 0x90;
+					nrs_jnz.as<uint8_t*>()[1] = 0xE9;
+				}
 			}
 			else
 			{
