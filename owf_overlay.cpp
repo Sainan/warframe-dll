@@ -39,11 +39,16 @@ void owfOverlay::init()
 			&& hwnd != GetConsoleWindow()
 			)
 		{
-			s_game_hwnd = hwnd;
-			/*char buf[100];
-			GetWindowText(hwnd, buf, 100);
-			std::cout << buf << std::endl;*/
-			return FALSE;
+			// Avoid picking up on a message box
+			const auto [width, height] = Window(hwnd).getSize();
+			if (width > 400)
+			{
+				s_game_hwnd = hwnd;
+				/*char buf[100];
+				GetWindowText(hwnd, buf, 100);
+				std::cout << buf << std::endl;*/
+				return FALSE;
+			}
 		}
 		return TRUE;
 	}, static_cast<LPARAM>(game_pid));

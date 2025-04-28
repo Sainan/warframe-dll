@@ -122,6 +122,7 @@
 		<li><code>prohibit_scripts</code></li>
 	</ul>
 	<p>The presence of a field disables the respective feature.</p>
+	<p>To aid in troubleshooting, the bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
 	<h2>Traffic Deviations</h2>
 	<ul>
 		<li>login.php & worldState.php requests have the extra query parameter <code>buildLabel</code> to indicate the client's buildLabel.</li>

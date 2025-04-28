@@ -518,7 +518,10 @@ static void on_got_server_host()
 		UniquePtr<JsonNode> jr;
 		if (auto res = hr.execute())
 		{
-			jr = json::decode(res->body);
+			if (res->status_code == 200)
+			{
+				jr = json::decode(res->body);
+			}
 		}
 
 		if (jr && jr->isObj())
@@ -537,6 +540,16 @@ static void on_got_server_host()
 			prohibit_skip_mission_start_timer = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
 			prohibit_freecam = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_freecam"));
 			prohibit_scripts = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_scripts"));
+		}
+		else
+		{
+			// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
+			auto msg = ObfusString("Failed to verify that the server at ").str();
+			msg.append(hr.getHost());
+			msg.append(ObfusString(" on port ").str());
+			msg.append(std::to_string(hr.port));
+			msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
+			MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONWARNING);
 		}
 
 		owfOverlay::redraw();
