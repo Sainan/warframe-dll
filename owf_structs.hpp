@@ -63,13 +63,40 @@ union GameString
 };
 static_assert(sizeof(GameString) == 0x10);
 
+#define uses_legacy_game_string !is_35_0_0_or_above
+
 union LegacyGameString
 {
-	char data[32];
-	char* long_data;
+	struct
+	{
+		char data[31];
+		uint8_t inv_len;
+	} shrt;
+	struct
+	{
+		char* ptr;
+		uint32_t len;
+	} lng;
 
-	[[nodiscard]] bool isLong() const noexcept { return data[sizeof(data) - 1] == (char)0xFF; }
-	[[nodiscard]] char* getData() noexcept { return isLong() ? long_data : data; }
+	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
+	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
+	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? lng.len : (sizeof(shrt.data) - shrt.inv_len); }
+
+	void setShortData(const char* data, size_t len) noexcept
+	{
+		if (len > sizeof(shrt.data))
+		{
+			len = sizeof(shrt.data);
+		}
+		memcpy(shrt.data, data, len);
+		shrt.data[len] = 0;
+		shrt.inv_len = sizeof(shrt.data) - len;
+	}
+
+	void setShortData(const std::string& str) noexcept
+	{
+		return setShortData(str.data(), str.size());
+	}
 };
 
 struct Arguments
@@ -150,6 +177,22 @@ struct Arguments
 //static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
 //static_assert(offsetof(Arguments, cluster) == 0x1C8);
 //static_assert(offsetof(Arguments, relaunch) == 0x1D8);
+
+struct LegacyArguments
+{
+	PAD(0, 0x263) bool got_graphicsDriver;
+	/* 0x268 */ LegacyGameString graphicsDriver;
+	PAD(0x268 + sizeof(LegacyGameString), 0x294) bool got_language;
+	/* 0x298 */ LegacyGameString language;
+	PAD(0x298 + sizeof(LegacyGameString), 0x2B8) bool got_cluster;
+	/* 0x2C0 */ LegacyGameString cluster;
+};
+static_assert(offsetof(LegacyArguments, got_graphicsDriver) == 0x263);
+static_assert(offsetof(LegacyArguments, graphicsDriver) == 0x268);
+static_assert(offsetof(LegacyArguments, got_language) == 0x294);
+static_assert(offsetof(LegacyArguments, language) == 0x298);
+static_assert(offsetof(LegacyArguments, got_cluster) == 0x2B8);
+static_assert(offsetof(LegacyArguments, cluster) == 0x2C0);
 
 // Objects
 

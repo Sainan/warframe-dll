@@ -579,45 +579,86 @@ static void do_logout()
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 
-static void parse_arguments_detour(Arguments* arguments, GameString* str, void* a3)
+template <typename T>
+static void process_args(T* str)
+{
+	for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
+	{
+		if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+		{
+			server_host = arg.substr(15);
+		}
+	}
+	on_got_server_host();
+}
+
+static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 {
 #if LOGGING
-	std::cout << "parse_arguments: " << str->getData() << std::endl;
+	std::cout << "parse_arguments: " << (uses_legacy_game_string ? ((LegacyGameString*)_str)->getData() : ((GameString*)_str)->getData()) << std::endl;
 #endif
 
-	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(arguments, str, a3);
+	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(_arguments, _str, a3);
 
 	if (!processed_args)
 	{
-		processed_args = true;
-		for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
+		if (uses_legacy_game_string)
 		{
-			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
-			{
-				server_host = arg.substr(15);
-			}
+			process_args((LegacyGameString*)_str);
 		}
-		on_got_server_host();
+		else
+		{
+			process_args((GameString*)_str);
+		}
+		processed_args = true;
 	}
 
-	if (!arguments->got_language())
+	if (uses_legacy_game_string)
 	{
-		arguments->got_language() = true;
-		arguments->language().setShortData(fallback_language);
-	}
-	if (!arguments->got_graphicsDriver())
-	{
-		arguments->got_graphicsDriver() = true;
-		arguments->graphicsDriver().setShortData(fallback_graphicsDriver);
-	}
-	if (!arguments->got_cluster())
-	{
-		arguments->got_cluster() = true;
-		arguments->cluster().setShortData(fallback_cluster);
-	}
+		auto arguments = (LegacyArguments*)_arguments;
 
-	lang_code = std::string(arguments->language().getData(), arguments->language().getSize());
-	graphics_driver = std::string(arguments->graphicsDriver().getData(), arguments->graphicsDriver().getSize());
+		if (!arguments->got_language)
+		{
+			arguments->got_language = true;
+			arguments->language.setShortData(fallback_language);
+		}
+		if (!arguments->got_graphicsDriver)
+		{
+			arguments->got_graphicsDriver = true;
+			arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
+		}
+		if (!arguments->got_cluster)
+		{
+			arguments->got_cluster = true;
+			arguments->cluster.setShortData(fallback_cluster);
+		}
+
+		lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
+		graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+	}
+	else
+	{
+		auto arguments = (Arguments*)_arguments;
+
+		if (!arguments->got_language())
+		{
+			arguments->got_language() = true;
+			arguments->language().setShortData(fallback_language);
+		}
+		if (!arguments->got_graphicsDriver())
+		{
+			arguments->got_graphicsDriver() = true;
+			arguments->graphicsDriver().setShortData(fallback_graphicsDriver);
+		}
+		if (!arguments->got_cluster())
+		{
+			arguments->got_cluster() = true;
+			arguments->cluster().setShortData(fallback_cluster);
+		}
+
+		lang_code = std::string(arguments->language().getData(), arguments->language().getSize());
+		graphics_driver = std::string(arguments->graphicsDriver().getData(), arguments->graphicsDriver().getSize());
+	}
 }
 
 
@@ -2327,14 +2368,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 89 5B 20");
-			auto parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
+			void* parse_arguments;
+			if (is_35_0_0_or_above)
+			{
+				SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 89 5B 20");
+				parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 D9 48 81 EC F0 00 00 00 48 8B 05"); // 2023.07.26.16.38 (33.6.0)
+				parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "parse_arguments = " << parse_arguments << std::endl;
 #endif
-			if (parse_arguments
-				&& is_35_0_0_or_above // I think it fails here due to GameString being a different size, which may also be why request redirection is not working on this version.
-				)
+			if (parse_arguments)
 			{
 				parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour);
 				parse_arguments_hook.target = parse_arguments;
