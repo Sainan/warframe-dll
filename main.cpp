@@ -576,30 +576,6 @@ static void do_logout()
 }
 
 
-struct Arguments
-{
-	PAD(0, 0x04) bool silent;
-	PAD(0x05, 0x18) bool client;
-	PAD(0x19, 0x140) bool got_debugSession;
-	/* 0x148 */ GameString debugSession;
-	/* 0x158 */ bool got_clientType;
-	/* 0x160 */ GameString clientType;
-	PAD(0x160 + sizeof(GameString), 0x189) bool got_graphicsDriver;
-	/* 0x190 */ GameString graphicsDriver;
-	PAD(0x1A0, 0x1AC) bool got_language;
-	/* 0x1B0 */ GameString language;
-	/* 0x1C0 */ bool got_cluster;
-	/* 0x1C8 */ GameString cluster;
-	/* 0x1D8 */ GameString relaunch;
-};
-static_assert(offsetof(Arguments, got_graphicsDriver) == 0x189);
-static_assert(offsetof(Arguments, graphicsDriver) == 0x190);
-static_assert(offsetof(Arguments, got_language) == 0x1AC);
-static_assert(offsetof(Arguments, language) == 0x1B0);
-static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
-static_assert(offsetof(Arguments, cluster) == 0x1C8);
-static_assert(offsetof(Arguments, relaunch) == 0x1D8);
-
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 
@@ -624,24 +600,24 @@ static void parse_arguments_detour(Arguments* arguments, GameString* str, void* 
 		on_got_server_host();
 	}
 
-	if (!arguments->got_language)
+	if (!arguments->got_language())
 	{
-		arguments->got_language = true;
-		arguments->language.setShortData(fallback_language);
+		arguments->got_language() = true;
+		arguments->language().setShortData(fallback_language);
 	}
-	if (!arguments->got_graphicsDriver)
+	if (!arguments->got_graphicsDriver())
 	{
-		arguments->got_graphicsDriver = true;
-		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
+		arguments->got_graphicsDriver() = true;
+		arguments->graphicsDriver().setShortData(fallback_graphicsDriver);
 	}
-	if (!arguments->got_cluster)
+	if (!arguments->got_cluster())
 	{
-		arguments->got_cluster = true;
-		arguments->cluster.setShortData(fallback_cluster);
+		arguments->got_cluster() = true;
+		arguments->cluster().setShortData(fallback_cluster);
 	}
 
-	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
-	graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+	lang_code = std::string(arguments->language().getData(), arguments->language().getSize());
+	graphics_driver = std::string(arguments->graphicsDriver().getData(), arguments->graphicsDriver().getSize());
 }
 
 
@@ -1726,10 +1702,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			soup::free(data);
 		}
 
-		if (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0)
-		{
-			is_38_5_0_or_above = true;
-		}
+		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
+		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.10.01.11.03").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
