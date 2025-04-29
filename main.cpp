@@ -51,6 +51,7 @@
 
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
+#pragma comment(lib, "version")
 
 #include "whirlpool.hpp"
 
@@ -738,22 +739,6 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 				{
 				case soup::joaat::compileTimeHash("Logged in "):
 					owfOverlay::setPrelogin(false);
-					break;
-
-				case soup::joaat::compileTimeHash("Build Labe"):
-					if (size >= 29)
-					{
-						memcpy(build_label, message + 13, 16);
-						if (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0)
-						{
-							is_38_5_0_or_above = true;
-							if (!encstr_append_hook.target || !encstr_discharge_hook.target)
-							{
-								ObfusString msg("Failed to disable request encryption. This is required for 38.5.0 and above.");
-								MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-							}
-						}
-					}
 					break;
 
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
@@ -1715,6 +1700,37 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			og_WTSUnRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSUnRegisterSessionNotification");
 		}
 
+		{
+			DWORD dwHandle;
+			DWORD version_info_size = GetFileVersionInfoSizeA("Warframe.x64.exe", &dwHandle);
+
+			void* data = soup::malloc(version_info_size);
+			GetFileVersionInfoA("Warframe.x64.exe", 0, version_info_size, data);
+
+			/*struct LANGANDCODEPAGE {
+				WORD wLanguage;
+				WORD wCodePage;
+			} *lpTranslate;
+			UINT cbTranslate;
+			VerQueryValueA(data, "\\VarFileInfo\\Translation", (LPVOID*)&lpTranslate, &cbTranslate);
+			for (INT i=0; i < (cbTranslate/4); i++)
+			{
+				std::cout << "Lang " << lpTranslate[i].wLanguage << ", c.p. " << lpTranslate[i].wCodePage << std::endl;
+			}*/
+
+			LPVOID value_data;
+			UINT value_size;
+			VerQueryValue(data, "\\StringFileInfo\\040904B0\\ProductVersion", &value_data, &value_size);
+			memcpy(build_label, value_data, 16);
+
+			soup::free(data);
+		}
+
+		if (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0)
+		{
+			is_38_5_0_or_above = true;
+		}
+
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
 		SOUP_RETHROW_FALSE(check_ec(ec));
@@ -2145,7 +2161,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		// Disable request encryption for 38.5.0 and above
-		if (!is_legacy)
+		if (is_38_5_0_or_above)
 		{
 			{
 				SIG_INST("40 53 57 41 54 48 83 EC 20 44 8B E2 48 8B F9 48 85 C9"); // 38.5.0, 38.5.2, 38.5.3
@@ -2193,10 +2209,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 			}
 
-			/*if (!encstr_append_hook.target || !encstr_discharge_hook.target)
+			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
 			{
-				std::cout << ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.") << std::endl;
-			}*/
+				//std::cout << ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.") << std::endl;
+				ObfusString msg("Failed to disable request encryption. This is required for 38.5.0 and above.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
 		}
 
 		// 38.5.0
