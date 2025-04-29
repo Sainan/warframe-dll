@@ -20,7 +20,7 @@ union GameString
 	} lng;
 
 	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
-	//[[nodiscard]] bool willFreeData() const noexcept { return isLong() && (lng.metadata & 0xFFFFFFF0000000ull) != 0xFFFFFFF0000000ull; }
+	[[nodiscard]] bool willFreeData() const noexcept { return isLong() && (lng.metadata & 0xFFFFFFF0000000ull) != 0xFFFFFFF0000000ull; }
 	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
 	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? (lng.metadata & 0xFFFFFFF) : (sizeof(shrt.data) - shrt.inv_len); }
 
@@ -55,11 +55,11 @@ union GameString
 		return setShortData(str.data(), str.size());
 	}
 
-	void clear() noexcept
+	/*void clear() noexcept
 	{
 		shrt.data[0] = '\0';
 		shrt.inv_len = sizeof(shrt.data);
-	}
+	}*/
 };
 static_assert(sizeof(GameString) == 0x10);
 
@@ -76,11 +76,29 @@ union LegacyGameString
 	{
 		char* ptr;
 		uint32_t len;
+		uint32_t ownership;
 	} lng;
 
 	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
+	[[nodiscard]] bool willFreeData() const noexcept { return isLong() && lng.ownership != -1; }
 	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
 	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? lng.len : (sizeof(shrt.data) - shrt.inv_len); }
+
+	void setUnownedData(const char* data, size_t len) noexcept
+	{
+		if (len > sizeof(shrt.data))
+		{
+			lng.ptr = (char*)data;
+			lng.len = len;
+			lng.ownership = -1;
+		}
+		else
+		{
+			memcpy(shrt.data, data, len);
+			shrt.data[len] = 0;
+			shrt.inv_len = sizeof(shrt.data) - len;
+		}
+	}
 
 	void setShortData(const char* data, size_t len) noexcept
 	{
@@ -97,6 +115,12 @@ union LegacyGameString
 	{
 		return setShortData(str.data(), str.size());
 	}
+
+	/*void clear() noexcept
+	{
+		shrt.data[0] = '\0';
+		shrt.inv_len = sizeof(shrt.data);
+	}*/
 };
 
 struct Arguments

@@ -261,12 +261,24 @@ static DetourHook game_http_request_hook;
 struct GameHttpRequest
 {
 	/* 0x00 */ GameString url;
-	PAD(0x10, 0x38) GameString body;
+	char pad[0x28];
+	/* 0x38 */ GameString body;
 };
 static_assert(offsetof(GameHttpRequest, body) == 0x38);
 
+struct LegacyGameHttpRequest
+{
+	/* 0x00 */ LegacyGameString url;
+	char pad[0x28];
+	/* 0x48 */ LegacyGameString body;
+};
+static_assert(offsetof(LegacyGameHttpRequest, body) == 0x48);
+
 static void on_got_server_host();
-static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* a3)
+static void* game_http_request_detour(void* a1, void* request, void* a3);
+
+template <typename T>
+static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 {
 #if LOGGING
 	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
@@ -378,7 +390,19 @@ static void* game_http_request_detour(void* a1, GameHttpRequest* request, void* 
 	}*/
 #endif
 
-	return ret;
+	return ret;	
+}
+
+static void* game_http_request_detour(void* a1, void* request, void* a3)
+{
+	if (uses_legacy_game_string)
+	{
+		return game_http_request_detour_impl(a1, (LegacyGameHttpRequest*)request, a3);
+	}
+	else
+	{
+		return game_http_request_detour_impl(a1, (GameHttpRequest*)request, a3);
+	}
 }
 
 
