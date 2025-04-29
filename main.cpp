@@ -2488,6 +2488,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		/*{
 			SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
 			auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+#if LOGGING
+			std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
 			memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
 			insn[0] = 0x31;
 			insn[1] = 0xc0;
