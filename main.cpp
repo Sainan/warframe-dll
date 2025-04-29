@@ -2048,7 +2048,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		// 2018.02.22.14.34 (M:8004325165498360760)
-		{
+		// This breaks update 36
+		/*{
 			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 0F B7 01");
 			auto resolve_addr = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
@@ -2063,7 +2064,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 				is_legacy = true;
 			}
-		}
+		}*/
 
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
@@ -2213,9 +2214,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (!is_legacy)
 		{
-			//SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
-			SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
-			auto Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
+			void* Curl_resolv;
+			if (is_37_0_0_or_above)
+			{
+				SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
+				Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 48 8B 39");
+				Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
@@ -2250,9 +2259,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (!is_legacy)
 		{
-			//SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
-			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
-			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+			void* Curl_ossl_verifyhost;
+			if (is_37_0_0_or_above)
+			{
+				SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
+				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
+				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
 #endif
