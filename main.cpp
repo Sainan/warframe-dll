@@ -1704,6 +1704,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
+		is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2287,8 +2288,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// This hook allows WorldSeed to be absent or just any value.
 		if (!is_legacy)
 		{
-			SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
-			auto verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			void* verify_worldstate_integrity;
+			if (is_35_0_0_or_above)
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0)
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
@@ -2322,7 +2332,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "parse_arguments = " << parse_arguments << std::endl;
 #endif
-			if (parse_arguments)
+			if (parse_arguments
+				&& is_35_0_0_or_above // I think it fails here due to GameString being a different size, which may also be why request redirection is not working on this version.
+				)
 			{
 				parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour);
 				parse_arguments_hook.target = parse_arguments;
