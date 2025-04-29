@@ -1686,8 +1686,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
-		DisableThreadLibraryCalls(hmod);
-
 		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
 		{
 			MessageBoxA(0, "Please only put the dwmapi.dll in your Warframe installation folder.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
