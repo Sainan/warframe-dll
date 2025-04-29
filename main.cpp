@@ -1703,7 +1703,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
-		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.10.01.11.03").str()) >= 0);
+		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
