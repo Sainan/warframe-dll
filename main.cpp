@@ -2596,6 +2596,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above) // Straight up crashes on 35.5.0
 		{
 			SIG_INST("C2 96 84 6B 00 00 00 00");
 			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(sig_inst);
