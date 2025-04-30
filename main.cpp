@@ -1776,6 +1776,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
 		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
+		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2569,23 +2570,50 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Needed for 33.0.0 (2023.04.25.23.40). Doesn't seem to cause any issues.
 		if (!is_33_6_0_or_above)
 		{
-			SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
-			auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-#if LOGGING
-			std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
-#endif
-			if (insn)
+			if (is_32_0_0_or_above)
 			{
-				memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
-				insn[0] = 0x31;
-				insn[1] = 0xc0;
-				insn[2] = 0x90;
-				insn[3] = 0x90;
-				insn[4] = 0x90;
+				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
+				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+#if LOGGING
+				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
+				if (insn)
+				{
+					memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
+					insn[0] = 0x31;
+					insn[1] = 0xc0;
+					insn[2] = 0x90;
+					insn[3] = 0x90;
+					insn[4] = 0x90;
+				}
+				else
+				{
+					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				}
 			}
 			else
 			{
-				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				SIG_INST("0F B6 84 24 80 00 00 00 40 0F B6 CF 88 05");
+				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+#if LOGGING
+				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
+				if (insn)
+				{
+					memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
+					insn[0] = 0x31;
+					insn[1] = 0xc0;
+					insn[2] = 0x90;
+					insn[3] = 0x90;
+					insn[4] = 0x90;
+					insn[5] = 0x90;
+					insn[6] = 0x90;
+					insn[7] = 0x90;
+				}
+				else
+				{
+					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				}
 			}
 		}
 
