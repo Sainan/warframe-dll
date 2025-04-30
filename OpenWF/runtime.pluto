@@ -2677,6 +2677,10 @@ function owf_stop_script(name)
 	http.request("http://localhost:6155/stop_script?"..url.encode("OpenWF/scripts/"..name))
 end
 
+function owf_get_build_label()
+	return owf_get_build_version() .. "/" .. owf_get_build_hash()
+end
+
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
 

@@ -201,7 +201,7 @@ void owfScript::openLibs(lua_State* L)
 		lua_pushlstring(L, build_label, 16);
 		return 1;
 	});
-	{ ObfusString name("owf_get_build_label"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("owf_get_build_version"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

@@ -466,6 +466,7 @@ function owf_create_thread(f)
 function owf_replace_label(tag, str)
 function owf_restore_label(tag)
 function owf_get_build_label()
+function owf_get_build_version()
 function owf_get_build_hash()
 
 -- OpenWF events
