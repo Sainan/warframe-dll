@@ -2,6 +2,7 @@
 
 #include <structing.hpp>
 
+inline char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 inline bool is_38_5_0_or_above = false;
 inline bool is_37_0_0_or_above = false;
 inline bool is_35_0_0_or_above = false;
