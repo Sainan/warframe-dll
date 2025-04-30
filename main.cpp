@@ -334,12 +334,15 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 			}
 		}
 #if PROVIDE_VERSION_INFO
-		if (build_label[0] && build_hash[0])
+		if (build_label[0])
 		{
 			uri.query.append(ObfusString("&buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
-			uri.query.append(build_hash, 22);
+			if (build_hash[0])
+			{
+				uri.query.append(build_hash, 22);
+			}
 		}
 		uri.query.append(ObfusString("&clientMod=").str());
 		uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
@@ -356,12 +359,15 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
-		if (build_label[0] && build_hash[0])
+		if (build_label[0])
 		{
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
-			uri.query.append(build_hash, 22);
+			if (build_hash[0])
+			{
+				uri.query.append(build_hash, 22);
+			}
 		}
 #endif
 	}
@@ -1769,6 +1775,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 		is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
+		is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2559,19 +2566,28 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
-		/*{
+		// Needed for 33.0.0 (2023.04.25.23.40). Doesn't seem to cause any issues.
+		if (!is_33_6_0_or_above)
+		{
 			SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
 			auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 #if LOGGING
 			std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
 #endif
-			memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
-			insn[0] = 0x31;
-			insn[1] = 0xc0;
-			insn[2] = 0x90;
-			insn[3] = 0x90;
-			insn[4] = 0x90;
-		}*/
+			if (insn)
+			{
+				memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
+				insn[0] = 0x31;
+				insn[1] = 0xc0;
+				insn[2] = 0x90;
+				insn[3] = 0x90;
+				insn[4] = 0x90;
+			}
+			else
+			{
+				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+			}
+		}
 
 		// Same idea for 2018.02.22.14.34 (M:8004325165498360760), but can't see any immediate issues with it.
 		if (is_legacy)
