@@ -9,6 +9,8 @@ inline bool is_35_0_0_or_above = false;
 inline bool is_33_6_0_or_above = false;
 inline bool is_33_0_0_or_above = false;
 
+inline char build_hash[22] = { 0 };
+
 union GameString
 {
 	struct

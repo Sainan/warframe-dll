@@ -70,7 +70,6 @@ using namespace soup;
 #include "owf_tunables.hpp"
 
 static bool disabled_xp_based_level_cap = false;
-static char build_hash[22] = { 0 };
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 static bool metadata_patches_in_use = false;

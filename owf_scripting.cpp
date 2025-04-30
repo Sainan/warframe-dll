@@ -203,6 +203,13 @@ void owfScript::openLibs(lua_State* L)
 	});
 	{ ObfusString name("owf_get_build_label"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushlstring(L, build_hash, build_hash[0] ? 22 : 0);
+		return 1;
+	});
+	{ ObfusString name("owf_get_build_hash"); lua_setglobal(L, name.c_str()); }
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
