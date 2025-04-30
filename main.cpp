@@ -71,7 +71,7 @@ using namespace soup;
 
 static bool disabled_xp_based_level_cap = false;
 static char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
-static std::string build_hash;
+static char build_hash[22] = { 0 };
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 static bool metadata_patches_in_use = false;
@@ -335,12 +335,12 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 			}
 		}
 #if PROVIDE_VERSION_INFO
-		if (build_label[0] && !build_hash.empty())
+		if (build_label[0] && build_hash[0])
 		{
 			uri.query.append(ObfusString("&buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
-			uri.query.append(build_hash);
+			uri.query.append(build_hash, 22);
 		}
 		uri.query.append(ObfusString("&clientMod=").str());
 		uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
@@ -357,12 +357,12 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 	else if (uri.path.find(ObfusString("/dynamic/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
-		if (build_label[0] && !build_hash.empty())
+		if (build_label[0] && build_hash[0])
 		{
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
-			uri.query.append(build_hash);
+			uri.query.append(build_hash, 22);
 		}
 #endif
 	}
@@ -785,7 +785,7 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
 					if (size == 43)
 					{
-						build_hash = std::string(message + 20, 22);
+						memcpy(build_hash, message + 20, 22);
 					}
 					break;
 
@@ -3828,7 +3828,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							JsonObject obj;
 							obj.add(ObfusString("build_label"), std::string(build_label, 16));
-							obj.add(ObfusString("build_hash"), build_hash);
+							obj.add(ObfusString("build_hash"), std::string(build_hash, 22));
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
 						break;
