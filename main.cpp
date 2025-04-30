@@ -3846,7 +3846,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							JsonObject obj;
 							obj.add(ObfusString("build_label"), std::string(build_label, 16));
-							obj.add(ObfusString("build_hash"), std::string(build_hash, 22));
+							obj.add(ObfusString("build_hash"), build_hash[0] ? std::string(build_hash, 22) : std::string());
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
 						break;
