@@ -1776,6 +1776,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 		is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
 		is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
+		is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2657,6 +2658,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_33_0_0_or_above)
 		{
 			SIG_INST("FC 94 94 BF 00 00 00 00 ? ? ? ? ? ? ? ? C0 99 E8 D0 00 00 00 00");
 			auto lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
@@ -2951,6 +2953,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_33_0_0_or_above) // U32 Veilbreaker (2022.09.06.19.24) seems to crash in this detour
 		{
 			SIG_INST("6F 5D A9 54 00 00 00 00");
 			auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(sig_inst);
