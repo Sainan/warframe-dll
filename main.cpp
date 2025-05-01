@@ -2562,7 +2562,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
-		// Needed for 33.0.0 (2023.04.25.23.40). Doesn't seem to cause any issues.
+		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
 		if (!is_33_6_0_or_above)
 		{
 			if (is_32_0_0_or_above)
