@@ -672,9 +672,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct((ArgumentsU36*)_arguments);
 	}
-	else
+	else if (is_31_5_0_or_above)
 	{
 		process_args_struct((LegacyArguments*)_arguments);
+	}
+	else
+	{
+		process_args_struct((LegacyArgumentsU30*)_arguments);
 	}
 }
 
@@ -1768,6 +1772,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
+		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2144,8 +2149,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (!is_legacy)
 		{
-			SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00");
-			auto winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
+			void* winhttp_connect;
+			if (is_31_5_0_or_above)
+			{
+				SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00");
+				winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 ? ? 00 00 44 0F B7 AC");
+				winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
 #endif
@@ -2577,7 +2591,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				SIG_INST("0F B6 84 24 80 00 00 00 40 0F B6 CF 88 05");
+				SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05");
 				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 #if LOGGING
 				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
@@ -3159,6 +3173,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 #if LABEL_REPLACEMENTS
+		if (is_33_0_0_or_above) // Seems to match something unexpected in 2021.09.08.19.27 (~30.5)
 		{
 			SIG_INST("4C 8B DC 57 41 ? 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
 			auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();

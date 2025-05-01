@@ -6,6 +6,7 @@ inline char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
 inline bool is_38_5_0_or_above = false;
 inline bool is_37_0_0_or_above = false;
 inline bool is_35_5_0_or_above = false;
+inline bool is_31_5_0_or_above = false;
 
 inline char build_hash[22] = { 0 };
 
@@ -182,6 +183,22 @@ static_assert(offsetof(LegacyArguments, got_language) == 0x294);
 static_assert(offsetof(LegacyArguments, language) == 0x298);
 static_assert(offsetof(LegacyArguments, got_cluster) == 0x2B8);
 static_assert(offsetof(LegacyArguments, cluster) == 0x2C0);
+
+struct LegacyArgumentsU30
+{
+	PAD(0, 0x263) bool got_graphicsDriver;
+	/* 0x268 */ LegacyGameString graphicsDriver;
+	PAD(0x268 + sizeof(LegacyGameString), 0x28A) bool got_language;
+	/* 0x290 */ LegacyGameString language;
+	/* 0x2B0 */ bool got_cluster;
+	/* 0x2B8 */ LegacyGameString cluster;
+};
+static_assert(offsetof(LegacyArgumentsU30, got_graphicsDriver) == 0x263);
+static_assert(offsetof(LegacyArgumentsU30, graphicsDriver) == 0x268);
+static_assert(offsetof(LegacyArgumentsU30, got_language) == 0x28A);
+static_assert(offsetof(LegacyArgumentsU30, language) == 0x290);
+static_assert(offsetof(LegacyArgumentsU30, got_cluster) == 0x2B0);
+static_assert(offsetof(LegacyArgumentsU30, cluster) == 0x2B8);
 
 // Objects
 
