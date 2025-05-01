@@ -2,12 +2,16 @@ Write-Host "Fetching latest version..."
 $latest = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/meta" -Method Get
 
 $sha256 = ""
-if (Test-Path "../dwmapi.dll") {
-	$sha256 = (Get-FileHash "../dwmapi.dll" -Algorithm SHA256).Hash.ToLower()
+if (Test-Path "../wtsapi32.dll") {
+	$sha256 = (Get-FileHash "../wtsapi32.dll" -Algorithm SHA256).Hash.ToLower()
 }
 $hotfix_sha256 = ""
 if (Test-Path "Hotfix.bin") {
 	$hotfix_sha256 = (Get-FileHash "Hotfix.bin" -Algorithm SHA256).Hash.ToLower()
+}
+
+if (Test-Path "../dwmapi.dll") {
+	Remove-Item "../dwmapi.dll"
 }
 
 if ($sha256 -ne $latest.sha256 -or $hotfix_sha256 -ne $latest.hotfix_sha256) {
@@ -19,7 +23,7 @@ if ($sha256 -ne $latest.sha256 -or $hotfix_sha256 -ne $latest.hotfix_sha256) {
 	}
 
 	if ($sha256 -ne $latest.sha256) {
-		Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/dwmapi.dll" -OutFile "../dwmapi.dll"
+		Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/dwmapi.dll" -OutFile "../wtsapi32.dll"
 	}
 	if ($hotfix_sha256 -ne $latest.hotfix_sha256) {
 		if ($latest.hotfix -ne "") {
