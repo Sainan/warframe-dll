@@ -126,84 +126,46 @@ union LegacyGameString
 	}*/
 };
 
-struct Arguments
+// Update 37-38
+struct ArgumentsU37
 {
-	SOUP_PURE bool& got_graphicsDriver()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x189);
-		}
-		return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x171);
-	}
-
-	SOUP_PURE GameString& graphicsDriver()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x190);
-		}
-		return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x178);
-	}
-
-	SOUP_PURE bool& got_language()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x1AC);
-		}
-		return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x194);
-	}
-
-	SOUP_PURE GameString& language()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x1B0);
-		}
-		return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x198);
-	}
-
-	SOUP_PURE bool& got_cluster()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x1C0);
-		}
-		return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x1A8);
-	}
-
-	SOUP_PURE GameString& cluster()
-	{
-		if (is_37_0_0_or_above)
-		{
-			return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x1C8);
-		}
-		return *reinterpret_cast<GameString*>(reinterpret_cast<uintptr_t>(this) + 0x1B0);
-	}
-
-	// Update 37-38
-	// PAD(0, 0x04) bool silent;
-	// PAD(0x05, 0x18) bool client;
-	// PAD(0x19, 0x140) bool got_debugSession;
-	// /* 0x148 */ GameString debugSession;
-	// /* 0x158 */ bool got_clientType;
-	// /* 0x160 */ GameString clientType;
-	// PAD(0x160 + sizeof(GameString), 0x189) bool got_graphicsDriver;
-	// /* 0x190 */ GameString graphicsDriver;
-	// PAD(0x1A0, 0x1AC) bool got_language;
-	// /* 0x1B0 */ GameString language;
-	// /* 0x1C0 */ bool got_cluster;
-	// /* 0x1C8 */ GameString cluster;
-	// /* 0x1D8 */ GameString relaunch;
+	PAD(0, 0x04) bool silent;
+	PAD(0x05, 0x18) bool client;
+	PAD(0x19, 0x140) bool got_debugSession;
+	/* 0x148 */ GameString debugSession;
+	/* 0x158 */ bool got_clientType;
+	/* 0x160 */ GameString clientType;
+	PAD(0x160 + sizeof(GameString), 0x189) bool got_graphicsDriver;
+	/* 0x190 */ GameString graphicsDriver;
+	PAD(0x1A0, 0x1AC) bool got_language;
+	/* 0x1B0 */ GameString language;
+	/* 0x1C0 */ bool got_cluster;
+	/* 0x1C8 */ GameString cluster;
+	/* 0x1D8 */ GameString relaunch;
 };
-//static_assert(offsetof(Arguments, got_graphicsDriver) == 0x189);
-//static_assert(offsetof(Arguments, graphicsDriver) == 0x190);
-//static_assert(offsetof(Arguments, got_language) == 0x1AC);
-//static_assert(offsetof(Arguments, language) == 0x1B0);
-//static_assert(offsetof(Arguments, got_cluster) == 0x1C0);
-//static_assert(offsetof(Arguments, cluster) == 0x1C8);
-//static_assert(offsetof(Arguments, relaunch) == 0x1D8);
+static_assert(offsetof(ArgumentsU37, got_graphicsDriver) == 0x189);
+static_assert(offsetof(ArgumentsU37, graphicsDriver) == 0x190);
+static_assert(offsetof(ArgumentsU37, got_language) == 0x1AC);
+static_assert(offsetof(ArgumentsU37, language) == 0x1B0);
+static_assert(offsetof(ArgumentsU37, got_cluster) == 0x1C0);
+static_assert(offsetof(ArgumentsU37, cluster) == 0x1C8);
+static_assert(offsetof(ArgumentsU37, relaunch) == 0x1D8);
+
+struct ArgumentsU36
+{
+	PAD(0, 0x171) bool got_graphicsDriver;
+	/* 0x178 */ GameString graphicsDriver;
+	PAD(0x178 + sizeof(GameString), 0x194) bool got_language;
+	/* 0x198 */ GameString language;
+	PAD(0x198 + sizeof(GameString), 0x1A8) bool got_cluster;
+	/* 0x1B0 */ GameString cluster;
+};
+static_assert(offsetof(ArgumentsU36, got_graphicsDriver) == 0x171);
+static_assert(offsetof(ArgumentsU36, graphicsDriver) == 0x178);
+static_assert(offsetof(ArgumentsU36, got_language) == 0x194);
+static_assert(offsetof(ArgumentsU36, language) == 0x198);
+static_assert(offsetof(ArgumentsU36, got_cluster) == 0x1A8);
+static_assert(offsetof(ArgumentsU36, cluster) == 0x1B0);
 
 struct LegacyArguments
 {

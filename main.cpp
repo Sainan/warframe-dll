@@ -608,7 +608,7 @@ static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 
 template <typename T>
-static void process_args(T* str)
+static void process_args_str(T* str)
 {
 	for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
 	{
@@ -618,6 +618,29 @@ static void process_args(T* str)
 		}
 	}
 	on_got_server_host();
+}
+
+template <typename T>
+static void process_args_struct(T* arguments)
+{
+	if (!arguments->got_language)
+	{
+		arguments->got_language = true;
+		arguments->language.setShortData(fallback_language);
+	}
+	if (!arguments->got_graphicsDriver)
+	{
+		arguments->got_graphicsDriver = true;
+		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
+	}
+	if (!arguments->got_cluster)
+	{
+		arguments->got_cluster = true;
+		arguments->cluster.setShortData(fallback_cluster);
+	}
+
+	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
+	graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
 }
 
 static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
@@ -632,60 +655,26 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		if (uses_legacy_game_string)
 		{
-			process_args((LegacyGameString*)_str);
+			process_args_str((LegacyGameString*)_str);
 		}
 		else
 		{
-			process_args((GameString*)_str);
+			process_args_str((GameString*)_str);
 		}
 		processed_args = true;
 	}
 
-	if (uses_legacy_game_string)
+	if (is_37_0_0_or_above)
 	{
-		auto arguments = (LegacyArguments*)_arguments;
-
-		if (!arguments->got_language)
-		{
-			arguments->got_language = true;
-			arguments->language.setShortData(fallback_language);
-		}
-		if (!arguments->got_graphicsDriver)
-		{
-			arguments->got_graphicsDriver = true;
-			arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
-		}
-		if (!arguments->got_cluster)
-		{
-			arguments->got_cluster = true;
-			arguments->cluster.setShortData(fallback_cluster);
-		}
-
-		lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
-		graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+		process_args_struct((ArgumentsU37*)_arguments);
+	}
+	else if (!uses_legacy_game_string)
+	{
+		process_args_struct((ArgumentsU36*)_arguments);
 	}
 	else
 	{
-		auto arguments = (Arguments*)_arguments;
-
-		if (!arguments->got_language())
-		{
-			arguments->got_language() = true;
-			arguments->language().setShortData(fallback_language);
-		}
-		if (!arguments->got_graphicsDriver())
-		{
-			arguments->got_graphicsDriver() = true;
-			arguments->graphicsDriver().setShortData(fallback_graphicsDriver);
-		}
-		if (!arguments->got_cluster())
-		{
-			arguments->got_cluster() = true;
-			arguments->cluster().setShortData(fallback_cluster);
-		}
-
-		lang_code = std::string(arguments->language().getData(), arguments->language().getSize());
-		graphics_driver = std::string(arguments->graphicsDriver().getData(), arguments->graphicsDriver().getSize());
+		process_args_struct((LegacyArguments*)_arguments);
 	}
 }
 
