@@ -38,7 +38,9 @@ end
 
 local { base64, crypto, http, json } = require "*"
 
-if owf_overlay_get_size() == 0xFFFFFFFF then
+if owf_overlay_get_size() == 0xFFFFFFFF -- Heuristic to avoid managing content again after applying hotfix
+	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
+then
 	local function b64m_encode(data)
 		return base64.encode(data, false):replace("/", "-")
 	end
