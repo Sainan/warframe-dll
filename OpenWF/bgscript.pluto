@@ -272,7 +272,7 @@ local function check_for_updates()
 		end
 		version_is_latest = false
 		if meta and meta.manifest then
-			local sha256 = crypto.sha256(io.contents("dwmapi.dll") or io.contents("wtsapi32.dll"))
+			local sha256 = crypto.sha256(io.contents("wtsapi32.dll") or io.contents("dwmapi.dll"))
 			local hotfix_sha256 = ""
 			if hotfix_bin := io.contents("OpenWF/Hotfix.bin") then
 				hotfix_sha256 = crypto.sha256(hotfix_bin)
