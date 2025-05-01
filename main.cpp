@@ -1711,7 +1711,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	{
 		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
 		{
-			MessageBoxA(0, "Please only put the dwmapi.dll in your Warframe installation folder.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			MessageBoxA(0, "Please don't keep the bootstrapper DLL (wtsapi32.dll or dwmapi.dll) in the same folder as any executable other than Warframe.x64.exe.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 
