@@ -676,9 +676,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct((LegacyArguments*)_arguments);
 	}
-	else
+	else if (is_28_0_0_or_above)
 	{
 		process_args_struct((LegacyArgumentsU30*)_arguments);
+	}
+	else
+	{
+		process_args_struct((LegacyArgumentsU27*)_arguments);
 	}
 }
 
@@ -1773,6 +1777,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
 		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
+		//const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
+		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
+		const bool is_29_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.08.25.18.35").str()) >= 0);
+		is_28_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.06.12.16.46").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2306,15 +2314,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 			std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
-			if (!Curl_resolv)
+			if (Curl_resolv)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				Curl_resolv_hook.detour = reinterpret_cast<void*>(&Curl_resolv_detour);
+				Curl_resolv_hook.target = Curl_resolv;
+				Curl_resolv_hook.create();
+				Curl_resolv_hook.enable();
 			}
-			Curl_resolv_hook.detour = reinterpret_cast<void*>(&Curl_resolv_detour);
-			Curl_resolv_hook.target = Curl_resolv;
-			Curl_resolv_hook.create();
-			Curl_resolv_hook.enable();
+			else
+			{
+				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+			}
 		}
 
 		{
@@ -2343,9 +2353,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else
+			else if (is_29_0_0_or_above)
 			{
 				SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
+				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.03.24.20.24
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
@@ -2591,8 +2606,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05");
-				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				uint8_t* insn;
+				if (is_29_3_2_or_above)
+				{
+					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_29_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05");
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else
+				{
+					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
 #if LOGGING
 				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
 #endif
