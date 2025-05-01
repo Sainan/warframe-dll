@@ -1773,7 +1773,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
-		is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
+		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
+		//const bool is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
+		//const bool is_34_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.09.12.09.10").str()) > 0); // 2023.09.12.09.10 should be 33.6.9, which was the last hotfix for update 33
 		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
@@ -2361,14 +2363,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		if (!is_legacy)
 		{
 			void* verify_worldstate_integrity;
-			if (is_35_0_0_or_above)
+			if (is_35_5_0_or_above)
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else
 			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0)
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0) & 2024.02.16.17.13 (35.1.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
@@ -2399,22 +2401,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			void* parse_arguments;
-			if (is_35_0_0_or_above)
-			{
-				SIG_INST("4C 8B DC 55 41 57 49 8D 6B A1 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 89 5B 20");
-				parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else
-			{
-				SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 D9 48 81 EC F0 00 00 00 48 8B 05"); // 2023.07.26.16.38 (33.6.0)
-				parse_arguments = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
+			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
+			auto parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "parse_arguments = " << parse_arguments << std::endl;
+			std::cout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
 #endif
-			if (parse_arguments)
+			if (parse_arguments_callsite)
 			{
+				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
+
 				parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour);
 				parse_arguments_hook.target = parse_arguments;
 				parse_arguments_hook.create();
