@@ -1783,7 +1783,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
 		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
-		//const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
+		const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
 		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
 		const bool is_29_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.08.25.18.35").str()) >= 0);
 		is_28_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.06.12.16.46").str()) >= 0);
@@ -2619,14 +2619,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				uint8_t* insn;
-				if (is_29_3_2_or_above)
+				if (is_30_0_0_or_above)
 				{
-					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05"); // 2021.09.08.19.27
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_29_0_0_or_above)
+				else if (is_29_3_2_or_above)
 				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05");
+					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
 				else if (is_26_0_0_or_above)
