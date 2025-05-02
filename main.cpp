@@ -81,8 +81,12 @@ extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetC
 static HMODULE og_wtsapi32;
 static FARPROC og_WTSRegisterSessionNotification;
 static FARPROC og_WTSUnRegisterSessionNotification;
+static FARPROC og_WTSFreeMemory;
+static FARPROC og_WTSQuerySessionInformationA;
 extern "C" __declspec(dllexport) void WTSRegisterSessionNotification() { og_WTSRegisterSessionNotification(); }
 extern "C" __declspec(dllexport) void WTSUnRegisterSessionNotification() { og_WTSUnRegisterSessionNotification(); }
+extern "C" __declspec(dllexport) void WTSFreeMemory() { og_WTSFreeMemory(); }
+extern "C" __declspec(dllexport) void WTSQuerySessionInformationA() { og_WTSQuerySessionInformationA(); }
 
 
 // Cache tunables for faster access
@@ -1740,6 +1744,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			og_WTSRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSRegisterSessionNotification");
 			og_WTSUnRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSUnRegisterSessionNotification");
+			og_WTSFreeMemory = GetProcAddress(og_wtsapi32, "WTSFreeMemory");
+			og_WTSQuerySessionInformationA = GetProcAddress(og_wtsapi32, "WTSQuerySessionInformationA");
 		}
 
 		{
