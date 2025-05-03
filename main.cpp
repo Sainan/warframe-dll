@@ -2455,7 +2455,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
+			//SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
+			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2019.05.22.23.12
 			auto parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 			std::cout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
