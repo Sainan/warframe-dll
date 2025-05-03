@@ -7,6 +7,7 @@ inline bool is_38_5_0_or_above = false;
 inline bool is_37_0_0_or_above = false;
 inline bool is_35_5_0_or_above = false;
 inline bool is_31_5_0_or_above = false;
+inline bool is_29_10_0_or_above = false;
 inline bool is_28_0_0_or_above = false;
 inline bool is_26_1_0_or_above = false;
 inline bool is_25_0_0_or_above = false;
@@ -187,6 +188,7 @@ static_assert(offsetof(LegacyArguments, language) == 0x298);
 static_assert(offsetof(LegacyArguments, got_cluster) == 0x2B8);
 static_assert(offsetof(LegacyArguments, cluster) == 0x2C0);
 
+// 2021.09.08.19.27, 2021.03.19.10.30
 struct LegacyArgumentsU30
 {
 	PAD(0, 0x263) bool got_graphicsDriver;
@@ -202,6 +204,23 @@ static_assert(offsetof(LegacyArgumentsU30, got_language) == 0x28A);
 static_assert(offsetof(LegacyArgumentsU30, language) == 0x290);
 static_assert(offsetof(LegacyArgumentsU30, got_cluster) == 0x2B0);
 static_assert(offsetof(LegacyArgumentsU30, cluster) == 0x2B8);
+
+// 2021.01.25.08.49
+struct LegacyArgumentsU29
+{
+	PAD(0, 0x243) bool got_graphicsDriver;
+	/* 0x248 */ LegacyGameString graphicsDriver;
+	PAD(0x248 + sizeof(LegacyGameString), 0x26A) bool got_language;
+	/* 0x270 */ LegacyGameString language;
+	/* 0x290 */ bool got_cluster;
+	/* 0x298 */ LegacyGameString cluster;
+};
+static_assert(offsetof(LegacyArgumentsU29, got_graphicsDriver) == 0x243);
+static_assert(offsetof(LegacyArgumentsU29, graphicsDriver) == 0x248);
+static_assert(offsetof(LegacyArgumentsU29, got_language) == 0x26A);
+static_assert(offsetof(LegacyArgumentsU29, language) == 0x270);
+static_assert(offsetof(LegacyArgumentsU29, got_cluster) == 0x290);
+static_assert(offsetof(LegacyArgumentsU29, cluster) == 0x298);
 
 // 2020.03.24.20.24
 struct LegacyArgumentsU27
