@@ -2189,7 +2189,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				if (is_33_6_0_or_above)
+				{
+					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				}
+				else
+				{
+					std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				}
 			}
 		}
 
