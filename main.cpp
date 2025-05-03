@@ -676,9 +676,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct((ArgumentsU36*)_arguments);
 	}
+	else if (is_33_6_0_or_above)
+	{
+		process_args_struct((LegacyArgumentsU33_6*)_arguments);
+	}
 	else if (is_31_5_0_or_above)
 	{
-		process_args_struct((LegacyArguments*)_arguments);
+		process_args_struct((LegacyArgumentsU30_1*)_arguments);
 	}
 	else if (is_29_10_0_or_above)
 	{
@@ -1807,7 +1811,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
 		//const bool is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
 		//const bool is_34_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.09.12.09.10").str()) > 0); // 2023.09.12.09.10 should be 33.6.9, which was the last hotfix for update 33
-		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
+		is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		//const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
 		const bool is_31_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.06.09.08.45").str()) >= 0);
