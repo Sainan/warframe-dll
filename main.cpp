@@ -684,9 +684,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct((LegacyArgumentsU30*)_arguments);
 	}
-	else if (is_28_0_0_or_above)
+	else if (is_29_6_0_or_above)
 	{
 		process_args_struct((LegacyArgumentsU29*)_arguments);
+	}
+	else if (is_28_0_0_or_above)
+	{
+		process_args_struct((LegacyArgumentsU28*)_arguments);
 	}
 	else if (is_26_1_0_or_above)
 	{
@@ -1810,6 +1814,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
 		const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
 		is_29_10_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.03.19.10.30").str()) >= 0);
+		is_29_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.01.25.08.49").str()) >= 0);
 		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
 		const bool is_29_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.08.25.18.35").str()) >= 0);
 		is_28_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.06.12.16.46").str()) >= 0);
