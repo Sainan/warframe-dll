@@ -1781,7 +1781,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		//const bool is_34_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.09.12.09.10").str()) > 0); // 2023.09.12.09.10 should be 33.6.9, which was the last hotfix for update 33
 		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
-		const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
+		//const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
+		const bool is_31_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.07.25.16.59").str()) >= 0);
 		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
 		const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
 		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
@@ -2605,7 +2606,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
 		if (!is_33_6_0_or_above)
 		{
-			if (is_32_0_0_or_above)
+			if (is_31_6_0_or_above)
 			{
 				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
 				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
