@@ -1800,7 +1800,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
 		const bool is_29_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.08.25.18.35").str()) >= 0);
 		is_28_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.06.12.16.46").str()) >= 0);
-		const bool is_27_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.12.13.15.04").str()) >= 0);
+		//const bool is_27_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.12.13.00.31").str()) >= 0);
+		const bool is_26_1_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.12.13.00.31").str()) >= 0);
 		const bool is_26_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.10.31.22.42").str()) >= 0);
 
 		std::error_code ec{};
@@ -2350,7 +2351,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			Pointer ssl_verify_internal_caller;
-			if (is_27_0_0_or_above)
+			if (is_26_1_0_or_above)
 			{
 				SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F");
 				ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
@@ -2388,9 +2389,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_27_0_0_or_above)
+			else if (is_26_1_0_or_above)
 			{
-				SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.03.24.20.24
+				SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.03.24.20.24, 2019.12.13.00.31
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else
