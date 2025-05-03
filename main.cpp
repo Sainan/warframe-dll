@@ -704,9 +704,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct((LegacyArgumentsU25*)_arguments);
 	}
-	else
+	else if (is_24_0_0_or_above)
 	{
 		process_args_struct((LegacyArgumentsU24*)_arguments);
+	}
+	else
+	{
+		process_args_struct((LegacyArgumentsU23*)_arguments);
 	}
 }
 
@@ -1826,6 +1830,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_26_1_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.11.22.21.24").str()) >= 0);
 		const bool is_26_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.10.31.22.42").str()) >= 0);
 		is_25_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.05.22.23.12").str()) >= 0);
+		is_24_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.11.08.14.45").str()) >= 0);
+		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2130,8 +2136,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		save_config();
 
-		bool is_legacy = false;
-
 		// 2018.02.22.14.34 (M:8004325165498360760)
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 00 FA FF FF 48 81 EC 00 07 00 00 48 8B 05 ? ? ? ? 48 33 C4");
@@ -2145,8 +2149,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				legacy_parse_url_hook.target = legacy_parse_url;
 				legacy_parse_url_hook.create();
 				legacy_parse_url_hook.enable();
-
-				is_legacy = true;
 			}
 		}*/
 
@@ -2164,8 +2166,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				internet_connect_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 				internet_connect_hook.create();
 				internet_connect_hook.enable();
-
-				is_legacy = true;
 			}
 		}*/
 
@@ -2183,8 +2183,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				resolve_addr_hook.target = resolve_addr;
 				resolve_addr_hook.create();
 				resolve_addr_hook.enable();
-
-				is_legacy = true;
 			}
 		}*/
 
@@ -2200,7 +2198,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			parse_url_hook.enable();
 		}*/
 
-		if (!is_legacy)
 		{
 			void* winhttp_connect;
 			if (is_31_5_0_or_above)
@@ -2229,7 +2226,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (!is_legacy)
 		{
 			SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
 			auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
@@ -2343,7 +2339,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-		if (!is_legacy)
 		{
 			void* Curl_resolv;
 			if (is_37_0_0_or_above)
@@ -2399,7 +2394,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			ssl_verify_internal_hook.enable();
 		}
 
-		if (!is_legacy)
 		{
 			void* Curl_ossl_verifyhost;
 			if (is_37_0_0_or_above)
@@ -2437,7 +2431,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// This hook allows WorldSeed to be absent or just any value.
-		if (!is_legacy)
 		{
 			void* verify_worldstate_integrity;
 			if (is_35_5_0_or_above)
@@ -2445,9 +2438,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
+			else if (is_23_0_0_or_above)
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0), 2024.02.16.17.13 (35.1.0), 2018.06.14.23.21 (23.0.0)
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 			else
 			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0) & 2024.02.16.17.13 (35.1.0)
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
@@ -2682,9 +2680,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else
+				else if (is_24_0_0_or_above)
 				{
 					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_23_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else
+				{
+					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
 #if LOGGING
@@ -2706,32 +2714,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				{
 					log_optional_scan_failure(true);
 				}
-			}
-		}
-
-		// Same idea for 2018.02.22.14.34 (M:8004325165498360760), but can't see any immediate issues with it.
-		if (is_legacy)
-		{
-			SIG_INST("E8 ? ? ? ? 0F B6 84 24 ? ? ? ? 88 05 ? ? ? ? 0F B6 84");
-			auto insn = Module(nullptr).range.scan(sig_inst).add(5).as<uint8_t*>();
-#if LOGGING
-			std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
-#endif
-			if ((uintptr_t)insn != 5)
-			{
-				memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
-				insn[0] = 0x31;
-				insn[1] = 0xc0;
-				insn[2] = 0x90;
-				insn[3] = 0x90;
-				insn[4] = 0x90;
-				insn[5] = 0x90;
-				insn[6] = 0x90;
-				insn[7] = 0x90;
-			}
-			else
-			{
-				log_optional_scan_failure(true);
 			}
 		}
 
@@ -2757,6 +2739,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_24_0_0_or_above) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
 		{
 			// "Sys [Error]: Could not write to "
 			SIG_INST("48 8B 0D ? ? ? ? 48 85 C9 74 14 41 B8 20 00 00 00 48 8D 15 ? ? ? ? E8");
