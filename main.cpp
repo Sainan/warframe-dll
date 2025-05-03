@@ -2985,7 +2985,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				std::cout << ObfusString("Failed to bring up \"forced profile dir\". This option will be non-functional.") << std::endl;
 			}
 		}
 
