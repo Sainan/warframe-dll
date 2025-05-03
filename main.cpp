@@ -1602,6 +1602,18 @@ static bool check_ec(const std::error_code& ec)
 	return true;
 }
 
+static void log_optional_scan_failure(bool important)
+{
+	if (important)
+	{
+		std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+	}
+	else
+	{
+		std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+	}
+}
+
 static Server serv;
 
 struct owfWebsocketTag {};
@@ -2189,14 +2201,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				if (is_33_6_0_or_above)
-				{
-					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
-				}
-				else
-				{
-					std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
-				}
+				log_optional_scan_failure(is_33_6_0_or_above);
 			}
 		}
 
@@ -2233,7 +2238,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}*/
 
@@ -2310,7 +2315,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}*/
 
@@ -2339,7 +2344,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2466,7 +2471,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				on_got_server_host();
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2520,7 +2525,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}*/
 
@@ -2539,7 +2544,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2631,7 +2636,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else
 				{
-					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+					log_optional_scan_failure(true);
 				}
 			}
 			else
@@ -2674,7 +2679,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else
 				{
-					std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+					log_optional_scan_failure(true);
 				}
 			}
 		}
@@ -2701,7 +2706,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+				log_optional_scan_failure(true);
 			}
 		}
 
@@ -2743,7 +2748,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2763,7 +2768,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2782,7 +2787,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2802,7 +2807,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2818,7 +2823,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2830,7 +2835,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_newstate)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}*/
 
@@ -2842,7 +2847,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_pushstring)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2854,7 +2859,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_pushpointer)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2866,7 +2871,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_pushobject)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2882,7 +2887,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2894,7 +2899,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_createtable)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2906,7 +2911,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luau_settable)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2918,7 +2923,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!luauD_call)
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2952,7 +2957,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 				std::cout << "No results for swig types" << std::endl;
 #endif
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -2970,7 +2975,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 				std::cout << "No results for swig enums" << std::endl;
 #endif
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3019,7 +3024,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3058,7 +3063,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3077,7 +3082,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3094,7 +3099,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3113,7 +3118,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3132,7 +3137,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3151,7 +3156,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3170,7 +3175,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3189,7 +3194,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 #endif
@@ -3210,7 +3215,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 #endif
@@ -3231,7 +3236,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 #endif
@@ -3275,7 +3280,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 #if !METADATA_PATCHES
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 #endif
 			}
 		}
@@ -3331,7 +3336,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 #endif
@@ -3352,7 +3357,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3371,7 +3376,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3390,7 +3395,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 #endif
@@ -3412,7 +3417,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
@@ -3431,7 +3436,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
