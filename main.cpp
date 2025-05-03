@@ -1802,7 +1802,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
 		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
 		//const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
-		const bool is_31_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.07.25.16.59").str()) >= 0);
+		const bool is_31_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.06.09.08.45").str()) >= 0);
 		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
 		const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
 		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
