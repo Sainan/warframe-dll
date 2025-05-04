@@ -308,7 +308,7 @@ static_assert(offsetof(LegacyArgumentsU24, language) == 0x228);
 static_assert(offsetof(LegacyArgumentsU24, got_cluster) == 0x248);
 static_assert(offsetof(LegacyArgumentsU24, cluster) ==  0x250);
 
-// 2018.06.14.23.21, 2018.02.22.14.34, 2017.10.12.17.04
+// 2018.06.14.23.21, 2018.05.17.16.28, 2018.02.22.14.34, 2017.10.12.17.04
 struct LegacyArgumentsU23
 {
 	inline static bool got_graphicsDriver;

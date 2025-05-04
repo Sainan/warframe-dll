@@ -1832,6 +1832,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_25_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.05.22.23.12").str()) >= 0);
 		is_24_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.11.08.14.45").str()) >= 0);
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
+		const bool is_20_20_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.05.17.16.28").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2441,6 +2442,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else if (is_23_0_0_or_above)
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0), 2024.02.16.17.13 (35.1.0), 2018.06.14.23.21 (23.0.0)
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else if (is_20_20_0_or_above)
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37"); // 2018.05.17.16.28 (20.20.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else
