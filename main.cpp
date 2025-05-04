@@ -258,7 +258,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 }
 
 
-static DetourHook game_http_request_hook;
+static CompactDetourHook game_http_request_hook;
 
 struct GameHttpRequest
 {
@@ -1833,6 +1833,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_24_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.11.08.14.45").str()) >= 0);
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
+		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2241,6 +2242,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			auto game_http_request = game_http_request_caller.add(5).rip().as<void*>();
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
 			game_http_request_hook.target = game_http_request;
+			game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
+#if LOGGING
+			std::cout << "game_http_request_hook.code_cave = " << game_http_request_hook.code_cave << std::endl;
+#endif
 			game_http_request_hook.create();
 			game_http_request_hook.enable();
 		}
@@ -2449,9 +2454,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2018.05.17.16.28 (22.20.0), 2018.04.20.02.04 (22.18.0), 2018.03.15.19.39 (22.16.0), 2018.03.07.14.18 (22.15.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
+			else if (is_21_0_0_or_above)
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34 (22.13.4), 2017.06.29.02.13 (21.0.0)
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 			else
 			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34 (22.13.4)
+				SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 57 41 56 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 65 48 8B 04 25"); // 2017.03.06.15.49 (19.13.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
