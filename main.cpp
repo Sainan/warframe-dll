@@ -292,10 +292,10 @@ struct GameHttpRequestU18
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
 static void on_got_server_host();
-static void* game_http_request_detour(void* a1, void* request, void* a3);
+using game_http_request_detour_t = void*(*)(void* a1, void* request, void* a3);
 
-template <bool strip_tls = false, typename T>
-static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
+template <typename T, bool strip_tls = false>
+static void* game_http_request_detour(void* a1, T* request, void* a3)
 {
 #if LOGGING
 	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
@@ -415,7 +415,7 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 	}
 #endif
 
-	const auto ret = reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, request, a3);
+	const auto ret = reinterpret_cast<game_http_request_detour_t>(game_http_request_hook.original)(a1, request, a3);
 
 #if LOGGING
 	// This now contains the response
@@ -426,22 +426,6 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 #endif
 
 	return ret;	
-}
-
-static void* game_http_request_detour(void* a1, void* request, void* a3)
-{
-	if (is_35_5_0_or_above)
-	{
-		return game_http_request_detour_impl(a1, (GameHttpRequest*)request, a3);
-	}
-	else if (is_19_0_0_or_above)
-	{
-		return game_http_request_detour_impl(a1, (LegacyGameHttpRequest*)request, a3);
-	}
-	else
-	{
-		return game_http_request_detour_impl<true>(a1, (GameHttpRequestU18*)request, a3);
-	}
 }
 
 
@@ -2304,7 +2288,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				game_http_request = game_http_request_caller.add(8).rip().as<void*>();
 			}
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
+			if (is_35_5_0_or_above)
+			{
+				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequest>);
+			}
+			else if (is_19_0_0_or_above)
+			{
+				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest>);
+			}
+			else
+			{
+				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU18, true>);
+			}
 			game_http_request_hook.target = game_http_request;
 			game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
 #if LOGGING
