@@ -4079,7 +4079,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else
 				{
-					std::cout << ObfusString("Failed to bind TCP/6155. The game will fail to start.").str() << std::endl;
+					std::cout << ObfusString("Failed to bind TCP/6155.").str();
+					if (is_33_6_0_or_above)
+					{
+						std::cout << ObfusString(" The game will fail to start.").str();
+					}
+					std::cout << std::endl;
 				}
 			});
 			thrd.detach();
