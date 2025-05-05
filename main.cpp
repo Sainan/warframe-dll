@@ -74,6 +74,13 @@ static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
 static bool metadata_patches_in_use = false;
 
+// Exports for Ordis' old Helper.dll:
+// ??4CExampleExport@@QEAAAEAV0@$$QEAV0@@Z
+// ??4CExampleExport@@QEAAAEAV0@AEBV0@@Z
+class __declspec(dllexport) CExampleExport
+{
+};
+
 static HMODULE og_dwmapi;
 static FARPROC og_DwmGetCompositionTimingInfo;
 extern "C" __declspec(dllexport) void DwmGetCompositionTimingInfo() { og_DwmGetCompositionTimingInfo(); }
