@@ -1817,7 +1817,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			soup::free(data);
 		}
 
-		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.16.07").str()) >= 0);
+		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.09.51").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
 		//const bool is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
