@@ -1873,6 +1873,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
 		const bool is_18_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.04.10.06").str()) >= 0);
 		const bool is_18_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.12.05.18.07").str()) >= 0);
+		const bool is_17_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.10.15.12.24").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2519,6 +2520,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// This hook allows WorldSeed to be absent or just any value.
+		// 16.5 seemingly does not validate the WorldSeed.
+		if (is_17_0_0_or_above)
 		{
 			void* verify_worldstate_integrity;
 			if (is_35_5_0_or_above)
