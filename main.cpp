@@ -283,10 +283,18 @@ struct LegacyGameHttpRequest
 };
 static_assert(offsetof(LegacyGameHttpRequest, body) == 0x48);
 
+struct GameHttpRequestU18
+{
+	/* 0x00 */ LegacyGameStringU18 url;
+	char pad[0x30];
+	/* 0x48 */ LegacyGameStringU18 body;
+};
+static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
+
 static void on_got_server_host();
 static void* game_http_request_detour(void* a1, void* request, void* a3);
 
-template <typename T>
+template <bool strip_tls = false, typename T>
 static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 {
 #if LOGGING
@@ -301,18 +309,26 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 #if REDIRECT_REQUESTS
 	std::string body_buf;
 	uri.host = server_host;
-	if (uri.scheme.size() == 4) // "http"
+	if constexpr (strip_tls)
 	{
-		if (http_port != 80)
-		{
-			uri.port = http_port;
-		}
+		uri.scheme = ObfusString("http").str();
+		uri.port = http_port;
 	}
 	else
 	{
-		if (https_port != 443)
+		if (uri.scheme.size() == 4) // "http"
 		{
-			uri.port = https_port;
+			if (http_port != 80)
+			{
+				uri.port = http_port;
+			}
+		}
+		else
+		{
+			if (https_port != 443)
+			{
+				uri.port = https_port;
+			}
 		}
 	}
 	if (uri.path == ObfusString("/api/inventory.php").str() || uri.path == ObfusString("/api/missionInventoryUpdate.php").str())
@@ -346,7 +362,11 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 #if PROVIDE_VERSION_INFO
 		if (build_label[0])
 		{
-			uri.query.append(ObfusString("&buildLabel=").str());
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
+			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
 			if (build_hash[0])
@@ -410,13 +430,17 @@ static void* game_http_request_detour_impl(void* a1, T* request, void* a3)
 
 static void* game_http_request_detour(void* a1, void* request, void* a3)
 {
-	if (uses_legacy_game_string)
+	if (is_35_5_0_or_above)
+	{
+		return game_http_request_detour_impl(a1, (GameHttpRequest*)request, a3);
+	}
+	else if (is_19_0_0_or_above)
 	{
 		return game_http_request_detour_impl(a1, (LegacyGameHttpRequest*)request, a3);
 	}
 	else
 	{
-		return game_http_request_detour_impl(a1, (GameHttpRequest*)request, a3);
+		return game_http_request_detour_impl<true>(a1, (GameHttpRequestU18*)request, a3);
 	}
 }
 
@@ -621,65 +645,75 @@ static bool processed_args = false;
 template <typename T>
 static void process_args_str(T* str)
 {
-	for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
+#if LOGGING
+	std::cout << "parse_arguments: " << str->getData() << std::endl;
+#endif
+
+	if (!processed_args)
 	{
-		if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+		processed_args = true;
+		for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
 		{
-			server_host = arg.substr(15);
+			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+			{
+				server_host = arg.substr(15);
+			}
 		}
+		on_got_server_host();
 	}
-	on_got_server_host();
 }
 
-template <typename T>
+template <bool has_graphicsDriver = true, typename T>
 static void process_args_struct(T* arguments)
 {
 	if (!arguments->got_language)
 	{
 		arguments->got_language = true;
-		arguments->language.setShortData(fallback_language);
+		arguments->language.setShortData(fallback_language.data(), fallback_language.size());
 	}
-	if (!arguments->got_graphicsDriver)
+	if constexpr (has_graphicsDriver)
 	{
-		arguments->got_graphicsDriver = true;
-		arguments->graphicsDriver.setShortData(fallback_graphicsDriver);
+		if (!arguments->got_graphicsDriver)
+		{
+			arguments->got_graphicsDriver = true;
+			arguments->graphicsDriver.setShortData(fallback_graphicsDriver.data(), fallback_graphicsDriver.size());
+		}
 	}
 	if (!arguments->got_cluster)
 	{
 		arguments->got_cluster = true;
-		arguments->cluster.setShortData(fallback_cluster);
+		arguments->cluster.setShortData(fallback_cluster.data(), fallback_cluster.size());
 	}
 
 	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
-	graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+	if constexpr (has_graphicsDriver)
+	{
+		graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+	}
 }
 
 static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 {
-#if LOGGING
-	std::cout << "parse_arguments: " << (uses_legacy_game_string ? ((LegacyGameString*)_str)->getData() : ((GameString*)_str)->getData()) << std::endl;
-#endif
+	if (is_35_5_0_or_above)
+	{
+		process_args_str((GameString*)_str);
+	}
+	else if (is_19_0_0_or_above)
+	{
+		process_args_str((LegacyGameString*)_str);
+	}
+	else
+	{
+		process_args_str((LegacyGameStringU18*)_str);
+	}
 
 	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(_arguments, _str, a3);
-
-	if (!processed_args)
-	{
-		if (uses_legacy_game_string)
-		{
-			process_args_str((LegacyGameString*)_str);
-		}
-		else
-		{
-			process_args_str((GameString*)_str);
-		}
-		processed_args = true;
-	}
 
 	if (is_37_0_0_or_above)
 	{
 		process_args_struct((ArgumentsU37*)_arguments);
 	}
-	else if (!uses_legacy_game_string)
+	else if (is_35_5_0_or_above)
 	{
 		process_args_struct((ArgumentsU36*)_arguments);
 	}
@@ -705,19 +739,23 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	}
 	else if (is_26_1_0_or_above)
 	{
-		process_args_struct((LegacyArgumentsU27*)_arguments);
+		process_args_struct<false>((LegacyArgumentsU27*)_arguments);
 	}
 	else if (is_25_0_0_or_above)
 	{
-		process_args_struct((LegacyArgumentsU25*)_arguments);
+		process_args_struct<false>((LegacyArgumentsU25*)_arguments);
 	}
 	else if (is_24_0_0_or_above)
 	{
-		process_args_struct((LegacyArgumentsU24*)_arguments);
+		process_args_struct<false>((LegacyArgumentsU24*)_arguments);
+	}
+	else if (is_19_0_0_or_above)
+	{
+		process_args_struct<false>((LegacyArgumentsU23*)_arguments);
 	}
 	else
 	{
-		process_args_struct((LegacyArgumentsU23*)_arguments);
+		process_args_struct<false>((LegacyArgumentsU18*)_arguments);
 	}
 }
 
@@ -1841,6 +1879,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
+		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2236,17 +2275,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
-			auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-			std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
-#endif
-			if (!game_http_request_caller)
+			void* game_http_request;
+			if (is_19_0_0_or_above)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
+				auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+				std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
+#endif
+				if (!game_http_request_caller)
+				{
+					ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+					MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				}
+				game_http_request = game_http_request_caller.add(5).rip().as<void*>();
 			}
-			auto game_http_request = game_http_request_caller.add(5).rip().as<void*>();
+			else
+			{
+				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05");
+				auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+				std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
+#endif
+				if (!game_http_request_caller)
+				{
+					ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+					MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				}
+				game_http_request = game_http_request_caller.add(8).rip().as<void*>();
+			}
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour);
 			game_http_request_hook.target = game_http_request;
 			game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
@@ -2407,6 +2464,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			ssl_verify_internal_hook.enable();
 		}
 
+		if (is_19_0_0_or_above) // Just stripping TLS for U18 and below
 		{
 			void* Curl_ossl_verifyhost;
 			if (is_37_0_0_or_above)
@@ -2466,9 +2524,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34 (22.13.4), 2017.06.29.02.13 (21.0.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else
+			else if (is_19_0_0_or_above)
 			{
 				SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 57 41 56 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 65 48 8B 04 25"); // 2017.03.06.15.49 (19.13.0)
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 18 56 57 41 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.09.30.12.04
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
@@ -2499,9 +2562,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			//SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
-			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2019.05.22.23.12
-			auto parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
+			Pointer parse_arguments_callsite;
+			if (is_19_0_0_or_above)
+			{
+				//SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
+				SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2019.05.22.23.12
+				parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
+			}
+			else
+			{
+				// Also made this 24 bytes just to match the above pattern
+				SIG_INST("89 43 ? 49 8D 43 ? 49 89 ? ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2016.09.30.12.04
+				parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
+			}
 #if LOGGING
 			std::cout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
 #endif
@@ -2713,9 +2786,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else
+				else if (is_19_0_0_or_above)
 				{
 					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else
+				{
+					SIG_INST("0F B6 84 24 A0 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
 #if LOGGING

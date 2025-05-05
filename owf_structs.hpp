@@ -14,6 +14,7 @@ inline bool is_28_0_0_or_above = false;
 inline bool is_26_1_0_or_above = false;
 inline bool is_25_0_0_or_above = false;
 inline bool is_24_0_0_or_above = false;
+inline bool is_19_0_0_or_above = false;
 
 inline char build_hash[22] = { 0 };
 
@@ -31,7 +32,7 @@ union GameString
 	} lng;
 
 	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
-	[[nodiscard]] bool willFreeData() const noexcept { return isLong() && (lng.metadata & 0xFFFFFFF0000000ull) != 0xFFFFFFF0000000ull; }
+	//[[nodiscard]] bool willFreeData() const noexcept { return isLong() && (lng.metadata & 0xFFFFFFF0000000ull) != 0xFFFFFFF0000000ull; }
 	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
 	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? (lng.metadata & 0xFFFFFFF) : (sizeof(shrt.data) - shrt.inv_len); }
 
@@ -61,11 +62,6 @@ union GameString
 		shrt.inv_len = sizeof(shrt.data) - len;
 	}
 
-	void setShortData(const std::string& str) noexcept
-	{
-		return setShortData(str.data(), str.size());
-	}
-
 	/*void clear() noexcept
 	{
 		shrt.data[0] = '\0';
@@ -73,8 +69,6 @@ union GameString
 	}*/
 };
 static_assert(sizeof(GameString) == 0x10);
-
-#define uses_legacy_game_string !is_35_5_0_or_above
 
 union LegacyGameString
 {
@@ -91,7 +85,7 @@ union LegacyGameString
 	} lng;
 
 	[[nodiscard]] bool isLong() const noexcept { return shrt.inv_len == 0xFF; }
-	[[nodiscard]] bool willFreeData() const noexcept { return isLong() && lng.ownership != -1; }
+	//[[nodiscard]] bool willFreeData() const noexcept { return isLong() && lng.ownership != -1; }
 	[[nodiscard]] char* getData() noexcept { return isLong() ? lng.ptr : shrt.data; }
 	[[nodiscard]] size_t getSize() const noexcept { return isLong() ? lng.len : (sizeof(shrt.data) - shrt.inv_len); }
 
@@ -122,16 +116,38 @@ union LegacyGameString
 		shrt.inv_len = sizeof(shrt.data) - len;
 	}
 
-	void setShortData(const std::string& str) noexcept
-	{
-		return setShortData(str.data(), str.size());
-	}
-
 	/*void clear() noexcept
 	{
 		shrt.data[0] = '\0';
 		shrt.inv_len = sizeof(shrt.data);
 	}*/
+};
+
+struct LegacyGameStringU18
+{
+	char* ptr;
+	size_t len;
+	size_t ownership;
+
+	//[[nodiscard]] bool isLong() const noexcept { return true; }
+	//[[nodiscard]] bool willFreeData() const noexcept { return ownership != -1; }
+	[[nodiscard]] char* getData() noexcept { return ptr; }
+	[[nodiscard]] size_t getSize() const noexcept { return len; }
+
+	void setUnownedData(const char* data, size_t len) noexcept
+	{
+		this->ptr = (char*)data;
+		this->len = len;
+		this->ownership = -1;
+	}
+
+	void setShortData(const char* data, size_t len) noexcept
+	{
+		// If it's short, then I guess it's fine to leak it.
+		auto block = soup::malloc(len);
+		memcpy(block, data, len);
+		setUnownedData((const char*)block, len);
+	}
 };
 
 // Update 37-38
@@ -263,9 +279,6 @@ static_assert(offsetof(LegacyArgumentsU28, cluster) == 0x298);
 // 2020.03.24.20.24
 struct LegacyArgumentsU27
 {
-	inline static bool got_graphicsDriver;
-	inline static GameString graphicsDriver;
-
 	PAD(0, 0x24B) bool got_language;
 	/* 0x250 */ LegacyGameString language;
 	/* 0x270 */ bool got_cluster;
@@ -279,9 +292,6 @@ static_assert(offsetof(LegacyArgumentsU27, cluster) == 0x278);
 // 2019.05.22.23.12, 2019.09.09.12.43, 2019.10.31.22.42
 struct LegacyArgumentsU25
 {
-	inline static bool got_graphicsDriver;
-	inline static GameString graphicsDriver;
-
 	PAD(0, 0x249) bool got_language;
 	/* 0x250 */ LegacyGameString language;
 	/* 0x270 */ bool got_cluster;
@@ -295,9 +305,6 @@ static_assert(offsetof(LegacyArgumentsU25, cluster) == 0x278);
 // 2019.04.04.21.31
 struct LegacyArgumentsU24
 {
-	inline static bool got_graphicsDriver;
-	inline static GameString graphicsDriver;
-
 	PAD(0, 0x223) bool got_language;
 	/* 0x228 */ LegacyGameString language;
 	/* 0x248 */ bool got_cluster;
@@ -311,9 +318,6 @@ static_assert(offsetof(LegacyArgumentsU24, cluster) ==  0x250);
 // 2018.06.14.23.21, 2018.05.17.16.28, 2018.02.22.14.34, 2017.10.12.17.04
 struct LegacyArgumentsU23
 {
-	inline static bool got_graphicsDriver;
-	inline static GameString graphicsDriver;
-
 	PAD(0, 0x1FB) bool got_language;
 	/* 0x200 */ LegacyGameString language;
 	/* 0x220 */ bool got_cluster;
@@ -323,6 +327,19 @@ static_assert(offsetof(LegacyArgumentsU23, got_language) == 0x1FB);
 static_assert(offsetof(LegacyArgumentsU23, language) == 0x200);
 static_assert(offsetof(LegacyArgumentsU23, got_cluster) == 0x220);
 static_assert(offsetof(LegacyArgumentsU23, cluster) ==  0x228);
+
+// 2016.09.30.12.04
+struct LegacyArgumentsU18
+{
+	PAD(0, 0x253) bool got_language;
+	/* 0x258 */ LegacyGameStringU18 language;
+	PAD(0x258 + sizeof(LegacyGameStringU18), 0x280) bool got_cluster;
+	/* 0x288 */ LegacyGameStringU18 cluster;
+};
+static_assert(offsetof(LegacyArgumentsU18, got_language) == 0x253);
+static_assert(offsetof(LegacyArgumentsU18, language) == 0x258);
+static_assert(offsetof(LegacyArgumentsU18, got_cluster) == 0x280);
+static_assert(offsetof(LegacyArgumentsU18, cluster) ==  0x288);
 
 // Objects
 
