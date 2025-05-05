@@ -1864,6 +1864,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
 		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
+		const bool is_18_22_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.09.30.12.04").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2259,35 +2260,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			void* game_http_request;
+			Pointer game_http_request_caller;
+			size_t offset;
 			if (is_19_0_0_or_above)
 			{
 				SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
-				auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-				std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
-#endif
-				if (!game_http_request_caller)
-				{
-					ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-					MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-				}
-				game_http_request = game_http_request_caller.add(5).rip().as<void*>();
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 5;
+			}
+			else if (is_18_22_0_or_above)
+			{
+				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05"); // 2016.09.30.12.04
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 8;
 			}
 			else
 			{
-				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05");
-				auto game_http_request_caller = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-				std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
-#endif
-				if (!game_http_request_caller)
-				{
-					ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-					MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-				}
-				game_http_request = game_http_request_caller.add(8).rip().as<void*>();
+				SIG_INST("48 8D 53 18 48 8B CF 40 88 6A 30 E8"); // 2015.12.05.18.07
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 12;
 			}
+#if LOGGING
+			std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
+#endif
+			if (!game_http_request_caller)
+			{
+				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			}
+			auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
 			if (is_35_5_0_or_above)
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequest>);
@@ -2524,9 +2525,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 57 41 56 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 65 48 8B 04 25"); // 2017.03.06.15.49 (19.13.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else
+			else if (is_18_22_0_or_above)
 			{
 				SIG_INST("48 89 5C 24 18 56 57 41 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.09.30.12.04
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2015.12.05.18.07
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
