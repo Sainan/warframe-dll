@@ -1871,6 +1871,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
 		const bool is_18_22_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.09.30.12.04").str()) >= 0);
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
+		const bool is_18_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.04.10.06").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2280,9 +2281,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
-			else if (is_18_7_1_or_above)
+			else if (is_18_5_0_or_above)
 			{
-				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 4F 48"); // 2016.03.31.15.16
+				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 4F 48"); // 2016.03.31.15.16, 2016.03.04.10.06
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
@@ -2540,6 +2541,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else if (is_18_7_1_or_above)
 			{
 				SIG_INST("48 89 5C 24 18 56 57 41 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.09.30.12.04, 2016.03.31.15.16
+				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else if (is_18_5_0_or_above)
+			{
+				SIG_INST("48 89 5C 24 18 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.03.04.10.06
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else
