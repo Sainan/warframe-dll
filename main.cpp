@@ -1872,6 +1872,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_18_18_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.08.19.17.12").str()) >= 0);
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
 		const bool is_18_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.04.10.06").str()) >= 0);
+		const bool is_18_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.12.05.18.07").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2287,11 +2288,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
-			else
+			else if (is_18_0_0_or_above)
 			{
 				SIG_INST("48 8D 53 18 48 8B CF 40 88 6A 30 E8"); // 2015.12.05.18.07
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 12;
+			}
+			else
+			{
+				SIG_INST("48 8B CF 44 88 72 30 E8"); // 2015.10.21.12.48
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 8;
 			}
 #if LOGGING
 			std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
@@ -2446,6 +2453,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_19_0_0_or_above) // Just stripping TLS for U18 and below
 		{
 			Pointer ssl_verify_internal_caller;
 			if (is_26_1_0_or_above)
