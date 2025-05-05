@@ -12,7 +12,8 @@ struct PermanentString
 	size_t size;
 	char data[1];
 };
-inline std::unordered_map<uint32_t, PermanentString*> permanent_strings;
+inline std::unordered_map<uint32_t, PermanentString*> permanent_strings; // mutexed by label_replacements_mtx
+inline std::atomic<size_t> fossilised_memory = 0;
 inline PermanentString* fossilise_string(const char* data, size_t size)
 {
 	const auto hash = soup::joaat::hashRange(data, size);
@@ -25,6 +26,9 @@ inline PermanentString* fossilise_string(const char* data, size_t size)
 	memcpy(ps->data, data, size);
 	ps->data[size] = 0;
 	permanent_strings.emplace(hash, ps);
+
+	fossilised_memory += size + 1;
+
 	return ps;
 }
 

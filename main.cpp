@@ -447,14 +447,22 @@ static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 
 
 static DetourHook encstr_discharge_hook;
+//static std::atomic<size_t> leaked_memory = 0;
 
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
 	//std::cout << "encstr_discharge: " << (void*)a1->app << std::endl;
 #if REDIRECT_REQUESTS
-	// Maybe not the most memory efficient approach but should be fine for now.
-	auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
-	out->setUnownedData(ps->data, ps->size);
+	{
+		// Maybe not the most memory efficient approach but should be fine for now.
+		std::lock_guard lock(label_replacements_mtx);
+		auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
+		out->setUnownedData(ps->data, ps->size);
+		//auto data = soup::malloc(dec_buf.size());
+		//memcpy(data, dec_buf.data(), dec_buf.size());
+		//out->setUnownedData((const char*)data, dec_buf.size());
+		//leaked_memory += dec_buf.size();
+	}
 #else
 	reinterpret_cast<decltype(&encstr_discharge_detour)>(encstr_discharge_hook.original)(a1, out);
 #endif
@@ -471,10 +479,7 @@ static void queue_http_request_internal_detour(void* a1, GameString* url, GameSt
 	std::cout << "queue_http_request_internal: url=" << url->getData() << ", encoding=" << (encoding ? encoding : "NULL") << std::endl;
 	if (encoding)
 	{
-		// TODO: Maybe tag this somehow so that game_http_request_detour will be able to free the memory.
-		auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
-		body->setUnownedData(ps->data, ps->size);
-		std::cout << "Decrypted body: " << std::string(body->getData(), body->getSize()) << std::endl;
+		std::cout << "Decrypted body: " << dec_buf << std::endl;
 	}
 	reinterpret_cast<decltype(&queue_http_request_internal_detour)>(queue_http_request_internal_hook.original)(a1, url, body, encoding, callback_data, flags);
 	dec_buf.clear();
@@ -4066,6 +4071,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 #endif
+
+					case soup::joaat::compileTimeHash("/memory"):
+						{
+							JsonObject obj;
+							//obj.add(ObfusString("leaked"), static_cast<int64_t>(leaked_memory.load()));
+//#if LABEL_REPLACEMENTS
+							obj.add(ObfusString("fossilised"), static_cast<int64_t>(fossilised_memory.load()));
+//#endif
+							ServerWebService::sendText(s, obj.encodePretty());
+						}
+						break;
 
 #if METADATA_PATCHES
 					case soup::joaat::compileTimeHash("/reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
