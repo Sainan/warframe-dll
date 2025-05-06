@@ -10,6 +10,13 @@ if (Test-Path "Hotfix.bin") {
 	$hotfix_sha256 = (Get-FileHash "Hotfix.bin" -Algorithm SHA256).Hash.ToLower()
 }
 
+if (Test-Path "../wtsapi32.dll") {
+	Remove-Item "../wtsapi32.dll"
+}
+if (Test-Path "../version.dll") {
+	Remove-Item "../version.dll"
+}
+
 if ($sha256 -ne $latest.sha256 -or $hotfix_sha256 -ne $latest.hotfix_sha256) {
 	if ($latest.hotfix -ne "") {
 		Write-Host "Downloading OpenWF Bootstrapper v$($latest.version) $($latest.hotfix)..."
