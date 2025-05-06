@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <alloc.hpp>
+#include <fnv.hpp>
 #include <Mutex.hpp>
 
 struct PermanentString
@@ -12,11 +13,11 @@ struct PermanentString
 	size_t size;
 	char data[1];
 };
-inline std::unordered_map<uint32_t, PermanentString*> permanent_strings; // mutexed by label_replacements_mtx
+inline std::unordered_map<uint64_t, PermanentString*> permanent_strings; // mutexed by label_replacements_mtx
 inline std::atomic<size_t> fossilised_memory = 0;
 inline PermanentString* fossilise_string(const char* data, size_t size)
 {
-	const auto hash = soup::joaat::hashRange(data, size);
+	const auto hash = soup::fnv1a_64(data, size);
 	if (auto e = permanent_strings.find(hash); e != permanent_strings.end())
 	{
 		return e->second;
