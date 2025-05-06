@@ -15,6 +15,7 @@ inline bool is_26_1_0_or_above = false;
 inline bool is_25_0_0_or_above = false;
 inline bool is_24_0_0_or_above = false;
 inline bool is_19_0_0_or_above = false;
+inline bool is_17_0_0_or_above = false;
 
 inline char build_hash[22] = { 0 };
 
@@ -340,6 +341,19 @@ static_assert(offsetof(LegacyArgumentsU18, got_language) == 0x253);
 static_assert(offsetof(LegacyArgumentsU18, language) == 0x258);
 static_assert(offsetof(LegacyArgumentsU18, got_cluster) == 0x280);
 static_assert(offsetof(LegacyArgumentsU18, cluster) ==  0x288);
+
+// 2015.03.21.08.17
+struct LegacyArgumentsU16
+{
+	PAD(0, 0x2A3) bool got_language;
+	/* 0x2A8 */ LegacyGameStringU18 language;
+	PAD(0x2A8 + sizeof(LegacyGameStringU18), 0x2D0) bool got_cluster;
+	/* 0x2D8 */ LegacyGameStringU18 cluster;
+};
+static_assert(offsetof(LegacyArgumentsU16, got_language) == 0x2A3);
+static_assert(offsetof(LegacyArgumentsU16, language) == 0x2A8);
+static_assert(offsetof(LegacyArgumentsU16, got_cluster) == 0x2D0);
+static_assert(offsetof(LegacyArgumentsU16, cluster) ==  0x2D8);
 
 // Objects
 

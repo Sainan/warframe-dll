@@ -742,9 +742,13 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct<false>((LegacyArgumentsU23*)_arguments);
 	}
-	else
+	else if (is_17_0_0_or_above)
 	{
 		process_args_struct<false>((LegacyArgumentsU18*)_arguments);
+	}
+	else
+	{
+		process_args_struct<false>((LegacyArgumentsU16*)_arguments);
 	}
 }
 
@@ -1873,7 +1877,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
 		const bool is_18_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.04.10.06").str()) >= 0);
 		const bool is_18_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.12.05.18.07").str()) >= 0);
-		const bool is_17_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.10.15.12.24").str()) >= 0);
+		is_17_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.10.15.12.24").str()) >= 0);
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2823,7 +2827,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else
 				{
-					SIG_INST("0F B6 84 24 A0 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
 #if LOGGING
