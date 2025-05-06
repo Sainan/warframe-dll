@@ -1,4 +1,4 @@
-name version
+name dwmapi
 dynamic
 +*.cpp
 require ../Soup/soup
