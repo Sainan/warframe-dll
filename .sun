@@ -1,4 +1,4 @@
-name wtsapi32
+name version
 dynamic
 +*.cpp
 require ../Soup/soup

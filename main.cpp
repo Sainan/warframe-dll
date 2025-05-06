@@ -51,7 +51,6 @@
 
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
-#pragma comment(lib, "version")
 
 #include "whirlpool.hpp"
 
@@ -94,6 +93,60 @@ extern "C" __declspec(dllexport) void WTSRegisterSessionNotification() { og_WTSR
 extern "C" __declspec(dllexport) void WTSUnRegisterSessionNotification() { og_WTSUnRegisterSessionNotification(); }
 extern "C" __declspec(dllexport) void WTSFreeMemory() { og_WTSFreeMemory(); }
 extern "C" __declspec(dllexport) void WTSQuerySessionInformationA() { og_WTSQuerySessionInformationA(); }
+
+using GetFileVersionInfoA_t = BOOL(*)(LPCSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+//using GetFileInformationByHandle_t = BOOL(*)(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
+using GetFileVersionInfoExA_t = BOOL(*)(DWORD dwFlags, LPCSTR lpwstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+using GetFileVersionInfoExW_t = BOOL(*)(DWORD dwFlags, LPCWSTR lpwstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+using GetFileVersionInfoSizeA_t = DWORD(*)(LPCSTR lptstrFilename, LPDWORD lpdwHandle);
+using GetFileVersionInfoSizeExA_t = DWORD(*)(DWORD dwFlags, LPCSTR lpwstrFilename, LPDWORD lpdwHandle);
+using GetFileVersionInfoSizeExW_t = DWORD(*)(DWORD dwFlags, LPCWSTR lpwstrFilename, LPDWORD lpdwHandle);
+using GetFileVersionInfoSizeW_t = DWORD(*)(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
+using GetFileVersionInfoW_t = BOOL(*)(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+using VerFindFileA_t = DWORD(*)(DWORD uFlags, LPCSTR szFileName, LPCSTR szWinDir, LPCSTR szAppDir, LPSTR szCurDir, PUINT puCurDirLen, LPSTR szDestDir, PUINT puDestDirLen);
+using VerFindFileW_t = DWORD(*)(DWORD uFlags, LPCWSTR szFileName, LPCWSTR szWinDir, LPCWSTR szAppDir, LPWSTR szCurDir, PUINT puCurDirLen, LPWSTR szDestDir, PUINT puDestDirLen);
+using VerInstallFileA_t = DWORD(*)(DWORD uFlags, LPCSTR szSrcFileName, LPCSTR szDestFileName, LPCSTR szSrcDir, LPCSTR szDestDir, LPCSTR szCurDir, LPSTR szTmpFile, PUINT puTmpFileLen);
+using VerInstallFileW_t = DWORD(*)(DWORD uFlags, LPCWSTR szSrcFileName, LPCWSTR szDestFileName, LPCWSTR szSrcDir, LPCWSTR szDestDir, LPCWSTR szCurDir, LPWSTR szTmpFile, PUINT puTmpFileLen);
+using VerLanguageNameA_t = DWORD(*)(DWORD wLang, LPSTR szLang, DWORD cchLang);
+using VerLanguageNameW_t = DWORD(*)(DWORD wLang, LPWSTR szLang, DWORD cchLang);
+using VerQueryValueA_t = BOOL(*)(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
+using VerQueryValueW_t = BOOL(*)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
+static HMODULE og_version;
+static GetFileVersionInfoA_t og_GetFileVersionInfoA;
+//static GetFileInformationByHandle_t og_GetFileInformationByHandle;
+static GetFileVersionInfoExA_t og_GetFileVersionInfoExA;
+static GetFileVersionInfoExW_t og_GetFileVersionInfoExW;
+static GetFileVersionInfoSizeA_t og_GetFileVersionInfoSizeA;
+static GetFileVersionInfoSizeExA_t og_GetFileVersionInfoSizeExA;
+static GetFileVersionInfoSizeExW_t og_GetFileVersionInfoSizeExW;
+static GetFileVersionInfoSizeW_t og_GetFileVersionInfoSizeW;
+static GetFileVersionInfoW_t og_GetFileVersionInfoW;
+static VerFindFileA_t og_VerFindFileA;
+static VerFindFileW_t og_VerFindFileW;
+static VerInstallFileA_t og_VerInstallFileA;
+static VerInstallFileW_t og_VerInstallFileW;
+static VerLanguageNameA_t og_VerLanguageNameA;
+static VerLanguageNameW_t og_VerLanguageNameW;
+static VerQueryValueA_t og_VerQueryValueA;
+static VerQueryValueW_t og_VerQueryValueW;
+#pragma clang diagnostic ignored "-Wdll-attribute-on-redeclaration"
+extern "C" __declspec(dllexport) BOOL GetFileVersionInfoA(LPCSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) { return og_GetFileVersionInfoA(lptstrFilename, dwHandle, dwLen, lpData); }
+//extern "C" __declspec(dllexport) BOOL GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation) { return og_GetFileInformationByHandle(hFile, lpFileInformation); }
+extern "C" __declspec(dllexport) BOOL GetFileVersionInfoExA(DWORD dwFlags, LPCSTR lpwstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) { return og_GetFileVersionInfoExA(dwFlags, lpwstrFilename, dwHandle, dwLen, lpData); }
+extern "C" __declspec(dllexport) BOOL GetFileVersionInfoExW(DWORD dwFlags, LPCWSTR lpwstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) { return og_GetFileVersionInfoExW(dwFlags, lpwstrFilename, dwHandle, dwLen, lpData); }
+extern "C" __declspec(dllexport) DWORD GetFileVersionInfoSizeA(LPCSTR lptstrFilename, LPDWORD lpdwHandle) { return og_GetFileVersionInfoSizeA(lptstrFilename, lpdwHandle); }
+extern "C" __declspec(dllexport) DWORD GetFileVersionInfoSizeExA(DWORD dwFlags, LPCSTR lpwstrFilename, LPDWORD lpdwHandle) { return og_GetFileVersionInfoSizeExA(dwFlags, lpwstrFilename, lpdwHandle); }
+extern "C" __declspec(dllexport) DWORD GetFileVersionInfoSizeExW(DWORD dwFlags, LPCWSTR lpwstrFilename, LPDWORD lpdwHandle) { return og_GetFileVersionInfoSizeExW(dwFlags, lpwstrFilename, lpdwHandle); }
+extern "C" __declspec(dllexport) DWORD GetFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) { return og_GetFileVersionInfoSizeW(lptstrFilename, lpdwHandle); }
+extern "C" __declspec(dllexport) BOOL GetFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) { return og_GetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData); }
+extern "C" __declspec(dllexport) DWORD VerFindFileA(DWORD uFlags, LPCSTR szFileName, LPCSTR szWinDir, LPCSTR szAppDir, LPSTR szCurDir, PUINT puCurDirLen, LPSTR szDestDir, PUINT puDestDirLen) { return og_VerFindFileA(uFlags, szFileName, szWinDir, szAppDir, szCurDir, puCurDirLen, szDestDir, puDestDirLen); }
+extern "C" __declspec(dllexport) DWORD VerFindFileW(DWORD uFlags, LPCWSTR szFileName, LPCWSTR szWinDir, LPCWSTR szAppDir, LPWSTR szCurDir, PUINT puCurDirLen, LPWSTR szDestDir, PUINT puDestDirLen) { return og_VerFindFileW(uFlags, szFileName, szWinDir, szAppDir, szCurDir, puCurDirLen, szDestDir, puDestDirLen); }
+extern "C" __declspec(dllexport) DWORD VerInstallFileA(DWORD uFlags, LPCSTR szSrcFileName, LPCSTR szDestFileName, LPCSTR szSrcDir, LPCSTR szDestDir, LPCSTR szCurDir, LPSTR szTmpFile, PUINT puTmpFileLen) { return og_VerInstallFileA(uFlags, szSrcFileName, szDestFileName, szSrcDir, szDestDir, szCurDir, szTmpFile, puTmpFileLen); }
+extern "C" __declspec(dllexport) DWORD VerInstallFileW(DWORD uFlags, LPCWSTR szSrcFileName, LPCWSTR szDestFileName, LPCWSTR szSrcDir, LPCWSTR szDestDir, LPCWSTR szCurDir, LPWSTR szTmpFile, PUINT puTmpFileLen) { return og_VerInstallFileW(uFlags, szSrcFileName, szDestFileName, szSrcDir, szDestDir, szCurDir, szTmpFile, puTmpFileLen); }
+extern "C" __declspec(dllexport) DWORD VerLanguageNameA(DWORD wLang, LPSTR szLang, DWORD cchLang) { return og_VerLanguageNameA(wLang, szLang, cchLang); }
+extern "C" __declspec(dllexport) DWORD VerLanguageNameW(DWORD wLang, LPWSTR szLang, DWORD cchLang) { return og_VerLanguageNameW(wLang, szLang, cchLang); }
+extern "C" __declspec(dllexport) BOOL VerQueryValueA(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen); }
+extern "C" __declspec(dllexport) BOOL VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen); }
 
 
 // Cache tunables for faster access
@@ -1823,11 +1876,37 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
+			std::wstring path(_wgetenv(L"windir"));
+			path.append(LR"(\System32\version.dll)");
+			og_version = LoadLibraryW(path.c_str());
+#if LOGGING
+			std::cout << "og_version = " << (void*)og_version << std::endl;
+#endif
+			og_GetFileVersionInfoA = (GetFileVersionInfoA_t)GetProcAddress(og_version, "GetFileVersionInfoA");
+			//og_GetFileInformationByHandle = (GetFileInformationByHandle_t)GetProcAddress(og_version, "GetFileInformationByHandle");
+			og_GetFileVersionInfoExA = (GetFileVersionInfoExA_t)GetProcAddress(og_version, "GetFileVersionInfoExA");
+			og_GetFileVersionInfoExW = (GetFileVersionInfoExW_t)GetProcAddress(og_version, "GetFileVersionInfoExW");
+			og_GetFileVersionInfoSizeA = (GetFileVersionInfoSizeA_t)GetProcAddress(og_version, "GetFileVersionInfoSizeA");
+			og_GetFileVersionInfoSizeExA = (GetFileVersionInfoSizeExA_t)GetProcAddress(og_version, "GetFileVersionInfoSizeExA");
+			og_GetFileVersionInfoSizeExW = (GetFileVersionInfoSizeExW_t)GetProcAddress(og_version, "GetFileVersionInfoSizeExW");
+			og_GetFileVersionInfoSizeW = (GetFileVersionInfoSizeW_t)GetProcAddress(og_version, "GetFileVersionInfoSizeW");
+			og_GetFileVersionInfoW = (GetFileVersionInfoW_t)GetProcAddress(og_version, "GetFileVersionInfoW");
+			og_VerFindFileA = (VerFindFileA_t)GetProcAddress(og_version, "VerFindFileA");
+			og_VerFindFileW = (VerFindFileW_t)GetProcAddress(og_version, "VerFindFileW");
+			og_VerInstallFileA = (VerInstallFileA_t)GetProcAddress(og_version, "VerInstallFileA");
+			og_VerInstallFileW = (VerInstallFileW_t)GetProcAddress(og_version, "VerInstallFileW");
+			og_VerLanguageNameA = (VerLanguageNameA_t)GetProcAddress(og_version, "VerLanguageNameA");
+			og_VerLanguageNameW = (VerLanguageNameW_t)GetProcAddress(og_version, "VerLanguageNameW");
+			og_VerQueryValueA = (VerQueryValueA_t)GetProcAddress(og_version, "VerQueryValueA");
+			og_VerQueryValueW = (VerQueryValueW_t)GetProcAddress(og_version, "VerQueryValueW");
+		}
+
+		{
 			DWORD dwHandle;
-			DWORD version_info_size = GetFileVersionInfoSizeA("Warframe.x64.exe", &dwHandle);
+			DWORD version_info_size = og_GetFileVersionInfoSizeA("Warframe.x64.exe", &dwHandle);
 
 			void* data = soup::malloc(version_info_size);
-			GetFileVersionInfoA("Warframe.x64.exe", 0, version_info_size, data);
+			og_GetFileVersionInfoA("Warframe.x64.exe", 0, version_info_size, data);
 
 			/*struct LANGANDCODEPAGE {
 				WORD wLanguage;
@@ -1842,7 +1921,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 			LPVOID value_data;
 			UINT value_size;
-			VerQueryValue(data, "\\StringFileInfo\\040904B0\\ProductVersion", &value_data, &value_size);
+			og_VerQueryValueA(data, "\\StringFileInfo\\040904B0\\ProductVersion", &value_data, &value_size);
 			memcpy(build_label, value_data, 16);
 
 			soup::free(data);
