@@ -2724,6 +2724,7 @@ OWF_FONT_SIMPLE5 = 5
 owf_overlay_set_color = owf_overlay_set_colour
 
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
+OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE = 5
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
 OWF_EVT_SCRIPT_TRIGGERED = 4
@@ -2983,6 +2984,11 @@ return function(f)
 					local arr = evt.data:split(":")
 					evt.script = arr[1]
 					evt.func = arr[2]
+					evt.data = nil
+				elseif evt.type == OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE then
+					local arr = evt.data:split(" :", 2)
+					evt.channel = arr[1]
+					evt.text = arr[2]
 					evt.data = nil
 				end
 				owf_internal_event_queue:insert(evt)

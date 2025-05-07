@@ -1,6 +1,6 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
 local commands = {}
-commands["/god"] = function()
+commands["god"] = function()
 	local avatar = gRegion:GetLocalPlayerAvatar()
 	if avatar instanceof LotusVehicleAvatar then
 		avatar = avatar:GetRider()
@@ -13,14 +13,14 @@ commands["/god"] = function()
 		chat_system_reply("Granted immunity.")
 	end
 end
-commands["/suicide"] = function()
+commands["suicide"] = function()
 	if gGameRules instanceof LotusGameRules then
 		gRegion:GetLocalPlayerAvatar():Suicide()
 	else
 		chat_system_reply("That's not a good idea.")
 	end
 end
-commands["/killall"] = function()
+commands["killall"] = function()
 	local player = gRegion:GetLocalPlayerAvatar()
 	for gRegion:GetAvatars() as avatar do
 		if not avatar:IsAvatarFriendly(player) then
@@ -28,26 +28,26 @@ commands["/killall"] = function()
 		end
 	end
 end
-commands["/kdrive"] = function()
+commands["kdrive"] = function()
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar"))
 end
-commands["/dargyn"] = function()
+commands["dargyn"] = function()
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar"))
 end
-commands["/simulacrum"] = function()
+commands["simulacrum"] = function()
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
 	args:SetGameRules("/Lotus/Types/GameRules/LotusDangerRoomGameRules")
 	Engine.OpenLevel(args)
 end
-commands["/level"] = function(text)
+commands["level"] = function(text)
 	local level = text:split(" ")[2]
 	chat_system_reply("Loading level "..level)
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel(level)
 	Engine.OpenLevel(args)
 end
-commands["/captura"] = function(text)
+commands["captura"] = function(text)
 	local level = text:split(" ")[2]
 	chat_system_reply("Opening Captura in "..level)
 	local args = Engine.OpenLevelArgs()
@@ -55,7 +55,7 @@ commands["/captura"] = function(text)
 	args:SetGameRules("/Lotus/Types/GameRules/LotusPhotoBoothGameRules")
 	Engine.OpenLevel(args)
 end
-commands["/energy"] = function()
+commands["energy"] = function()
 	local avatar = gRegion:GetLocalPlayerAvatar()
 	if avatar instanceof LotusVehicleAvatar then
 		avatar = avatar:GetRider()
@@ -63,7 +63,7 @@ commands["/energy"] = function()
 	avatar:InventoryControl():GetActivePowerSuit():SetMaxEnergy(1000000)
 	avatar:InventoryControl():GetActivePowerSuit():SetEnergy(1000000)
 end
-commands["/scale"] = function(text)
+commands["scale"] = function(text)
 	local scale = tonumber(text:split(" ")[2])
 	if scale ~= 0 then
 		gRegion:GetLocalPlayerAvatar():SetMeshScale(scale)
@@ -71,7 +71,7 @@ commands["/scale"] = function(text)
 		chat_system_reply("That's not a good idea.")
 	end
 end
-commands["/timescale"] = function(text)
+commands["timescale"] = function(text)
 	local scale = tonumber(text:split(" ")[2])
 	if scale == 1 then
 		gGameRules:CancelSlomo()
@@ -81,13 +81,13 @@ commands["/timescale"] = function(text)
 		chat_system_reply("That's not a good idea.")
 	end
 end
-commands["/pause"] = function(text)
+commands["pause"] = function(text)
 	gGameRules:RequestPause()
 end
-commands["/unpause"] = function(text)
+commands["unpause"] = function(text)
 	gGameRules:RequestUnpause()
 end
-commands["/script"] = function(text)
+commands["script"] = function(text)
 	local query = text:sub(text:find(" ") + 1):lower()
 	if query:sub(-6) ~= ".pluto" then
 		query ..= ".pluto"
@@ -102,23 +102,24 @@ commands["/script"] = function(text)
 		chat_system_reply($"No such script: {query}")
 	end
 end
-commands["/sync"] = function()
+commands["sync"] = function()
 	gGameData:SyncInventoryFromDB()
 end
-commands["/unstick"] = function()
+commands["unstick"] = function()
 	gGameRules:UnstickLocalPlayer()
 end
-commands["/quit"] = function()
+commands["quit"] = function()
 	gFlashMgr:ExecuteToolMenuCommand(Resource("/EE/Editor/ToolMenus/Commands/CmdQuit"))
 end
 for prefix in commands do
-	chat_block_prefix(prefix)
+	chat_block_prefix("/"..prefix)
+	chat_block_outgoing_prefix("$"..prefix)
 end
 repeat
 	while evt := owf_next_event() do
-		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
+		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE or evt.type == OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE then
 			for prefix, f in commands do
-				if evt.text:sub(1, #prefix) == prefix then
+				if evt.text:sub(2, #prefix + 1) == prefix then
 					f(evt.text)
 					break
 				end

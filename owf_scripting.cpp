@@ -1132,6 +1132,20 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("chat_unblock_prefix"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->blocked_outgoing_chat_prefixes.emplace(pluto_checkstring(L, 1));
+		return 0;
+	});
+	{ ObfusString name("chat_block_outgoing_prefix"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->blocked_outgoing_chat_prefixes.erase(pluto_checkstring(L, 2));
+		return 0;
+	});
+	{ ObfusString name("chat_unblock_outgoing_prefix"); lua_setglobal(L, name.c_str()); }
+
 	if (luauD_call)
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1233,6 +1247,7 @@ owfScript::owfScript()
 				break;
 
 			case OWF_EVT_SCRIPT_TRIGGERED:
+			case OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE:
 				pluto_pushstring(L, ObfusString("data").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);

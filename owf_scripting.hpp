@@ -20,6 +20,7 @@ inline std::string active_input_filter;
 enum owfScriptEventType : uint8_t
 {
 	OWF_EVT_BLOCKED_CHAT_MESSAGE = 1,
+	OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE = 5,
 	OWF_EVT_CUSTOM_ROUTE_SERVED = 2,
 	OWF_EVT_CALLBACK = 3,
 	OWF_EVT_SCRIPT_TRIGGERED = 4,
@@ -45,6 +46,7 @@ struct owfScript
 		std::string content;
 	};
 	std::unordered_set<std::string> blocked_chat_prefixes;
+	std::unordered_set<std::string> blocked_outgoing_chat_prefixes;
 	std::unordered_map<uint32_t, CustomRoute> custom_routes;
 	std::unordered_set<std::string> callbacks;
 	std::unordered_map<uint32_t, bool> subscribed_script_triggers;
@@ -65,6 +67,18 @@ struct owfScript
 	bool isBlockingMessage(const std::string& msg) const noexcept
 	{
 		for (const auto& prefix : blocked_chat_prefixes)
+		{
+			if (msg.starts_with(prefix))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool isBlockingOutgoingMessage(const std::string_view& msg) const noexcept
+	{
+		for (const auto& prefix : blocked_outgoing_chat_prefixes)
 		{
 			if (msg.starts_with(prefix))
 			{

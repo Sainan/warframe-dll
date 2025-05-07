@@ -1590,6 +1590,9 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 #if VERBOSE_IRC
 	bLogIt = true;
 #endif
+#if LOGGING
+	std::cout << "irc_send_raw: " << std::string(str->getData(), str->getSize()) << std::endl;
+#endif
 #if REDIRECT_REQUESTS
 	if (str->getSize() > 36 && soup::joaat::hashRange(str->getData(), 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
 	{
@@ -1604,6 +1607,34 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 		return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
 	}
 #endif
+	if (str->getSize() > 10 && soup::joaat::hashRange(str->getData(), 8) == soup::joaat::compileTimeHash("PRIVMSG "))
+	{
+		std::string_view sv(str->getData(), str->getSize());
+		const auto sep = sv.find(ObfusString(" :").str());
+		if (sep != std::string::npos)
+		{
+			std::string_view message(str->getData() + sep + 2, str->getSize() - (sep + 2));
+			//std::cout << "channel_name = " << sv.substr(8, sep - 8) << std::endl;
+			//std::cout << "message = " << message << std::endl;
+			owfScript* blocking_script = nullptr;
+			{
+				std::lock_guard lock(running_scripts_mtx);
+				for (auto& scr : running_scripts)
+				{
+					if (scr->isBlockingOutgoingMessage(message))
+					{
+						blocking_script = scr;
+						break;
+					}
+				}
+			}
+			if (blocking_script != nullptr)
+			{
+				blocking_script->events.emplace_back(OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE, std::string(str->getData() + 8, str->getSize() - 8));
+				return;
+			}
+		}
+	}
 	return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, str, bLogIt);
 }
 
