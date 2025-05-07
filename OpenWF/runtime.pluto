@@ -599,7 +599,12 @@ class BaseAvatar extends Entity
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "MotionControl"), 1)
 		if ivkr_type(-1) > 0 do
-			return new MotionControllerBase()
+			local motion = new MotionControllerBase()
+			if motion:GetType():isNameInHierarchy("LotusSpaceFlightMotionController") then
+				motion:pushToIvkr()
+				return new LotusSpaceFlightMotionController()
+			end
+			return motion
 		end
 		ivkr_pop(1)
 	end
@@ -674,16 +679,26 @@ class BaseAvatar extends Entity
 
 	function SetCustomAnimController(type)
 		self:pushToIvkr()
-		do
+		if type == nil then
+			ivkr_push_nil()
+		else
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomAnimController"), 2))
 	end
 
+	function GetAnimControllerType()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("BaseAvatar", "GetAnimControllerType"), 1)
+		return new ObjectType()
+	end
+
 	function SetCustomMotionController(type)
 		self:pushToIvkr()
-		do
+		if type == nil then
+			ivkr_push_nil()
+		else
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
@@ -692,7 +707,9 @@ class BaseAvatar extends Entity
 
 	function SetCustomCameraController(type)
 		self:pushToIvkr()
-		do
+		if type == nil then
+			ivkr_push_nil()
+		else
 			ivkr_push_string(type)
 			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
 		end
@@ -775,6 +792,12 @@ class LotusAvatar extends Avatar
 		self:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("LotusAvatar", "SetDynamicUIName"), 2)
+	end
+
+	function SetCollisionEnabled(b)
+		self:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("LotusAvatar", "SetCollisionEnabled"), 2)
 	end
 end
 
@@ -1692,6 +1715,20 @@ class MotionControllerBase extends Object
 		self:pushToIvkr()
 		ivkr_push_float(f)
 		ivkr_call(ivkr_find_method("MotionControllerBase", "SetSpeedMultiplier"), 2)
+	end
+end
+
+class LotusMotionController extends MotionControllerBase
+	__name = "LotusMotionController"
+end
+
+class LotusSpaceFlightMotionController extends LotusMotionController
+	__name = "LotusSpaceFlightMotionController"
+
+	function EnableFlight(b)
+		self:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("LotusSpaceFlightMotionController", "EnableFlight"), 2)
 	end
 end
 

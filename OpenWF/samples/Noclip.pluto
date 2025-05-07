@@ -1,0 +1,26 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+local avatar
+local function disable()
+	if not IsNull(avatar) then
+		avatar:SetCustomAnimController(nil)
+		avatar:SetCustomMotionController(nil)
+		if avatar:MotionControl():IsA(Type("/Lotus/Powersuits/Fairy/FlightMotionController")) then
+			avatar:MotionControl():EnableFlight(false)
+		end
+		avatar:SetCustomCameraController(nil)
+		avatar:SetCollisionEnabled(true)
+	end
+end
+repeat
+	if avatar ~= gRegion:GetLocalPlayerAvatar() then
+		disable()
+		avatar = gRegion:GetLocalPlayerAvatar()
+	end
+	if not IsNull(avatar) then
+		avatar:SetCustomAnimController(Type("/Lotus/Powersuits/Fairy/FairyFlightAnimController"))
+		avatar:SetCustomMotionController(Type("/Lotus/Powersuits/Fairy/FlightMotionController"))
+		avatar:SetCustomCameraController(Type("/Lotus/Types/Player/SpaceBattle/SpaceMoveCameraController"))
+		avatar:SetCollisionEnabled(false)
+	end
+until not pcall(yield)
+disable()

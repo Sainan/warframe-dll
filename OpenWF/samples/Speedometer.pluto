@@ -1,3 +1,4 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
 repeat
 	if _T.AddHudTracker then
 		require("Lotus.Scripts.Libs.ObjectiveText").SetPrimaryObjText(string.format("%.2f KMH", (gRegion:GetLocalPlayerAvatar():GetSpeed() * 3.6)))

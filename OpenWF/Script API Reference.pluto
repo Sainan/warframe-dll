@@ -95,6 +95,7 @@ class BaseAvatar extends Entity
 	function ClearAgent()
 	function PushInputFilter(resource)
 	function SetCustomAnimController(type)
+	function GetAnimControllerType()
 	function SetCustomMotionController(type)
 	function SetCustomCameraController(type)
 	function EnableRagdollRecovery(b1, b2)
@@ -112,6 +113,7 @@ class LotusAvatar extends Avatar
 	function SetUIName(str)
 	function HasDynamicUIName()
 	function SetDynamicUIName(b)
+	function SetCollisionEnabled(b)
 
 class DamageControllerBase extends Object
 	function GiveTemporaryImmunity(a, b)
@@ -298,6 +300,11 @@ class PickUpTypeRarity
 class MotionControllerBase
 	function GetSpeedMultiplier()
 	function SetSpeedMultiplier(f)
+
+class LotusMotionController extends MotionControllerBase
+
+class LotusSpaceFlightMotionController extends LotusMotionController
+	function EnableFlight(b)
 
 class CameraControllerBase extends Object
 	function setFovMultiplier(fMul)
