@@ -1,4 +1,4 @@
-name dwmapi
+name wtsapi32
 dynamic
 +*.cpp
 require ../Soup/soup
