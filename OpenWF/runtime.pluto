@@ -1093,6 +1093,16 @@ class PowerSuit extends LotusWeapon
 		ivkr_pop(1)
 		return nil
 	end
+
+	function AddAbilityByType(type, idx)
+		self:pushToIvkr()
+		do
+			ivkr_push_string(type)
+			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		end
+		ivkr_push_int(idx)
+		ivkr_call(ivkr_find_method("PowerSuit", "AddAbilityByType"), 3)
+	end
 end
 
 class PowerSuitAbility extends Item
