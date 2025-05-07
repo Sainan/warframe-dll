@@ -708,14 +708,14 @@ static void process_args_str(T* str)
 template <bool has_graphicsDriver = true, typename T>
 static void process_args_struct(T* arguments)
 {
-	if (!arguments->got_language)
+	if (!arguments->got_language && !fallback_language.empty())
 	{
 		arguments->got_language = true;
 		arguments->language.setShortData(fallback_language.data(), fallback_language.size());
 	}
 	if constexpr (has_graphicsDriver)
 	{
-		if (!arguments->got_graphicsDriver)
+		if (!arguments->got_graphicsDriver && !fallback_graphicsDriver.empty())
 		{
 			arguments->got_graphicsDriver = true;
 			arguments->graphicsDriver.setShortData(fallback_graphicsDriver.data(), fallback_graphicsDriver.size());
@@ -727,10 +727,16 @@ static void process_args_struct(T* arguments)
 		arguments->cluster.setShortData(fallback_cluster.data(), fallback_cluster.size());
 	}
 
-	lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
+	if (arguments->got_language)
+	{
+		lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
+	}
 	if constexpr (has_graphicsDriver)
 	{
-		graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+		if (arguments->got_graphicsDriver)
+		{
+			graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+		}
 	}
 }
 
@@ -906,6 +912,20 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 					if (size == 43)
 					{
 						memcpy(build_hash, message + 20, 22);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("Cache lang"): // "Cache languages enabled: _xx"
+					if (size == 28)
+					{
+						lang_code = std::string(message + 26, 2);
+					}
+					break;
+
+				case soup::joaat::compileTimeHash("Using lang"): // "Using language: _xx"
+					if (size == 19)
+					{
+						lang_code = std::string(message + 17, 2);
 					}
 					break;
 
@@ -2040,7 +2060,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				fallback_language = ObfusString("en").str();
+#if !CONFIG_LOADED_ONLY_ONCE
+				fallback_language.clear();
+#endif
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it != config->reinterpretAsObj().end() && it->second->isStr())
