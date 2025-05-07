@@ -15,7 +15,7 @@ inline bool is_26_1_0_or_above = false;
 inline bool is_25_0_0_or_above = false;
 inline bool is_24_0_0_or_above = false;
 inline bool is_19_0_0_or_above = false;
-inline bool is_17_0_0_or_above = false;
+inline bool is_16_5_0_or_above = false;
 
 inline char build_hash[22] = { 0 };
 
@@ -329,7 +329,7 @@ static_assert(offsetof(LegacyArgumentsU23, language) == 0x200);
 static_assert(offsetof(LegacyArgumentsU23, got_cluster) == 0x220);
 static_assert(offsetof(LegacyArgumentsU23, cluster) ==  0x228);
 
-// 2016.09.30.12.04
+// 2016.09.30.12.04, 2015.05.14.16.29
 struct LegacyArgumentsU18
 {
 	PAD(0, 0x253) bool got_language;
