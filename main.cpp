@@ -2933,9 +2933,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			//SIG_INST("0F 85 4A 20 00 00");
-			SIG_INST("0F 85 ? ? ? ? 48 89 9C 24 ? ? ? ? 4C 89 BC 24 ? ? ? ? E8");
-			auto nrs_jnz = Module(nullptr).range.scan(sig_inst);
+			Pointer nrs_jnz;
+			if (is_17_0_0_or_above)
+			{
+				//SIG_INST("0F 85 4A 20 00 00");
+				SIG_INST("0F 85 ? ? ? ? 48 89 9C 24 ? ? ? ? 4C 89 BC 24 ? ? ? ? E8");
+				nrs_jnz = Module(nullptr).range.scan(sig_inst);
+			}
+			else
+			{
+				SIG_INST("0F 85 ? ? ? ? 49 8D 9D ? ? ? ? 48 8D 15 ? ? ? ? 48 8B CB E8"); // 2015.05.14.16.29
+				nrs_jnz = Module(nullptr).range.scan(sig_inst);
+			}
 #if LOGGING
 			std::cout << "nrs_jnz = " << nrs_jnz.as<void*>() << std::endl;
 #endif
