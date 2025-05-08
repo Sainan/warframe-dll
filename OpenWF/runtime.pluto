@@ -2981,6 +2981,7 @@ return function(f)
 							else
 								print("Could not find a toggle called "..name)
 							end
+							continue
 						end
 					end
 				elseif evt.type == OWF_EVT_CALLBACK then
