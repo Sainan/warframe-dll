@@ -458,11 +458,8 @@ class Entity extends BaseEntity
 
 	function Attach(type, optionalBoneSymbol, optionalPosOffset)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
-		(optionalBoneSymbol or EMPTY_SYMBOL):pushToIvkr()
+		type:pushToIvkr()
+		;(optionalBoneSymbol or EMPTY_SYMBOL):pushToIvkr()
 		if optionalPosOffset then
 			ivkr_push_vector(optionalPosOffset)
 		end
@@ -472,20 +469,14 @@ class Entity extends BaseEntity
 
 	function GetAttachment(type)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetAttachment"), 2)
 		return ivkr_pop_entity()
 	end
 
 	function GetAllAttachments(type)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetAllAttachments"), 2)
 		return ivkr_pop_entity_array()
 	end
@@ -587,10 +578,7 @@ class BaseAvatar extends Entity
 
 	function GiveItem(type, b)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_push_bool(b)
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "GiveItem"), 3))
 	end
@@ -682,8 +670,7 @@ class BaseAvatar extends Entity
 		if type == nil then
 			ivkr_push_nil()
 		else
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			type:pushToIvkr()
 		end
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomAnimController"), 2))
 	end
@@ -699,8 +686,7 @@ class BaseAvatar extends Entity
 		if type == nil then
 			ivkr_push_nil()
 		else
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			type:pushToIvkr()
 		end
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomMotionController"), 2))
 	end
@@ -710,8 +696,7 @@ class BaseAvatar extends Entity
 		if type == nil then
 			ivkr_push_nil()
 		else
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+			type:pushToIvkr()
 		end
 		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "SetCustomCameraController"), 2))
 	end
@@ -1096,10 +1081,7 @@ class PowerSuit extends LotusWeapon
 
 	function AddAbilityByType(type, idx)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_push_int(idx)
 		ivkr_call(ivkr_find_method("PowerSuit", "AddAbilityByType"), 3)
 	end
@@ -1247,19 +1229,13 @@ class LotusBaseGameRules extends GameRulesImpl
 
 	function AddActiveLevelAuraUpgrade(type)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "AddActiveLevelAuraUpgrade"), 2)
 	end
 
 	function RemoveActiveLevelAuraUpgrade(type)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "RemoveActiveLevelAuraUpgrade"), 2)
 	end
 
@@ -1911,10 +1887,7 @@ class NpcManager extends EngineNpcMgr
 
 	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
 		self:pushToIvkr()
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_push_vector(pos)
 		ivkr_push_rotation(rot)
 		;(optionalSymbol or EMPTY_SYMBOL):pushToIvkr()
@@ -2392,9 +2365,16 @@ function IsNull(val)
 	return not val
 end
 
-function Type(name)
-	return name
+class Type
+	function __construct(public name)
+	end
+
+	function pushToIvkr()
+		ivkr_push_string(self.name)
+		ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+	end
 end
+setmetatable(Type, { __call = |_, name| -> new Type(name) })
 
 function Resource(name)
 	ivkr_push_string(name)
@@ -2525,29 +2505,20 @@ gRegion = {
 	end,
 	function FindAll(type)
 		ivkr_push_object(get_regionmgr())
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "FindAll"), 2)
 		return ivkr_pop_entity_array()
 	end,
 	function CreateObject(type)
 		ivkr_push_object(get_regionmgr())
-		do
-			ivkr_push_string(type)
-			ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-		end
+		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateObject"), 2)
 		return new Object()
 	end,
 	function CreateEntity(type, pos, rot)
 		if avatar := gRegion:GetLocalPlayerAvatar() then
 			ivkr_push_object(get_regionmgr())
-			do
-				ivkr_push_string(type)
-				ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
-			end
+			type:pushToIvkr()
 			do
 				avatar:pushToIvkr()
 				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
