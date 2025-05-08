@@ -303,6 +303,18 @@ class PickUpTypeRarity
 	mItemType
 	mRarity
 
+class CodexManifest
+	function GetEnvironmentEntries()
+
+class CodexTypes.Entry
+	locName
+	icon
+	reqScans
+	secret
+	type
+
+class Texture extends ResourceBase
+
 class MotionControllerBase
 	function GetSpeedMultiplier()
 	function SetSpeedMultiplier(f)

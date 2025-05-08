@@ -1715,6 +1715,57 @@ class PickUpTypeRarity extends owfUserdata
 	end
 end
 
+class CodexManifest extends owfUserdata
+	__name = "CodexManifest"
+
+	function GetEnvironmentEntries()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("CodexManifest", "GetEnvironmentEntries"), 1)
+		local t = {}
+		local i = 1
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new CodexTypes.Entry())
+			++i
+		end
+		ivkr_pop(2)
+		return t
+	end
+end
+
+CodexTypes = {}
+
+class CodexTypes.Entry extends owfUserdata
+	__name = "CodexTypes.Entry"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("Entry", "locName"), 1)
+		self.locName = ivkr_pop_symbol()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("Entry", "icon"), 1)
+		self.icon = new Texture()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("Entry", "reqScans"), 1)
+		self.reqScans = math.tointeger(ivkr_pop_number())
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("Entry", "secret"), 1)
+		self.secret = ivkr_pop_bool()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("Entry", "type"), 1)
+		self.type = new ObjectType()
+	end
+end
+
+class Texture extends ResourceBase
+	__name = "Texture"
+end
+
 class MotionControllerBase extends Object
 	__name = "MotionControllerBase"
 
@@ -2376,6 +2427,9 @@ setmetatable(Type, { __call = |_, name| -> new Type(name) })
 function Resource(name)
 	ivkr_push_string(name)
 	ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+	if name == "/Lotus/Types/Lore/PrimaryCodexManifest" then
+		return new CodexManifest()
+	end
 	return new Object()
 end
 
