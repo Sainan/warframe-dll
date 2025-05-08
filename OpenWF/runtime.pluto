@@ -76,6 +76,11 @@ class Symbol
 end
 setmetatable(Symbol, { __call = |_, name| -> new Symbol(name) })
 
+function ivkr_pop_symbol()
+	ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
+	return new Symbol(ivkr_pop_string())
+end
+
 class Color
 	__name = "Color"
 
@@ -484,8 +489,7 @@ class Entity extends BaseEntity
 	function GetTag()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("Entity", "GetTag"), 1)
-		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(ivkr_pop_string())
+		return ivkr_pop_symbol()
 	end
 
 	function SetTag(symbol)
@@ -630,15 +634,13 @@ class BaseAvatar extends Entity
 	function GetFaction()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetFaction"), 1)
-		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(ivkr_pop_string())
+		return ivkr_pop_symbol()
 	end
 
 	function GetOriginalFaction()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetOriginalFaction"), 1)
-		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(ivkr_pop_string())
+		return ivkr_pop_symbol()
 	end
 
 	function SetFaction(symbol)
@@ -650,8 +652,7 @@ class BaseAvatar extends Entity
 	function GetLocTag()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetLocTag"), 1)
-		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(ivkr_pop_string())
+		return ivkr_pop_symbol()
 	end
 
 	function ClearAgent()
@@ -1370,8 +1371,7 @@ class RadialSector extends owfUserdata
 			case "name":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "name"), 1)
-				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(ivkr_pop_string())
+				return ivkr_pop_symbol()
 
 			case "unlocked":
 				self:pushToIvkr()
@@ -1386,8 +1386,7 @@ class RadialSector extends owfUserdata
 			case "missionTag":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "missionTag"), 1)
-				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(ivkr_pop_string())
+				return ivkr_pop_symbol()
 
 			case "mission":
 				self:pushToIvkr()
@@ -1418,8 +1417,7 @@ class LotusMissionInfo extends owfUserdata
 			case "location":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
-				ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-				return new Symbol(ivkr_pop_string())
+				return ivkr_pop_symbol()
 
 			case "levelOverride":
 			case "gameRules":
@@ -1919,8 +1917,7 @@ class LotusNpcAvatar extends LotusAvatar
 	function GetEnhancementLocTag()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusNpcAvatar", "GetEnhancementLocTag"), 1)
-		ivkr_call(ivkr_find_method("Symbol", "__tostring"), 1)
-		return new Symbol(ivkr_pop_string())
+		return ivkr_pop_symbol()
 	end
 end
 
