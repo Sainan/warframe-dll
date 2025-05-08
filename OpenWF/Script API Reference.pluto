@@ -279,11 +279,16 @@ class MissionAI
 
 class StoreManifest extends Object
 	function GetStoreItemsOfType(objectType)
+	function GetGiftBonusItems()
 
 class StoreItem extends Object
 	function GetProductCategory()
 	function ExcludeFromCodex()
 	function ShowInMarket()
+
+class GiftBonusItem
+	gift
+	reward
 
 class CountedItem
 	mItemType

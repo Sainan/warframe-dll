@@ -1632,6 +1632,19 @@ class StoreManifest extends Object
 		ivkr_pop(2)
 		return t
 	end
+
+	function GetGiftBonusItems()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("StoreManifest", "GetGiftBonusItems"), 1)
+		local t = {}
+		local i = 1
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new GiftBonusItem())
+			++i
+		end
+		ivkr_pop(2)
+		return t
+	end
 end
 
 class StoreItem extends Object
@@ -1653,6 +1666,22 @@ class StoreItem extends Object
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("StoreItem", "ShowInMarket"), 1)
 		return ivkr_pop_bool()
+	end
+end
+
+class GiftBonusItem extends owfUserdata
+	__name = "GiftBonusItem"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("GiftBonusItem", "gift"), 1)
+		self.gift = new StoreItem()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("GiftBonusItem", "reward"), 1)
+		self.reward = new StoreItem()
 	end
 end
 
