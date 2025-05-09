@@ -17,8 +17,16 @@ function joaat(string $str): int
 function add_file_to_archive($path, $archive_path)
 {
 	global $uncompressed;
-	echo $path." -> ".$archive_path."\n";
+	echo $path." -> ".$archive_path;
 	$cont = file_get_contents($path);
+	if ($path == "OpenWF/runtime.pluto")
+	{
+		echo " [compiled]";
+		passthru("plutoc ".escapeshellarg($path));
+		$cont = file_get_contents("plutoc.out");
+		unlink("plutoc.out");
+	}
+	echo "\n";
 	$uncompressed .= pack("V", joaat($archive_path));
 	$uncompressed .= pack("V", strlen($cont));
 	$uncompressed .= $cont;
