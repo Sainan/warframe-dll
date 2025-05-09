@@ -2567,32 +2567,12 @@ gRegion = {
 		return new Object()
 	end,
 	function CreateEntity(type, pos, rot)
-		if avatar := gRegion:GetLocalPlayerAvatar() then
-			ivkr_push_object(get_regionmgr())
-			type:pushToIvkr()
-			do
-				avatar:pushToIvkr()
-				ivkr_call(ivkr_find_method("Entity", "GetPosition"), 1)
-				if pos then -- optional for compatibility with older OpenWF versions
-					local ud = ivkr_get_userdata()
-					mem_write_f32(ud + 0x20, pos.x)
-					mem_write_f32(ud + 0x24, pos.y)
-					mem_write_f32(ud + 0x28, pos.z)
-				end
-			end
-			do
-				avatar:pushToIvkr()
-				ivkr_call(ivkr_find_method("Entity", "GetRotation"), 1)
-				if rot then -- optional for compatibility with older OpenWF versions
-					local ud = ivkr_get_userdata()
-					mem_write_f32(ud + 0x20, rot.heading)
-					mem_write_f32(ud + 0x24, rot.pitch)
-					mem_write_f32(ud + 0x28, rot.bank)
-				end
-			end
-			ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateEntity"), 4)
-			return ivkr_pop_entity()
-		end
+		ivkr_push_object(get_regionmgr())
+		type:pushToIvkr()
+		ivkr_push_vector(pos or gRegion:GetLocalPlayerAvatar():GetPosition()) -- Optional for compatibility with older OpenWF versions
+		ivkr_push_rotation(rot or gRegion:GetLocalPlayerAvatar():GetRotation()) -- Optional for compatibility with older OpenWF versions
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateEntity"), 4)
+		return ivkr_pop_entity()
 	end,
 	function GetNpcMgr()
 		ivkr_push_object(get_regionmgr())
