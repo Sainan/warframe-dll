@@ -3107,6 +3107,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
 			auto lua_set_global = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3146,6 +3147,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
 			auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
@@ -3174,6 +3176,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 6C 24 18 56 48 83 EC 20 48 8B EA 48 8B F1 48 85 D2");
 			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
@@ -3186,6 +3189,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
 			luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
@@ -3198,6 +3202,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
 			luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
@@ -3210,6 +3215,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 			auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
@@ -3226,6 +3232,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
 			luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
@@ -3238,6 +3245,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("40 53 48 83 EC 20 4C 8B D1 85 D2 7E");
 			luau_settable = Module(nullptr).range.scan(sig_inst).as<luau_settable_t>();
@@ -3250,6 +3258,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0");
 			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
@@ -3262,6 +3271,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			Pointer res[20];
@@ -3296,6 +3306,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_37_0_0_or_above)
 		{
 			SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
 			Pointer res[10];
