@@ -2024,7 +2024,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
-		const bool is_19_12_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.03.03.17.01").str()) >= 0);
+		const bool is_19_12_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.03.02.14.59").str()) >= 0);
 		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
 		const bool is_18_18_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.08.19.17.12").str()) >= 0);
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
@@ -2431,7 +2431,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			Pointer game_http_request_caller;
 			size_t offset;
-			if (is_19_12_1_or_above)
+			if (is_19_12_0_or_above)
 			{
 				SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
