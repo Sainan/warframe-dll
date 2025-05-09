@@ -2274,6 +2274,11 @@ class FlashInstance extends OverlayBase
 		ivkr_push_string(str)
 		ivkr_pop(ivkr_call(ivkr_find_method("FlashInstance", "Execute"), 3))
 	end
+
+	function Close()
+		self:pushToIvkr()
+		ivkr_pop(ivkr_call(ivkr_find_method("FlashInstance", "Close"), 1))
+	end
 end
 
 class OverlayMgr extends owfUserdata

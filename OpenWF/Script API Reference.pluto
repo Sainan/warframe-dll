@@ -427,6 +427,7 @@ class OverlayBase extends Object
 class FlashInstance extends OverlayBase
 	function AttachToEntity(ent, off, rot, vecScale)
 	function Execute(func, str)
+	function Close()
 
 class OverlayMgr
 	function SetSelectedStyle(resource)
