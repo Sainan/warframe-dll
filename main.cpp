@@ -897,6 +897,7 @@ static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
 	{
 	case soup::joaat::compileTimeHash("hub.warframe.com"):
 	case soup::joaat::compileTimeHash("nrs.warframe.com"):
+	case soup::joaat::compileTimeHash("arbiter.warframe.com"):
 		name->setUnownedData(server_host.data(), server_host.size());
 		break;
 	}
