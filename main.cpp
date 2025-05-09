@@ -345,7 +345,6 @@ struct GameHttpRequestU18
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
 static void on_got_server_host();
-using game_http_request_detour_t = void*(*)(void* a1, void* request, void* a3);
 
 template <typename T, bool strip_tls = false>
 static void* game_http_request_detour(void* a1, T* request, void* a3)
@@ -468,7 +467,7 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	}
 #endif
 
-	const auto ret = reinterpret_cast<game_http_request_detour_t>(game_http_request_hook.original)(a1, request, a3);
+	const auto ret = reinterpret_cast<decltype(&game_http_request_detour<T>)>(game_http_request_hook.original)(a1, request, a3);
 
 #if LOGGING
 	// This now contains the response
@@ -888,7 +887,8 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 
 static DetourHook legacy_dns_lookup_hook;
 
-static bool legacy_dns_lookup_detour(void* out, LegacyGameString* name, bool a3)
+template <typename T>
+static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
 {
 #if LOGGING
 	std::cout << "legacy_dns_lookup: " << name->getData() << std::endl;
@@ -900,7 +900,7 @@ static bool legacy_dns_lookup_detour(void* out, LegacyGameString* name, bool a3)
 		name->setUnownedData(server_host.data(), server_host.size());
 		break;
 	}
-	return reinterpret_cast<decltype(&legacy_dns_lookup_detour)>(legacy_dns_lookup_hook.original)(out, name, a3);
+	return reinterpret_cast<decltype(&legacy_dns_lookup_detour<T>)>(legacy_dns_lookup_hook.original)(out, name, a3);
 }
 
 
@@ -3008,7 +3008,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_33_0_0_or_above || !is_17_0_0_or_above)
 		{
 			Pointer nrs_jnz;
 			if (is_17_0_0_or_above)
@@ -3039,7 +3038,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
 			}
 		}
-		else
+
+		if (!is_33_0_0_or_above)
 		{
 			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
 			const auto legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3048,17 +3048,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (legacy_dns_lookup)
 			{
-				if (disable_nrs_connection)
+				if (is_19_0_0_or_above)
 				{
-					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour);
-					legacy_dns_lookup_hook.target = legacy_dns_lookup;
-					legacy_dns_lookup_hook.create();
-					legacy_dns_lookup_hook.enable();
+					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameString>);
 				}
+				else
+				{
+					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameStringU18>);
+				}
+				legacy_dns_lookup_hook.target = legacy_dns_lookup;
+				legacy_dns_lookup_hook.create();
+				legacy_dns_lookup_hook.enable();
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
+				std::cout << ObfusString("An important pattern scan has failed. You may experience stuttering.") << std::endl;
 			}
 		}
 
