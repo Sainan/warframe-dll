@@ -1978,6 +1978,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			soup::free(data);
 		}
 
+#if LOGGING
+		std::cout << "build_label = " << std::string(build_label, 16) << std::endl;
+#endif
+
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.09.51").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
@@ -2002,6 +2006,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
+		const bool is_19_13_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.03.06.15.49").str()) >= 0);
 		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
 		const bool is_18_18_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.08.19.17.12").str()) >= 0);
 		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
@@ -2408,7 +2413,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			Pointer game_http_request_caller;
 			size_t offset;
-			if (is_19_0_0_or_above)
+			if (is_19_13_0_or_above)
 			{
 				SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
@@ -2416,7 +2421,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else if (is_18_18_0_or_above)
 			{
-				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05"); // 2016.09.30.12.04, 2016.08.19.17.12
+				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05"); // 2016.12.16.14.33, 2016.09.30.12.04, 2016.08.19.17.12
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
@@ -2453,7 +2458,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else if (is_19_0_0_or_above)
 			{
-				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest>);
+				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest, true>);
 			}
 			else
 			{
@@ -2591,7 +2596,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_19_0_0_or_above) // Just stripping TLS for U18 and below
+		if (is_35_5_0_or_above) // Just stripping TLS for older versions
 		{
 			Pointer ssl_verify_internal_caller;
 			if (is_26_1_0_or_above)
@@ -2619,7 +2624,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			ssl_verify_internal_hook.enable();
 		}
 
-		if (is_19_0_0_or_above) // Just stripping TLS for U18 and below
+		if (is_35_5_0_or_above) // Just stripping TLS for older versions
 		{
 			void* Curl_ossl_verifyhost;
 			if (is_37_0_0_or_above)
