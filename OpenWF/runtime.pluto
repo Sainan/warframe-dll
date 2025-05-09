@@ -2861,7 +2861,7 @@ ivkr_typename = function(idx)
 	return ivkr_pop_string()
 end
 
-local AddHudTracker = function(name, type)
+local function AddHudTracker(name, type)
 	ivkr_push_string("_T")
 	ivkr_gettable(-10002)
 
@@ -2873,6 +2873,20 @@ local AddHudTracker = function(name, type)
 	ivkr_call2(2, 0)
 end
 
+local function OpenScreen(name)
+	ivkr_push_string("_T")
+	ivkr_gettable(-10002)
+
+	ivkr_push_string("OpenScreen")
+	ivkr_gettable(-2)
+
+	ivkr_push_string(name)
+	ivkr_call2(1, 1)
+	local ret = new FlashInstance()
+	ivkr_pop(1)
+	return ret
+end
+
 _T = setmetatable({}, {
 	function __index(name)
 		if name == "AddHudTracker" then
@@ -2882,6 +2896,9 @@ _T = setmetatable({}, {
 			local ok = ivkr_gettable(-2) > 0
 			ivkr_pop(2)
 			return ok ? AddHudTracker : nil
+		end
+		if name == "OpenScreen" then
+			return OpenScreen
 		end
 		return rawget(self, name)
 	end
