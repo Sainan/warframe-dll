@@ -2853,7 +2853,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				log_optional_scan_failure(false);
+				std::cout << ObfusString("Failed to bring up \"skip mission start timer\". This option will be non-functional.") << std::endl;
 			}
 		}
 
@@ -3359,7 +3359,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				log_optional_scan_failure(false);
+				std::cout << ObfusString("Failed to bring up \"simulacrum whitelisted/blacklisted\". This option will be non-functional.") << std::endl;
 			}
 		}
 
