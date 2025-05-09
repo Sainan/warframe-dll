@@ -2798,6 +2798,118 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
+		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
+		if (!is_33_6_0_or_above)
+		{
+			if (is_31_6_0_or_above)
+			{
+				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
+				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+#if LOGGING
+				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
+				if (insn)
+				{
+					memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
+					insn[0] = 0x31;
+					insn[1] = 0xc0;
+					insn[2] = 0x90;
+					insn[3] = 0x90;
+					insn[4] = 0x90;
+				}
+				else
+				{
+					log_optional_scan_failure(true);
+				}
+			}
+			else
+			{
+				uint8_t* insn;
+				if (is_30_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05"); // 2021.09.08.19.27
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_29_3_2_or_above)
+				{
+					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_26_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_24_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_23_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else if (is_19_0_0_or_above)
+				{
+					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+				else
+				{
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17
+					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+				}
+#if LOGGING
+				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+#endif
+				if (insn)
+				{
+					memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
+					insn[0] = 0x31;
+					insn[1] = 0xc0;
+					insn[2] = 0x90;
+					insn[3] = 0x90;
+					insn[4] = 0x90;
+					insn[5] = 0x90;
+					insn[6] = 0x90;
+					insn[7] = 0x90;
+				}
+				else
+				{
+					log_optional_scan_failure(true);
+				}
+			}
+		}
+
+		if (!is_33_0_0_or_above)
+		{
+			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
+			const auto legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
+#endif
+			if (legacy_dns_lookup)
+			{
+				if (is_19_0_0_or_above)
+				{
+					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameString>);
+				}
+				else
+				{
+					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameStringU18>);
+				}
+				legacy_dns_lookup_hook.target = legacy_dns_lookup;
+				legacy_dns_lookup_hook.create();
+				legacy_dns_lookup_hook.enable();
+			}
+			else
+			{
+				std::cout << ObfusString("An important pattern scan has failed. You may experience stuttering.") << std::endl;
+			}
+		}
+
 #if DISABLE_XP_BASED_LEVEL_CAPPING
 		{
 			SIG_INST("73 43 B2 05");
@@ -2923,91 +3035,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
-		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
-		if (!is_33_6_0_or_above)
-		{
-			if (is_31_6_0_or_above)
-			{
-				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
-				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-#if LOGGING
-				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
-#endif
-				if (insn)
-				{
-					memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
-					insn[0] = 0x31;
-					insn[1] = 0xc0;
-					insn[2] = 0x90;
-					insn[3] = 0x90;
-					insn[4] = 0x90;
-				}
-				else
-				{
-					log_optional_scan_failure(true);
-				}
-			}
-			else
-			{
-				uint8_t* insn;
-				if (is_30_0_0_or_above)
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05"); // 2021.09.08.19.27
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (is_29_3_2_or_above)
-				{
-					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (is_26_0_0_or_above)
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (is_24_0_0_or_above)
-				{
-					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (is_23_0_0_or_above)
-				{
-					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (is_19_0_0_or_above)
-				{
-					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-#if LOGGING
-				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
-#endif
-				if (insn)
-				{
-					memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
-					insn[0] = 0x31;
-					insn[1] = 0xc0;
-					insn[2] = 0x90;
-					insn[3] = 0x90;
-					insn[4] = 0x90;
-					insn[5] = 0x90;
-					insn[6] = 0x90;
-					insn[7] = 0x90;
-				}
-				else
-				{
-					log_optional_scan_failure(true);
-				}
-			}
-		}
-
 		{
 			Pointer nrs_jnz;
 			if (is_17_0_0_or_above)
@@ -3036,33 +3063,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
-			}
-		}
-
-		if (!is_33_0_0_or_above)
-		{
-			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
-			const auto legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
-#if LOGGING
-			std::cout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
-#endif
-			if (legacy_dns_lookup)
-			{
-				if (is_19_0_0_or_above)
-				{
-					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameString>);
-				}
-				else
-				{
-					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameStringU18>);
-				}
-				legacy_dns_lookup_hook.target = legacy_dns_lookup;
-				legacy_dns_lookup_hook.create();
-				legacy_dns_lookup_hook.enable();
-			}
-			else
-			{
-				std::cout << ObfusString("An important pattern scan has failed. You may experience stuttering.") << std::endl;
 			}
 		}
 
