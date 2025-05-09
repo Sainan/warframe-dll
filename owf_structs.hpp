@@ -316,7 +316,7 @@ static_assert(offsetof(LegacyArgumentsU24, language) == 0x228);
 static_assert(offsetof(LegacyArgumentsU24, got_cluster) == 0x248);
 static_assert(offsetof(LegacyArgumentsU24, cluster) ==  0x250);
 
-// 2018.06.14.23.21, 2018.05.17.16.28, 2018.02.22.14.34, 2017.10.12.17.04
+// 2018.06.14.23.21, 2018.05.17.16.28, 2018.02.22.14.34, 2017.10.12.17.04, 2017.03.03.17.01, 2016.11.11.17.46
 struct LegacyArgumentsU23
 {
 	PAD(0, 0x1FB) bool got_language;
