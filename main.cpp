@@ -886,6 +886,24 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 }
 
 
+static DetourHook legacy_dns_lookup_hook;
+
+static bool legacy_dns_lookup_detour(void* out, LegacyGameString* name, bool a3)
+{
+#if LOGGING
+	std::cout << "legacy_dns_lookup: " << name->getData() << std::endl;
+#endif
+	switch (soup::joaat::hashRange(name->getData(), name->getSize()))
+	{
+	case soup::joaat::compileTimeHash("hub.warframe.com"):
+	case soup::joaat::compileTimeHash("nrs.warframe.com"):
+		name->setUnownedData(server_host.data(), server_host.size());
+		break;
+	}
+	return reinterpret_cast<decltype(&legacy_dns_lookup_detour)>(legacy_dns_lookup_hook.original)(out, name, a3);
+}
+
+
 static DetourHook write_to_log_file_hook;
 static void* write_to_log_file_a1 = nullptr;
 static ObfusString log_sep("]: ");
@@ -2990,6 +3008,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (is_33_0_0_or_above || !is_17_0_0_or_above)
 		{
 			Pointer nrs_jnz;
 			if (is_17_0_0_or_above)
@@ -3013,6 +3032,28 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
 					nrs_jnz.as<uint8_t*>()[0] = 0x90;
 					nrs_jnz.as<uint8_t*>()[1] = 0xE9;
+				}
+			}
+			else
+			{
+				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
+			}
+		}
+		else
+		{
+			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
+			const auto legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
+#endif
+			if (legacy_dns_lookup)
+			{
+				if (disable_nrs_connection)
+				{
+					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour);
+					legacy_dns_lookup_hook.target = legacy_dns_lookup;
+					legacy_dns_lookup_hook.create();
+					legacy_dns_lookup_hook.enable();
 				}
 			}
 			else
