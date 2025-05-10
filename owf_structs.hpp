@@ -13,7 +13,7 @@ inline bool is_29_6_0_or_above = false;
 inline bool is_28_0_0_or_above = false;
 inline bool is_26_1_0_or_above = false;
 inline bool is_25_0_0_or_above = false;
-inline bool is_24_0_0_or_above = false;
+inline bool is_23_10_0_or_above = false;
 inline bool is_19_0_0_or_above = false;
 inline bool is_16_5_0_or_above = false;
 

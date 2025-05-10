@@ -792,7 +792,7 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 	{
 		process_args_struct<false>((LegacyArgumentsU25*)_arguments);
 	}
-	else if (is_24_0_0_or_above)
+	else if (is_23_10_0_or_above)
 	{
 		process_args_struct<false>((LegacyArgumentsU24*)_arguments);
 	}
@@ -2022,7 +2022,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		is_26_1_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.11.22.21.24").str()) >= 0);
 		const bool is_26_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.10.31.22.42").str()) >= 0);
 		is_25_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.05.22.23.12").str()) >= 0);
-		is_24_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.11.08.14.45").str()) >= 0);
+		is_23_10_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.10.11.23.29").str()) >= 0);
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
@@ -2843,7 +2843,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_24_0_0_or_above)
+				else if (is_23_10_0_or_above)
 				{
 					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
@@ -3068,7 +3068,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_24_0_0_or_above) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
+		if (is_23_10_0_or_above) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
 		{
 			// "Sys [Error]: Could not write to "
 			SIG_INST("48 8B 0D ? ? ? ? 48 85 C9 74 14 41 B8 20 00 00 00 48 8D 15 ? ? ? ? E8");
