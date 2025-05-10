@@ -250,14 +250,14 @@ owfScript::owfScript()
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		const auto scr = reinterpret_cast<owfScript*>(L->l_G->user_data);
-		SOUP_IF_UNLIKELY (scr->stop_requested)
-		{
-			ObfusString err("Stop requested");
-			luaL_error(L, err.c_str());
-		}
 		SOUP_IF_UNLIKELY (scr->callback_context)
 		{
 			ObfusString err("Cannot yield in a callback context");
+			luaL_error(L, err.c_str());
+		}
+		SOUP_IF_UNLIKELY (scr->stop_requested)
+		{
+			ObfusString err("Stop requested");
 			luaL_error(L, err.c_str());
 		}
 		lua_yield(L, 0);
@@ -623,7 +623,6 @@ owfScript::owfScript()
 						{
 							const auto cid = L->ci->func->value.gc->cl.upvals[1].value.as_uintptr;
 							//std::cout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
-							luau_L = L;
 							/*L->global_state_error_longjump_data() = nullptr;
 							L->global_state_panic_func() = [](luau_State* L, int)
 							{
@@ -633,16 +632,33 @@ owfScript::owfScript()
 								throw 0;
 							};*/
 							scr->callback_context = true;
-							lua_pushinteger(scr->coro, cid);
-							lua_pushinteger(scr->coro, luau_gettop(L));
-							const int nresults = scr->tick(2);
-							scr->callback_context = false;
-							//std::cout << "Runtime yielded " << nresults << " value(s)" << std::endl;
-							if (nresults == 1)
+							if (luau_L)
 							{
-								npushed = lua_tonumber(scr->coro, -1);
-								//std::cout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
+								const auto og_L = luau_L;
+								luau_L = L;
+								ObfusString str("owf_internal_callback");
+								lua_getglobal(scr->main, str.c_str());
+								lua_pushinteger(scr->main, cid);
+								lua_pushinteger(scr->main, luau_gettop(L));
+								lua_call(scr->main, 2, 1);
+								npushed = lua_tonumber(scr->main, -1);
+								luau_L = og_L;
 							}
+							else
+							{
+								luau_L = L;
+								lua_pushinteger(scr->coro, cid);
+								lua_pushinteger(scr->coro, luau_gettop(L));
+								const int nresults = scr->tick(2);
+								//std::cout << "Runtime yielded " << nresults << " value(s)" << std::endl;
+								if (nresults == 1)
+								{
+									npushed = lua_tonumber(scr->coro, -1);
+								}
+								luau_L = nullptr;
+							}
+							scr->callback_context = false;
+							//std::cout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
 						}
 						else
 						{

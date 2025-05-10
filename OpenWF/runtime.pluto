@@ -3097,6 +3097,24 @@ local function errorfunc(e)
 	end
 end
 
+function owf_internal_callback(cid, nargs)
+	local args = {}
+	for i = 1, nargs do
+		ivkr_push_value(-i)
+		args[nargs - i + 1] = ivkr_pop_any()
+	end
+	local t = table.pack(xpcall(owf_flash_callbacks[cid], errorfunc, table.unpack(args, 1, nargs)))
+	if t[1] then
+		for i = 2, t.n do
+			if not ivkr_push_any(t[i]) then
+				ivkr_push_nil()
+			end
+		end
+		return t.n - 1
+	end
+	return 0
+end
+
 return function(f)
 	owf_script_route_base = owf_script_get_path():sub(7)
 	owf_register_custom_route(owf_script_route_base.."/request_broadcast", "text/plain", "")
@@ -3115,22 +3133,7 @@ return function(f)
 			if not cid then
 				break
 			end
-			local args = {}
-			for i = 1, nargs do
-				ivkr_push_value(-i)
-				args[nargs - i + 1] = ivkr_pop_any()
-			end
-			local t = table.pack(xpcall(owf_flash_callbacks[cid], errorfunc, table.unpack(args, 1, nargs)))
-			if t[1] then
-				for i = 2, t.n do
-					if not ivkr_push_any(t[i]) then
-						ivkr_push_nil()
-					end
-				end
-				nres = t.n - 1
-			else
-				nres = 0
-			end
+			nres = owf_internal_callback(cid, nargs)
 		end
 	end
 	sched.errorfunc = errorfunc

@@ -1256,6 +1256,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	{
 		*raise_script_error_fp = og_raise;
 	}
+	luau_L = nullptr;
 #endif
 
 	return lua_LotusHudStatus_UpdateFlashMarkers_og(L);

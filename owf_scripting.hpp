@@ -32,8 +32,8 @@ struct owfScript
 	lua_State* main;
 	lua_State* coro = nullptr;
 	const size_t instance_id;
-	bool stop_requested = false;
 	bool callback_context = false;
+	bool stop_requested = false;
 
 	std::unordered_set<owfOverlay::DrawItem*> overlay_items;
 
