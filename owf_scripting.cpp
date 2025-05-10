@@ -267,6 +267,20 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		incnny(L);
+		return 0;
+	});
+	{ ObfusString name("block_yield"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		decnny(L);
+		return 0;
+	});
+	{ ObfusString name("unblock_yield"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		pluto_pushstring(L, lang_code);
 		return 1;
 	});

@@ -3133,7 +3133,9 @@ return function(f)
 			if not cid then
 				break
 			end
+			block_yield()
 			nres = owf_internal_callback(cid, nargs)
+			unblock_yield()
 		end
 	end
 	sched.errorfunc = errorfunc
