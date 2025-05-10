@@ -3089,6 +3089,14 @@ ivkr_pop_any = function(lim = 2)
 	return { __not_walked__ = "Unsupported type: "..typename }
 end
 
+local function errorfunc(e)
+	if type(e) == "string" and e:sub(-14) == "Stop requested" then
+		print(e)
+	else
+		print(debug.traceback(e,2))
+	end
+end
+
 return function(f)
 	owf_script_route_base = owf_script_get_path():sub(7)
 	owf_register_custom_route(owf_script_route_base.."/request_broadcast", "text/plain", "")
@@ -3112,7 +3120,7 @@ return function(f)
 				ivkr_push_value(-i)
 				args[nargs - i + 1] = ivkr_pop_any()
 			end
-			local t = table.pack(pcall(owf_flash_callbacks[cid], table.unpack(args, 1, nargs)))
+			local t = table.pack(xpcall(owf_flash_callbacks[cid], errorfunc, table.unpack(args, 1, nargs)))
 			if t[1] then
 				for i = 2, t.n do
 					if not ivkr_push_any(t[i]) then
@@ -3121,18 +3129,11 @@ return function(f)
 				end
 				nres = t.n - 1
 			else
-				print(t[2])
 				nres = 0
 			end
 		end
 	end
-	function sched.errorfunc(e)
-		if type(e) == "string" and e:sub(-14) == "Stop requested" then
-			print(e)
-		else
-			print(debug.traceback(e,2))
-		end
-	end
+	sched.errorfunc = errorfunc
 	owf_create_thread = |x| -> sched:add(x)
 	local mainco
 	sched:add(function()
