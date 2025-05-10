@@ -3218,6 +3218,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (is_37_0_0_or_above)
 		{
+			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B D9 49 63 F9 48 8B 49 18 49 8B F0");
+			luau_pushcclosurek = Module(nullptr).range.scan(sig_inst).as<luau_pushcclosurek_t>();
+#if LOGGING
+			std::cout << "luau_pushcclosurek = " << (void*)luau_pushcclosurek << std::endl;
+#endif
+			if (!luau_pushcclosurek)
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+
+		if (is_37_0_0_or_above)
+		{
+			SIG_INST("BA 01 00 00 00 41 B8 06 00 00 00 48 8B D9 E8 ? ? ? ? BA 02 00 00 00 48 8B CB E8 ? ? ? ? BA 01 00 00 00 48 8B CB E8");
+			auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
+#endif
+			if (lua_next_callsite)
+			{
+				luau_next = lua_next_callsite.add(41).rip().as<luau_next_t>();
+			}
+		}
+
+		if (is_37_0_0_or_above)
+		{
 			SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 			auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING

@@ -31,7 +31,9 @@ struct owfScript
 	std::string name;
 	lua_State* main;
 	lua_State* coro = nullptr;
+	const size_t instance_id;
 	bool stop_requested = false;
+	bool callback_context = false;
 
 	std::unordered_set<owfOverlay::DrawItem*> overlay_items;
 
@@ -63,6 +65,7 @@ struct owfScript
 	bool loadString(std::string&& code);
 
 	bool tick();
+	int tick(int nargs);
 
 	bool isBlockingMessage(const std::string& msg) const noexcept
 	{

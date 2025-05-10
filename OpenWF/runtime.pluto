@@ -2901,6 +2901,17 @@ _T = setmetatable({}, {
 			return OpenScreen
 		end
 		return rawget(self, name)
+	end,
+	function __newindex(name, value)
+		assert(type(value) == "function")
+		ivkr_push_string("_T")
+		ivkr_gettable(-10002)
+		local cid = #owf_flash_callbacks + 1
+		owf_flash_callbacks[cid] = value
+		ivkr_push_string(name)
+		ivkr_push_callback2(cid)
+		ivkr_settable(-3)
+		ivkr_pop(1)
 	end
 })
 
@@ -2977,6 +2988,7 @@ Sleep = coroutine.sleep
 
 owf_internal_event_queue = {}
 owf_lambda_callbacks = {}
+owf_flash_callbacks = {}
 owf_next_event = || -> owf_internal_event_queue:remove(1)
 
 ivkr_push_callback = function(callback)
@@ -2986,6 +2998,80 @@ ivkr_push_callback = function(callback)
 	end
 	ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
 	owf_register_callback(callbackName)
+end
+
+ivkr_push_any = function(val)
+	switch type(val) do
+		case "nil":
+			ivkr_push_nil()
+			return true
+
+		case "boolean":
+			ivkr_push_bool(val)
+			return true
+
+		case "number":
+			if math.type(val) == "integer" do
+				ivkr_push_int(val)
+			else
+				ivkr_push_float(val)
+			end
+			return true
+
+		case "string":
+			ivkr_push_string(val)
+			return true
+
+		case "table":
+			ivkr_newtable()
+			for k, v in val do
+				if not ivkr_push_any(k) or not ivkr_push_any(v) then
+					ivkr_pop(1)
+					return false
+				end
+				ivkr_settable(-3)
+			end
+			return true
+	end
+	print("Unexpected value: "..dumpvar(val))
+	return false
+end
+
+ivkr_pop_any = function(lim = 2)
+	local typename = ivkr_typename(-1)
+	switch typename do
+		case "nil":
+			ivkr_pop(1)
+			return nil
+
+		case "boolean":
+			return ivkr_pop_bool()
+
+		case "number":
+			return ivkr_pop_number()
+
+		case "string":
+			return ivkr_pop_string()
+
+		case "table":
+			if lim == 0 then
+				ivkr_pop(1)
+				return { __not_walked__ = "Depth limit reached" }
+			else
+				local t = {}
+				ivkr_push_nil()
+				while ivkr_next(-2) do
+					local v = ivkr_pop_any(lim - 1)
+					ivkr_push_value(-1)
+					local k = ivkr_pop_any(lim - 1)
+					t[k] = v
+				end
+				ivkr_pop(1)
+				return t
+			end
+	end
+	ivkr_pop(1)
+	return { __not_walked__ = "Unsupported type: "..typename }
 end
 
 return function(f)
@@ -2999,8 +3085,33 @@ return function(f)
 	coroutine.yield = yield
 
 	local sched = new scheduler()
-	sched.yieldfunc = simple_yield
-	sched.errorfunc = function(e)
+	function sched.yieldfunc()
+		local nres
+		while true do
+			local cid, nargs = simple_yield(nres)
+			if not cid then
+				break
+			end
+			local args = {}
+			for i = 1, nargs do
+				ivkr_push_value(-i)
+				args[nargs - i + 1] = ivkr_pop_any()
+			end
+			local t = table.pack(pcall(owf_flash_callbacks[cid], table.unpack(args, 1, nargs)))
+			if t[1] then
+				for i = 2, t.n do
+					if not ivkr_push_any(t[i]) then
+						ivkr_push_nil()
+					end
+				end
+				nres = t.n - 1
+			else
+				print(t[2])
+				nres = 0
+			end
+		end
+	end
+	function sched.errorfunc(e)
 		if type(e) == "string" and e:sub(-14) == "Stop requested" then
 			print(e)
 		else
@@ -3060,6 +3171,6 @@ return function(f)
 		until mainco:status() == "dead" and (owf_lambda_callbacks:size() == 0 or owf_get_stop_requested())
 	end)
 	mainco = sched:add(f)
-	simple_yield()
+	sched.yieldfunc()
 	sched:run()
 end

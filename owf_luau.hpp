@@ -2,11 +2,20 @@
 
 #include "owf_structs.hpp"
 
+struct luau_State;
+union luau_GCObject;
+
+#define luau_CommonHeader uint8_t tt; uint8_t marked; uint8_t memcat
+
+using luau_CFunction = int(*)(luau_State*);
+using luau_Continuation = void*;
+
 union luau_Value
 {
 	uintptr_t as_uintptr;
 	int as_bool;
 	float as_float;
+	luau_GCObject* gc;
 };
 
 enum luau_Type
@@ -42,8 +51,6 @@ struct luau_TValue
 };
 static_assert(sizeof(luau_TValue) == 0x10);
 
-struct luau_State;
-
 // 38.0.x
 struct luau_GlobalState_38_0_x
 {
@@ -62,12 +69,21 @@ struct luau_GlobalState_38_5_0
 	PAD(0xCA8 + 8, 0xCE8) void(*panic_func)(luau_State* L, int status);
 };
 
+using luau_StkId = luau_TValue*;
+
+struct luau_CallInfo
+{
+	luau_StkId base;
+	luau_StkId func;
+	luau_StkId top;
+};
+
 struct luau_State
 {
 	PAD(0, 0x08) luau_TValue* outtop;
 	/* 0x10 */ luau_TValue* intop;
 	/* 0x18 */ void* global_state;
-	/* 0x20 */ void* ci;
+	/* 0x20 */ luau_CallInfo* ci;
 	/* 0x28 */ luau_TValue* stack_last;
 	/* 0x30 */ luau_TValue* stack;
 	PAD(0x38, 0x90);
@@ -97,16 +113,28 @@ struct luau_State
 };
 static_assert(sizeof(luau_State) == 0x90);
 
-using luau_CFunction = int(*)(luau_State*);
-using luau_Alloc = void*(*)(void* ud, void* ptr, size_t osize, size_t nsize);
-
 struct luau_Closure
 {
-	PAD(0x00, 0x03) uint8_t isC;
-	PAD(0x04, 0x18) luau_CFunction func;
+	/* 0x00 */ luau_CommonHeader;
+	/* 0x03 */ uint8_t isC;
+	/* 0x04 */ uint8_t nupvalues;
+	/* 0x05 */ uint8_t stacksize;
+	/* 0x06 */ uint8_t preload;
+	PAD(0x07, 0x18) luau_CFunction func;
+	/* 0x20 */ luau_Continuation cont;
+	/* 0x28 */ const char* debugname;
+	/* 0x30 */ luau_TValue upvals[1];
+};
+static_assert(offsetof(luau_Closure, isC) == 0x03);
+static_assert(offsetof(luau_Closure, func) == 0x18);
+
+union luau_GCObject
+{
+	luau_Closure cl;
 };
 
-/*inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
+/*using luau_Alloc = void*(*)(void* ud, void* ptr, size_t osize, size_t nsize);
+inline void* luau_alloc_impl(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	if (nsize == 0)
 	{
@@ -122,6 +150,35 @@ struct luau_Closure
 /*using luau_newstate_t = luau_State*(*)(luau_Alloc f, void* ud, char);
 inline luau_newstate_t luau_newstate = nullptr;*/
 
+inline int luau_gettop(luau_State* L)
+{
+	return L->outtop - L->intop;
+}
+
+inline bool luau_push_number(luau_State* luau_L, float value)
+{
+	SOUP_IF_LIKELY (luau_L->outtop != luau_L->stack_last)
+	{
+		luau_L->outtop->value.as_float = value;
+		luau_L->outtop->type = LUAU_NUMBER;
+		luau_L->outtop++;
+		return true;
+	}
+	return false;
+}
+
+inline bool luau_push_lightuserdata(luau_State* luau_L, void* value)
+{
+	SOUP_IF_LIKELY (luau_L->outtop != luau_L->stack_last)
+	{
+		luau_L->outtop->value.as_uintptr = reinterpret_cast<uintptr_t>(value);
+		luau_L->outtop->type = LUAU_LIGHTUSERDATA;
+		luau_L->outtop++;
+		return true;
+	}
+	return false;
+}
+
 using luau_pushstring_t = const char*(*)(luau_State*, const char*);
 inline luau_pushstring_t luau_pushstring = nullptr;
 
@@ -130,6 +187,12 @@ inline luau_pushpointer_t luau_pushpointer = nullptr;
 
 using luau_pushobject_t = Object*(*)(luau_State*, Object*);
 inline luau_pushobject_t luau_pushobject = nullptr;
+
+using luau_pushcclosurek_t = void(*)(luau_State* L, luau_CFunction func, const char* debugname, int nup, luau_Continuation cont);
+inline luau_pushcclosurek_t luau_pushcclosurek = nullptr;
+
+using luau_next_t = int(*)(luau_State* L, int idx);
+inline luau_next_t luau_next = nullptr;
 
 using luau_gettable_t = int(*)(luau_State*, int idx);
 inline luau_gettable_t luau_gettable = nullptr;
