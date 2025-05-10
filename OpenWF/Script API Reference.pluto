@@ -616,6 +616,20 @@ PowerSuitCustomizationSlot = { Helmet, ArmLeft, LegLeft, CustomEmblem, EventEmbl
 "Lotus.Interface.LotusNetworkUtilities"
 	Host_LoadMission = function(node, missionInfo)
 
+"Lotus.Interface.LotusUtilities"
+	SLIDER
+	CHECKBOX
+	TOGGLE
+	BUTTON
+	TITLE
+	INPUTBOX
+	SPACER
+	INPUTCOUNT
+	ICONBUTTON
+	CHOICE
+	COLOR
+	IMAGE
+
 "Lotus.Scripts.Libs.ObjectiveText"
 	SetPrimaryObjText = function(text)
 	ClearPrimaryObjText = function()

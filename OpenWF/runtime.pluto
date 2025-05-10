@@ -2952,6 +2952,21 @@ package.preload["Lotus.Interface.LotusNetworkUtilities"] = || -> {
 	end
 }
 
+package.preload["Lotus.Interface.LotusUtilities"] = || -> {
+	SLIDER = 1,
+	CHECKBOX = 2,
+	TOGGLE = 3,
+	BUTTON = 4,
+	TITLE = 5,
+	INPUTBOX = 6,
+	SPACER = 7,
+	INPUTCOUNT = 8,
+	ICONBUTTON = 9,
+	CHOICE = 10,
+	COLOR = 11,
+	IMAGE = 12
+}
+
 package.preload["Lotus.Scripts.Libs.ObjectiveText"] = || -> {
 	SetPrimaryObjText = function(text)
 		ivkr_push_string("Lotus.Scripts.Libs.ObjectiveText")
