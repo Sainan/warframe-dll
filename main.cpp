@@ -2023,6 +2023,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		const bool is_26_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.10.31.22.42").str()) >= 0);
 		is_25_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.05.22.23.12").str()) >= 0);
 		is_23_10_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.10.11.23.29").str()) >= 0);
+		const bool is_23_9_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.09.28.19.09").str()) >= 0);
 		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
 		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
 		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
@@ -2843,7 +2844,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_23_10_0_or_above)
+				else if (is_23_9_1_or_above)
 				{
 					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
