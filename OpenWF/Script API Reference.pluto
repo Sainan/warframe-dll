@@ -608,6 +608,9 @@ ForceType = { FT_FORCE, FT_IMPULSE, FT_VELOCITY_CHANGE, FT_ACCELERATION }
 ColorCustomizationSlot = { PrimaryColors, Attachments, Sigil, Eyes, Facial, Clothing, Syandana }
 PowerSuitCustomizationSlot = { Helmet, ArmLeft, LegLeft, CustomEmblem, EventEmblem, AnimationSet, Neckwear, BodySkin, Chest, ArmRight, LegRight, Face, SigilChest, SigilBack, SpecialEvent, FxSet, SpecialFxSet }
 
+_T.AddHudTracker -- function(name, type) or nil
+_T.OpenScreen -- function(name)
+
 -- Preloaded modules
 
 "EE.Interface.Utilities"
