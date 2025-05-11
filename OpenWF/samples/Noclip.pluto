@@ -8,6 +8,7 @@ local function disable()
 			avatar:MotionControl():EnableFlight(false)
 		end
 		avatar:SetCustomCameraController(nil)
+		avatar:SetPostureModifier(PostureModifier.PM_AIRBORNE, false)
 		avatar:SetCollisionEnabled(true)
 	end
 end

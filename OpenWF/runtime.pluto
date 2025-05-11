@@ -723,6 +723,13 @@ class BaseAvatar extends Entity
 		end
 		ivkr_pop(1)
 	end
+
+	function SetPostureModifier(i, b)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("BaseAvatar", "SetPostureModifier"), 3)
+	end
 end
 
 class Avatar extends BaseAvatar
@@ -2791,6 +2798,7 @@ OperationType = {
 }
 
 DamageType = UpgradeType
+PostureModifier = UpgradeType
 
 Injury = {
 	PAIN = 0,
