@@ -78,6 +78,9 @@ struct luau_CallInfo
 	luau_StkId top;
 };
 
+#define luau_savestack(L, p) ((char*)(p) - (char*)L->stack)
+#define luau_restorestack(L, n) ((luau_TValue*)((char*)L->stack + (n)))
+
 struct luau_State
 {
 	PAD(0, 0x08) luau_TValue* outtop;

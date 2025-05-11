@@ -1285,7 +1285,6 @@ owfScript::owfScript()
 						luau_error_msg = ObfusString("low-level exception").str();
 					}
 				}
-				luau_L->outtop = call_top;
 				SOUP_IF_UNLIKELY (!luau_error_msg.empty())
 				{
 					luaL_error(L, luau_error_msg.c_str());
@@ -1314,7 +1313,6 @@ owfScript::owfScript()
 					luau_error_msg = ObfusString("low-level exception").str();
 				}
 			}
-			luau_L->outtop = call_top + nresults;
 			SOUP_IF_UNLIKELY (!luau_error_msg.empty())
 			{
 				luaL_error(L, luau_error_msg.c_str());

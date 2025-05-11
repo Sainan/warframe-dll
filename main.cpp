@@ -1177,8 +1177,8 @@ static raise_script_error_t* raise_script_error_fp = nullptr;
 static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 {
 #if true
-	const auto og_outtop = L->outtop;
-	const auto og_intop = L->intop;
+	const auto og_outtop = luau_savestack(L, L->outtop);
+	const auto og_intop = luau_savestack(L, L->intop);
 	const auto og_lngjmp = L->global_state_error_longjump_data();
 	const auto og_panic = L->global_state_panic_func();
 	raise_script_error_t og_raise;
@@ -1243,13 +1243,13 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	}
 
 #if PRIVATE
-	if (L->outtop != og_outtop)
+	if (luau_savestack(L, L->outtop) != og_outtop)
 	{
 		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
-	L->outtop = og_outtop;
-	L->intop = og_intop;
+	L->outtop = luau_restorestack(L, og_outtop);
+	L->intop = luau_restorestack(L, og_intop);
 	L->global_state_error_longjump_data() = og_lngjmp;
 	L->global_state_panic_func() = og_panic;
 	if (raise_script_error_fp)
