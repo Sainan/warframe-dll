@@ -114,6 +114,7 @@ class LotusAvatar extends Avatar
 	function HasDynamicUIName()
 	function SetDynamicUIName(b)
 	function SetCollisionEnabled(b)
+	function SetCinematicID(symbol)
 
 class DamageControllerBase extends Object
 	function GiveTemporaryImmunity(a, b)

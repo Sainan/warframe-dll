@@ -792,6 +792,12 @@ class LotusAvatar extends Avatar
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("LotusAvatar", "SetCollisionEnabled"), 2)
 	end
+
+	function SetCinematicID(symbol)
+		self:pushToIvkr()
+		symbol:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusAvatar", "SetCinematicID"), 2)
+	end
 end
 
 class DamageControllerBase extends Object
