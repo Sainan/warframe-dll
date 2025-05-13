@@ -459,6 +459,17 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	}
 	std::string url_buf = uri.toString();
 	request->url.setUnownedData(url_buf.data(), url_buf.size());
+#if true // PS can be relatively sensitive data but is often shared alongside server logs.
+	if (auto jr = json::decode(request->body.getData()); jr && jr->isObj())
+	{
+		if (auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
+		{
+			it->second->reinterpretAsStr().value = ObfusString("Ws1PSElKS0xNRBIECNy3YlnrXVc5olXfUVxbKG4YsyybP3XD4+t9W3rN4G8hLNneSopUM52ZIIQKadVACvgGWM6R175JwL3NZ8OmiQiZ83IQo+YjmI8thUM3i8rnWEqgsBkfEuvJhux/2608Vpkldr+j6uAOwCQyu9qMPC1P0ZjPcAvOTKWV3AVvP1V1UTFZGI6Wo/BGA+CuRT6nAK0k7iyjuuly+3utTODq48Y0+hyz8DzlfLbr1rodZNMNfbvkgME/DhxfGhoa2QycQE8vZMPMZAeaVBr12Qw4kNNoASwkwXZZVlEOhfniBER4DvAbmWeWQRAyM7Y2bUTAGsbP+Yu2ka2LBd+xqiSyhFNmAnW0F+GEIhFapgBkaDi48gOR197GefGhqdYYOMV7eKKGTm3itq99FMtoMVoXxyLhwci2Oqat4yLrUJ/p4CZy/T+oVDEQPORavynKBYMzLenguQb0oW3YGHkx/qZCdTWhIFobvU0b/vfmqi+ngZzWqFqRzJyouNqW8q9B+gzXtIqaWfqIa9qkt0GL7wl4Mkb6PAj/EyVNzlw0Urylagi733zvIzNN+B6dDX+I2lpmpuscKAh9dw573NH/AfEXTOlQPlOvitQRko2OB9ew0ize0Kl1QxYBNIcMnkFr1C2k1eFgQONo6y41c2E+ce0m4cY78bdJOfJfLGhqTeA/ymvkfndVQ8XAKJLLcNiRP4Z7yAOnHFq5C+p6DiWNg+5aCslGr3dL81w6bHD8QV3FMk9bANGa2DguCv/atSRVovicVl/b5r1vMPO7sgXedthu0gSw/MA2vJIcaWhGNKNk98KXHnX3dnsUORrayaG43B1XpLHLOMgg2REgkpI9OwI8RS0UuzMaOa63pWOUU4Uxjj5sSbdnXb5Fp9/R7pOgH7zhxvuRquMc833/uR9duRiCK5zjm3LrMMAV4BCvQ43n7svbIgXR51pVvOllbNSvDiQmISJF").str();
+			body_buf = jr->encode();
+			request->body.setUnownedData(body_buf.data(), body_buf.size());
+		}
+	}
+#endif
 #else
 	if (uri.path == "/api/heartbeat.php")
 	{
