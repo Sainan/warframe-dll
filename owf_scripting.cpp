@@ -17,6 +17,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <lstate.h>
+#include <lstring.h> // plutoS_prealloc, plutoS_commit
 
 #include "owf_archive.hpp"
 #include "owf_cache.hpp"
@@ -1619,7 +1620,6 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("owf_cachemanifest_pack_entries"); lua_setglobal(L, name.c_str()); }
 
-	// ffi.alloc & ffi.read will be added in Pluto 0.11.0, but for now...
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		size_t compressed_len;
@@ -1630,10 +1630,10 @@ owfScript::owfScript()
 		using OodleLZ_Decompress_t = int(*)(const char* inputData, size_t inputLen, void* outputData, size_t outputLen, int a5, int a6, int a7, size_t a8, size_t a9, size_t a10, size_t a11, size_t a12, size_t a13, int a14);
 		SOUP_IF_LIKELY (auto OodleLZ_Decompress = (OodleLZ_Decompress_t)lib.getAddress(ObfusString("OodleLZ_Decompress")))
 		{
-			auto decompressed = soup::malloc(decompressed_size);
+			char shrtbuf[LUAI_MAXSHORTLEN];
+			auto decompressed = plutoS_prealloc(L, shrtbuf, decompressed_size);
 			OodleLZ_Decompress(compressed, compressed_len, decompressed, decompressed_size, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
-			lua_pushlstring(L, (const char*)decompressed, decompressed_size);
-			soup::free(decompressed);
+			plutoS_commit(L, decompressed, decompressed_size);
 			return 1;
 		}
 		return 0;
