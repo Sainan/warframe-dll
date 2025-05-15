@@ -61,6 +61,7 @@ void owfOverlay::init()
 			{
 				Sleep(100);
 			}
+			Sleep(500);
 
 #if !LOGGING
 			if (!ee_log_in_console
