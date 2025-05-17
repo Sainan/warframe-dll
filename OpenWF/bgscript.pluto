@@ -294,6 +294,8 @@ local function check_for_updates()
 	end)
 end
 
+local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.12.11.14.26") >= 0
+
 local last_status_update = 0
 local last_status_string
 
@@ -312,25 +314,27 @@ while pcall(yield) do
 			pos = "",
 			markers = {}
 		}
-		if ply := gRegion:GetLocalPlayer() then
-			if avatar := ply:GetAvatar() then
-				if not avatar:isFollowedByCamera() then
-					status.camtype = gRegion:GetLocalPlayer():isControllingCamera() ? "freecam" : "lockcam"
+		if ivkr_available then
+			if ply := gRegion:GetLocalPlayer() then
+				if avatar := ply:GetAvatar() then
+					if not avatar:isFollowedByCamera() then
+						status.camtype = gRegion:GetLocalPlayer():isControllingCamera() ? "freecam" : "lockcam"
+					end
+					local pos = avatar:GetPosition()
+					status.pos = "%f,%f,%f":format(pos.x, pos.y, pos.z)
 				end
-				local pos = avatar:GetPosition()
-				status.pos = "%f,%f,%f":format(pos.x, pos.y, pos.z)
-			end
-			if hud := ply:GetHudStatus() then
-				for hud:GetFlashMarkers() as marker do
-					if not marker.garbage then
-						local pos = marker.baseMarkerInfo:GetPosition()
-						status.markers:insert({
-							type = marker.markerType,
-							x = pos.x,
-							y = pos.y,
-							z = pos.z,
-							dist = marker.distanceToEye,
-						})
+				if hud := ply:GetHudStatus() then
+					for hud:GetFlashMarkers() as marker do
+						if not marker.garbage then
+							local pos = marker.baseMarkerInfo:GetPosition()
+							status.markers:insert({
+								type = marker.markerType,
+								x = pos.x,
+								y = pos.y,
+								z = pos.z,
+								dist = marker.distanceToEye,
+							})
+						end
 					end
 				end
 			end
@@ -353,7 +357,7 @@ while pcall(yield) do
 		last_status_update = os.millis()
 	end
 	if (fov_override := owf_config_get_fov_override()) ~= 0 then
-		if not owf_tunables_has("prohibit_fov_override") then
+		if ivkr_available and not owf_tunables_has("prohibit_fov_override") then
 			if ply := gRegion:GetLocalPlayer() then
 				ply:CameraControl():SetBaseFovOverride(fov_override)
 			end
@@ -362,7 +366,7 @@ while pcall(yield) do
 	while evt := owf_next_event() do
 		if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
 			if evt.path:sub(1, 10) == "/teleport?" then
-				if not owf_tunables_has("prohibit_teleport") then
+				if ivkr_available and not owf_tunables_has("prohibit_teleport") then
 					local arr = evt.path:sub(11):split(",")
 					if #arr == 3 then
 						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
