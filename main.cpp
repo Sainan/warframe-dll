@@ -1199,7 +1199,21 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	raise_script_error_t og_raise;
 
 	luau_L = L;
-	L->global_state_error_longjump_data() = nullptr;
+	if (is_37_0_0_or_above) // These offsets are very likely wrong for 35.5.0 and below
+	{
+		L->global_state_error_longjump_data() = nullptr;
+		L->global_state_panic_func() = [](luau_State* L, int)
+		{
+#if LOGGING
+			std::cout << "LuaU is panicking" << std::endl;
+#endif
+			luau_error_msg = (--L->outtop)->getString();
+#if LOGGING
+			std::cout << luau_error_msg << std::endl;
+#endif
+			throw 0;
+		};
+	}
 	if (raise_script_error_fp)
 	{
 		og_raise = *raise_script_error_fp;
@@ -1215,17 +1229,6 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 			throw 0;
 		};
 	}
-	L->global_state_panic_func() = [](luau_State* L, int)
-	{
-#if LOGGING
-		std::cout << "LuaU is panicking" << std::endl;
-#endif
-		luau_error_msg = (--L->outtop)->getString();
-#if LOGGING
-		std::cout << luau_error_msg << std::endl;
-#endif
-		throw 0;
-	};
 
 	{
 		std::lock_guard mtx(running_scripts_mtx);
@@ -1263,10 +1266,13 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
-	L->outtop = luau_restorestack(L, og_outtop);
-	L->intop = luau_restorestack(L, og_intop);
-	L->global_state_error_longjump_data() = og_lngjmp;
-	L->global_state_panic_func() = og_panic;
+	if (is_37_0_0_or_above)
+	{
+		L->outtop = luau_restorestack(L, og_outtop);
+		L->intop = luau_restorestack(L, og_intop);
+		L->global_state_error_longjump_data() = og_lngjmp;
+		L->global_state_panic_func() = og_panic;
+	}
 	if (raise_script_error_fp)
 	{
 		*raise_script_error_fp = og_raise;
@@ -3145,7 +3151,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above) // Straight up crashes on 35.5.0
 		{
 			SIG_INST("C2 96 84 6B 00 00 00 00");
 			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(sig_inst);
