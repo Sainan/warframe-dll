@@ -491,7 +491,9 @@ struct Player : public Object
 	PAD(0x078, 0x090) GameString clan_name;
 	PAD(0x0A0, 0x148) Avatar** avatar;
 	PAD(0x150, 0x158) bool controlling_camera;
-	PAD(0x159, 0x1A0) GameString mm_value;
+	/* 0x159 */ bool freecam_locked;
+	PAD(0x15A, 0x15B) bool allow_input_in_freecam;
+	PAD(0x15C, 0x1A0) GameString mm_value;
 	PAD(0x1B0, 0x1C0) GameString account_id;
 	PAD(0x1D0, 0x13E0) UnkControlsArg unk_controls_arg;
 
