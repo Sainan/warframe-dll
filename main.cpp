@@ -1285,10 +1285,11 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 
 
 static ReplacementHook get_profile_dir_hook;
+static uint32_t get_profile_dir_offset;
 
 static GameString* get_profile_dir_detour(uintptr_t a1)
 {
-	auto str = reinterpret_cast<GameString*>(a1 + 0x2A0);
+	auto str = reinterpret_cast<GameString*>(a1 + get_profile_dir_offset);
 	str->setUnownedData(forced_profile_dir.data(), forced_profile_dir.size());
 	return str;
 }
@@ -3379,20 +3380,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 AF 02 00 00");
-			auto get_profile_dir = Module(nullptr).range.scan(sig_inst).as<void*>();
+			// "Using profile dir "
+			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 ? ? ? ? 48 8D 99");
+			auto get_profile_dir = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "get_profile_dir = " << get_profile_dir << std::endl;
+			std::cout << "get_profile_dir = " << get_profile_dir.as<void*>() << std::endl;
 #endif
 			if (get_profile_dir)
 			{
 				if (!forced_profile_dir.empty())
 				{
 					get_profile_dir_hook.detour = reinterpret_cast<void*>(&get_profile_dir_detour);
-					get_profile_dir_hook.target = get_profile_dir;
+					get_profile_dir_hook.target = get_profile_dir.as<void*>();
 					//get_profile_dir_hook.create();
 					get_profile_dir_hook.enable();
 				}
+				get_profile_dir_offset = get_profile_dir.add(46).as<uint32_t&>();
+#if LOGGING
+				std::cout << "get_profile_dir_offset = " << get_profile_dir_offset << std::endl;
+#endif
 			}
 			else
 			{
