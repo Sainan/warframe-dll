@@ -2506,28 +2506,30 @@ end
 
 gRegion = {
 	function GetLocalPlayer()
-		if player := get_local_player() then
-			ivkr_push_object(player)
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetLocalPlayer"), 1)
+		if ivkr_type(-1) > 0 then
 			return new HumanPlayer()
 		end
 	end,
 	function GetLocalPlayerAvatar()
-		if player := get_local_player() then
-			if avatar := player_get_avatar(player) then
-				ivkr_push_object(avatar)
-				return ivkr_pop_entity()
-			end
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetLocalPlayerAvatar"), 1)
+		if ivkr_type(-1) > 0 then
+			return ivkr_pop_entity()
 		end
 	end,
 	function GetGameCamera()
-		if camera := get_game_camera() then
-			ivkr_push_object(camera)
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetGameCamera"), 1)
+		if ivkr_type(-1) > 0 then
 			return new Entity()
 		end
 	end,
 	function GetGameRules()
-		ivkr_push_object(get_gamerules())
-		ivkr_push_object(get_gamerules())
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetGameRules"), 1)
+		ivkr_push_value(-1)
 		ivkr_call(ivkr_find_method("Object", "GetType"), 1)
 		local type = new ObjectType()
 		if type:isNameInHierarchy("LotusAttractModeGameRules") then

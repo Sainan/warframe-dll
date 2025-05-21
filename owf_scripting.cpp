@@ -320,12 +320,12 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("get_regionmgr"); lua_setglobal(L, name.c_str()); }
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? *regionmgr->game_rules : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_gamerules"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("get_gamerules"); lua_setglobal(L, name.c_str()); }*/
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -362,19 +362,19 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("get_matchingservice"); lua_setglobal(L, name.c_str()); }
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? regionmgr->GetLocalPlayer() : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_local_player"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("get_local_player"); lua_setglobal(L, name.c_str()); }*/
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? regionmgr->GetGameCamera() : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_game_camera"); lua_setglobal(L, name.c_str()); }
+	{ ObfusString name("get_game_camera"); lua_setglobal(L, name.c_str()); }*/
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

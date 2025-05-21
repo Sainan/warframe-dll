@@ -1,3 +1,6 @@
+owf_register_custom_route("/freecam", "text/plain", "")
+owf_register_custom_route("/lockcam", "text/plain", "")
+owf_register_custom_route("/gamecam", "text/plain", "")
 owf_register_custom_route("/teleport", "text/plain", "")
 owf_register_custom_route("/enable_pause_always_stops_time", "text/plain", "")
 owf_register_custom_route("/disable_pause_always_stops_time", "text/plain", "")
@@ -370,6 +373,27 @@ while pcall(yield) do
 					local arr = evt.path:sub(11):split(",")
 					if #arr == 3 then
 						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
+					end
+				end
+			elseif evt.path == "/freecam" then
+				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+					if ply := gRegion:GetLocalPlayer() then
+						ply:setControllingCamera(true)
+						ply:GetAvatar():ControlCamera(false)
+					end
+				end
+			elseif evt.path == "/lockcam" then
+				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+					if ply := gRegion:GetLocalPlayer() then
+						ply:setControllingCamera(false)
+						ply:GetAvatar():ControlCamera(false)
+					end
+				end
+			elseif evt.path == "/gamecam" then
+				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+					if ply := gRegion:GetLocalPlayer() then
+						ply:setControllingCamera(false)
+						ply:GetAvatar():ControlCamera(true)
 					end
 				end
 			elseif evt.path == "/enable_pause_always_stops_time" then

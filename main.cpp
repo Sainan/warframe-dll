@@ -4131,7 +4131,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, server_host);
 						break;
 
-					case soup::joaat::compileTimeHash("/freecam"):
+					/*case soup::joaat::compileTimeHash("/freecam"):
 						if (regionmgr && !prohibit_freecam)
 						{
 							if (auto local_player = regionmgr->GetLocalPlayer())
@@ -4165,7 +4165,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 						}
 						ServerWebService::sendText(s, {});
-						break;
+						break;*/
 
 					case soup::joaat::compileTimeHash("/status"):
 						{

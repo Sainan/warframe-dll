@@ -604,7 +604,7 @@ struct EncryptedString
 static_assert(offsetof(EncryptedString, out_buf) == 0x58);
 
 
-inline RegionMgr* regionmgr = nullptr;
+inline Object* regionmgr = nullptr;
 //inline LotusGameRules* gamerules;
 inline Object* flashmgr = nullptr;
 inline Object* gamedata = nullptr;
