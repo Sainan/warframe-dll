@@ -1160,10 +1160,10 @@ static void start_script_from_file(std::string&& path)
 	broadcast_running_scripts_locked();
 }
 
-static void start_script_from_string(std::string&& code)
+static void start_script_from_string(const std::string& code)
 {
 	auto scr = new owfScript();
-	bool ok = scr->loadString(std::move(code));
+	bool ok = scr->loadString(code, code);
 	std::lock_guard lock(running_scripts_mtx);
 	if (ok)
 	{
@@ -1902,7 +1902,7 @@ static void start_bgscript()
 
 	std::lock_guard lock(running_scripts_mtx);
 	bgscript = new owfScript();
-	bgscript->loadString(std::move(code));
+	bgscript->loadString(ObfusString("OpenWF Background Script"), std::move(code));
 	bgscript->tick();
 }
 

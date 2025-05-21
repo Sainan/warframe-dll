@@ -62,7 +62,7 @@ struct owfScript
 	owfScript();
 
 	bool loadFile(std::string&& path);
-	bool loadString(std::string&& code);
+	bool loadString(const std::string& name, const std::string& code);
 
 	bool tick();
 	int tick(int nargs);

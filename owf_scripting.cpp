@@ -1733,10 +1733,10 @@ bool owfScript::loadFile(std::string&& path)
 	return false;
 }
 
-bool owfScript::loadString(std::string&& code)
+bool owfScript::loadString(const std::string& name, const std::string& code)
 {
-	this->name = std::move(code);
-	if (luaL_loadbuffer(main, this->name.data(), this->name.size(), this->name.c_str()) == LUA_OK)
+	this->name = name;
+	if (luaL_loadbuffer(main, code.data(), code.size(), this->name.c_str()) == LUA_OK)
 	{
 		coro = lua_newthread(main);
 		luaL_ref(main, LUA_REGISTRYINDEX);
