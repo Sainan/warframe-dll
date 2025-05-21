@@ -1944,6 +1944,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		owfConsole::activate(BOOTSTRAPPER_TITLE);
 
+#if LOGGING
+		std::cout << "base address = " << soup::Process::current()->open()->range.base.as<void*>() << std::endl;
+#endif
+
 		{
 			std::wstring path(_wgetenv(L"windir"));
 			path.append(LR"(\System32\dwmapi.dll)");
