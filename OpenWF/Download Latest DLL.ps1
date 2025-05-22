@@ -14,8 +14,8 @@ if (Test-Path $dll_path) {
 	$sha256 = (Get-FileHash $dll_path -Algorithm SHA256).Hash.ToLower()
 }
 $hotfix_sha256 = ""
-if (Test-Path "Hotfix.bin") {
-	$hotfix_sha256 = (Get-FileHash "Hotfix.bin" -Algorithm SHA256).Hash.ToLower()
+if (Test-Path "Hotfix.owf") {
+	$hotfix_sha256 = (Get-FileHash "Hotfix.owf" -Algorithm SHA256).Hash.ToLower()
 }
 
 $sideloadify_sha256 = ""
@@ -41,10 +41,10 @@ if ($sha256 -ne $latest.sha256 -or $hotfix_sha256 -ne $latest.hotfix_sha256) {
 	}
 	if ($hotfix_sha256 -ne $latest.hotfix_sha256) {
 		if ($latest.hotfix -ne "") {
-			Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/$($latest.hotfix)/Hotfix.bin" -OutFile "Hotfix.bin"
+			Invoke-WebRequest -Uri "https://openwf.io/supplementals/client%20drop-in/$($latest.version)/$($latest.hotfix)/Hotfix.owf" -OutFile "Hotfix.owf"
 		}
 		else {
-			Remove-Item "Hotfix.bin"
+			Remove-Item "Hotfix.owf"
 		}
 	}
 }

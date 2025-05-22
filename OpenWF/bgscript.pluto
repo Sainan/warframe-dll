@@ -278,7 +278,7 @@ local function check_for_updates()
 		if meta and meta.manifest then
 			local sha256 = crypto.sha256(io.contents("dwmapi.dll") or io.contents("wtsapi32.dll") or io.contents("version.dll"))
 			local hotfix_sha256 = ""
-			if hotfix_bin := io.contents("OpenWF/Hotfix.bin") then
+			if hotfix_bin := io.contents("OpenWF/Hotfix.owf") then
 				hotfix_sha256 = crypto.sha256(hotfix_bin)
 			end
 			version_is_latest = sha256 == meta.sha256
@@ -413,9 +413,9 @@ while pcall(yield) do
 				if not downloading_hotfix then
 					downloading_hotfix = true
 					owf_create_thread(function()
-						if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.bin") then
+						if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.owf") then
 							if crypto.sha256(bin) == hotfix_available_sha256 then
-								io.contents("OpenWF/Hotfix.bin", bin)
+								io.contents("OpenWF/Hotfix.owf", bin)
 								http.request("http://localhost:6155/apply_hotfix")
 								current_hotfix = hotfix_available
 								hotfix_available = ""

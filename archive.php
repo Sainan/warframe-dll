@@ -55,4 +55,4 @@ file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_
 touch("owf_archive.cpp");
 
 $target_version = substr(trim(explode("\n", file_get_contents("main.cpp"))[0]), 28, -1);
-file_put_contents("Hotfix.bin", pack("V", joaat($target_version)).$bin_str);
+file_put_contents("Hotfix.owf", pack("V", joaat($target_version)).$bin_str);
