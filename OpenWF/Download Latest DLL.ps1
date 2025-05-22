@@ -19,11 +19,11 @@ if (Test-Path "Hotfix.bin") {
 }
 
 $sideloadify_sha256 = ""
-if (Test-Path "sideloadify-cli.exe") {
-	$sideloadify_sha256 = (Get-FileHash "sideloadify-cli.exe" -Algorithm SHA256).Hash
+if (Test-Path "sideloadify-cli.cache") {
+	$sideloadify_sha256 = (Get-FileHash "sideloadify-cli.cache" -Algorithm SHA256).Hash
 }
 if ($sideloadify_sha256 -ne "EE990FF8366E49DE5AF5A80DB845A9BFE9285092365E3A887FDFC76EB20C61AF") {
-	Invoke-WebRequest -Uri "https://github.com/Sainan/Sideloadify/releases/download/1.1.0/sideloadify-cli.exe" -OutFile "sideloadify-cli.exe"
+	Invoke-WebRequest -Uri "https://github.com/Sainan/Sideloadify/releases/download/1.1.0/sideloadify-cli.exe" -OutFile "sideloadify-cli.cache"
 }
 
 $should_sleep = $false
@@ -53,7 +53,9 @@ else {
 	$should_sleep = $true
 }
 
+Rename-Item -Path "sideloadify-cli.cache" -NewName "sideloadify-cli.exe"
 $sideloadified = (./sideloadify-cli.exe ../Warframe.x64.exe).Contains(" has successfully been sideloadified.")
+Rename-Item -Path "sideloadify-cli.exe" -NewName "sideloadify-cli.cache"
 if ($sideloadified) {
 	Write-Host "Warframe.x64.exe has successfully been sideloadified."
 	$should_sleep = $true
