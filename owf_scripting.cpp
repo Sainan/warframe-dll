@@ -1640,17 +1640,6 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("oodle_decompress"); lua_setglobal(L, name.c_str()); }
 
-	// crypto.crc32c will be added in Pluto 0.11.0, but for now...
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		size_t len;
-		const auto text = luaL_checklstring(L, 1, &len);
-		const auto hash = soup::crc32c::hash((const uint8_t*)text, len);
-		lua_pushinteger(L, hash);
-		return 1;
-	});
-	{ ObfusString name("crc32c"); lua_setglobal(L, name.c_str()); }
-
 #if LABEL_REPLACEMENTS
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

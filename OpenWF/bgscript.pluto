@@ -120,7 +120,7 @@ then
 		local bin = "SHCC\x1f\x00\x00\x00"
 		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
 		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
-		return bin .. string.pack("<I4", crc32c(bin))
+		return bin .. string.pack("<I4", crypto.crc32c(bin))
 	end
 
 	local function shcc_pack_HB(H_compressed, H_decompressed_size, B_compressed, B_decompressed_size)
@@ -128,17 +128,12 @@ then
 		bin ..= string.pack("<I1I4s4", 2, H_decompressed_size, H_compressed)
 		bin ..= string.pack("<I1I4s4", 2, B_decompressed_size, B_compressed)
 		bin ..= "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x52"
-		return bin .. string.pack("<I4", crc32c(bin))
-	end
-
-	-- Pluto 0.11.0 will add a 'binary' argument to crypto.md5, but for now...
-	local function md5bin(str)
-		return crypto.md5(str):gsub("..", |x| -> string.char(tonumber(x, 16)))
+		return bin .. string.pack("<I4", crypto.crc32c(bin))
 	end
 
 	local function shcc_pack_H_mod(data)
 		local bin = "SHCC\x1f\x00\x00\x00"
-		local hash = md5bin("SHCC\x1f\x00\x00\x00"..data:sub(17))
+		local hash = crypto.md5("SHCC\x1f\x00\x00\x00"..data:sub(17), true)
 
 		bin ..= "\x00"
 		bin ..= string.pack("<I4I4", #data, #data)
