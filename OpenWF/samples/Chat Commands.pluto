@@ -81,10 +81,10 @@ commands["timescale"] = function(text)
 		chat_system_reply("That's not a good idea.")
 	end
 end
-commands["pause"] = function(text)
+commands["pause"] = function()
 	gGameRules:RequestPause()
 end
-commands["unpause"] = function(text)
+commands["unpause"] = function()
 	gGameRules:RequestUnpause()
 end
 commands["script"] = function(text)
