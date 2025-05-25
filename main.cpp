@@ -642,33 +642,20 @@ static void on_got_server_host()
 		hr.use_tls = true;
 		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
 
-		UniquePtr<JsonNode> jr;
+		bool ok = false;
 		if (auto res = hr.execute())
 		{
 			if (res->status_code == 200)
 			{
-				jr = json::decode(res->body);
+				std::lock_guard lock(g_server_tunables_mtx);
+				ok = g_server_tunables.load(res->body.data(), res->body.size());
 			}
 		}
+		prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
+		prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
+		prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
 
-		if (jr && jr->isObj())
-		{
-			std::lock_guard lock(owfTunables::mtx);
-
-			owfTunables::set.clear();
-			for (const auto& e : jr->reinterpretAsObj().children)
-			{
-				if (e.first->isStr())
-				{
-					owfTunables::set.emplace_back(joaat::hash(e.first->reinterpretAsStr().value));
-				}
-			}
-
-			prohibit_skip_mission_start_timer = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
-			prohibit_freecam = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_freecam"));
-			prohibit_scripts = owfTunables::hasLocked(joaat::compileTimeHash("prohibit_scripts"));
-		}
-		else
+		if (!ok)
 		{
 			// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
 			auto msg = ObfusString("Failed to verify that the server at ").str();
@@ -901,18 +888,17 @@ static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
 #if LOGGING
 	std::cout << "legacy_dns_lookup: " << name->getData() << std::endl;
 #endif
-	switch (soup::joaat::hashRange(name->getData(), name->getSize()))
+
+	bool block;
 	{
-	case soup::joaat::compileTimeHash("hub.warframe.com"):
-	case soup::joaat::compileTimeHash("nrs.warframe.com"):
-	case soup::joaat::compileTimeHash("arbiter.warframe.com"):
-	case soup::joaat::compileTimeHash("nrs.warframe.com:4950"): // U15
-	case soup::joaat::compileTimeHash("nrs2.warframe.com:4950"): // U15
-	case soup::joaat::compileTimeHash("irc.warframe.com:6696"): // U15
-	case soup::joaat::compileTimeHash("irc.warframe.com:6697"): // U15
-		name->setUnownedData(server_host.data(), server_host.size());
-		break;
+		std::lock_guard lock(g_client_tunables_mtx);
+		block = g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(name->getData(), name->getSize()));
 	}
+	if (block)
+	{
+		name->setUnownedData(server_host.data(), server_host.size());
+	}
+
 	return reinterpret_cast<decltype(&legacy_dns_lookup_detour<T>)>(legacy_dns_lookup_hook.original)(out, name, a3);
 }
 
@@ -970,8 +956,8 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 							size -= (filter - message);
 							size -= 1; // '\n'
 							active_input_filter = std::string(filter, size);
-							const auto hash = joaat::hash(active_input_filter);
-							active_input_filter_allows_hotkeys = (hash != joaat::compileTimeHash("/EE/Types/Input/MenuInputFilter") && hash != joaat::compileTimeHash("/Lotus/Types/Input/LoadoutReduxInputFilter"));
+							std::lock_guard lock(g_client_tunables_mtx);
+							active_input_filter_allows_hotkeys = !g_client_tunables.isStringInArray(joaat::compileTimeHash("nhkif"), joaat::hash(active_input_filter));
 						}
 					}
 					break;
@@ -4069,6 +4055,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			g_archive.loadBuiltin();
 		}
+
+		{
+			uint32_t size;
+			auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+			g_client_tunables.load(data, size);
+		}
+
 		start_bgscript();
 
 		load_hotkeys();
@@ -4427,9 +4420,42 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								g_archive = std::move(archive);
 							}
 
+							{
+								uint32_t size;
+								auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+								std::lock_guard lock(g_client_tunables_mtx);
+								g_client_tunables.load(data, size);
+							}
+
 							restart_bgscript();
+
+							ServerWebService::sendText(s, {});
 						}
 						break;
+
+#if PRIVATE
+					case soup::joaat::compileTimeHash("/reload_tunables"):
+						{
+							size_t size;
+							if (auto data = (const char*)filesystem::createFileMapping("OpenWF/tunables.json", size))
+							{
+								{
+									std::lock_guard lock(g_client_tunables_mtx);
+									g_client_tunables.load(data, size);
+								}
+								filesystem::destroyFileMapping(data, size);
+							}
+							else
+							{
+								uint32_t size;
+								data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+								std::lock_guard lock(g_client_tunables_mtx);
+								g_client_tunables.load(data, size);
+							}
+							ServerWebService::sendText(s, {});
+						}
+						break;
+#endif
 
 					case soup::joaat::compileTimeHash("/version"):
 						ServerWebService::sendText(s, ObfusString(BOOTSTRAPPER_TITLE).str());

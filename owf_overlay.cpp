@@ -99,8 +99,8 @@ void owfOverlay::init()
 
 						std::string banned;
 						{
-							std::lock_guard lock(owfTunables::mtx);
-							for (const auto& hash : owfTunables::set)
+							std::lock_guard lock(g_server_tunables_mtx);
+							for (const auto& hash : g_server_tunables.bools)
 							{
 								if (auto name = owfTunables::getProhibitionName(hash); !name.empty())
 								{

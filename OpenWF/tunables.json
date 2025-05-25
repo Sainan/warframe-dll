@@ -1,0 +1,15 @@
+{
+	"nhkif": [
+		"/EE/Types/Input/MenuInputFilter", // Chat
+		"/Lotus/Types/Input/LoadoutReduxInputFilter",
+	],
+	"dns": [
+		"hub.warframe.com",
+		"nrs.warframe.com",
+		"arbiter.warframe.com",
+		"nrs.warframe.com:4950", // U15
+		"nrs2.warframe.com:4950", // U15
+		"irc.warframe.com:6696", // U15
+		"irc.warframe.com:6697", // U15
+	],
+}

@@ -1383,7 +1383,8 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushboolean(L, owfTunables::has(soup::joaat::hash(luaL_checkstring(L, 1))));
+		std::lock_guard lock(g_server_tunables_mtx);
+		lua_pushboolean(L, g_server_tunables.getBool(soup::joaat::hash(luaL_checkstring(L, 1))));
 		return 1;
 	});
 	{ ObfusString name("owf_tunables_has"); lua_setglobal(L, name.c_str()); }
