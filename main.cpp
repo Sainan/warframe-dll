@@ -1935,6 +1935,15 @@ static void restart_bgscript()
 
 static void populate_initial_status(JsonObject& obj)
 {
+	obj.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
+	obj.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	obj.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+	obj.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+	obj.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
+	obj.add(ObfusString("alternative_loading"), alternative_loading);
+	obj.add(ObfusString("ee_log_in_console"), ee_log_in_console);
+	obj.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+
 	obj.add(ObfusString("console"), owfConsole::active);
 }
 

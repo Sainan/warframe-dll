@@ -67,58 +67,15 @@
 			fetch("/logout");
 		};
 
-		fetch("/high_damage_numbers_patch").then(res => res.text()).then(res => {
-			document.getElementById("high_damage_numbers_patch").checked = (res == "1");
-		});
-		document.getElementById("high_damage_numbers_patch").onchange = function() {
-			fetch("/high_damage_numbers_patch?" + this.checked);
-		};
+		const toggles = [...document.querySelectorAll("[type=checkbox]")].map(x => x.id);
+		for (const toggle of toggles) {
+			if (toggle != "console") {
+				document.getElementById(toggle).onchange = function() {
+					fetch("/" + toggle + "?" + this.checked);
+				};
+			}
+		}
 
-		fetch("/skip_mission_start_timer").then(res => res.text()).then(res => {
-			document.getElementById("skip_mission_start_timer").checked = (res == "1");
-		});
-		document.getElementById("skip_mission_start_timer").onchange = function() {
-			fetch("/skip_mission_start_timer?" + this.checked);
-		};
-
-		fetch("/simulacrum_blacklisted").then(res => res.text()).then(res => {
-			document.getElementById("simulacrum_blacklisted").checked = (res == "1");
-		});
-		document.getElementById("simulacrum_blacklisted").onchange = function() {
-			fetch("/simulacrum_blacklisted?" + this.checked);
-		};
-
-		fetch("/simulacrum_whitelisted").then(res => res.text()).then(res => {
-			document.getElementById("simulacrum_whitelisted").checked = (res == "1");
-		});
-		document.getElementById("simulacrum_whitelisted").onchange = function() {
-			fetch("/simulacrum_whitelisted?" + this.checked);
-		};
-
-		fetch("/alternative_loading").then(res => res.text()).then(res => {
-			document.getElementById("alternative_loading").checked = (res == "1");
-		});
-		document.getElementById("alternative_loading").onchange = function() {
-			fetch("/alternative_loading?" + this.checked);
-		};
-
-		fetch("/ee_log_in_console").then(res => res.text()).then(res => {
-			document.getElementById("ee_log_in_console").checked = (res == "1");
-		});
-		document.getElementById("ee_log_in_console").onchange = function() {
-			fetch("/ee_log_in_console?" + this.checked);
-		};
-
-		fetch("/dont_resolve_labels").then(res => res.text()).then(res => {
-			document.getElementById("dont_resolve_labels").checked = (res == "1");
-		});
-		document.getElementById("dont_resolve_labels").onchange = function() {
-			fetch("/dont_resolve_labels?" + this.checked);
-		};
-
-		fetch("/pause_always_stops_time").then(res => res.text()).then(res => {
-			document.getElementById("pause_always_stops_time").checked = (res == "1");
-		});
 		document.getElementById("pause_always_stops_time").onchange = function() {
 			if (this.checked) {
 				fetch("/enable_pause_always_stops_time");
@@ -167,8 +124,10 @@
 			ws.onmessage = function(e) {
 				const obj = JSON.parse(e.data);
 
-				if ("console" in obj) {
-					document.getElementById("console").checked = obj.console;
+				for (const toggle of toggles) {
+					if (toggle in obj) {
+						document.getElementById(toggle).checked = obj[toggle];
+					}
 				}
 
 				if ("bgscript_status_string" in obj) {
