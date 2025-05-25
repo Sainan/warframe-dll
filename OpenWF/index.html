@@ -57,9 +57,6 @@
 			elm.innerHTML = dict[elm.id];
 		});
 
-		fetch("/server_host").then(res => res.text()).then(res => {
-			document.getElementById("server_host").value = res;
-		});
 		document.getElementById("server_host_submit").onclick = function() {
 			fetch("/server_host?" + document.getElementById("server_host").value);
 		};
@@ -123,6 +120,10 @@
 			};
 			ws.onmessage = function(e) {
 				const obj = JSON.parse(e.data);
+
+				if ("server_host" in obj) {
+					document.getElementById("server_host").value = obj.server_host;
+				}
 
 				for (const toggle of toggles) {
 					if (toggle in obj) {

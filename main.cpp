@@ -1935,6 +1935,8 @@ static void restart_bgscript()
 
 static void populate_initial_status(JsonObject& obj)
 {
+	obj.add(ObfusString("server_host"), server_host);
+
 	obj.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 	obj.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	obj.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
