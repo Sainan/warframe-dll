@@ -61,6 +61,7 @@ using namespace soup;
 #include "owf_archive.hpp"
 #include "owf_config.hpp"
 #include "owf_console.hpp"
+#include "owf_hotkeys.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
 #include "owf_overlay.hpp"
@@ -969,6 +970,8 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 							size -= (filter - message);
 							size -= 1; // '\n'
 							active_input_filter = std::string(filter, size);
+							const auto hash = joaat::hash(active_input_filter);
+							active_input_filter_allows_hotkeys = (hash != joaat::compileTimeHash("/EE/Types/Input/MenuInputFilter") && hash != joaat::compileTimeHash("/Lotus/Types/Input/LoadoutReduxInputFilter"));
 						}
 					}
 					break;
@@ -1253,6 +1256,17 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 
 	{
 		std::lock_guard mtx(running_scripts_mtx);
+		if (active_input_filter_allows_hotkeys && hotkeys_mtx.tryLock())
+		{
+			for (auto& hk : hotkeys)
+			{
+				if (hk.wasJustPressed())
+				{
+					start_script_from_string(hk.script);
+				}
+			}
+			hotkeys_mtx.unlock();
+		}
 		if (bgscript != nullptr)
 		{
 			SOUP_IF_UNLIKELY (!bgscript->tick())
@@ -4051,6 +4065,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		start_bgscript();
 
+		load_hotkeys();
+
 #if LABEL_REPLACEMENTS
 		load_label_replacements();
 #endif
@@ -4425,6 +4441,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							obj.add(ObfusString("build_hash"), build_hash[0] ? std::string(build_hash, 22) : std::string());
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
+						break;
+
+					case soup::joaat::compileTimeHash("/reload_hotkeys"):
+						load_hotkeys();
+						ServerWebService::sendText(s, {});
 						break;
 
 #if LABEL_REPLACEMENTS

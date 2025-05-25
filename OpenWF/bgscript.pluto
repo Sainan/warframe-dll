@@ -19,7 +19,8 @@ if true then
 	io.contents("OpenWF/scripts/samples/Become The Stalker.pluto", owf_archive_find("OpenWF/samples/Become The Stalker.pluto"))
 	io.contents("OpenWF/scripts/samples/Chat Commands.pluto", owf_archive_find("OpenWF/samples/Chat Commands.pluto"))
 	io.contents("OpenWF/scripts/samples/Complete Wave or Mission.pluto", owf_archive_find("OpenWF/samples/Complete Wave or Mission.pluto"))
-	io.contents("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto", owf_archive_find("OpenWF/samples/Cycle Camera Hotkey (K).pluto"))
+	io.contents("OpenWF/scripts/samples/Cycle Camera.pluto", owf_archive_find("OpenWF/samples/Cycle Camera.pluto"))
+	os.remove("OpenWF/scripts/samples/Cycle Camera Hotkey (K).pluto") -- pre-0.11.0
 	io.contents("OpenWF/scripts/samples/Detailed Enemy HP.pluto", owf_archive_find("OpenWF/samples/Detailed Enemy HP.pluto"))
 	io.contents("OpenWF/scripts/samples/Enter Simulacrum.pluto", owf_archive_find("OpenWF/samples/Enter Simulacrum.pluto"))
 	io.contents("OpenWF/scripts/samples/First Person View.pluto", owf_archive_find("OpenWF/samples/First Person View.pluto"))
@@ -34,6 +35,10 @@ if true then
 	io.contents("OpenWF/scripts/samples/Speedometer.pluto", owf_archive_find("OpenWF/samples/Speedometer.pluto"))
 	io.contents("OpenWF/scripts/samples/Wallhack.pluto", owf_archive_find("OpenWF/samples/Wallhack.pluto"))
 	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))
+end
+
+if not io.exists("OpenWF/Hotkeys.json") then
+	io.contents("OpenWF/Hotkeys.json", owf_archive_find("OpenWF/Hotkeys.json"))
 end
 
 if not io.exists("OpenWF/Metadata Patches.txt") then

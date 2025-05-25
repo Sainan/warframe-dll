@@ -1,0 +1,13 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+if gRegion:GetLocalPlayerAvatar():isFollowedByCamera() then
+	-- Normal -> Freecam
+	gRegion:GetLocalPlayer():setControllingCamera(true)
+	gRegion:GetLocalPlayerAvatar():ControlCamera(false)
+elseif gRegion:GetLocalPlayer():isControllingCamera() then
+	-- Freecam -> Locked In Place
+	gRegion:GetLocalPlayer():setControllingCamera(false)
+else
+	-- Locked In Place -> Normal
+	gRegion:GetLocalPlayer():setControllingCamera(false)
+	gRegion:GetLocalPlayerAvatar():ControlCamera(true)
+end

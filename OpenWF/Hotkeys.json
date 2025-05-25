@@ -1,0 +1,11 @@
+[
+    // {
+    //     "key": "K",
+    //     "script": "owf_start_script[[samples/Cycle Camera.pluto]]"
+    // },
+    // {
+    //     "key": "L",
+    //     "shift": true,
+    //     "script": "set_ee_log_in_console(not get_ee_log_in_console())"
+    // },
+]

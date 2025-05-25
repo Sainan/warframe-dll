@@ -16,6 +16,7 @@ inline uintptr_t ChatRedux_table = 0;
 inline uintptr_t ChatRedux_SystemMessage_method = 0;
 
 inline std::string active_input_filter;
+inline bool active_input_filter_allows_hotkeys;
 
 enum owfScriptEventType : uint8_t
 {
