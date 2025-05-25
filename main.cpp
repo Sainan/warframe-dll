@@ -1256,16 +1256,22 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 
 	{
 		std::lock_guard mtx(running_scripts_mtx);
-		if (active_input_filter_allows_hotkeys && !prohibit_scripts && hotkeys_mtx.tryLock())
+		if (active_input_filter_allows_hotkeys && !prohibit_scripts)
 		{
-			for (auto& hk : hotkeys)
+			if (DWORD pid; GetWindowThreadProcessId(GetForegroundWindow(), &pid), pid == GetCurrentProcessId())
 			{
-				if (hk.wasJustPressed())
+				if (hotkeys_mtx.tryLock())
 				{
-					start_script_from_string(hk.script);
+					for (auto& hk : hotkeys)
+					{
+						if (hk.wasJustPressed())
+						{
+							start_script_from_string(hk.script);
+						}
+					}
+					hotkeys_mtx.unlock();
 				}
 			}
-			hotkeys_mtx.unlock();
 		}
 		if (bgscript != nullptr)
 		{
