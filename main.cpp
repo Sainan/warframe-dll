@@ -1256,7 +1256,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 
 	{
 		std::lock_guard mtx(running_scripts_mtx);
-		if (active_input_filter_allows_hotkeys && hotkeys_mtx.tryLock())
+		if (active_input_filter_allows_hotkeys && !prohibit_scripts && hotkeys_mtx.tryLock())
 		{
 			for (auto& hk : hotkeys)
 			{
