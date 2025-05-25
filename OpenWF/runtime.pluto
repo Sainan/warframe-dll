@@ -2785,6 +2785,21 @@ function owf_get_build_label()
 	return owf_get_build_version() .. "/" .. owf_get_build_hash()
 end
 
+get_high_damage_numbers_patch = || -> owf_command("high_damage_numbers_patch").high_damage_numbers_patch
+set_high_damage_numbers_patch = |b| -> do owf_command("high_damage_numbers_patch?"..b) end
+get_skip_mission_start_timer = || -> owf_command("skip_mission_start_timer").skip_mission_start_timer
+set_skip_mission_start_timer = |b| -> do owf_command("skip_mission_start_timer?"..b) end
+get_simulacrum_blacklisted = || -> owf_command("simulacrum_blacklisted").simulacrum_blacklisted
+set_simulacrum_blacklisted = |b| -> do owf_command("simulacrum_blacklisted?"..b) end
+get_simulacrum_whitelisted = || -> owf_command("simulacrum_whitelisted").simulacrum_whitelisted
+set_simulacrum_whitelisted = |b| -> do owf_command("simulacrum_whitelisted?"..b) end
+get_alternative_loading = || -> owf_command("alternative_loading").alternative_loading
+set_alternative_loading = |b| -> do owf_command("alternative_loading?"..b) end
+get_ee_log_in_console = || -> owf_command("ee_log_in_console").ee_log_in_console
+set_ee_log_in_console = |b| -> do owf_command("ee_log_in_console?"..b) end
+get_dont_resolve_labels = || -> owf_command("dont_resolve_labels").dont_resolve_labels
+set_dont_resolve_labels = |b| -> do owf_command("dont_resolve_labels?"..b) end
+
 OWF_FONT_SIMPLE8 = 8
 OWF_FONT_SIMPLE5 = 5
 

@@ -2010,6 +2010,90 @@ bool owf_command(const std::string& in, JsonObject& out)
 			}
 		}
 		return true;
+
+	case soup::joaat::compileTimeHash("high_damage_numbers_patch"):
+		if (args.size() > 1)
+		{
+			high_damage_numbers_patch = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
+		}
+		else
+		{
+			out.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("skip_mission_start_timer"):
+		if (args.size() > 1)
+		{
+			skip_mission_start_timer = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+		}
+		else
+		{
+			out.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("simulacrum_blacklisted"):
+		if (args.size() > 1)
+		{
+			simulacrum_blacklisted = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+		}
+		else
+		{
+			out.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("simulacrum_whitelisted"):
+		if (args.size() > 1)
+		{
+			simulacrum_whitelisted = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+		}
+		else
+		{
+			out.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("alternative_loading"):
+		if (args.size() > 1)
+		{
+			alternative_loading = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("alternative_loading"), alternative_loading);
+		}
+		else
+		{
+			out.add(ObfusString("alternative_loading"), alternative_loading);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("ee_log_in_console"):
+		if (args.size() > 1)
+		{
+			ee_log_in_console = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("ee_log_in_console"), ee_log_in_console);
+		}
+		else
+		{
+			out.add(ObfusString("ee_log_in_console"), ee_log_in_console);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("dont_resolve_labels"):
+		if (args.size() > 1)
+		{
+			dont_resolve_labels = (args[1].size() == 4);
+			owf_broadcast_bool(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+		}
+		else
+		{
+			out.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+		}
+		return true;
 	}
 	return false;
 }
@@ -4085,60 +4169,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
-					case soup::joaat::compileTimeHash("/skip_mission_start_timer"):
-						if (arr.size() > 1)
-						{
-							skip_mission_start_timer = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
-						}
-						ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
-						break;
-
-					case soup::joaat::compileTimeHash("/simulacrum_whitelisted"):
-						if (arr.size() > 1)
-						{
-							simulacrum_whitelisted = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
-						}
-						ServerWebService::sendText(s, std::to_string(simulacrum_whitelisted));
-						break;
-
-					case soup::joaat::compileTimeHash("/simulacrum_blacklisted"):
-						if (arr.size() > 1)
-						{
-							simulacrum_blacklisted = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
-						}
-						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
-						break;
-
-					case soup::joaat::compileTimeHash("/ee_log_in_console"):
-						if (arr.size() > 1)
-						{
-							ee_log_in_console = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("ee_log_in_console"), ee_log_in_console);
-						}
-						ServerWebService::sendText(s, std::to_string(ee_log_in_console));
-						break;
-
-					case soup::joaat::compileTimeHash("/alternative_loading"):
-						if (arr.size() > 1)
-						{
-							alternative_loading = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("alternative_loading"), alternative_loading);
-						}
-						ServerWebService::sendText(s, std::to_string(alternative_loading));
-						break;
-
-					case soup::joaat::compileTimeHash("/dont_resolve_labels"):
-						if (arr.size() > 1)
-						{
-							dont_resolve_labels = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("dont_resolve_labels"), dont_resolve_labels);
-						}
-						ServerWebService::sendText(s, std::to_string(dont_resolve_labels));
-						break;
-
 					case soup::joaat::compileTimeHash("/save_all_metadata"):
 						if (arr.size() > 1)
 						{
@@ -4189,15 +4219,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
 						}
 						ServerWebService::sendText(s, std::to_string(fov_override));
-						break;
-
-					case soup::joaat::compileTimeHash("/high_damage_numbers_patch"):
-						if (arr.size() > 1)
-						{
-							high_damage_numbers_patch = (arr[1].size() == 4);
-							owf_broadcast_bool(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
-						}
-						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
 						break;
 
 					case soup::joaat::compileTimeHash("/logout"):
