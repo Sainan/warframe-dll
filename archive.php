@@ -50,7 +50,7 @@ add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/");
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/");
 add_folder_to_archive("modules/openwf-translations/bootstrapper/", "OpenWF/translations/");
 
-$bin_str = gzcompress($uncompressed);
+$bin_str = gzcompress($uncompressed, 9);
 file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
 touch("owf_archive.cpp");
 
