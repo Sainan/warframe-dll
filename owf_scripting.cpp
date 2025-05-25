@@ -7,6 +7,7 @@
 #include <filesystem.hpp>
 #include <joaat.hpp>
 #include <JsonObject.hpp>
+#include <Key.hpp> // char_to_virtual_key
 #include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
@@ -295,12 +296,9 @@ owfScript::owfScript()
 			int vk = 0;
 			if (lua_type(L, 1) == LUA_TSTRING)
 			{
-				vk = (int)*luaL_checkstring(L, 1);
+				vk = soup::char_to_virtual_key(*luaL_checkstring(L, 1));
 			}
-			if ((vk < 'A' || vk > 'Z')
-				&& (vk < '0' || vk > '9')
-				&& vk != ' '
-				)
+			if (!vk)
 			{
 				vk = (int)luaL_checkinteger(L, 1);
 			}
