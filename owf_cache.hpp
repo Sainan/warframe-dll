@@ -29,7 +29,7 @@ struct CachePair
 {
 	TocFile* toc;
 	size_t toc_size;
-	void* cache;
+	const void* cache;
 	size_t cache_size;
 
 	CachePair(const std::string& base)
