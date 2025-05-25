@@ -750,13 +750,13 @@ static void process_args_struct(T* arguments)
 	{
 		lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
 	}
-	if constexpr (has_graphicsDriver)
+	/*if constexpr (has_graphicsDriver)
 	{
 		if (arguments->got_graphicsDriver)
 		{
 			graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
 		}
-	}
+	}*/
 }
 
 static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
@@ -1889,7 +1889,7 @@ struct owfContentTask : public Task
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
 					{
 						auto msg = ObfusString("The language that the game was supposed to launch with (").str();
-						msg.append(lang_code);
+						msg.append(hrt.hr.path.substr(19, 2));
 						msg.append(ObfusString(") is missing or outdated.").str());
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
@@ -1897,8 +1897,8 @@ struct owfContentTask : public Task
 					}
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
 					{
-						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (").str();
-						msg.append(graphics_driver);
+						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (dx").str();
+						msg.append(hrt.hr.path.substr(13, 2));
 						msg.append(ObfusString(") is missing or outdated.").str());
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
@@ -2204,7 +2204,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				fallback_graphicsDriver = ObfusString("dx11").str();
+#if !CONFIG_LOADED_ONLY_ONCE
+				fallback_graphicsDriver.clear();
+#endif
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it != config->reinterpretAsObj().end() && it->second->isStr())
