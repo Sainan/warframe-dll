@@ -2154,7 +2154,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			SOUP_RETHROW_FALSE(check_ec(ec));
 		}
 		{
-			UniquePtr<JsonNode> config = json::decode(string::fromFile(ObfusString("OpenWF/client_config.json").str()));
+			UniquePtr<JsonNode> config = json::decodeFile(ObfusString("OpenWF/client_config.json").str());
 			if (!config || !config->isObj())
 			{
 				config = soup::make_unique<JsonObject>();
