@@ -393,9 +393,11 @@ while pcall(yield) do
 				end
 			elseif evt.path == "/enable_pause_always_stops_time" then
 				set_pause_always_stops_time(true)
+				owf_broadcast_message[[{"pause_always_stops_time":true}]]
 			elseif evt.path == "/disable_pause_always_stops_time" then
 				gGameRules:RequestUnpause()
 				set_pause_always_stops_time(false)
+				owf_broadcast_message[[{"pause_always_stops_time":false}]]
 			elseif evt.path == "/request_bgscript_broadcasts" then
 				send_status_broadcast()
 				if not requested_versions then

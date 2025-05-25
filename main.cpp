@@ -1956,6 +1956,13 @@ static void populate_full_script_log(JsonObject& obj)
 	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 }
 
+static void owf_broadcast_bool(std::string name, bool value)
+{
+	JsonObject obj;
+	obj.add(std::move(name), value);
+	owf_broadcast_message(obj.encode());
+}
+
 bool owf_command(const std::string& in, JsonObject& out)
 {
 	auto args = string::explode(in, '?');
@@ -4057,6 +4064,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							skip_mission_start_timer = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 						}
 						ServerWebService::sendText(s, std::to_string(skip_mission_start_timer));
 						break;
@@ -4065,6 +4073,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							simulacrum_whitelisted = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 						}
 						ServerWebService::sendText(s, std::to_string(simulacrum_whitelisted));
 						break;
@@ -4073,6 +4082,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							simulacrum_blacklisted = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 						}
 						ServerWebService::sendText(s, std::to_string(simulacrum_blacklisted));
 						break;
@@ -4081,6 +4091,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							ee_log_in_console = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("ee_log_in_console"), ee_log_in_console);
 						}
 						ServerWebService::sendText(s, std::to_string(ee_log_in_console));
 						break;
@@ -4089,6 +4100,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							alternative_loading = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("alternative_loading"), alternative_loading);
 						}
 						ServerWebService::sendText(s, std::to_string(alternative_loading));
 						break;
@@ -4097,6 +4109,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							dont_resolve_labels = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 						}
 						ServerWebService::sendText(s, std::to_string(dont_resolve_labels));
 						break;
@@ -4157,6 +4170,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						if (arr.size() > 1)
 						{
 							high_damage_numbers_patch = (arr[1].size() == 4);
+							owf_broadcast_bool(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 							if (high_damage_numbers_patch)
 							{
 								enable_dmg_number_patch();
