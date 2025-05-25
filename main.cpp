@@ -1945,6 +1945,32 @@ static void populate_full_script_log(JsonObject& obj)
 	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 }
 
+bool owf_command(const std::string& in, JsonObject& out)
+{
+	auto args = string::explode(in, '?');
+	switch (joaat::hash(args[0]))
+	{
+	case joaat::compileTimeHash("running_scripts"):
+		populate_running_scripts(out);
+		return true;
+
+	case joaat::compileTimeHash("script_log"):
+		populate_full_script_log(out);
+		return true;
+
+	case joaat::compileTimeHash("stop_script"):
+		{
+			std::lock_guard lock(running_scripts_mtx);
+			if (auto scr = get_script_by_name(args.at(1)))
+			{
+				scr->stop_requested = true;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -3964,7 +3990,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						return;
 					}
 					auto arr = string::explode(req.path, '?');
-					const auto route_hash = soup::joaat::hash(urlenc::decode(arr.at(0)));
+					const auto route_hash = soup::joaat::hash(urlenc::decode(arr[0]));
 					switch (route_hash)
 					{
 					case soup::joaat::compileTimeHash("/"):
@@ -4239,17 +4265,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-					case soup::joaat::compileTimeHash("/stop_script"):
-						{
-							std::lock_guard lock(running_scripts_mtx);
-							if (auto scr = get_script_by_name(urlenc::decode(arr.at(1))))
-							{
-								scr->stop_requested = true;
-							}
-							ServerWebService::sendText(s, {});
-						}
-						break;
-
 					case soup::joaat::compileTimeHash("/stop_bgscript"):
 						if (bgscript)
 						{
@@ -4415,6 +4430,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					default:
 						{
+							// Try commands
+							if (!req.path.empty())
+							{
+								if (JsonObject out; owf_command(urlenc::decode(req.path.begin() + 1, req.path.end()), out))
+								{
+									ServerWebService::sendText(s, out.encodePretty());
+									break;
+								}
+							}
+
+							// Try script routes
 							bool handled = false;
 							std::lock_guard lock(running_scripts_mtx);
 							for (auto& scr : running_scripts)
@@ -4436,6 +4462,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 									handled = true;
 								}
 							}
+
 							if (!handled)
 							{
 								ServerWebService::send404(s);
@@ -4456,17 +4483,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
-					if (joaat::hash(msg.data) == joaat::compileTimeHash("running_scripts"))
+					if (JsonObject out; owf_command(msg.data, out))
 					{
-						JsonObject obj;
-						populate_running_scripts(obj);
-						ServerWebService::wsSendText(s, obj.encode());
-					}
-					else if (joaat::hash(msg.data) == joaat::compileTimeHash("script_log"))
-					{
-						JsonObject obj;
-						populate_full_script_log(obj);
-						ServerWebService::wsSendText(s, obj.encode());
+						ServerWebService::wsSendText(s, out.encode());
 					}
 				};
 				serv.bind(61558, &srv);

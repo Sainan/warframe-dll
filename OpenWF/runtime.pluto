@@ -2759,12 +2759,18 @@ function owf_script_add_toggle(name, value = false)
 	return toggle
 end
 
+function owf_command(cmd)
+	if res := owf_command_raw(cmd) then
+		return json.decode(res)
+	end
+end
+
 function owf_get_available_scripts()
 	return http.request("http://localhost:6155/scripts") |> json.decode
 end
 
 function owf_get_running_scripts()
-	return (http.request("http://localhost:6155/status") |> json.decode).running_scripts:map(|x| -> x:sub(16))
+	return owf_command("running_scripts").running_scripts:map(|x| -> x:sub(16))
 end
 
 function owf_start_script(name)
@@ -2772,7 +2778,7 @@ function owf_start_script(name)
 end
 
 function owf_stop_script(name)
-	http.request("http://localhost:6155/stop_script?"..url.encode("OpenWF/scripts/"..name))
+	owf_command("stop_script?OpenWF/scripts/"..name)
 end
 
 function owf_get_build_label()

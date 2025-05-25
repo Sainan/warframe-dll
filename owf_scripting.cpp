@@ -30,6 +30,7 @@
 using namespace soup;
 
 extern void owf_broadcast_message(std::string&& msg);
+extern bool owf_command(const std::string& in, JsonObject& out);
 
 static uint32_t wf_fnv_32(const char* str) noexcept
 {
@@ -1452,6 +1453,25 @@ owfScript::owfScript()
 		return 0;
 	});
 	{ ObfusString name("owf_broadcast_message"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto cmd = pluto_checkstring(L, 1);
+		try
+		{
+			if (JsonObject obj; owf_command(cmd, obj))
+			{
+				pluto_pushstring(L, obj.encode());
+				return 1;
+			}
+		}
+		catch (std::exception& e)
+		{
+			luaL_error(L, e.what());
+		}
+		return 0;
+	});
+	{ ObfusString name("owf_command_raw"); lua_setglobal(L, name.c_str()); }
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
