@@ -855,28 +855,15 @@ static int lua_SquadSetCountdownTimer_detour(luau_State* L)
 }
 
 
-static void* dmg_number_patch_addr;
-static uint8_t dmg_number_trampoline[] = {
-	0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-	0x41, 0xff, 0xe2, // jmp r10
-};
-static uint8_t dmg_number_og_bytes[sizeof(dmg_number_trampoline)];
-
-static void enable_dmg_number_patch()
-{
-	memGuard::setAllowedAccess(dmg_number_patch_addr, sizeof(dmg_number_trampoline), memGuard::ACC_RWX);
-	memcpy(dmg_number_patch_addr, dmg_number_trampoline, sizeof(dmg_number_trampoline));
-}
-
-static void disable_dmg_number_patch()
-{
-	memcpy(dmg_number_patch_addr, dmg_number_og_bytes, sizeof(dmg_number_og_bytes));
-}
-
 static float last_dmg = 0.0f;
 
 static float get_dmg_to_display(int dmg_int)
 {
+	if (!high_damage_numbers_patch)
+	{
+		return static_cast<float>(dmg_int);
+	}
+
 	float dmg_number = (dmg_int < 0 ? last_dmg : static_cast<float>(dmg_int));
 #if LOGGING
 	//std::cout << "get_dmg_to_display: " << dmg_int << " -> " << dmg_number << std::endl;
@@ -3071,12 +3058,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
-			auto addr = Module(nullptr).range.scan(sig_inst);
-			dmg_number_patch_addr = addr.as<void*>();
+			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr << std::endl;
+			std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-			if (get_total_damage_hook.target && addr)
+			if (get_total_damage_hook.target && dmg_number_patch_addr)
 			{
 				uint8_t detour_bytes[] = {
 					// prepare call
@@ -3099,20 +3085,19 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				static_assert(sizeof(detour_bytes) == 50 + 3);
 				*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
-				*(void**)(detour_bytes + 21 + 2) = addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
-				*(void**)(detour_bytes + 40 + 2) = addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
+				*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
+				*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
 
 				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
 				memcpy(detour, detour_bytes, sizeof(detour_bytes));
 
-				*(void**)(dmg_number_trampoline + 2) = detour;
-
-				memcpy(dmg_number_og_bytes, dmg_number_patch_addr, sizeof(dmg_number_trampoline));
-
-				if (high_damage_numbers_patch)
-				{
-					enable_dmg_number_patch();
-				}
+				uint8_t trampoline[] = {
+					0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					0x41, 0xff, 0xe2, // jmp r10
+				};
+				*(void**)(trampoline + 2) = detour;
+				memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
+				memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
 			}
 			else
 			{
@@ -4171,14 +4156,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							high_damage_numbers_patch = (arr[1].size() == 4);
 							owf_broadcast_bool(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
-							if (high_damage_numbers_patch)
-							{
-								enable_dmg_number_patch();
-							}
-							else
-							{
-								disable_dmg_number_patch();
-							}
 						}
 						ServerWebService::sendText(s, std::to_string(high_damage_numbers_patch));
 						break;
