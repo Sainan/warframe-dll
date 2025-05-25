@@ -67,11 +67,9 @@
 
 		const toggles = [...document.querySelectorAll("[type=checkbox]")].map(x => x.id);
 		for (const toggle of toggles) {
-			if (toggle != "console") {
-				document.getElementById(toggle).onchange = function() {
-					fetch("/" + toggle + "?" + this.checked);
-				};
-			}
+			document.getElementById(toggle).onchange = function() {
+				fetch("/" + toggle + "?" + this.checked);
+			};
 		}
 
 		document.getElementById("pause_always_stops_time").onchange = function() {
