@@ -2781,6 +2781,14 @@ function owf_stop_script(name)
 	owf_command("stop_script?OpenWF/scripts/"..name)
 end
 
+function owf_toggle_script(name)
+	if name in owf_get_running_scripts() then
+		owf_stop_script(name)
+	else
+		owf_start_script(name)
+	end
+end
+
 function owf_get_build_label()
 	return owf_get_build_version() .. "/" .. owf_get_build_hash()
 end
