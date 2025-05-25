@@ -1121,6 +1121,31 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 }
 
 
+static JsonArray get_available_scripts()
+{
+	JsonArray arr;
+	for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
+	{
+		if (std::filesystem::is_regular_file(file))
+		{
+			auto name = string::fixType(file.path().u8string()).substr(15);
+			soup::string::replaceAll(name, '\\', '/');
+			arr.children.emplace_back(soup::make_unique<JsonString>(std::move(name)));
+		}
+	}
+	return arr;
+}
+
+static void populate_autostart_scripts(JsonObject& obj)
+{
+	auto arr = soup::make_unique<JsonArray>();
+	for (const auto& name : auto_start_scripts)
+	{
+		arr->children.emplace_back(soup::make_unique<JsonString>(name));
+	}
+	obj.add(ObfusString("autostart_scripts"), std::move(arr));
+}
+
 static void populate_running_scripts_locked(JsonObject& obj)
 {
 	auto arr = soup::make_unique<JsonArray>();
@@ -1920,7 +1945,14 @@ static void restart_bgscript()
 	start_bgscript();
 }
 
-static void populate_initial_status(JsonObject& obj)
+static void populate_full_script_log(JsonObject& obj)
+{
+	std::lock_guard lock(script_log_mtx);
+	obj.add(ObfusString("script_log"), script_log);
+	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
+}
+
+static void populate_full_status(JsonObject& obj)
 {
 	obj.add(ObfusString("server_host"), server_host);
 
@@ -1934,13 +1966,11 @@ static void populate_initial_status(JsonObject& obj)
 	obj.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 
 	obj.add(ObfusString("console"), owfConsole::active);
-}
 
-static void populate_full_script_log(JsonObject& obj)
-{
-	std::lock_guard lock(script_log_mtx);
-	obj.add(ObfusString("script_log"), script_log);
-	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
+	obj.add(ObfusString("available_scripts"), soup::make_unique<JsonArray>(get_available_scripts()));
+	populate_running_scripts(obj);
+	populate_autostart_scripts(obj);
+	populate_full_script_log(obj);
 }
 
 static void owf_broadcast_bool(std::string name, bool value)
@@ -1955,8 +1985,16 @@ bool owf_command(const std::string& in, JsonObject& out)
 	auto args = string::explode(in, '?');
 	switch (joaat::hash(args[0]))
 	{
+	case joaat::compileTimeHash("available_scripts"):
+		out.add(ObfusString("available_scripts"), soup::make_unique<JsonArray>(get_available_scripts()));
+		return true;
+
 	case joaat::compileTimeHash("running_scripts"):
 		populate_running_scripts(out);
+		return true;
+
+	case joaat::compileTimeHash("autostart_scripts"):
+		populate_autostart_scripts(out);
 		return true;
 
 	case joaat::compileTimeHash("script_log"):
@@ -4216,9 +4254,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/status"):
 						{
 							JsonObject obj;
-							populate_initial_status(obj);
-							populate_running_scripts(obj);
-							populate_full_script_log(obj);
+							populate_full_status(obj);
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
 						break;
@@ -4236,19 +4272,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/scripts"):
-						{
-							JsonArray arr;
-							for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
-							{
-								if (std::filesystem::is_regular_file(file))
-								{
-									auto name = string::fixType(file.path().u8string()).substr(15);
-									soup::string::replaceAll(name, '\\', '/');
-									arr.children.emplace_back(soup::make_unique<JsonString>(std::move(name)));
-								}
-							}
-							ServerWebService::sendText(s, arr.encodePretty());
-						}
+						ServerWebService::sendText(s, get_available_scripts().encodePretty());
 						break;
 
 					case soup::joaat::compileTimeHash("/start_script"):
@@ -4478,9 +4502,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					s.flags |= (1 << WORKER_FLAG_WEBSOCKET);
 
 					JsonObject obj;
-					populate_initial_status(obj);
-					populate_running_scripts(obj);
-					populate_full_script_log(obj);
+					populate_full_status(obj);
 					ServerWebService::wsSendText(s, obj.encode());
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)

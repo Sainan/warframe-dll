@@ -2766,7 +2766,7 @@ function owf_command(cmd)
 end
 
 function owf_get_available_scripts()
-	return http.request("http://localhost:6155/scripts") |> json.decode
+	return owf_command("available_scripts").available_scripts
 end
 
 function owf_get_running_scripts()

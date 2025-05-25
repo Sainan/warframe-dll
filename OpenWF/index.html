@@ -164,6 +164,34 @@
 					}
 				}
 
+				if ("available_scripts" in obj) {
+					obj.available_scripts.forEach(script => {
+						const p = document.createElement("p");
+						const label = document.createElement("label");
+						label.setAttribute("for", script);
+						label.textContent = script + ": ";
+						p.appendChild(label);
+						const input = document.createElement("input");
+						input.id = script;
+						input.type = "checkbox";
+						input.setAttribute("data-path", "OpenWF/scripts/" + script);
+						input.onchange = function() {
+							fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
+						};
+						p.appendChild(input);
+						const button = document.createElement("button");
+						button.style.marginLeft = "8px";
+						button.textContent = dict.enable_auto_start;
+						button.onclick = function() {
+							const on = (this.textContent != dict.enable_auto_start);
+							fetch((on ? "/remove_autostart_script?" : "/add_autostart_script?") + script);
+							this.textContent = (on ? dict.enable_auto_start : dict.disable_auto_start);
+						};
+						p.appendChild(button);
+						document.getElementById("scripts-container").appendChild(p);
+					});
+				}
+
 				if ("running_scripts" in obj) {
 					for (const script of document.getElementById("scripts-container").children) {
 						const path = script.children[1].getAttribute("data-path");
@@ -185,6 +213,12 @@
 							}
 						}
 					}
+				}
+
+				if ("autostart_scripts" in obj) {
+					obj.autostart_scripts.forEach(script => {
+						document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = dict.disable_auto_start;
+					});
 				}
 
 				if ("script_log" in obj) {
@@ -320,41 +354,5 @@
 		document.getElementById("console").onchange = function() {
 			fetch("/toggle_console");
 		};
-
-		fetch("/scripts").then(res => res.json()).then(res => {
-			res.forEach(script => {
-				const p = document.createElement("p");
-				const label = document.createElement("label");
-				label.setAttribute("for", script);
-				label.textContent = script + ": ";
-				p.appendChild(label);
-				const input = document.createElement("input");
-				input.id = script;
-				input.type = "checkbox";
-				input.setAttribute("data-path", "OpenWF/scripts/" + script);
-				input.onchange = function() {
-					fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
-				};
-				p.appendChild(input);
-				const button = document.createElement("button");
-				button.style.marginLeft = "8px";
-				button.textContent = dict.enable_auto_start;
-				button.onclick = function() {
-					const on = (this.textContent != dict.enable_auto_start);
-					fetch((on ? "/remove_autostart_script?" : "/add_autostart_script?") + script);
-					this.textContent = (on ? dict.enable_auto_start : dict.disable_auto_start);
-				};
-				p.appendChild(button);
-				document.getElementById("scripts-container").appendChild(p);
-			});
-			fetch("/autostart_scripts").then(res => res.json()).then(res => {
-				res.forEach(script => {
-					document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = dict.disable_auto_start;
-				});
-			});
-			if (ws.readyState == 1) {
-				ws.send("running_scripts");
-			}
-		});
 	</script>
 </body>
