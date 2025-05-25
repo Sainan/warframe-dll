@@ -1833,7 +1833,10 @@ static void log_optional_scan_failure(bool important)
 
 static Server serv;
 
-struct owfWebsocketTag {};
+enum : uint8_t
+{
+	WORKER_FLAG_WEBSOCKET = WORKER_FLAG_USER,
+};
 
 struct owfContentTask : public Task
 {
@@ -4443,7 +4446,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				});
 				srv.on_websocket_connection_established = [](Socket& s, const HttpRequest&, ServerWebService&)
 				{
-					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
+					s.flags |= (1 << WORKER_FLAG_WEBSOCKET);
 
 					JsonObject obj;
 					populate_initial_status(obj);
@@ -4500,9 +4503,7 @@ struct owfBroadcastMessageTask final : public Task
 	{
 		for (const auto& w : Scheduler::get()->workers)
 		{
-			if (w->type == soup::WORKER_TYPE_SOCKET
-				&& static_cast<Socket*>(w.get())->custom_data.isStructInMap(owfWebsocketTag)
-				)
+			if ((w->flags >> WORKER_FLAG_WEBSOCKET) & 1)
 			{
 				ServerWebService::wsSendText(*static_cast<Socket*>(w.get()), msg);
 			}
