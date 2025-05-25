@@ -37,9 +37,12 @@ void load_hotkeys()
 			{
 				hk.vk = jKey.asInt();
 			}
-			hk.ctrl = jHk.contains(ObfusString("ctrl")) && jHk.at(ObfusString("ctrl")).asBool();
-			hk.shift = jHk.contains(ObfusString("shift")) && jHk.at(ObfusString("shift")).asBool();
-			hk.alt = jHk.contains(ObfusString("alt")) && jHk.at(ObfusString("alt")).asBool();
+			hk.has_ctrl = jHk.contains(ObfusString("ctrl"));
+			hk.ctrl = hk.has_ctrl && jHk.at(ObfusString("ctrl")).asBool();
+			hk.has_shift = jHk.contains(ObfusString("shift"));
+			hk.shift = hk.has_shift && jHk.at(ObfusString("shift")).asBool();
+			hk.has_alt = jHk.contains(ObfusString("alt"));
+			hk.alt = hk.has_alt && jHk.at(ObfusString("alt")).asBool();
 			hk.script = jHk.at(ObfusString("script")).asStr();
 		}
 	}

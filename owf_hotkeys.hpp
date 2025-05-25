@@ -8,8 +8,11 @@
 struct owfHotkey
 {
 	int vk;
+	bool has_ctrl;
 	bool ctrl;
+	bool has_shift;
 	bool shift;
+	bool has_alt;
 	bool alt;
 	bool was_pressed = false;
 	std::string script;
@@ -18,11 +21,11 @@ struct owfHotkey
 	{
 		if (GetAsyncKeyState(vk) & 0x8000)
 		{
-			if (!ctrl || (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+			if (!has_ctrl || ctrl == (bool)(GetAsyncKeyState(VK_CONTROL) & 0x8000))
 			{
-				if (!shift || (GetAsyncKeyState(VK_SHIFT) & 0x8000))
+				if (!has_shift || shift == (bool)(GetAsyncKeyState(VK_SHIFT) & 0x8000))
 				{
-					if (!alt || (GetAsyncKeyState(VK_MENU) & 0x8000))
+					if (!has_alt || alt == (bool)(GetAsyncKeyState(VK_MENU) & 0x8000))
 					{
 						return true;
 					}

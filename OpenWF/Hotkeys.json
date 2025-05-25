@@ -1,15 +1,21 @@
 [
+    // Welcome, you can put your hotkeys here. Some examples:
+
     // {
     //     "key": "K",
     //     "script": "owf_toggle_script[[samples/Cycle Camera.pluto]]"
     // },
+
     // {
     //     "key": "L",
     //     "script": "owf_toggle_script[[samples/Noclip.pluto]]"
     // },
+
     // {
     //     "key": 186, // the key to the right of L
-    //     "shift": true,
+    //     "shift": false,
     //     "script": "set_ee_log_in_console(not get_ee_log_in_console())"
     // },
+
+    // The presence of a modifier (ctrl, shift, or alt) means it must be pressed/released depending on the value (true/false).
 ]
