@@ -5,6 +5,10 @@
     // },
     // {
     //     "key": "L",
+    //     "script": "owf_toggle_script[[samples/Noclip.pluto]]"
+    // },
+    // {
+    //     "key": 186, // the key to the right of L
     //     "shift": true,
     //     "script": "set_ee_log_in_console(not get_ee_log_in_console())"
     // },
