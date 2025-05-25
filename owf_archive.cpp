@@ -1,7 +1,12 @@
 #include "owf_archive.hpp"
 
+#include <cat.hpp>
+#include <catTreeReader.hpp>
 #include <deflate.hpp>
+#include <joaat.hpp>
 #include <MemoryRefReader.hpp>
+#include <ObfusString.hpp>
+#include <string.hpp>
 
 #include "owf_archive_data.hpp"
 
@@ -45,4 +50,25 @@ const char* owfArchive::find(uint32_t key, uint32_t& out_len) const
 		r.skip(out_len);
 	}
 	return nullptr;
+}
+
+std::unordered_map<std::string, std::string> owfArchive::getDict(const std::string& lang) const
+{
+	std::string buf = string::fromFile(ObfusString("OpenWF/dict.cat.txt").str());
+	MemoryRefReader r(buf.data(), buf.size());
+	if (buf.empty())
+	{
+		r.data = (const uint8_t*)this->find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/translations/"), lang), ObfusString(".cat.txt").str()), *(uint32_t*)&r.size);
+		if (!r.data)
+		{
+			r.data = (const uint8_t*)this->find(soup::joaat::compileTimeHash("OpenWF/translations/en.cat.txt"), *(uint32_t*)&r.size);
+		}
+	}
+
+	if (auto root = soup::cat::parse(r))
+	{
+		soup::catTreeReader tr;
+		return tr.toMap(root.get(), false);
+	}
+	return {};
 }

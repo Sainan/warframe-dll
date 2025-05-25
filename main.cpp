@@ -4160,19 +4160,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 					case soup::joaat::compileTimeHash("/dict.js"):
-						if (std::string content = string::fromFile(ObfusString("OpenWF/dict.js").str()); !content.empty())
 						{
-							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), content);
-						}
-						else
-						{
-							uint32_t size;
-							auto data = g_archive.find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/webui_dicts/"), webui_lang_code), ObfusString(".js").str()), size);
-							if (!data)
+							JsonObject obj;
+							auto dict = g_archive.getDict(webui_lang_code);
+							for (const auto& e : dict)
 							{
-								data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/webui_dicts/en.js"), size);
+								obj.add(std::move(e.first), std::move(e.second));
 							}
-							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), data, size);
+							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), ObfusString("dict=").str() + obj.encode());
 						}
 						break;
 
