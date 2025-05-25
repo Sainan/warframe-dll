@@ -247,7 +247,7 @@ class Object extends owfUserdata
 	function IsA(type)
 		local htype = self:GetType()
 		repeat
-			if htype:GetFullName() == type then
+			if htype:GetFullName() == type.name then
 				return true
 			end
 			htype = htype:GetParent()
