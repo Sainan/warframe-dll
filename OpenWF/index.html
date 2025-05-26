@@ -15,7 +15,7 @@
 	<p id="dll_to_hotfix_update" style="display:none"></p>
 	<p id="hotfix_to_hotfix_update" style="display:none"></p>
 	<hr>
-	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout"></button></p>
+	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout" onclick="fire_and_forget('logout')"></button></p>
 	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
 	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
 	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
@@ -26,9 +26,9 @@
 	<p><label for="dont_resolve_labels"></label> <input id="dont_resolve_labels" type="checkbox" /></p>
 	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
 	<p>
-		<button id="save_config" onclick="fetch('/save_config')" style="margin-top:3px"></button>
-		<button id="reload_hotkeys" onclick="fetch('/reload_hotkeys')"></button>
-		<button id="reload_label_replacements" onclick="fetch('/reload_label_replacements')"></button>
+		<button id="save_config" onclick="fire_and_forget('save_config')" style="margin-top:3px"></button>
+		<button id="reload_hotkeys" onclick="fire_and_forget('reload_hotkeys')"></button>
+		<button id="reload_label_replacements" onclick="fire_and_forget('reload_label_replacements')"></button>
 	</p>
 	<hr>
 	<p><label for="camtype"></label> <select id="camtype"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select></p>
@@ -37,7 +37,7 @@
 	<hr>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
-	<p><button id="clear_script_log" onclick="fetch('/clear_script_log')"></button></p>
+	<p><button id="clear_script_log" onclick="fire_and_forget('clear_script_log')"></button></p>
 	<p><label for="console"></label> <input id="console" type="checkbox" /></p>
 	<script src="/dict.js"></script>
 	<script>
@@ -60,9 +60,6 @@
 
 		document.getElementById("server_host_submit").onclick = function() {
 			fetch("/server_host?" + document.getElementById("server_host").value);
-		};
-		document.getElementById("logout").onclick = function() {
-			fetch("/logout");
 		};
 
 		const toggles = [...document.querySelectorAll("[type=checkbox]")].map(x => x.id);

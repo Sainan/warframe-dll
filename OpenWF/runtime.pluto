@@ -2793,6 +2793,11 @@ function owf_get_build_label()
 	return owf_get_build_version() .. "/" .. owf_get_build_hash()
 end
 
+owf_logout = || -> do owf_command("logout") end
+owf_save_config = || -> do owf_command("save_config") end
+owf_reload_hotkeys = || -> do owf_command("reload_hotkeys") end
+owf_reload_label_replacements = || -> do owf_command("reload_label_replacements") end
+
 get_high_damage_numbers_patch = || -> owf_command("high_damage_numbers_patch").high_damage_numbers_patch
 set_high_damage_numbers_patch = |b| -> do owf_command("high_damage_numbers_patch?"..b) end
 get_skip_mission_start_timer = || -> owf_command("skip_mission_start_timer").skip_mission_start_timer

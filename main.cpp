@@ -1991,6 +1991,30 @@ bool owf_command(const std::string& in, JsonObject& out)
 	auto args = string::explode(in, '?');
 	switch (joaat::hash(args[0]))
 	{
+	case joaat::compileTimeHash("logout"):
+		do_logout();
+		return true;
+
+	case joaat::compileTimeHash("save_config"):
+		save_config();
+		return true;
+
+	case joaat::compileTimeHash("reload_hotkeys"):
+		load_hotkeys();
+		return true;
+
+#if LABEL_REPLACEMENTS
+	case joaat::compileTimeHash("reload_label_replacements"):
+		load_label_replacements();
+		return true;
+#endif
+
+#if METADATA_PATCHES
+	case joaat::compileTimeHash("reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
+		load_metadata_patches();
+		return true;
+#endif
+
 	case joaat::compileTimeHash("available_scripts"):
 		out.add(ObfusString("available_scripts"), soup::make_unique<JsonArray>(get_available_scripts()));
 		return true;
@@ -2005,6 +2029,18 @@ bool owf_command(const std::string& in, JsonObject& out)
 
 	case joaat::compileTimeHash("script_log"):
 		populate_full_script_log(out);
+		return true;
+
+	case joaat::compileTimeHash("clear_script_log"):
+		{
+			std::lock_guard lock(script_log_mtx);
+			script_log.clear();
+		}
+		{
+			JsonObject obj;
+			populate_full_script_log(obj);
+			owf_broadcast_message(obj.encode());
+		}
 		return true;
 
 	case joaat::compileTimeHash("stop_script"):
@@ -4174,11 +4210,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, ObfusString("pong"));
 						break;
 
-					case soup::joaat::compileTimeHash("/save_config"):
-						save_config();
-						ServerWebService::sendText(s, {});
-						break;
-
 					case soup::joaat::compileTimeHash("/save_all_metadata"):
 						if (arr.size() > 1)
 						{
@@ -4229,11 +4260,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
 						}
 						ServerWebService::sendText(s, std::to_string(fov_override));
-						break;
-
-					case soup::joaat::compileTimeHash("/logout"):
-						do_logout();
-						ServerWebService::sendText(s, {});
 						break;
 
 					case soup::joaat::compileTimeHash("/server_host"):
@@ -4374,19 +4400,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
-					case soup::joaat::compileTimeHash("/clear_script_log"):
-						{
-							std::lock_guard lock(script_log_mtx);
-							script_log.clear();
-						}
-						{
-							JsonObject obj;
-							populate_full_script_log(obj);
-							owf_broadcast_message(obj.encode());
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
 					case soup::joaat::compileTimeHash("/apply_hotfix"):
 						{
 							owfArchive archive;
@@ -4470,18 +4483,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-					case soup::joaat::compileTimeHash("/reload_hotkeys"):
-						load_hotkeys();
-						ServerWebService::sendText(s, {});
-						break;
-
 #if LABEL_REPLACEMENTS
 					case soup::joaat::compileTimeHash("/check_label_replacements"):
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/reload_label_replacements"):
-						load_label_replacements();
 						ServerWebService::sendText(s, {});
 						break;
 #endif
@@ -4498,11 +4501,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 #if METADATA_PATCHES
-					case soup::joaat::compileTimeHash("/reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
-						load_metadata_patches();
-						ServerWebService::sendText(s, {});
-						break;
-
 					case soup::joaat::compileTimeHash("/get_effective_metadata"):
 						{
 							std::lock_guard lock(metadata_patches_mtx);
