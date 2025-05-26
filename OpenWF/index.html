@@ -68,7 +68,7 @@
 		const toggles = [...document.querySelectorAll("[type=checkbox]")].map(x => x.id);
 		for (const toggle of toggles) {
 			document.getElementById(toggle).onchange = function() {
-				fetch("/" + toggle + "?" + this.checked);
+				fire_and_forget(toggle + "?" + this.checked);
 			};
 		}
 
@@ -330,6 +330,15 @@
 			};
 		}
 		openWebSocket();
+
+		function fire_and_forget(cmd) {
+			if (ws.readyState == 1) {
+				ws.send(cmd);
+			}
+			else {
+				fetch("/" + cmd);
+			}
+		}
 
 		function onConnectionLost() {
 			document.body.innerHTML = `<p style="margin-block-start:0">` + dict.err + ` <a href="#" onclick="location.reload()">` + dict.err_retry + `</a></p>`;
