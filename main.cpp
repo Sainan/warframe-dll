@@ -4047,7 +4047,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to apply hotfix as it was made for a different DLL version") << std::endl;
+				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
 				g_archive.loadBuiltin();
 			}
 		}
