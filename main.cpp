@@ -4578,7 +4578,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
 				{
-					if (JsonObject out; owf_command(msg.data, out))
+					if (JsonObject out; owf_command(msg.data, out) && !out.empty())
 					{
 						ServerWebService::wsSendText(s, out.encode());
 					}
