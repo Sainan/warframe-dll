@@ -22,9 +22,16 @@ function add_file_to_archive($path, $archive_path)
 	if ($path == "OpenWF/runtime.pluto")
 	{
 		echo " [compiled]";
-		passthru("plutoc ".escapeshellarg($path));
+		passthru("tools\plutoc ".escapeshellarg($path));
 		$cont = file_get_contents("plutoc.out");
 		unlink("plutoc.out");
+	}
+	else if (substr($path, -5) == ".json" && $path != "OpenWF/Hotkeys.json")
+	{
+		echo " [minified]";
+		passthru("pluto tools/json_minify.pluto ".escapeshellarg($path)." min.json");
+		$cont = file_get_contents("min.json");
+		unlink("min.json");
 	}
 	echo "\n";
 	$uncompressed .= pack("V", joaat($archive_path));

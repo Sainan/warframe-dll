@@ -1,0 +1,6 @@
+if arg[1] and arg[2] then
+	local json = require "json"
+	arg[1] |> io.contents |> json.decode|json.withorder + json.withnull| |> json.encode |> |data| -> io.contents(arg[2], data)
+else
+	print("Syntax: pluto json_minify.pluto <in file> <out file>")
+end
