@@ -71,10 +71,10 @@
 
 		document.getElementById("pause_always_stops_time").onchange = function() {
 			if (this.checked) {
-				fetch("/enable_pause_always_stops_time");
+				fire_and_forget("enable_pause_always_stops_time");
 			}
 			else {
-				fetch("/disable_pause_always_stops_time");
+				fire_and_forget("disable_pause_always_stops_time");
 			}
 		};
 
@@ -86,7 +86,7 @@
 		};
 
 		document.getElementById("camtype").onchange = function() {
-			fetch("/" + this.value);
+			fire_and_forget(this.value);
 		};
 
 		const marker_types = {
@@ -112,7 +112,7 @@
 			let script_log_len = -1;
 			const script_broadcast_requested = {};
 			ws.onopen = function() {
-				fetch("/request_bgscript_broadcasts");
+				fire_and_forget("request_bgscript_broadcasts");
 			};
 			ws.onmessage = function(e) {
 				const obj = JSON.parse(e.data);
@@ -196,7 +196,7 @@
 						if (running) {
 							if (!script_broadcast_requested[path]) {
 								script_broadcast_requested[path] = true;
-								fetch(path.substr(6) + "/request_broadcast");
+								fire_and_forget(path.substr(7) + "/request_broadcast");
 							}
 						}
 						else {
@@ -261,7 +261,7 @@
 							input.id = obj.from + toggle.name;
 							input.type = "checkbox";
 							input.onchange = function() {
-								fetch(obj.from.substr(6) + "/set_toggle?" + (this.checked ? "1" : "0") + encodeURIComponent(toggle.name));
+								fire_and_forget(obj.from.substr(7) + "/set_toggle", (this.checked ? "1" : "0") + toggle.name);
 							};
 							li.appendChild(input);
 						}
@@ -328,12 +328,12 @@
 		}
 		openWebSocket();
 
-		function fire_and_forget(cmd) {
+		function fire_and_forget(cmd, arg) {
 			if (ws.readyState == 1) {
-				ws.send(cmd);
+				ws.send(cmd + (arg ? "?"+arg : ""));
 			}
 			else {
-				fetch("/" + cmd);
+				fetch("/" + cmd + (arg ? "?"+encodeURIComponent(arg) : ""));
 			}
 		}
 
@@ -353,7 +353,7 @@
 			if (pos == "custom") {
 				pos = document.getElementById("tp-pos").value
 			}
-			fetch("/teleport?" + pos);
+			fire_and_forget("teleport?" + pos);
 		};
 
 		document.getElementById("console").onchange = function() {

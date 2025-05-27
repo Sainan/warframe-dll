@@ -2834,6 +2834,7 @@ OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE = 5
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
 OWF_EVT_SCRIPT_TRIGGERED = 4
+OWF_EVT_WEBSOCKET_MESSAGE = 6
 
 UpgradeType = setmetatable({}, {
 	__index = |t, k| -> rawset(t, k, ivkr_get_enum_value(k))[k]
@@ -3176,6 +3177,13 @@ function owf_internal_callback(cid, nargs)
 	return 0
 end
 
+local pseudo_commands = {}
+function register_pseudo_command(cmd, cb)
+	pseudo_commands[cmd] = cb
+	owf_register_custom_route("/" .. cmd, "text/plain", "")
+	register_websocket_message_prefix(cmd)
+end
+
 return function(f)
 	owf_script_route_base = owf_script_get_path()
 	local is_bgscript = (owf_script_route_base == "OpenWF Background Script")
@@ -3184,8 +3192,23 @@ return function(f)
 	else
 		owf_script_route_base = owf_script_get_path():sub(7)
 	end
-	owf_register_custom_route(owf_script_route_base.."/request_broadcast", "text/plain", "")
-	owf_register_custom_route(owf_script_route_base.."/set_toggle", "text/plain", "")
+	register_pseudo_command(owf_script_route_base:sub(2).."/request_broadcast", function(sender)
+		owf_broadcast_message(json.encode({
+			from = owf_script_get_path(),
+			script_broadcast = {
+				toggles = owf_script_toggles,
+			},
+		}), sender)
+	end)
+	register_pseudo_command(owf_script_route_base:sub(2).."/set_toggle", function(_, arg)
+		local value = arg:sub(1, 1) == "1"
+		local name = arg:sub(2)
+		if toggle := owf_script_toggles:find(|x| -> x.name == name) then
+			toggle.value = value
+		else
+			print("Could not find a toggle called "..name)
+		end
+	end)
 
 	coroutine.yield()
 
@@ -3215,26 +3238,17 @@ return function(f)
 				if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
 					local path = url.decode(evt.path)
 					if path:sub(1, #owf_script_route_base) == owf_script_route_base then
-						local off = 1 + #owf_script_route_base
-						if path:sub(off) == "/request_broadcast" then
-							owf_broadcast_message(json.encode({
-								from = owf_script_get_path(),
-								script_broadcast = {
-									toggles = owf_script_toggles,
-								},
-							}))
+						local cmd, arg = evt.text:split("?", 2):unpack()
+						if cb := pseudo_commands[cmd] then
+							cb(0, arg)
 							continue
 						end
-						if path:sub(off, off + 11) == "/set_toggle?" then
-							local value = path:sub(off + 12, off + 12) == "1"
-							local name = path:sub(off + 13)
-							if toggle := owf_script_toggles:find(|x| -> x.name == name) then
-								toggle.value = value
-							else
-								print("Could not find a toggle called "..name)
-							end
-							continue
-						end
+					end
+				elseif evt.type == OWF_EVT_WEBSOCKET_MESSAGE then
+					local cmd, arg = evt.text:split("?", 2):unpack()
+					if cb := pseudo_commands[cmd] then
+						cb(evt.sender, arg)
+						continue
 					end
 				elseif evt.type == OWF_EVT_CALLBACK then
 					evt.name = evt.name:sub(1 + #owf_script_get_path())

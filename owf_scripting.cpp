@@ -30,7 +30,7 @@
 
 using namespace soup;
 
-extern void owf_broadcast_message(std::string&& msg);
+extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
 extern bool owf_command(const std::string& in, JsonObject& out);
 
 static uint32_t wf_fnv_32(const char* str) noexcept
@@ -1255,6 +1255,20 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("chat_unblock_outgoing_prefix"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.emplace(pluto_checkstring(L, 1));
+		return 0;
+	});
+	{ ObfusString name("register_websocket_message_prefix"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.erase(pluto_checkstring(L, 2));
+		return 0;
+	});
+	{ ObfusString name("unregister_websocket_message_prefix"); lua_setglobal(L, name.c_str()); }
+
 	if (luauD_call)
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1359,6 +1373,15 @@ owfScript::owfScript()
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
 				break;
+
+			case OWF_EVT_WEBSOCKET_MESSAGE:
+				pluto_pushstring(L, ObfusString("sender").str());
+				lua_pushinteger(L, scr->events.front().intdata);
+				lua_settable(L, -3);
+				pluto_pushstring(L, ObfusString("text").str());
+				pluto_pushstring(L, scr->events.front().data);
+				lua_settable(L, -3);
+				break;
 			}
 			scr->events.pop_front();
 			return 1;
@@ -1455,7 +1478,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		owf_broadcast_message(pluto_checkstring(L, 1));
+		owf_broadcast_message(pluto_checkstring(L, 1), luaL_optinteger(L, 2, 0));
 		return 0;
 	});
 	{ ObfusString name("owf_broadcast_message"); lua_setglobal(L, name.c_str()); }

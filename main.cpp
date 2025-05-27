@@ -4581,6 +4581,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					if (JsonObject out; owf_command(msg.data, out) && !out.empty())
 					{
 						ServerWebService::wsSendText(s, out.encode());
+						return;
+					}
+
+					std::lock_guard lock(running_scripts_mtx);
+					for (auto& scr : running_scripts)
+					{
+						if (scr->handlesWebsocketMessage(msg.data))
+						{
+							scr->events.emplace_back(OWF_EVT_WEBSOCKET_MESSAGE, s.custom_data.getStructFromMapConst(owfWebsocketTag).id, std::move(msg.data));
+							return;
+						}
+					}
+					if (bgscript)
+					{
+						if (auto route = bgscript->handlesWebsocketMessage(msg.data))
+						{
+							bgscript->events.emplace_back(OWF_EVT_WEBSOCKET_MESSAGE, s.custom_data.getStructFromMapConst(owfWebsocketTag).id, std::move(msg.data));
+							return;
+						}
 					}
 				};
 				serv.bind(61558, &srv);
@@ -4607,9 +4626,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 struct owfBroadcastMessageTask final : public Task
 {
 	const std::string msg;
+	const uint32_t recipient;
 
-	owfBroadcastMessageTask(std::string&& msg)
-		: msg(std::move(msg))
+	owfBroadcastMessageTask(std::string&& msg, uint32_t recipient)
+		: msg(std::move(msg)), recipient(recipient)
 	{
 	}
 
@@ -4619,6 +4639,7 @@ struct owfBroadcastMessageTask final : public Task
 		{
 			if (w->type == soup::WORKER_TYPE_SOCKET
 				&& static_cast<Socket*>(w.get())->custom_data.isStructInMap(owfWebsocketTag)
+				&& (recipient == 0 || recipient == static_cast<Socket*>(w.get())->custom_data.getStructFromMapConst(owfWebsocketTag).id)
 				)
 			{
 				ServerWebService::wsSendText(*static_cast<Socket*>(w.get()), msg);
@@ -4628,7 +4649,7 @@ struct owfBroadcastMessageTask final : public Task
 	}
 };
 
-void owf_broadcast_message(std::string&& msg)
+void owf_broadcast_message(std::string&& msg, uint32_t recipient /*= 0*/)
 {
-	serv.add<owfBroadcastMessageTask>(std::move(msg));
+	serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
 }

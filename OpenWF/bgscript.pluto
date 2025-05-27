@@ -1,13 +1,3 @@
-owf_register_custom_route("/freecam", "text/plain", "")
-owf_register_custom_route("/lockcam", "text/plain", "")
-owf_register_custom_route("/gamecam", "text/plain", "")
-owf_register_custom_route("/teleport", "text/plain", "")
-owf_register_custom_route("/enable_pause_always_stops_time", "text/plain", "")
-owf_register_custom_route("/disable_pause_always_stops_time", "text/plain", "")
-owf_register_custom_route("/request_bgscript_broadcasts", "text/plain", "")
-owf_register_custom_route("/download_latest_hotfix", "text/plain", "")
-owf_register_custom_route("/check_for_updates", "text/plain", "")
-
 owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
@@ -254,15 +244,15 @@ local hotfix_available = ""
 local hotfix_available_sha256 = ""
 local downloading_hotfix = false
 
-local function send_version_broadcast()
-	owf_broadcast_message(json.encode({
+local function send_version_broadcast(recipient)
+	owf_broadcast_message(json.encode{
 		version_broadcast = {
 			current = current_version,
 			latest = version_is_latest,
 			hotfix = current_hotfix,
 			hotfix_available = hotfix_available,
 		}
-	}))
+	}, recipient)
 end
 
 local function check_for_updates()
@@ -305,13 +295,89 @@ local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.12
 local last_status_update = 0
 local last_status_string
 
-local function send_status_broadcast()
-	owf_broadcast_message(json.encode({
+local function send_status_broadcast(recipient)
+	owf_broadcast_message(json.encode{
 		bgscript_status_string = last_status_string
-	}))
+	}, recipient)
 end
 
 local script_log_len = 0
+
+register_pseudo_command("freecam", function()
+	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+		if ply := gRegion:GetLocalPlayer() then
+			ply:setControllingCamera(true)
+			ply:GetAvatar():ControlCamera(false)
+		end
+	end
+end)
+register_pseudo_command("lockcam", function()
+	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+		if ply := gRegion:GetLocalPlayer() then
+			ply:setControllingCamera(false)
+			ply:GetAvatar():ControlCamera(false)
+		end
+	end
+end)
+register_pseudo_command("gamecam", function()
+	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
+		if ply := gRegion:GetLocalPlayer() then
+			ply:setControllingCamera(false)
+			ply:GetAvatar():ControlCamera(true)
+		end
+	end
+end)
+register_pseudo_command("teleport", function(_, pos)
+	if ivkr_available and not owf_tunables_has("prohibit_teleport") then
+		local arr = pos:split(",")
+		if #arr == 3 then
+			gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
+		end
+	end
+end)
+register_pseudo_command("enable_pause_always_stops_time", function()
+	set_pause_always_stops_time(true)
+	owf_broadcast_message[[{"pause_always_stops_time":true}]]
+end)
+register_pseudo_command("disable_pause_always_stops_time", function()
+	gGameRules:RequestUnpause()
+	set_pause_always_stops_time(false)
+	owf_broadcast_message[[{"pause_always_stops_time":false}]]
+end)
+register_pseudo_command("request_bgscript_broadcasts", function(sender)
+	send_status_broadcast(sender)
+	if not requested_versions then
+		requested_versions = true
+		check_for_updates()
+	else
+		send_version_broadcast(sender)
+	end
+end)
+register_pseudo_command("download_latest_hotfix", function()
+	if not downloading_hotfix then
+		downloading_hotfix = true
+		owf_create_thread(function()
+			if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.owf") then
+				if crypto.sha256(bin) == hotfix_available_sha256 then
+					io.contents("OpenWF/Hotfix.owf", bin)
+					http.request("http://localhost:6155/apply_hotfix")
+					current_hotfix = hotfix_available
+					hotfix_available = ""
+					hotfix_available_sha256 = ""
+					owf_broadcast_message[[{"reload":1}]]
+				else
+					print("Downloaded hotfix but checksum mismatches. Discarding it.")
+				end
+			else
+				print("Failed to download hotfix.")
+			end
+			downloading_hotfix = false
+		end)
+	end
+end)
+register_pseudo_command("check_for_updates", function()
+	check_for_updates()
+end)
 
 while pcall(yield) do
 	if os.millis() - last_status_update >= 20 then
@@ -370,74 +436,8 @@ while pcall(yield) do
 		end
 	end
 	while evt := owf_next_event() do
-		if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
-			if evt.path:sub(1, 10) == "/teleport?" then
-				if ivkr_available and not owf_tunables_has("prohibit_teleport") then
-					local arr = evt.path:sub(11):split(",")
-					if #arr == 3 then
-						gRegion:GetLocalPlayerAvatar():SetPosition(Vector(tonumber(arr[1]), tonumber(arr[2]), tonumber(arr[3])))
-					end
-				end
-			elseif evt.path == "/freecam" then
-				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
-					if ply := gRegion:GetLocalPlayer() then
-						ply:setControllingCamera(true)
-						ply:GetAvatar():ControlCamera(false)
-					end
-				end
-			elseif evt.path == "/lockcam" then
-				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
-					if ply := gRegion:GetLocalPlayer() then
-						ply:setControllingCamera(false)
-						ply:GetAvatar():ControlCamera(false)
-					end
-				end
-			elseif evt.path == "/gamecam" then
-				if ivkr_available and not owf_tunables_has("prohibit_freecam") then
-					if ply := gRegion:GetLocalPlayer() then
-						ply:setControllingCamera(false)
-						ply:GetAvatar():ControlCamera(true)
-					end
-				end
-			elseif evt.path == "/enable_pause_always_stops_time" then
-				set_pause_always_stops_time(true)
-				owf_broadcast_message[[{"pause_always_stops_time":true}]]
-			elseif evt.path == "/disable_pause_always_stops_time" then
-				gGameRules:RequestUnpause()
-				set_pause_always_stops_time(false)
-				owf_broadcast_message[[{"pause_always_stops_time":false}]]
-			elseif evt.path == "/request_bgscript_broadcasts" then
-				send_status_broadcast()
-				if not requested_versions then
-					requested_versions = true
-					check_for_updates()
-				else
-					send_version_broadcast()
-				end
-			elseif evt.path == "/download_latest_hotfix" then
-				if not downloading_hotfix then
-					downloading_hotfix = true
-					owf_create_thread(function()
-						if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.owf") then
-							if crypto.sha256(bin) == hotfix_available_sha256 then
-								io.contents("OpenWF/Hotfix.owf", bin)
-								http.request("http://localhost:6155/apply_hotfix")
-								current_hotfix = hotfix_available
-								hotfix_available = ""
-								hotfix_available_sha256 = ""
-								owf_broadcast_message[[{"reload":1}]]
-							else
-								print("Downloaded hotfix but checksum mismatches. Discarding it.")
-							end
-						else
-							print("Failed to download hotfix.")
-						end
-						downloading_hotfix = false
-					end)
-				end
-			elseif evt.path == "/check_for_updates" then
-				check_for_updates()
-			end
+		if evt.type ~= OWF_EVT_CUSTOM_ROUTE_SERVED or evt.path ~= "/favicon.ico" then
+			print("Unhandled event in background script: "..dumpvar(evt))
 		end
 	end
 end

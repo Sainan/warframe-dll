@@ -1,6 +1,8 @@
 #pragma once
 
-extern void owf_broadcast_message(std::string&& msg);
+#include <cstdint>
+
+extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
 
 struct owfConsole
 {

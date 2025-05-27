@@ -25,6 +25,7 @@ enum owfScriptEventType : uint8_t
 	OWF_EVT_CUSTOM_ROUTE_SERVED = 2,
 	OWF_EVT_CALLBACK = 3,
 	OWF_EVT_SCRIPT_TRIGGERED = 4,
+	OWF_EVT_WEBSOCKET_MESSAGE = 6,
 };
 
 struct owfScript
@@ -41,7 +42,18 @@ struct owfScript
 	struct Event
 	{
 		owfScriptEventType type;
+		uint32_t intdata;
 		std::string data;
+
+		Event(owfScriptEventType type, std::string data)
+			: type(type), data(std::move(data))
+		{
+		}
+
+		Event(owfScriptEventType type, uint32_t intdata, std::string data)
+			: type(type), intdata(intdata), data(std::move(data))
+		{
+		}
 	};
 	struct CustomRoute
 	{
@@ -50,6 +62,7 @@ struct owfScript
 	};
 	std::unordered_set<std::string> blocked_chat_prefixes;
 	std::unordered_set<std::string> blocked_outgoing_chat_prefixes;
+	std::unordered_set<std::string> websocket_message_prefixes;
 	std::unordered_map<uint32_t, CustomRoute> custom_routes;
 	std::unordered_set<std::string> callbacks;
 	std::unordered_map<uint32_t, bool> subscribed_script_triggers;
@@ -83,6 +96,18 @@ struct owfScript
 	bool isBlockingOutgoingMessage(const std::string_view& msg) const noexcept
 	{
 		for (const auto& prefix : blocked_outgoing_chat_prefixes)
+		{
+			if (msg.starts_with(prefix))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool handlesWebsocketMessage(const std::string& msg) const noexcept
+	{
+		for (const auto& prefix : websocket_message_prefixes)
 		{
 			if (msg.starts_with(prefix))
 			{
