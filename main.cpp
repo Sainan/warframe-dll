@@ -1851,7 +1851,12 @@ static void log_optional_scan_failure(bool important)
 
 static Server serv;
 
-struct owfWebsocketTag {};
+struct owfWebsocketTag
+{
+	static inline uint32_t last_id = 0;
+
+	uint32_t id;
+};
 
 struct owfContentTask : public Task
 {
@@ -4565,7 +4570,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				});
 				srv.on_websocket_connection_established = [](Socket& s, const HttpRequest&, ServerWebService&)
 				{
-					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{});
+					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{ ++owfWebsocketTag::last_id });
 
 					JsonObject obj;
 					populate_full_status(obj);
