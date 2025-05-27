@@ -912,7 +912,10 @@ class InventoryControllerBase extends Object
 		ivkr_push_int(upgradeType)
 		ivkr_push_int(operationType)
 		ivkr_push_float(value)
-		ivkr_call(ivkr_find_method("NullInventoryController", "AddUpgrade"), 4)
+		ivkr_push_nil()
+		ivkr_push_nil()
+		ivkr_push_int(damageType)
+		ivkr_call(ivkr_find_method("NullInventoryController", "AddUpgrade"), 7)
 	end
 end
 
