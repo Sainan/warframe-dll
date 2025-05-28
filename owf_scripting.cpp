@@ -1271,6 +1271,25 @@ owfScript::owfScript()
 	});
 	{ ObfusString name("unregister_websocket_message_prefix"); lua_setglobal(L, name.c_str()); }
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (ChatRedux_table
+			&& luau_L->outtop != luau_L->stack_last
+			)
+		{
+			luau_L->outtop->value.as_uintptr = ChatRedux_table;
+			luau_L->outtop->type = LUAU_TABLE;
+			luau_L->outtop++;
+			lua_pushboolean(L, true);
+		}
+		else
+		{
+			lua_pushboolean(L, false);
+		}
+		return 1;
+	});
+	{ ObfusString name("ivkr_push_chat_redux"); lua_setglobal(L, name.c_str()); }
+
 	if (luauD_call)
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
