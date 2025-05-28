@@ -1746,7 +1746,7 @@ owfScript::owfScript()
 		|| lua_pcall(L, 0, 1, 0) != LUA_OK
 		)
 	{
-		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error while loading runtime").str());
+		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error").str());
 	}
 }
 
@@ -1763,12 +1763,12 @@ bool owfScript::loadFile(std::string&& path)
 		{
 			return true;
 		}
-		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on load").str());
+		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error").str());
 		coro = nullptr;
 	}
 	else
 	{
-		owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error on load").str());
+		owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error").str());
 	}
 	return false;
 }
@@ -1786,12 +1786,12 @@ bool owfScript::loadString(const std::string& name, const std::string& code)
 		{
 			return true;
 		}
-		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on load").str());
+		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error").str());
 		coro = nullptr;
 	}
 	else
 	{
-		owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error on load").str());
+		owfScript::logNl(lua_type(main, -1) == LUA_TSTRING ? pluto_checkstring(main, -1) : ObfusString("Non-string script error").str());
 	}
 	return false;
 }
@@ -1806,7 +1806,7 @@ bool owfScript::tick()
 	}
 	if (status != LUA_OK)
 	{
-		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
+		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error").str());
 	}
 	return false;
 }
@@ -1817,7 +1817,7 @@ int owfScript::tick(int nargs)
 	int status = lua_resume(coro, main, nargs, &nresults);
 	SOUP_IF_UNLIKELY (status != LUA_YIELD && status != LUA_OK)
 	{
-		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error on tick").str());
+		owfScript::logNl(lua_type(coro, -1) == LUA_TSTRING ? pluto_checkstring(coro, -1) : ObfusString("Non-string script error").str());
 		return 0;
 	}
 	return nresults;

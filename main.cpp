@@ -1542,7 +1542,7 @@ static void load_metadata_patches()
 		|| lua_pcall(L, 0, 0, 0) != LUA_OK
 		)
 	{
-		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error while loading metadata patches").str());
+		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error").str());
 	}
 
 	lua_close(L);
