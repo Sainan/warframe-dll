@@ -128,7 +128,7 @@ void owfScript::openLibs(lua_State* L)
 		owfScript::logNl(concat_arguments(L));
 		return 0;
 	});
-	{ ObfusString name("print"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "print");
 
 	{ ObfusString name("io"); lua_getglobal(L, name.c_str()); }
 	{ ObfusString name("write"); lua_pushlstring(L, name.data(), name.size()); }
@@ -144,14 +144,14 @@ void owfScript::openLibs(lua_State* L)
 		std::cout << concat_arguments(L);
 		return 0;
 	});
-	{ ObfusString name("write_to_console"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "write_to_console");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		std::cout << concat_arguments(L) << '\n';
 		return 0;
 	});
-	{ ObfusString name("print_to_console"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "print_to_console");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -159,7 +159,7 @@ void owfScript::openLibs(lua_State* L)
 		lua_pushinteger(L, script_log.size());
 		return 1;
 	});
-	{ ObfusString name("owf_get_script_log_len"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_get_script_log_len");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -174,7 +174,7 @@ void owfScript::openLibs(lua_State* L)
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_get_script_log_sub"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_get_script_log_sub");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -187,7 +187,7 @@ void owfScript::openLibs(lua_State* L)
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_archive_find"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_archive_find");
 
 	if (string_pool)
 	{
@@ -196,7 +196,7 @@ void owfScript::openLibs(lua_State* L)
 			lua_pushstring(L, resolve_string_handle(luaL_checkinteger(L, 1)));
 			return 1;
 		});
-		{ ObfusString name("resolve_string_handle"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "resolve_string_handle");
 	}
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -204,14 +204,14 @@ void owfScript::openLibs(lua_State* L)
 		lua_pushlstring(L, build_label, 16);
 		return 1;
 	});
-	{ ObfusString name("owf_get_build_version"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_get_build_version");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushlstring(L, build_hash, build_hash[0] ? 22 : 0);
 		return 1;
 	});
-	{ ObfusString name("owf_get_build_hash"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_get_build_hash");
 
 #if PRIVATE
 	lua_pushboolean(L, true);
@@ -248,7 +248,7 @@ owfScript::owfScript()
 		lua_pushboolean(L, reinterpret_cast<owfScript*>(L->l_G->user_data)->stop_requested);
 		return 1;
 	});
-	{ ObfusString name("owf_get_stop_requested"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_get_stop_requested");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -266,28 +266,28 @@ owfScript::owfScript()
 		lua_yield(L, 0);
 		return 0;
 	});
-	{ ObfusString name("yield"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "yield");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		incnny(L);
 		return 0;
 	});
-	{ ObfusString name("block_yield"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "block_yield");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		decnny(L);
 		return 0;
 	});
-	{ ObfusString name("unblock_yield"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "unblock_yield");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pluto_pushstring(L, lang_code);
 		return 1;
 	});
-	{ ObfusString name("get_lang_code"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_lang_code");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -312,91 +312,91 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("owf_is_key_down"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_is_key_down");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr);
 		return 1;
 	});
-	{ ObfusString name("get_regionmgr"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_regionmgr");
 
 	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? *regionmgr->game_rules : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_gamerules"); lua_setglobal(L, name.c_str()); }*/
+	OWF_SET_GLOBAL(L, "get_gamerules");*/
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, flashmgr);
 		return 1;
 	});
-	{ ObfusString name("get_flashmgr"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_flashmgr");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, gamedata);
 		return 1;
 	});
-	{ ObfusString name("get_gamedata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_gamedata");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, profilemgr);
 		return 1;
 	});
-	{ ObfusString name("get_profilemgr"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_profilemgr");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, gClient);
 		return 1;
 	});
-	{ ObfusString name("get_client"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_client");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, matchingservice);
 		return 1;
 	});
-	{ ObfusString name("get_matchingservice"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_matchingservice");
 
 	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? regionmgr->GetLocalPlayer() : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_local_player"); lua_setglobal(L, name.c_str()); }*/
+	OWF_SET_GLOBAL(L, "get_local_player");*/
 
 	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, regionmgr ? regionmgr->GetGameCamera() : nullptr);
 		return 1;
 	});
-	{ ObfusString name("get_game_camera"); lua_setglobal(L, name.c_str()); }*/
+	OWF_SET_GLOBAL(L, "get_game_camera");*/
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->getAvatar());
 		return 1;
 	});
-	{ ObfusString name("player_get_avatar"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "player_get_avatar");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushboolean(L, reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->controlling_camera);
 		return 1;
 	});
-	{ ObfusString name("player_get_controlling_camera"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "player_get_controlling_camera");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		reinterpret_cast<Player*>(luaL_checkinteger(L, 1))->controlling_camera = lua_toboolean(L, 2);
 		return 0;
 	});
-	{ ObfusString name("player_set_controlling_camera"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "player_set_controlling_camera");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -406,56 +406,56 @@ owfScript::owfScript()
 		lua_pushnumber(L, entity->pos_z);
 		return 3;
 	});
-	{ ObfusString name("entity_get_pos"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "entity_get_pos");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<BaseAvatar*>(luaL_checkinteger(L, 1))->getDamageController());
 		return 1;
 	});
-	{ ObfusString name("baseavatar_get_damage_controller"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "baseavatar_get_damage_controller");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<BaseAvatar*>(luaL_checkinteger(L, 1))->getInventoryController());
 		return 1;
 	});
-	{ ObfusString name("baseavatar_get_inventory_controller"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "baseavatar_get_inventory_controller");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera() = lua_toboolean(L, 2);
 		return 0;
 	});
-	{ ObfusString name("avatar_set_followed_by_camera"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "avatar_set_followed_by_camera");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushboolean(L, reinterpret_cast<Avatar*>(luaL_checkinteger(L, 1))->followed_by_camera());
 		return 1;
 	});
-	{ ObfusString name("avatar_get_followed_by_camera"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "avatar_get_followed_by_camera");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<LotusInventoryController*>(luaL_checkinteger(L, 1))->GetWeaponInHand(luaL_checkinteger(L, 2)));
 		return 1;
 	});
-	{ ObfusString name("inventory_get_weapon_in_hand"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "inventory_get_weapon_in_hand");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<LotusInventoryController*>(luaL_checkinteger(L, 1))->GetActivePowerSuit());
 		return 1;
 	});
-	{ ObfusString name("inventory_get_active_powersuit"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "inventory_get_active_powersuit");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushpointer(L, reinterpret_cast<WeaponEx*>(luaL_checkinteger(L, 1))->GetActiveImpactBehavior());
 		return 1;
 	});
-	{ ObfusString name("weaponex_get_active_impact_behavior"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "weaponex_get_active_impact_behavior");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -474,56 +474,56 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("mem_scan_exe"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_scan_exe");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, *lua_checkpointer<int8_t*>(L, 1));
 		return 1;
 	});
-	{ ObfusString name("mem_read_i8"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_read_i8");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, *lua_checkpointer<int16_t*>(L, 1));
 		return 1;
 	});
-	{ ObfusString name("mem_read_i16"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_read_i16");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, *lua_checkpointer<int32_t*>(L, 1));
 		return 1;
 	});
-	{ ObfusString name("mem_read_i32"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_read_i32");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, *lua_checkpointer<int64_t*>(L, 1));
 		return 1;
 	});
-	{ ObfusString name("mem_read_i64"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_read_i64");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		*lua_checkpointer<int64_t*>(L, 1) = luaL_checkinteger(L, 2);
 		return 0;
 	});
-	{ ObfusString name("mem_write_i64"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_write_i64");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushnumber(L, *lua_checkpointer<float*>(L, 1));
 		return 1;
 	});
-	{ ObfusString name("mem_read_f32"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_read_f32");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		*lua_checkpointer<float*>(L, 1) = luaL_checknumber(L, 2);
 		return 0;
 	});
-	{ ObfusString name("mem_write_f32"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "mem_write_f32");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -535,7 +535,7 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_nil"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_nil");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -548,7 +548,7 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_bool"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_bool");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -558,7 +558,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_int"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_int");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -568,7 +568,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_float"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_float");
 
 	if (luau_pushstring)
 	{
@@ -582,7 +582,7 @@ owfScript::owfScript()
 			luau_pushstring(luau_L, str);
 			return 0;
 		});
-		{ ObfusString name("ivkr_push_string"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_push_string");
 	}
 
 	if (luau_pushpointer)
@@ -596,7 +596,7 @@ owfScript::owfScript()
 			luau_pushpointer(luau_L, reinterpret_cast<void*>(luaL_checkinteger(L, 1)));
 			return 0;
 		});
-		{ ObfusString name("ivkr_push_pointer"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_push_pointer");
 	}
 
 	if (luau_pushobject)
@@ -620,7 +620,7 @@ owfScript::owfScript()
 			}*/
 			return 0;
 		});
-		{ ObfusString name("ivkr_push_object"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_push_object");
 	}
 
 	if (luau_pushcclosurek)
@@ -689,7 +689,7 @@ owfScript::owfScript()
 			}
 			luaL_error(L, ObfusString("insufficient space"));
 		});
-		{ ObfusString name("ivkr_push_callback2"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_push_callback2");
 	}
 
 	if (luau_next)
@@ -699,7 +699,7 @@ owfScript::owfScript()
 			lua_pushboolean(L, luau_next(luau_L, (int)luaL_checkinteger(L, 1)));
 			return 1;
 		});
-		{ ObfusString name("ivkr_next"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_next");
 	}
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -713,7 +713,7 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_userdata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_userdata");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -726,7 +726,7 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_lightuserdata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_lightuserdata");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -738,7 +738,7 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_push_value"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_value");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -775,14 +775,14 @@ owfScript::owfScript()
 		lua_pushinteger(L, nresults);
 		return 1;
 	});
-	{ ObfusString name("ivkr_call"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_call");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		luau_L->outtop -= luaL_optinteger(L, 1, 1);
 		return 0;
 	});
-	{ ObfusString name("ivkr_pop"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -793,7 +793,7 @@ owfScript::owfScript()
 		lua_pushboolean(L, (--luau_L->outtop)->value.as_bool);
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_bool"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_bool");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -804,7 +804,7 @@ owfScript::owfScript()
 		lua_pushnumber(L, (--luau_L->outtop)->value.as_float);
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_number"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_number");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -815,7 +815,7 @@ owfScript::owfScript()
 		lua_pushstring(L, (--luau_L->outtop)->getString());
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_string"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_string");
 
 	// Unused
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -827,7 +827,7 @@ owfScript::owfScript()
 		lua_pushinteger(L, (--luau_L->outtop)->value.as_uintptr);
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_userdata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_userdata");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -838,7 +838,7 @@ owfScript::owfScript()
 		lua_pushinteger(L, luau_L->outtop[-1].value.as_uintptr);
 		return 1;
 	});
-	{ ObfusString name("ivkr_get_userdata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_userdata");
 
 	// Unused
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -850,7 +850,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, *(void**)((--luau_L->outtop)->value.as_uintptr + 0x18));
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_pointer"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_pointer");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -861,7 +861,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, (--luau_L->outtop)->getObject());
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_object"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_object");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -872,7 +872,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->c.func));
 		return 1;
 	});
-	{ ObfusString name("ivkr_pop_c_function"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_pop_c_function");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -895,21 +895,21 @@ owfScript::owfScript()
 		luau_L->outtop++;
 		return 0;
 	});
-	{ ObfusString name("ivkr_get_upvalue"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_upvalue");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, luau_L->getValue(luaL_checkinteger(L, 1))->type);
 		return 1;
 	});
-	{ ObfusString name("ivkr_type"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_type");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushboolean(L, luau_L->getValue(luaL_checkinteger(L, 1))->type == LUAU_TABLE);
 		return 1;
 	});
-	{ ObfusString name("ivkr_istable"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_istable");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -917,7 +917,7 @@ owfScript::owfScript()
 		lua_pushboolean(L, type == LUAU_LIGHTUSERDATA || type == LUAU_USERDATA);
 		return 1;
 	});
-	{ ObfusString name("ivkr_isuserdata"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_isuserdata");
 
 	if (luau_gettable)
 	{
@@ -933,7 +933,7 @@ owfScript::owfScript()
 			}
 			return 1;
 		});
-		{ ObfusString name("ivkr_gettable"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_gettable");
 	}
 
 	if (luau_createtable)
@@ -943,7 +943,7 @@ owfScript::owfScript()
 			luau_createtable(luau_L, 0, 0);
 			return 0;
 		});
-		{ ObfusString name("ivkr_newtable"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_newtable");
 	}
 
 	if (luau_settable)
@@ -960,7 +960,7 @@ owfScript::owfScript()
 			}
 			return 0;
 		});
-		{ ObfusString name("ivkr_settable"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_settable");
 	}
 
 #if PRIVATE
@@ -976,7 +976,7 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("ivkr_get_types"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_types");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -994,7 +994,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_get_methods"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_methods");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1012,7 +1012,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_get_attributes"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_attributes");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1023,7 +1023,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_get_parent"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_parent");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1050,7 +1050,7 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("ivkr_get_enums"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_enums");
 #endif
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1063,7 +1063,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, res);
 		return 1;
 	});
-	{ ObfusString name("ivkr_find_ctor"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_find_ctor");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1075,7 +1075,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, res);
 		return 1;
 	});
-	{ ObfusString name("ivkr_find_method"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_find_method");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1087,7 +1087,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, res);
 		return 1;
 	});
-	{ ObfusString name("ivkr_find_getter"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_find_getter");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1099,7 +1099,7 @@ owfScript::owfScript()
 		lua_pushpointer(L, res);
 		return 1;
 	});
-	{ ObfusString name("ivkr_find_setter"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_find_setter");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1117,7 +1117,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("ivkr_get_enum_value"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_get_enum_value");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1125,7 +1125,7 @@ owfScript::owfScript()
 		lua_pushinteger(L, owfOverlay::getHeight());
 		return 2;
 	});
-	{ ObfusString name("owf_overlay_get_size"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_get_size");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1142,7 +1142,7 @@ owfScript::owfScript()
 		lua_pushlightuserdata(L, id);
 		return 1;
 	});
-	{ ObfusString name("owf_overlay_add_rect"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_add_rect");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1160,7 +1160,7 @@ owfScript::owfScript()
 		lua_pushlightuserdata(L, id);
 		return 1;
 	});
-	{ ObfusString name("owf_overlay_add_text"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_add_text");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1175,7 +1175,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_overlay_set_visibility"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_set_visibility");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1189,7 +1189,7 @@ owfScript::owfScript()
 		id->b = luaL_checkinteger(L, 4);
 		return 0;
 	});
-	{ ObfusString name("owf_overlay_set_colour"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_set_colour");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1202,7 +1202,7 @@ owfScript::owfScript()
 		id->text = pluto_checkstring(L, 2);
 		return 0;
 	});
-	{ ObfusString name("owf_overlay_set_text"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_set_text");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1219,14 +1219,14 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_overlay_remove"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_remove");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		owfOverlay::redraw();
 		return 0;
 	});
-	{ ObfusString name("owf_overlay_update"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_overlay_update");
 
 	lua_pushcfunction(L, ([](lua_State* L) -> int
 	{
@@ -1236,63 +1236,63 @@ owfScript::owfScript()
 		lua_pushinteger(L, height);
 		return 2;
 	}));
-	{ ObfusString name("owf_measure_text"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_measure_text");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushnumber(L, fov_override);
 		return 1;
 	});
-	{ ObfusString name("owf_config_get_fov_override"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_config_get_fov_override");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pause_always_stops_time = lua_toboolean(L, 1);
 		return 0;
 	});
-	{ ObfusString name("set_pause_always_stops_time"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "set_pause_always_stops_time");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.emplace(pluto_checkstring(L, 1));
 		return 0;
 	});
-	{ ObfusString name("chat_block_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "chat_block_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.erase(pluto_checkstring(L, 2));
 		return 0;
 	});
-	{ ObfusString name("chat_unblock_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "chat_unblock_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->blocked_outgoing_chat_prefixes.emplace(pluto_checkstring(L, 1));
 		return 0;
 	});
-	{ ObfusString name("chat_block_outgoing_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "chat_block_outgoing_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->blocked_outgoing_chat_prefixes.erase(pluto_checkstring(L, 2));
 		return 0;
 	});
-	{ ObfusString name("chat_unblock_outgoing_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "chat_unblock_outgoing_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.emplace(pluto_checkstring(L, 1));
 		return 0;
 	});
-	{ ObfusString name("register_websocket_message_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "register_websocket_message_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.erase(pluto_checkstring(L, 2));
 		return 0;
 	});
-	{ ObfusString name("unregister_websocket_message_prefix"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "unregister_websocket_message_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1311,7 +1311,7 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("ivkr_push_chat_redux"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "ivkr_push_chat_redux");
 
 	if (luauD_call)
 	{
@@ -1350,7 +1350,7 @@ owfScript::owfScript()
 			}
 			return 0;
 		});
-		{ ObfusString name("chat_system_reply"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "chat_system_reply");
 
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
@@ -1377,7 +1377,7 @@ owfScript::owfScript()
 			}
 			return 0;
 		});
-		{ ObfusString name("ivkr_call2"); lua_setglobal(L, name.c_str()); }
+		OWF_SET_GLOBAL(L, "ivkr_call2");
 	}
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1432,21 +1432,21 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_internal_next_event"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_internal_next_event");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pluto_pushstring(L, active_input_filter);
 		return 1;
 	});
-	{ ObfusString name("get_active_input_filter"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_active_input_filter");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushboolean(L, active_input_filter_allows_hotkeys);
 		return 1;
 	});
-	{ ObfusString name("get_active_input_filter_allows_hotkeys"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "get_active_input_filter_allows_hotkeys");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1454,14 +1454,14 @@ owfScript::owfScript()
 		lua_pushboolean(L, g_server_tunables.getBool(soup::joaat::hash(luaL_checkstring(L, 1))));
 		return 1;
 	});
-	{ ObfusString name("owf_tunables_has"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_tunables_has");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		static_cast<owfScript*>(L->l_G->user_data)->custom_routes.emplace(soup::joaat::hash(luaL_checkstring(L, 1)), CustomRoute{ pluto_checkstring(L, 2), pluto_checkstring(L, 3) });
 		return 0;
 	});
-	{ ObfusString name("owf_register_custom_route"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_register_custom_route");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1473,7 +1473,7 @@ owfScript::owfScript()
 		static_cast<owfScript*>(L->l_G->user_data)->callbacks.emplace(std::move(name));
 		return 0;
 	});
-	{ ObfusString name("owf_register_callback"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_register_callback");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1490,42 +1490,42 @@ owfScript::owfScript()
 
 		return 0;
 	});
-	{ ObfusString name("owf_subscribe_to_script_trigger"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_subscribe_to_script_trigger");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, static_cast<float>(luaL_checkinteger(L, 1)) + static_cast<float>(luaL_checkinteger(L, 2)));
 		return 1;
 	});
-	{ ObfusString name("fltm_int_add"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "fltm_int_add");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, static_cast<float>(luaL_checkinteger(L, 1)) * static_cast<float>(luaL_checkinteger(L, 2)));
 		return 1;
 	});
-	{ ObfusString name("fltm_int_mul"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "fltm_int_mul");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushnumber(L, static_cast<float>(luaL_checknumber(L, 1)) + static_cast<float>(luaL_checknumber(L, 2)));
 		return 1;
 	});
-	{ ObfusString name("fltm_float_add"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "fltm_float_add");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushnumber(L, static_cast<float>(luaL_checknumber(L, 1)) * static_cast<float>(luaL_checknumber(L, 2)));
 		return 1;
 	});
-	{ ObfusString name("fltm_float_mul"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "fltm_float_mul");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		owf_broadcast_message(pluto_checkstring(L, 1), luaL_optinteger(L, 2, 0));
 		return 0;
 	});
-	{ ObfusString name("owf_broadcast_message"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_broadcast_message");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1544,14 +1544,14 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_command_raw"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_command_raw");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pluto_pushstring(L, static_cast<owfScript*>(L->l_G->user_data)->name);
 		return 1;
 	});
-	{ ObfusString name("owf_script_get_path"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_script_get_path");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1591,7 +1591,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_cache_find"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cache_find");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1602,7 +1602,7 @@ owfScript::owfScript()
 		open_cache_pairs.clear();
 		return 0;
 	});
-	{ ObfusString name("owf_cache_close"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cache_close");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1647,7 +1647,7 @@ owfScript::owfScript()
 		}
 		return 1;
 	});
-	{ ObfusString name("owf_cachemanifest_new"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cachemanifest_new");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1665,7 +1665,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_cachemanifest_get_hash"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cachemanifest_get_hash");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1686,7 +1686,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("owf_cachemanifest_set_hash"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cachemanifest_set_hash");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1711,7 +1711,7 @@ owfScript::owfScript()
 		pluto_pushstring(L, sw.data);
 		return 1;
 	});
-	{ ObfusString name("owf_cachemanifest_pack_entries"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_cachemanifest_pack_entries");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1731,7 +1731,7 @@ owfScript::owfScript()
 		}
 		return 0;
 	});
-	{ ObfusString name("oodle_decompress"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "oodle_decompress");
 
 #if LABEL_REPLACEMENTS
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1756,7 +1756,7 @@ owfScript::owfScript()
 
 		return 0;
 	});
-	{ ObfusString name("owf_replace_label"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_replace_label");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1770,7 +1770,7 @@ owfScript::owfScript()
 
 		return 0;
 	});
-	{ ObfusString name("owf_restore_label"); lua_setglobal(L, name.c_str()); }
+	OWF_SET_GLOBAL(L, "owf_restore_label");
 #endif
 
 	std::string runtime;

@@ -18,6 +18,8 @@ inline uintptr_t ChatRedux_SystemMessage_method = 0;
 inline std::string active_input_filter;
 inline bool active_input_filter_allows_hotkeys;
 
+#define OWF_SET_GLOBAL(L, name) { ObfusString os(name); lua_setglobal(L, os.c_str()); }
+
 enum owfScriptEventType : uint8_t
 {
 	OWF_EVT_BLOCKED_CHAT_MESSAGE = 1,
