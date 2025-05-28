@@ -219,7 +219,7 @@
 
 				if ("script_log" in obj) {
 					const log = document.getElementById("script_log");
-					log.textContent = obj.script_log;
+					log.value = obj.script_log;
 					log.scrollTop = log.scrollHeight;
 
 					script_log_len = obj.script_log_len;
@@ -230,7 +230,7 @@
 						script_log_len = obj.script_log_nlen;
 
 						const log = document.getElementById("script_log");
-						log.textContent += obj.script_log_app;
+						log.value += obj.script_log_app;
 						log.scrollTop = log.scrollHeight;
 					}
 					else {
