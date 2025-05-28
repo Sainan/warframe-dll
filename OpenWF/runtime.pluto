@@ -3293,7 +3293,7 @@ return function(f)
 					evt.script = arr[1]
 					evt.func = arr[2]
 					evt.data = nil
-				elseif evt.type == OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE then
+				elseif evt.type == OWF_EVT_OUTGOING_CHAT_MESSAGE then
 					local arr = evt.data:split(" :", 2)
 					evt.channel = arr[1]
 					evt.text = arr[2]

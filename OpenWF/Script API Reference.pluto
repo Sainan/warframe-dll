@@ -485,8 +485,8 @@ function mem_read_f32(addr)
 function mem_write_f32(addr, val)
 function chat_block_prefix(prefix)
 function chat_unblock_prefix(prefix)
-function chat_block_outgoing_prefix(prefix)
-function chat_unblock_outgoing_prefix(prefix)
+function chat_subscribe_prefix(prefix)
+function chat_unsubscribe_prefix(prefix)
 function chat_system_reply(text)
 function owf_register_custom_route(path, mime, content)
 function owf_subscribe_to_script_trigger(script, func, block)
@@ -530,7 +530,7 @@ function owf_broadcast_message(message, optionalRecipient)
 -- OpenWF events
 
 OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
-OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE = 5
+OWF_EVT_OUTGOING_CHAT_MESSAGE = 5
 OWF_EVT_CUSTOM_ROUTE_SERVED = 2
 OWF_EVT_CALLBACK = 3
 OWF_EVT_SCRIPT_TRIGGERED = 4

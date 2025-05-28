@@ -113,11 +113,11 @@ commands["quit"] = function()
 end
 for prefix in commands do
 	chat_block_prefix("/"..prefix)
-	chat_block_outgoing_prefix("$"..prefix)
+	chat_subscribe_prefix("$"..prefix)
 end
 repeat
 	while evt := owf_next_event() do
-		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE or evt.type == OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE then
+		if evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE or evt.type == OWF_EVT_OUTGOING_CHAT_MESSAGE then
 			for prefix, f in commands do
 				if evt.text:sub(2, #prefix + 1) == prefix then
 					f(evt.text)

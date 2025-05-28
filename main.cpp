@@ -1702,22 +1702,15 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 			std::string_view message(str->getData() + sep + 2, str->getSize() - (sep + 2));
 			//std::cout << "channel_name = " << sv.substr(8, sep - 8) << std::endl;
 			//std::cout << "message = " << message << std::endl;
-			owfScript* blocking_script = nullptr;
 			{
 				std::lock_guard lock(running_scripts_mtx);
 				for (auto& scr : running_scripts)
 				{
-					if (scr->isBlockingOutgoingMessage(message))
+					if (scr->isSubscribedToOutgoingMessage(message))
 					{
-						blocking_script = scr;
-						break;
+						scr->events.emplace_back(OWF_EVT_OUTGOING_CHAT_MESSAGE, std::string(str->getData() + 8, str->getSize() - 8));
 					}
 				}
-			}
-			if (blocking_script != nullptr)
-			{
-				blocking_script->events.emplace_back(OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE, std::string(str->getData() + 8, str->getSize() - 8));
-				return;
 			}
 		}
 	}
