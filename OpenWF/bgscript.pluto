@@ -158,12 +158,9 @@ then
 	end
 
 	io.mkdirs("OpenWF/content/0")
-	do
-		local compressed, decompressed_size = owf_cache_find("H.Misc", "/H.Cache.bin")
-		if compressed then
-			if compressed:byte(1) == 0x80 then
-				io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
-			end
+	if compressed, decompressed_size := owf_cache_find("H.Misc", "/H.Cache.bin") then
+		if compressed:byte(1) == 0x80 then
+			io.contents("OpenWF/content/0/H.Cache.bin!D_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
 		end
 	end
 
