@@ -44,6 +44,9 @@ if not io.exists("OpenWF/Hotkeys.json")
 	or crypto.fnv1(io.contents("OpenWF/Hotkeys.json")) == 0xB842BE54D70B517B
 then
 	io.contents("OpenWF/Hotkeys.json", owf_archive_find("OpenWF/Hotkeys.json"))
+	if owf_overlay_get_size() ~= 0xFFFFFFFF then
+		owf_reload_hotkeys()
+	end
 end
 
 if not io.exists("OpenWF/Metadata Patches.txt") then
