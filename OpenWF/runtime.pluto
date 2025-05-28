@@ -2829,13 +2829,6 @@ OWF_FONT_SIMPLE5 = 5
 
 owf_overlay_set_color = owf_overlay_set_colour
 
-OWF_EVT_BLOCKED_CHAT_MESSAGE = 1
-OWF_EVT_BLOCKED_OUTGOING_CHAT_MESSAGE = 5
-OWF_EVT_CUSTOM_ROUTE_SERVED = 2
-OWF_EVT_CALLBACK = 3
-OWF_EVT_SCRIPT_TRIGGERED = 4
-OWF_EVT_WEBSOCKET_MESSAGE = 6
-
 UpgradeType = setmetatable({}, {
 	__index = |t, k| -> rawset(t, k, ivkr_get_enum_value(k))[k]
 })
