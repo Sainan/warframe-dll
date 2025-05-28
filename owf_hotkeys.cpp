@@ -2,18 +2,37 @@
 
 #include <iostream>
 
+#include <joaat.hpp>
 #include <json.hpp>
 #include <Key.hpp>
 #include <ObfusString.hpp>
+
+#include <lauxlib.h>
+
+#include "owf_archive.hpp"
+#include "owf_scripting.hpp"
 
 using namespace soup;
 
 void load_hotkeys()
 {
+	auto L = luaL_newstate();
+	owfScript::openLibs(L);
+	uint32_t size;
+	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/pre_load_hotkeys.pluto"), size);
+	if (luaL_loadbuffer(L, data, size, nullptr) != LUA_OK
+		|| lua_pcall(L, 0, 0, 0) != LUA_OK
+		)
+	{
+		owfScript::logNl(lua_type(L, -1) == LUA_TSTRING ? pluto_checkstring(L, -1) : ObfusString("Non-string script error").str());
+	}
+	lua_close(L);
+
 	std::vector<owfHotkey> hks;
 	try
 	{
 		auto jr = json::decodeFile(ObfusString("OpenWF/Hotkeys.json").str());
+		SOUP_ASSERT(jr);
 		for (const auto& jc : jr->asArr().children)
 		{
 			auto& jHk = jc->asObj();
