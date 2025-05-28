@@ -39,6 +39,7 @@ void load_hotkeys()
 			hk.shift = hk.has_shift && jHk.at(ObfusString("shift")).asBool();
 			hk.has_alt = jHk.contains(ObfusString("alt"));
 			hk.alt = hk.has_alt && jHk.at(ObfusString("alt")).asBool();
+			hk.was_pressed = hk.isPressed();
 			hk.script = jHk.at(ObfusString("script")).asStr();
 		}
 	}

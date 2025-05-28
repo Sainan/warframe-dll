@@ -14,7 +14,7 @@ struct owfHotkey
 	bool shift;
 	bool has_alt;
 	bool alt;
-	bool was_pressed = false;
+	bool was_pressed;
 	std::string script;
 
 	bool isPressed() const noexcept
