@@ -38,15 +38,17 @@ if true then
 	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))
 end
 
-if not io.exists("OpenWF/Hotkeys.json") then
+local { base64, crypto, http, json } = require "*"
+
+if not io.exists("OpenWF/Hotkeys.json")
+	or crypto.fnv1(io.contents("OpenWF/Hotkeys.json")) == 0xB842BE54D70B517B
+then
 	io.contents("OpenWF/Hotkeys.json", owf_archive_find("OpenWF/Hotkeys.json"))
 end
 
 if not io.exists("OpenWF/Metadata Patches.txt") then
 	io.contents("OpenWF/Metadata Patches.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
 end
-
-local { base64, crypto, http, json } = require "*"
 
 if owf_overlay_get_size() == 0xFFFFFFFF -- Heuristic to avoid managing content again after applying hotfix
 	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up

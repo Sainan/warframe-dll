@@ -1,5 +1,12 @@
 [
-    // Welcome, you can put your hotkeys here. Some examples:
+    // By default, O opens the in-game settings:
+
+    {
+        "key": "O",
+        "script": "owf_toggle_script[[samples/Settings.pluto]]"
+    },
+
+    // Some additional samples:
 
     // {
     //     "key": "K",
