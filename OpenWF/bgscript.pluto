@@ -152,7 +152,7 @@ then
 		bin ..= data:sub(17)
 
 		bin ..= "\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x52"
-		bin ..= string.pack("<I4", crc32c(bin))
+		bin ..= string.pack("<I4", crypto.crc32c(bin))
 
 		return bin, hash
 	end
