@@ -29,6 +29,7 @@ enum owfScriptEventType : uint8_t
 	OWF_EVT_CALLBACK = 4,
 	OWF_EVT_SCRIPT_TRIGGERED = 5,
 	OWF_EVT_WEBSOCKET_MESSAGE = 6,
+	OWF_EVT_SCRIPT_MESSAGE = 7,
 };
 
 struct owfScript
@@ -66,6 +67,7 @@ struct owfScript
 	std::unordered_set<std::string> blocked_chat_prefixes;
 	std::unordered_set<std::string> subscribed_outgoing_chat_prefixes;
 	std::unordered_set<std::string> websocket_message_prefixes;
+	std::unordered_set<std::string> channels;
 	std::unordered_map<uint32_t, CustomRoute> custom_routes;
 	std::unordered_set<std::string> callbacks;
 	std::unordered_map<uint32_t, bool> subscribed_script_triggers;

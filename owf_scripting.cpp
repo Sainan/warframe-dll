@@ -1349,6 +1349,7 @@ owfScript::owfScript()
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CALLBACK);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_TRIGGERED);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_WEBSOCKET_MESSAGE);
+	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_MESSAGE);
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1364,6 +1365,7 @@ owfScript::owfScript()
 			switch (scr->events.front().type)
 			{
 			case OWF_EVT_BLOCKED_CHAT_MESSAGE:
+			case OWF_EVT_SCRIPT_MESSAGE:
 				pluto_pushstring(L, ObfusString("text").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
@@ -1742,6 +1744,45 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "owf_restore_label");
 #endif
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->channels.emplace(pluto_checkstring(L, 1));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_register_channel");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto channel = pluto_checkstring(L, 1);
+		auto text = pluto_checkstring(L, 2);
+
+		owfScript* target = nullptr;
+		for (auto& scr : running_scripts)
+		{
+			if (scr->channels.contains(channel))
+			{
+				target = scr;
+				break;
+			}
+		}
+		if (!target && bgscript && bgscript->channels.contains(channel))
+		{
+			target = bgscript;
+		}
+
+		if (target)
+		{
+			target->events.emplace_back(OWF_EVT_SCRIPT_MESSAGE, std::move(text));
+			lua_pushboolean(L, true);
+		}
+		else
+		{
+			lua_pushboolean(L, false);
+		}
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_send_message");
 
 	std::string runtime;
 #if PRIVATE

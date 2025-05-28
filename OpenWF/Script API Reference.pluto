@@ -491,6 +491,8 @@ function chat_system_reply(text)
 function owf_register_custom_route(path, mime, content)
 function owf_subscribe_to_script_trigger(script, func, block)
 function owf_script_add_toggle(name, value = false)
+function owf_script_register_channel(name)
+function owf_script_send_message(channel, text)
 function owf_get_available_scripts()
 function owf_get_running_scripts()
 function owf_start_script(name)
@@ -535,6 +537,7 @@ OWF_EVT_CUSTOM_ROUTE_SERVED = 3
 OWF_EVT_CALLBACK = 4
 OWF_EVT_SCRIPT_TRIGGERED = 5
 OWF_EVT_WEBSOCKET_MESSAGE = 6
+OWF_EVT_SCRIPT_MESSAGE = 7
 
 function owf_next_event()
 
