@@ -2760,6 +2760,18 @@ function get_lang_dict(lang = get_lang_code())
 	return cat.decode(data, "flat")
 end
 
+function chat_system_reply(text)
+	if ivkr_push_chat_redux() then
+		ivkr_push_string("SystemMessage")
+		ivkr_gettable(-2)
+		ivkr_push_value(-2)
+		ivkr_push_string(text)
+		ivkr_call2(2, 0)
+
+		ivkr_pop(1)
+	end
+end
+
 owf_script_toggles = {}
 function owf_script_add_toggle(name, value = false)
 	local toggle = {

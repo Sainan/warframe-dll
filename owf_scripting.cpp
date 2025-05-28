@@ -1317,43 +1317,6 @@ owfScript::owfScript()
 	{
 		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			if (/*ChatRedux_table &&*/ ChatRedux_SystemMessage_method)
-			{
-				const auto message = luaL_checkstring(L, 1);
-
-				const auto call_top = luau_L->outtop;
-
-				luau_L->outtop->value.as_uintptr = ChatRedux_SystemMessage_method;
-				luau_L->outtop->type = LUAU_FUNCTION;
-				luau_L->outtop++;
-				luau_L->outtop->value.as_uintptr = ChatRedux_table;
-				luau_L->outtop->type = LUAU_TABLE;
-				luau_L->outtop++;
-				luau_pushstring(luau_L, message);
-
-				luau_error_msg.clear();
-				__try
-				{
-					luauD_call(luau_L, call_top, 0);
-				}
-				__except (EXCEPTION_EXECUTE_HANDLER)
-				{
-					if (luau_error_msg.empty())
-					{
-						luau_error_msg = ObfusString("low-level exception").str();
-					}
-				}
-				SOUP_IF_UNLIKELY (!luau_error_msg.empty())
-				{
-					luaL_error(L, luau_error_msg.c_str());
-				}
-			}
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "chat_system_reply");
-
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
 			const auto nargs = luaL_checkinteger(L, 1);
 			const auto nresults = luaL_checkinteger(L, 2);
 

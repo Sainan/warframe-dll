@@ -1411,14 +1411,11 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 			{
 				if (L->outtop[i].type == LUAU_TABLE)
 				{
-					ObfusString SystemMessage("SystemMessage");
-					luau_pushstring(L, SystemMessage.c_str());
-					if (luau_gettable(L, i - 1) == LUAU_FUNCTION
-						//&& *(uint8_t*)(L->outtop[-1].value.as_uintptr + 3) == 0 // Closure::isC
-						)
+					ObfusString name("mPanelList");
+					luau_pushstring(L, name.c_str());
+					if (luau_gettable(L, i - 1) > 0)
 					{
 						ChatRedux_table = L->outtop[i - 1].value.as_uintptr;
-						ChatRedux_SystemMessage_method = L->outtop[-1].value.as_uintptr;
 						L->outtop--;
 						break;
 					}
