@@ -123,13 +123,26 @@ struct luau_Closure
 	/* 0x04 */ uint8_t nupvalues;
 	/* 0x05 */ uint8_t stacksize;
 	/* 0x06 */ uint8_t preload;
-	PAD(0x07, 0x18) luau_CFunction func;
-	/* 0x20 */ luau_Continuation cont;
-	/* 0x28 */ const char* debugname;
-	/* 0x30 */ luau_TValue upvals[1];
+	/* 0x08 */ luau_GCObject* gclist;
+	/* 0x10 */ void/*LuaTable*/* env;
+	union
+	{
+		struct
+		{
+			/* 0x18 */ luau_CFunction func;
+			/* 0x20 */ luau_Continuation cont;
+			/* 0x28 */ const char* debugname;
+			/* 0x30 */ luau_TValue upvals[1];
+		} c;
+		struct
+		{
+			void/*Proto*/* p;
+			luau_TValue uprefs[1];
+		} l;
+	};
 };
 static_assert(offsetof(luau_Closure, isC) == 0x03);
-static_assert(offsetof(luau_Closure, func) == 0x18);
+static_assert(offsetof(luau_Closure, c.func) == 0x18);
 
 union luau_GCObject
 {

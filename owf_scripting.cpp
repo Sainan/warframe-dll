@@ -635,9 +635,9 @@ owfScript::owfScript()
 					luau_pushcclosurek(luau_L, [](luau_State* L) -> int
 					{
 						int npushed = 0;
-						if (const auto scr = get_script_by_instance_id(L->ci->func->value.gc->cl.upvals[0].value.as_uintptr))
+						if (const auto scr = get_script_by_instance_id(L->ci->func->value.gc->cl.c.upvals[0].value.as_uintptr))
 						{
-							const auto cid = L->ci->func->value.gc->cl.upvals[1].value.as_uintptr;
+							const auto cid = L->ci->func->value.gc->cl.c.upvals[1].value.as_uintptr;
 							//std::cout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
 							/*L->global_state_error_longjump_data() = nullptr;
 							L->global_state_panic_func() = [](luau_State* L, int)
@@ -869,7 +869,7 @@ owfScript::owfScript()
 		{
 			luaL_error(L, ObfusString("unexpected type"));
 		}
-		lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->func));
+		lua_pushpointer(L, reinterpret_cast<void*>(reinterpret_cast<luau_Closure*>((--luau_L->outtop)->value.as_uintptr)->c.func));
 		return 1;
 	});
 	{ ObfusString name("ivkr_pop_c_function"); lua_setglobal(L, name.c_str()); }
