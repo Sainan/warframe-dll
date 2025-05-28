@@ -32,6 +32,7 @@ if true then
 	io.contents("OpenWF/scripts/samples/Loot Party.pluto", owf_archive_find("OpenWF/samples/Loot Party.pluto"))
 	io.contents("OpenWF/scripts/samples/No Ability Cooldowns.pluto", owf_archive_find("OpenWF/samples/No Ability Cooldowns.pluto"))
 	io.contents("OpenWF/scripts/samples/Noclip.pluto", owf_archive_find("OpenWF/samples/Noclip.pluto"))
+	io.contents("OpenWF/scripts/samples/Settings.pluto", owf_archive_find("OpenWF/samples/Settings.pluto"))
 	io.contents("OpenWF/scripts/samples/Speedometer.pluto", owf_archive_find("OpenWF/samples/Speedometer.pluto"))
 	io.contents("OpenWF/scripts/samples/Wallhack.pluto", owf_archive_find("OpenWF/samples/Wallhack.pluto"))
 	io.contents("OpenWF/scripts/samples/Watermark.pluto", owf_archive_find("OpenWF/samples/Watermark.pluto"))

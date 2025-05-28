@@ -1,0 +1,48 @@
+-- Modifications to sample scripts will be lost the next time you start the game.
+local { CHECKBOX } = require "Lotus.Interface.LotusUtilities"
+
+local dict = get_lang_dict()
+local options = {
+	{ dict.high_damage_numbers_patch, get_high_damage_numbers_patch, set_high_damage_numbers_patch },
+	{ dict.skip_mission_start_timer, get_skip_mission_start_timer, set_skip_mission_start_timer },
+	{ dict.simulacrum_blacklisted, get_simulacrum_blacklisted, set_simulacrum_blacklisted },
+	{ dict.simulacrum_whitelisted, get_simulacrum_whitelisted, set_simulacrum_whitelisted },
+	{ dict.alternative_loading, get_alternative_loading, set_alternative_loading },
+	{ dict.ee_log_in_console, get_ee_log_in_console, set_ee_log_in_console },
+	{ dict.dont_resolve_labels, get_dont_resolve_labels, set_dont_resolve_labels },
+}
+
+local done = false
+local movie = _T.OpenScreen("GenericSettings")
+movie:Execute("SetTitle", "OpenWF In-Game Options")
+function _T.owfSampleSettingsChangesDone(inputs, cancel)
+	if not cancel then
+		for i, opt in options do
+			if opt[4] ~= inputs[i].mValue then
+				print(opt[1].." set to "..inputs[i].mValue)
+				opt[3](inputs[i].mValue)
+			end
+		end
+	end
+	done = true
+end
+movie:Execute("SetCallBack", "owfSampleSettingsChangesDone")
+function _T.owfSampleGetSettings()
+	return options:mapped(function(opt)
+		local value = opt[2]()
+		opt[4] = value
+		return {
+			mLabel = opt[1],
+			mType = CHECKBOX,
+			mValue = opt[2]()
+		}
+	end)
+end
+movie:Execute("SetElementsFunction", "owfSampleGetSettings")
+movie:Execute("SetConfirmButtonActive", "true")
+movie:Execute("EnableHints", "")
+repeat
+until done or not pcall(yield)
+if not IsNull(movie) then
+	movie:Close()
+end
