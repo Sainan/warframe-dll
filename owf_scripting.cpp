@@ -876,6 +876,29 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		const auto idx = (uint8_t)luaL_checkinteger(L, 1);
+		SOUP_IF_UNLIKELY (luau_L->outtop[-1].type != LUAU_FUNCTION)
+		{
+			luaL_error(L, ObfusString("unexpected type"));
+		}
+		const auto closure = reinterpret_cast<luau_Closure*>(luau_L->outtop[-1].value.as_uintptr);
+		SOUP_IF_UNLIKELY (idx >= closure->nupvalues)
+		{
+			luaL_error(L, ObfusString("index out of range"));
+		}
+		luau_TValue* const arr = closure->isC ? closure->c.upvals : closure->l.uprefs;
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		*luau_L->outtop = arr[idx];
+		luau_L->outtop++;
+		return 0;
+	});
+	{ ObfusString name("ivkr_get_upvalue"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushinteger(L, luau_L->getValue(luaL_checkinteger(L, 1))->type);
 		return 1;
 	});
