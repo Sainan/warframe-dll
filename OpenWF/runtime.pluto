@@ -1,4 +1,4 @@
-local { http, json, scheduler, url, vector3 } = require "*"
+local { cat, http, json, scheduler, url, vector3 } = require "*"
 
 Vector = vector3
 Vector3 = vector3 -- compatibility
@@ -2751,6 +2751,14 @@ Lotus_Game.TINT_COLOR0 = Symbol("TintColor0")
 Lotus_Game.TINT_COLOR1 = Symbol("TintColor1")
 Lotus_Game.TINT_COLOR2 = Symbol("TintColor2")
 Lotus_Game.TINT_COLOR3 = Symbol("TintColor3")
+
+function get_lang_dict(lang = get_lang_code())
+	local data = owf_archive_find("OpenWF/translations/"..lang..".cat.txt")
+	if not data then
+		data = owf_archive_find("OpenWF/translations/en.cat.txt")
+	end
+	return cat.decode(data, "flat")
+end
 
 owf_script_toggles = {}
 function owf_script_add_toggle(name, value = false)
