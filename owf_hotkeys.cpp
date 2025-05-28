@@ -21,11 +21,7 @@ void load_hotkeys()
 			auto& jKey = jHk.at(ObfusString("key"));
 			if (jKey.isStr())
 			{
-				hk.vk = 0;
-				if (jKey.reinterpretAsStr().value.size() == 1)
-				{
-					hk.vk = soup::char_to_virtual_key(jKey.reinterpretAsStr().value[0]);
-				}
+				hk.vk = soup::string_to_virtual_key(jKey.reinterpretAsStr().value.data(), jKey.reinterpretAsStr().value.size());
 				if (!hk.vk)
 				{
 					std::string msg = ObfusString("Invalid key: ").str();

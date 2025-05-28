@@ -296,7 +296,9 @@ owfScript::owfScript()
 			int vk = 0;
 			if (lua_type(L, 1) == LUA_TSTRING)
 			{
-				vk = soup::char_to_virtual_key(*luaL_checkstring(L, 1));
+				size_t size;
+				const char* data = luaL_checklstring(L, 1, &size);
+				vk = soup::string_to_virtual_key(data, size);
 			}
 			if (!vk)
 			{
