@@ -4434,6 +4434,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 							restart_bgscript();
 
+							load_hotkeys();
+
 							ServerWebService::sendText(s, {});
 						}
 						break;
