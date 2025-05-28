@@ -19,7 +19,8 @@ inline std::string active_input_filter;
 inline bool active_input_filter_allows_hotkeys;
 
 #define OWF_SET_GLOBAL(L, name) { ObfusString os(name); lua_setglobal(L, os.c_str()); }
-#define OWF_EXPOSE_INT_CONSTANT(L, e) lua_pushinteger(L, e); OWF_SET_GLOBAL(L, #e);
+#define OWF_SET_GLOBAL_INT(L, name, value) lua_pushinteger(L, value); OWF_SET_GLOBAL(L, name);
+#define OWF_EXPOSE_INT_CONSTANT(L, e) OWF_SET_GLOBAL_INT(L, #e, e);
 
 enum owfScriptEventType : uint8_t
 {

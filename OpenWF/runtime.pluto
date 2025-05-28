@@ -145,7 +145,7 @@ end
 
 function ivkr_pop_array(mt)
 	local t = {}
-	if ivkr_istable(-1) then
+	if ivkr_type(-1) == IVKR_TABLE then
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
 			t:insert(new mt())
@@ -365,7 +365,7 @@ end
 
 function ivkr_pop_entity_array()
 	local t = {}
-	if ivkr_istable(-1) then
+	if ivkr_type(-1) == IVKR_TABLE then
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
 			t:insert(ivkr_pop_entity())
@@ -3108,22 +3108,21 @@ ivkr_push_any = function(val)
 end
 
 ivkr_pop_any = function(lim = 2)
-	local typename = ivkr_typename(-1)
-	switch typename do
-		case "nil":
+	switch ivkr_type(-1) do
+		case IVKR_NIL:
 			ivkr_pop(1)
 			return nil
 
-		case "boolean":
+		case IVKR_BOOL:
 			return ivkr_pop_bool()
 
-		case "number":
+		case IVKR_NUMBER:
 			return ivkr_pop_number()
 
-		case "string":
+		case IVKR_STRING:
 			return ivkr_pop_string()
 
-		case "table":
+		case IVKR_TABLE:
 			if lim == 0 then
 				ivkr_pop(1)
 				return { __not_walked__ = "Depth limit reached" }
@@ -3140,6 +3139,7 @@ ivkr_pop_any = function(lim = 2)
 				return t
 			end
 	end
+	local typename = ivkr_typename(-1)
 	ivkr_pop(1)
 	return { __not_walked__ = "Unsupported type: "..typename }
 end

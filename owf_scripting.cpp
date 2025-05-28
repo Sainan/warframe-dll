@@ -897,19 +897,19 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_get_upvalue");
 
+	OWF_SET_GLOBAL_INT(L, "IVKR_NIL", LUAU_NIL);
+	OWF_SET_GLOBAL_INT(L, "IVKR_BOOL", LUAU_BOOL);
+	OWF_SET_GLOBAL_INT(L, "IVKR_NUMBER", LUAU_NUMBER);
+	OWF_SET_GLOBAL_INT(L, "IVKR_STRING", LUAU_STRING);
+	OWF_SET_GLOBAL_INT(L, "IVKR_TABLE", LUAU_TABLE);
+	OWF_SET_GLOBAL_INT(L, "IVKR_FUNCTION", LUAU_FUNCTION);
+
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushinteger(L, luau_L->getValue(luaL_checkinteger(L, 1))->type);
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "ivkr_type");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		lua_pushboolean(L, luau_L->getValue(luaL_checkinteger(L, 1))->type == LUAU_TABLE);
-		return 1;
-	});
-	OWF_SET_GLOBAL(L, "ivkr_istable");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
