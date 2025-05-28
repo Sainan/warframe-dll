@@ -2760,6 +2760,30 @@ function get_lang_dict(lang = get_lang_code())
 	return cat.decode(data, "flat")
 end
 
+function chat_add_to_sent_history(text)
+	if ivkr_push_chat_redux() then
+		ivkr_push_string("mPanelList")
+		assert(ivkr_gettable(-2) == IVKR_TABLE)
+		ivkr_push_nil()
+		ivkr_next(-2)
+		ivkr_push_string("OnMessageSent")
+		ivkr_gettable(-2)
+		local i = 0
+		local j = 0
+		while true do
+			ivkr_get_upvalue(i)
+			if ivkr_type(-1) == 7 and ++j == 2 then
+				break
+			end
+			ivkr_pop(1)
+			++i
+		end
+		ivkr_push_string(text)
+		ivkr_call2(1, 0)
+		ivkr_pop(5)
+	end
+end
+
 function chat_system_reply(text)
 	if ivkr_push_chat_redux() then
 		ivkr_push_string("SystemMessage")
@@ -3255,6 +3279,8 @@ return function(f)
 						cb(evt.sender, arg)
 						continue
 					end
+				elseif evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
+					chat_add_to_sent_history(evt.text)
 				elseif evt.type == OWF_EVT_CALLBACK then
 					evt.name = evt.name:sub(1 + #owf_script_get_path())
 					if cb := owf_lambda_callbacks[evt.name] then
