@@ -3177,7 +3177,13 @@ function owf_internal_callback(cid, nargs)
 end
 
 return function(f)
-	owf_script_route_base = owf_script_get_path():sub(7)
+	owf_script_route_base = owf_script_get_path()
+	local is_bgscript = (owf_script_route_base == "OpenWF Background Script")
+	if is_bgscript then
+		owf_script_route_base = "/"..owf_script_route_base
+	else
+		owf_script_route_base = owf_script_get_path():sub(7)
+	end
 	owf_register_custom_route(owf_script_route_base.."/request_broadcast", "text/plain", "")
 	owf_register_custom_route(owf_script_route_base.."/set_toggle", "text/plain", "")
 
@@ -3255,4 +3261,7 @@ return function(f)
 	mainco = sched:add(f)
 	sched.yieldfunc()
 	sched:run()
+	if is_bgscript then
+		print("The background script has just died; some functionality will be unavailable. Want to try again? http://localhost:6155/start_bgscript")
+	end
 end
