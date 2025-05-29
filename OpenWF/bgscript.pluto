@@ -419,7 +419,7 @@ while pcall(yield) do
 		end
 		last_status_update = os.millis()
 	end
-	if (fov_override := owf_config_get_fov_override()) ~= 0 then
+	if (fov_override := get_fov_override()) ~= 0 then
 		if ivkr_available and not owf_tunables_has("prohibit_fov_override") then
 			if ply := gRegion:GetLocalPlayer() then
 				ply:CameraControl():SetBaseFovOverride(fov_override)

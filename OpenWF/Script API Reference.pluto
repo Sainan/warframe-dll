@@ -519,6 +519,8 @@ function get_ee_log_in_console()
 function set_ee_log_in_console(b)
 function get_dont_resolve_labels()
 function set_dont_resolve_labels(b)
+function get_fov_override()
+function set_fov_override(f)
 
 function owf_is_key_down(vk)
 function get_active_input_filter()

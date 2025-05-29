@@ -1243,7 +1243,7 @@ owfScript::owfScript()
 		lua_pushnumber(L, fov_override);
 		return 1;
 	});
-	OWF_SET_GLOBAL(L, "owf_config_get_fov_override");
+	OWF_SET_GLOBAL(L, "get_fov_override");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
