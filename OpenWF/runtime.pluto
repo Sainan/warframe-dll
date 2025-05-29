@@ -3267,13 +3267,10 @@ return function(f)
 			simple_yield()
 			while evt := owf_internal_next_event() do
 				if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
-					local path = url.decode(evt.path)
-					if path:sub(1, #owf_script_route_base) == owf_script_route_base then
-						local cmd, arg = evt.text:split("?", 2):unpack()
-						if cb := pseudo_commands[cmd] then
-							cb(0, arg)
-							continue
-						end
+					local path, arg = url.decode(evt.path):split("?", 2):unpack()
+					if cb := pseudo_commands[path:sub(2)] then
+						cb(0, arg)
+						continue
 					end
 				elseif evt.type == OWF_EVT_WEBSOCKET_MESSAGE then
 					local cmd, arg = evt.text:split("?", 2):unpack()
