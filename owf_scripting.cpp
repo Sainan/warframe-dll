@@ -1365,7 +1365,6 @@ owfScript::owfScript()
 			switch (scr->events.front().type)
 			{
 			case OWF_EVT_BLOCKED_CHAT_MESSAGE:
-			case OWF_EVT_SCRIPT_MESSAGE:
 				pluto_pushstring(L, ObfusString("text").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
@@ -1385,6 +1384,7 @@ owfScript::owfScript()
 
 			case OWF_EVT_SCRIPT_TRIGGERED:
 			case OWF_EVT_OUTGOING_CHAT_MESSAGE:
+			case OWF_EVT_SCRIPT_MESSAGE:
 				pluto_pushstring(L, ObfusString("data").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
@@ -1754,7 +1754,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		const auto channel = pluto_checkstring(L, 1);
+		auto channel = pluto_checkstring(L, 1);
 		auto text = pluto_checkstring(L, 2);
 
 		owfScript* target = nullptr;
@@ -1773,7 +1773,10 @@ owfScript::owfScript()
 
 		if (target)
 		{
-			target->events.emplace_back(OWF_EVT_SCRIPT_MESSAGE, std::move(text));
+			JsonObject obj;
+			obj.add(ObfusString("channel"), std::move(channel));
+			obj.add(ObfusString("text"), std::move(text));
+			target->events.emplace_back(OWF_EVT_SCRIPT_MESSAGE, obj.encode());
 			lua_pushboolean(L, true);
 		}
 		else

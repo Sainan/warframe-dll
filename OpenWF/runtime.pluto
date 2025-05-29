@@ -3298,6 +3298,11 @@ return function(f)
 					evt.channel = arr[1]
 					evt.text = arr[2]
 					evt.data = nil
+				elseif evt.type == OWF_EVT_SCRIPT_MESSAGE then
+					local data = json.decode(evt.data)
+					evt.channel = data.channel
+					evt.text = data.text
+					evt.data = nil
 				end
 				owf_internal_event_queue:insert(evt)
 			end
