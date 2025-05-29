@@ -78,11 +78,8 @@
 			}
 		};
 
-		fetch("/fov_override").then(res => res.text()).then(res => {
-			document.getElementById("fov_override").value = parseFloat(res) * 10000;
-		});
 		document.getElementById("fov_override").oninput = function() {
-			fetch("/fov_override?" + this.value);
+			fire_and_forget("fov_override?" + this.value);
 		};
 
 		document.getElementById("camtype").onchange = function() {
@@ -125,6 +122,10 @@
 					if (toggle in obj) {
 						document.getElementById(toggle).checked = obj[toggle];
 					}
+				}
+
+				if ("fov_override" in obj) {
+					document.getElementById("fov_override").value = parseFloat(obj.fov_override) * 10000;
 				}
 
 				if ("bgscript_status_string" in obj) {

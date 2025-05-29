@@ -1963,6 +1963,8 @@ static void populate_full_status(JsonObject& obj)
 	obj.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	obj.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 
+	obj.add(ObfusString("fov_override"), fov_override);
+
 	obj.add(ObfusString("console"), owfConsole::active);
 
 	obj.add(ObfusString("available_scripts"), soup::make_unique<JsonArray>(get_available_scripts()));
@@ -1971,7 +1973,8 @@ static void populate_full_status(JsonObject& obj)
 	populate_full_script_log(obj);
 }
 
-static void owf_broadcast_bool(std::string name, bool value)
+template <typename T>
+static void owf_broadcast_value(std::string name, T value)
 {
 	JsonObject obj;
 	obj.add(std::move(name), value);
@@ -2049,7 +2052,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			high_damage_numbers_patch = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
+			owf_broadcast_value(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 		}
 		else
 		{
@@ -2061,7 +2064,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			skip_mission_start_timer = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+			owf_broadcast_value(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 		}
 		else
 		{
@@ -2073,7 +2076,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			simulacrum_blacklisted = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
+			owf_broadcast_value(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 		}
 		else
 		{
@@ -2085,7 +2088,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			simulacrum_whitelisted = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
+			owf_broadcast_value(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 		}
 		else
 		{
@@ -2097,7 +2100,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			alternative_loading = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("alternative_loading"), alternative_loading);
+			owf_broadcast_value(ObfusString("alternative_loading"), alternative_loading);
 		}
 		else
 		{
@@ -2109,7 +2112,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			ee_log_in_console = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("ee_log_in_console"), ee_log_in_console);
+			owf_broadcast_value(ObfusString("ee_log_in_console"), ee_log_in_console);
 		}
 		else
 		{
@@ -2121,13 +2124,25 @@ bool owf_command(const std::string& in, JsonObject& out)
 		if (args.size() > 1)
 		{
 			dont_resolve_labels = (args[1].size() == 4);
-			owf_broadcast_bool(ObfusString("dont_resolve_labels"), dont_resolve_labels);
+			owf_broadcast_value(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 		}
 		else
 		{
 			out.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 		}
 		return true;
+
+	case soup::joaat::compileTimeHash("fov_override"):
+		if (args.size() > 1)
+		{
+			fov_override = static_cast<float>(string::toIntOpt<int64_t>(args[1]).value()) / 10000.0f;
+			owf_broadcast_value(ObfusString("fov_override"), fov_override);
+		}
+		else
+		{
+			out.add(ObfusString("fov_override"), fov_override);
+		}
+		break;
 	}
 	return false;
 }
@@ -4244,14 +4259,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					case soup::joaat::compileTimeHash("/pause_always_stops_time"):
 						ServerWebService::sendText(s, std::to_string(pause_always_stops_time));
-						break;
-
-					case soup::joaat::compileTimeHash("/fov_override"):
-						if (arr.size() > 1)
-						{
-							fov_override = static_cast<float>(string::toIntOpt<int64_t>(arr[1]).value()) / 10000.0f;
-						}
-						ServerWebService::sendText(s, std::to_string(fov_override));
 						break;
 
 					case soup::joaat::compileTimeHash("/server_host"):
