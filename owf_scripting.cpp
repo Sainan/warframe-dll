@@ -1494,6 +1494,10 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		/*if (pluto_checkstring(L, 1) == "[]")
+		{
+			luaL_error(L, ObfusString("u wot m8, no way you meant to broadcast []"));
+		}*/
 		owf_broadcast_message(pluto_checkstring(L, 1), luaL_optinteger(L, 2, 0));
 		return 0;
 	});

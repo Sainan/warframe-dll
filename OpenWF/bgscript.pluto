@@ -336,7 +336,9 @@ register_pseudo_command("disable_pause_always_stops_time", function()
 	owf_broadcast_message[[{"pause_always_stops_time":false}]]
 end)
 register_pseudo_command("request_bgscript_broadcasts", function(sender)
-	send_status_broadcast(sender)
+	if last_status_string then
+		send_status_broadcast(sender)
+	end
 	if not requested_versions then
 		requested_versions = true
 		check_for_updates()
