@@ -4387,6 +4387,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							auto_start_scripts.emplace_back(std::move(name));
 							save_config();
 						}
+						{
+							JsonObject obj;
+							populate_autostart_scripts(obj);
+							owf_broadcast_message(obj.encode());
+						}
 						ServerWebService::sendText(s, {});
 						break;
 
@@ -4395,6 +4400,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						{
 							auto_start_scripts.erase(it);
 							save_config();
+						}
+						{
+							JsonObject obj;
+							populate_autostart_scripts(obj);
+							owf_broadcast_message(obj.encode());
 						}
 						ServerWebService::sendText(s, {});
 						break;

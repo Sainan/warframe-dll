@@ -213,9 +213,9 @@
 				}
 
 				if ("autostart_scripts" in obj) {
-					obj.autostart_scripts.forEach(script => {
-						document.querySelector("input[id='" + script + "']").parentNode.querySelector("button").textContent = dict.disable_auto_start;
-					});
+					for (const script of document.getElementById("scripts-container").children) {
+						script.querySelector("button").textContent = (obj.autostart_scripts.indexOf(script.children[1].id) != -1 ? dict.disable_auto_start : dict.enable_auto_start);
+					}
 				}
 
 				if ("script_log" in obj) {
