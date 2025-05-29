@@ -191,7 +191,7 @@
 				if ("running_scripts" in obj) {
 					for (const script of document.getElementById("scripts-container").children) {
 						const path = script.children[1].getAttribute("data-path");
-						const running = obj.running_scripts.find(x => x == path);
+						const running = obj.running_scripts.indexOf(path) != -1;
 						script.children[1].checked = running;
 						if (running) {
 							if (!script_broadcast_requested[path]) {
