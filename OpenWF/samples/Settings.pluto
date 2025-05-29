@@ -1,5 +1,5 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
-local { CHECKBOX } = require "Lotus.Interface.LotusUtilities"
+local { CHECKBOX, INPUTBOX } = require "Lotus.Interface.LotusUtilities"
 
 local dict = get_lang_dict()
 local options = {
@@ -10,6 +10,7 @@ local options = {
 	{ dict.alternative_loading, get_alternative_loading, set_alternative_loading },
 	{ dict.ee_log_in_console, get_ee_log_in_console, set_ee_log_in_console },
 	{ dict.dont_resolve_labels, get_dont_resolve_labels, set_dont_resolve_labels },
+	{ dict.fov_override, get_fov_override, |s| -> set_fov_override(tonumber(s) or 0) },
 }
 
 local done = false
@@ -18,9 +19,10 @@ movie:Execute("SetTitle", "OpenWF In-Game Options")
 function _T.owfSampleSettingsChangesDone(inputs, cancel)
 	if not cancel then
 		for i, opt in options do
-			if opt[4] ~= inputs[i].mValue then
-				print(opt[1].." set to "..inputs[i].mValue)
-				opt[3](inputs[i].mValue)
+			local value = type(opt[4]) == "boolean" ? inputs[i].mValue : inputs[i].mContent
+			if opt[4] ~= value then
+				print(opt[1].." set to "..value)
+				opt[3](value)
 			end
 		end
 	end
@@ -29,12 +31,21 @@ end
 movie:Execute("SetCallBack", "owfSampleSettingsChangesDone")
 function _T.owfSampleGetSettings()
 	return options:mapped(function(opt)
-		local value = opt[2]()
-		opt[4] = value
+		opt[4] = opt[2]()
+		if type(opt[4]) == "boolean" then
+			return {
+				mLabel = opt[1],
+				mType = CHECKBOX,
+				mValue = opt[4],
+			}
+		end
 		return {
 			mLabel = opt[1],
-			mType = CHECKBOX,
-			mValue = opt[2]()
+			mType = INPUTBOX,
+			mContent = opt[4],
+			mMaxChars = 500,
+			mMultiLine = false,
+			mSkipAutoFocus = true,
 		}
 	end)
 end
