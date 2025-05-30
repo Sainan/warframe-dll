@@ -3279,7 +3279,7 @@ return function(f)
 						continue
 					end
 				elseif evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
-					chat_add_to_sent_history(evt.text)
+					sched:add(|| -> chat_add_to_sent_history(evt.text))
 				elseif evt.type == OWF_EVT_CALLBACK then
 					evt.name = evt.name:sub(1 + #owf_script_get_path())
 					if cb := owf_lambda_callbacks[evt.name] then
