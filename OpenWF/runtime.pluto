@@ -3312,7 +3312,7 @@ return function(f)
 	mainco = sched:add(f)
 	sched.yieldfunc()
 	sched:run()
-	if is_bgscript then
+	if is_bgscript and not owf_get_stop_requested() then
 		print("The background script has just died; some functionality will be unavailable. Want to try again? http://localhost:6155/start_bgscript")
 	end
 end
