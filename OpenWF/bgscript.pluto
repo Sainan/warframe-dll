@@ -34,10 +34,9 @@ if not io.exists("OpenWF/Metadata Patches.txt") then
 	io.contents("OpenWF/Metadata Patches.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
 end
 
-if owf_overlay_get_size() ~= 0xFFFFFFFF then -- Just applied hotfix?
-	print_to_console("Background script has successfully restarted.")
-	owf_command("clear_script_log")
-elseif compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 then -- This cache stuff is for echoes of duviri and up
+if owf_overlay_get_size() == 0xFFFFFFFF -- Heuristic to avoid managing content again after applying hotfix
+	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
+then
 	local function b64m_encode(data)
 		return base64.encode(data, false):replace("/", "-")
 	end
