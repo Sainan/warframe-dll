@@ -353,7 +353,7 @@ register_pseudo_command("download_latest_hotfix", function()
 			if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.owf") then
 				if crypto.sha256(bin) == hotfix_available_sha256 then
 					io.contents("OpenWF/Hotfix.owf", bin)
-					http.request("http://localhost:6155/apply_hotfix")
+					http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/apply_hotfix")
 					current_hotfix = hotfix_available
 					hotfix_available = ""
 					hotfix_available_sha256 = ""

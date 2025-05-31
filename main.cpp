@@ -197,6 +197,7 @@ static void save_config()
 	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
 	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
 	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
+	config.add(ObfusString("client_http_port"), client_http_port);
 
 	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
 }
@@ -257,7 +258,7 @@ static void internet_connect_detour(uintptr_t a1)
 	*reinterpret_cast<HINTERNET*>(a1 + 104) = InternetConnectA(
 		*reinterpret_cast<HINTERNET*>(a1 + 96),
 		localhost.c_str(),
-		6155,
+		client_http_port,
 		"",
 		"",
 		INTERNET_SERVICE_HTTP,
@@ -313,7 +314,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 	ObfusString localhost("localhost");
 	host_1 = localhost.c_str();
-	port = 6155;
+	port = client_http_port;
 
 	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, host_1, port, nullptr, nullptr);
 }
@@ -2580,6 +2581,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				write_patched_metadata_reads_to_ee_log = false;
 			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("client_http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
+			{
+				static_assert(CONFIG_LOADED_ONLY_ONCE);
+				client_http_port = it->second->reinterpretAsInt().value;
+			}
+			else
+			{
+				client_http_port = 6155;
+			}
 		}
 		save_config();
 
@@ -4611,13 +4622,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 					}
 				};
-				if (serv.bind(6155, &srv))
+				if (serv.bind(client_http_port, &srv))
 				{
 					serv.run();
 				}
 				else
 				{
-					std::cout << ObfusString("Failed to bind TCP/6155.").str();
+					std::cout << ObfusString("Failed to bind TCP/").str();
+					std::cout << client_http_port;
+					std::cout << '.';
 					if (is_33_6_0_or_above)
 					{
 						std::cout << ObfusString(" The game will fail to start.").str();

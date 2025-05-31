@@ -2823,7 +2823,7 @@ function owf_get_running_scripts()
 end
 
 function owf_start_script(name)
-	http.request("http://localhost:6155/start_script?"..url.encode("OpenWF/scripts/"..name))
+	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script?"..url.encode("OpenWF/scripts/"..name))
 end
 
 function owf_stop_script(name)
@@ -3313,6 +3313,6 @@ return function(f)
 	sched.yieldfunc()
 	sched:run()
 	if is_bgscript and not owf_get_stop_requested() then
-		print("The background script has just died; some functionality will be unavailable. Want to try again? http://localhost:6155/start_bgscript")
+		print("The background script has just died; some functionality will be unavailable. Want to try again? http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_bgscript")
 	end
 end

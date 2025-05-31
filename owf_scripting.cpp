@@ -213,6 +213,8 @@ void owfScript::openLibs(lua_State* L)
 	});
 	OWF_SET_GLOBAL(L, "owf_get_build_hash");
 
+	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port);
+
 #if PRIVATE
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
