@@ -4611,7 +4611,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 					}
 				};
-				serv.bind(61558, &srv);
 				if (serv.bind(6155, &srv))
 				{
 					serv.run();

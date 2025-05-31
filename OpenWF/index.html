@@ -41,10 +41,6 @@
 	<p><label for="console"></label> <input id="console" type="checkbox" /></p>
 	<script src="/dict.js"></script>
 	<script>
-		if (location.port != 6155) {
-			location.port = 6155;
-		}
-
 		document.querySelectorAll("label[for]").forEach(elm => {
 			elm.textContent = dict[elm.getAttribute("for")] + ": ";
 		});
