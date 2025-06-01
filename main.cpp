@@ -69,6 +69,7 @@ using namespace soup;
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
 
+static uint32_t server_ip_hash = 0;
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
@@ -346,8 +347,6 @@ struct GameHttpRequestU18
 };
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
-static void on_got_server_host();
-
 template <typename T, bool strip_tls = false>
 static void* game_http_request_detour(void* a1, T* request, void* a3)
 {
@@ -361,8 +360,14 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 
 	Uri uri((const char*)request->url.getData());
 #if REDIRECT_REQUESTS
+	bool server_blacklisted;
+	{
+		std::lock_guard lock(g_client_tunables_mtx);
+		server_blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_ip_hash);
+	}
+
 	std::string body_buf;
-	uri.host = server_host;
+	uri.host = server_blacklisted ? ObfusString("localhost").str() : server_host;
 	if constexpr (strip_tls)
 	{
 		uri.scheme = ObfusString("http").str();
@@ -569,12 +574,21 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-	if (server_host != hostname)
+	bool server_blacklisted;
+	{
+		std::lock_guard lock(g_client_tunables_mtx);
+		server_blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_ip_hash);
+	}
+	ObfusString localhost("localhost");
+	if (server_blacklisted
+		? localhost.str() != hostname
+		: server_host != hostname
+		)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
 
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host.c_str(), port, allowDOH, a5);
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_blacklisted ? localhost.c_str() : server_host.c_str(), port, allowDOH, a5);
 }
 #endif
 
@@ -642,6 +656,11 @@ struct owfTunablesTask : public soup::Task
 			bool ok = false;
 			if (hrt.result)
 			{
+				if (hrt.sock)
+				{
+					server_ip_hash = soup::joaat::hash(hrt.sock->peer.ip.toString());
+				}
+
 				if (hrt.result->status_code == 200)
 				{
 					std::lock_guard lock(g_server_tunables_mtx);
