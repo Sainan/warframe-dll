@@ -347,28 +347,16 @@ struct GameHttpRequestU18
 };
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
-template <typename T, bool strip_tls = false>
-static void* game_http_request_detour(void* a1, T* request, void* a3)
+static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool strip_tls)
 {
-#if LOGGING
-	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
-	/*if (request->body.getSize() != 0)
-	{
-		std::cout << request->body.getData() << std::endl;
-	}*/
-#endif
-
-	Uri uri((const char*)request->url.getData());
 #if REDIRECT_REQUESTS
 	bool server_blacklisted;
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
 		server_blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_ip_hash);
 	}
-
-	std::string body_buf;
 	uri.host = server_blacklisted ? ObfusString("localhost").str() : server_host;
-	if constexpr (strip_tls)
+	if (strip_tls)
 	{
 		uri.scheme = ObfusString("http").str();
 		uri.port = http_port;
@@ -401,7 +389,7 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
-		if (auto jr = json::decode(request->body.getData(), request->body.getSize()); jr && jr->isObj())
+		if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 		{
 			if (autologin && !did_auto_login)
 			{
@@ -415,7 +403,8 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 					it->second->reinterpretAsStr().value = autologin_password;
 				}
 				body_buf = jr->encode();
-				request->body.setUnownedData(body_buf.data(), body_buf.size());
+				body_data = body_buf.data();
+				body_size = body_buf.size();
 			}
 		}
 #if PROVIDE_VERSION_INFO
@@ -464,10 +453,8 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	{
 		owfOverlay::setPrelogin(true);
 	}
-	std::string url_buf = uri.toString();
-	request->url.setUnownedData(url_buf.data(), url_buf.size());
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
-	if (auto jr = json::decode(request->body.getData(), request->body.getSize()); jr && jr->isObj())
+	if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 	{
 		if (auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
 		{
@@ -482,7 +469,8 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 				it->second->reinterpretAsStr().value = std::move(lorem_ipsum.str());
 			}
 			body_buf = jr->encode();
-			request->body.setUnownedData(body_buf.data(), body_buf.size());
+			body_data = body_buf.data();
+			body_size = body_buf.size();
 		}
 	}
 #endif
@@ -493,6 +481,30 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 		exit(1);
 	}
 #endif
+}
+
+template <typename T, bool strip_tls = false>
+static void* game_http_request_detour(void* a1, T* request, void* a3)
+{
+#if LOGGING
+	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
+	/*if (request->body.getSize() != 0)
+	{
+		std::cout << request->body.getData() << std::endl;
+	}*/
+#endif
+
+	Uri uri((const char*)request->url.getData());
+	const char* body_data = request->body.getData();
+	size_t body_size = request->body.getSize();
+	std::string body_buf;
+	process_game_http_request(uri, body_data, body_size, body_buf, strip_tls);
+	std::string url_buf = uri.toString();
+	request->url.setUnownedData(url_buf.data(), url_buf.size());
+	if (body_data != request->body.getData())
+	{
+		request->body.setUnownedData(body_data, body_size);
+	}
 
 	const auto ret = reinterpret_cast<decltype(&game_http_request_detour<T>)>(game_http_request_hook.original)(a1, request, a3);
 
