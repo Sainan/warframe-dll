@@ -560,6 +560,7 @@ static void queue_http_request_internal_detour(void* a1, GameString* url, GameSt
 }*/
 
 
+#if PRIVATE
 static DetourHook Curl_resolv_hook;
 
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
@@ -568,15 +569,14 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-#if PRIVATE
 	if (server_host != hostname)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
-#endif
 
 	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_host.c_str(), port, allowDOH, a5);
 }
+#endif
 
 
 static ReplacementHook ssl_verify_internal_hook;
@@ -2857,6 +2857,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
+#if PRIVATE
 		{
 			void* Curl_resolv;
 			if (is_37_0_0_or_above)
@@ -2884,6 +2885,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 		if (is_35_5_0_or_above) // Just stripping TLS for older versions
 		{
