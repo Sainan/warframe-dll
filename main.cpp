@@ -851,23 +851,23 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 
 static DetourHook legacy_dns_lookup_hook;
 
+static bool should_block_dns_lookup(const char* data, size_t size)
+{
+#if LOGGING
+	std::cout << "legacy_dns_lookup: " << data << std::endl;
+#endif
+
+	std::lock_guard lock(g_client_tunables_mtx);
+	return g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(data, size));
+}
+
 template <typename T>
 static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
 {
-#if LOGGING
-	std::cout << "legacy_dns_lookup: " << name->getData() << std::endl;
-#endif
-
-	bool block;
-	{
-		std::lock_guard lock(g_client_tunables_mtx);
-		block = g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(name->getData(), name->getSize()));
-	}
-	if (block)
+	if (should_block_dns_lookup(name->getData(), name->getSize()))
 	{
 		name->setUnownedData(server_host.data(), server_host.size());
 	}
-
 	return reinterpret_cast<decltype(&legacy_dns_lookup_detour<T>)>(legacy_dns_lookup_hook.original)(out, name, a3);
 }
 
