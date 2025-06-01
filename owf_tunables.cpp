@@ -7,10 +7,9 @@
 
 using namespace soup;
 
-bool owfTunables::load(const char* data, size_t size)
+bool owfServerTunables::load(const char* data, size_t size)
 {
 	bools.clear();
-	strarrs.clear();
 
 	auto jr = json::decode(data, size);
 	if (!jr || !jr->isObj())
@@ -28,33 +27,12 @@ bool owfTunables::load(const char* data, size_t size)
 					bools.emplace_back(joaat::hash(e.first->reinterpretAsStr().value));
 				}
 			}
-			else if (e.second->isArr())
-			{
-				std::vector<uint32_t> arr;
-				for (const auto& c : e.second->reinterpretAsArr())
-				{
-					if (c.isStr())
-					{
-						arr.emplace_back(joaat::hash(c.asStr().value));
-					}
-				}
-				strarrs.emplace(joaat::hash(e.first->reinterpretAsStr().value), std::move(arr));
-			}
 		}
 	}
 	return true;
 }
 
-bool owfTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept
-{
-	if (auto e = strarrs.find(hash); e != strarrs.end())
-	{
-		return std::find(e->second.begin(), e->second.end(), str_hash) != e->second.end();
-	}
-	return false;
-}
-
-std::string owfTunables::getProhibitionName(uint32_t hash)
+std::string owfServerTunables::getProhibitionName(uint32_t hash)
 {
 	g_archive_mtx.lock();
 	uint32_t size;
@@ -74,4 +52,43 @@ std::string owfTunables::getProhibitionName(uint32_t hash)
 		}
 	}
 	return {};
+}
+
+bool owfClientTunables::load(const char* data, size_t size)
+{
+	strarrs.clear();
+
+	auto jr = json::decode(data, size);
+	if (!jr || !jr->isObj())
+	{
+		return false;
+	}
+	for (const auto& e : jr->reinterpretAsObj().children)
+	{
+		if (e.first->isStr())
+		{
+			if (e.second->isArr())
+			{
+				std::vector<uint32_t> arr;
+				for (const auto& c : e.second->reinterpretAsArr())
+				{
+					if (c.isStr())
+					{
+						arr.emplace_back(joaat::hash(c.asStr().value));
+					}
+				}
+				strarrs.emplace(joaat::hash(e.first->reinterpretAsStr().value), std::move(arr));
+			}
+		}
+	}
+	return true;
+}
+
+bool owfClientTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept
+{
+	if (auto e = strarrs.find(hash); e != strarrs.end())
+	{
+		return std::find(e->second.begin(), e->second.end(), str_hash) != e->second.end();
+	}
+	return false;
 }

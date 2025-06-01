@@ -7,10 +7,9 @@
 
 #include <Mutex.hpp>
 
-struct owfTunables
+struct owfServerTunables
 {
 	std::vector<uint32_t> bools;
-	std::unordered_map<uint32_t, std::vector<uint32_t>> strarrs;
 
 	bool load(const char* data, size_t size);
 
@@ -20,12 +19,19 @@ struct owfTunables
 	}
 	//static bool isProhibition(uint32_t hash) { return !getProhibitionName(hash).empty(); }
 	static std::string getProhibitionName(uint32_t hash);
+};
+
+struct owfClientTunables
+{
+	std::unordered_map<uint32_t, std::vector<uint32_t>> strarrs;
+
+	bool load(const char* data, size_t size);
 
 	bool isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept;
 };
 
 inline soup::Mutex g_server_tunables_mtx;
-inline owfTunables g_server_tunables;
+inline owfServerTunables g_server_tunables;
 
 inline soup::Mutex g_client_tunables_mtx;
-inline owfTunables g_client_tunables;
+inline owfClientTunables g_client_tunables;

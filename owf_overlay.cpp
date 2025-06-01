@@ -102,7 +102,7 @@ void owfOverlay::init()
 							std::lock_guard lock(g_server_tunables_mtx);
 							for (const auto& hash : g_server_tunables.bools)
 							{
-								if (auto name = owfTunables::getProhibitionName(hash); !name.empty())
+								if (auto name = owfServerTunables::getProhibitionName(hash); !name.empty())
 								{
 									soup::string::listAppend(banned, std::move(name));
 								}
