@@ -2466,9 +2466,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-#if !CONFIG_LOADED_ONLY_ONCE
-				auto_start_scripts.clear();
-#endif
+				auto_start_scripts = { ObfusString("samples/Chat Commands.pluto").str() };
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("forced_profile_dir")); it != config->reinterpretAsObj().end() && it->second->isStr())
