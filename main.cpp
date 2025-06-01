@@ -748,9 +748,13 @@ static void process_args_str(const char* str)
 	}
 }
 
-template <bool has_graphicsDriver = true, typename T>
-static void process_args_struct(T* arguments)
+template <typename Args, typename Str, bool has_graphicsDriver = true>
+static void parse_arguments_detour(Args* arguments, Str* str, void* a3)
 {
+	process_args_str(str->getData());
+
+	reinterpret_cast<decltype(&parse_arguments_detour<Args, Str, has_graphicsDriver>)>(parse_arguments_hook.original)(arguments, str, a3);
+	
 	if (!arguments->got_language && !fallback_language.empty())
 	{
 		arguments->got_language = true;
@@ -781,77 +785,6 @@ static void process_args_struct(T* arguments)
 			graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
 		}
 	}*/
-}
-
-static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
-{
-	if (is_35_5_0_or_above)
-	{
-		process_args_str(((GameString*)_str)->getData());
-	}
-	else if (is_19_0_0_or_above)
-	{
-		process_args_str(((LegacyGameString*)_str)->getData());
-	}
-	else
-	{
-		process_args_str(((LegacyGameStringU18*)_str)->getData());
-	}
-
-	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(_arguments, _str, a3);
-
-	if (is_37_0_0_or_above)
-	{
-		process_args_struct((ArgumentsU37*)_arguments);
-	}
-	else if (is_35_5_0_or_above)
-	{
-		process_args_struct((ArgumentsU36*)_arguments);
-	}
-	else if (is_33_6_0_or_above)
-	{
-		process_args_struct((LegacyArgumentsU33_6*)_arguments);
-	}
-	else if (is_31_5_0_or_above)
-	{
-		process_args_struct((LegacyArgumentsU30_1*)_arguments);
-	}
-	else if (is_29_10_0_or_above)
-	{
-		process_args_struct((LegacyArgumentsU30*)_arguments);
-	}
-	else if (is_29_6_0_or_above)
-	{
-		process_args_struct((LegacyArgumentsU29*)_arguments);
-	}
-	else if (is_28_0_0_or_above)
-	{
-		process_args_struct((LegacyArgumentsU28*)_arguments);
-	}
-	else if (is_26_1_0_or_above)
-	{
-		process_args_struct<false>((LegacyArgumentsU27*)_arguments);
-	}
-	else if (is_25_0_0_or_above)
-	{
-		process_args_struct<false>((LegacyArgumentsU25*)_arguments);
-	}
-	else if (is_23_10_0_or_above)
-	{
-		process_args_struct<false>((LegacyArgumentsU24*)_arguments);
-	}
-	else if (is_19_0_0_or_above)
-	{
-		process_args_struct<false>((LegacyArgumentsU23*)_arguments);
-	}
-	else if (is_16_5_0_or_above)
-	{
-		process_args_struct<false>((LegacyArgumentsU18*)_arguments);
-	}
-	else
-	{
-		process_args_struct<false>((LegacyArgumentsU16*)_arguments);
-	}
 }
 
 
@@ -3063,7 +2996,58 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
 
-				parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour);
+				if (is_37_0_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString>);
+				}
+				else if (is_35_5_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString>);
+				}
+				else if (is_33_6_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString>);
+				}
+				else if (is_31_5_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString>);
+				}
+				else if (is_29_10_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString>);
+				}
+				else if (is_29_6_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString>);
+				}
+				else if (is_28_0_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString>);
+				}
+				else if (is_26_1_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU27, LegacyGameString, false>);
+				}
+				else if (is_25_0_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU25, LegacyGameString, false>);
+				}
+				else if (is_23_10_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU24, LegacyGameString, false>);
+				}
+				else if (is_19_0_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU23, LegacyGameString, false>);
+				}
+				else if (is_16_5_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU18, LegacyGameStringU18, false>);
+				}
+				else
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU16, LegacyGameStringU18, false>);
+				}
 				parse_arguments_hook.target = parse_arguments;
 				parse_arguments_hook.create();
 				parse_arguments_hook.enable();
