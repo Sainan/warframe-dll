@@ -74,7 +74,7 @@ bool owfClientTunables::load(const char* data, size_t size)
 				{
 					if (c.isStr())
 					{
-						arr.emplace_back(joaat::hash(c.asStr().value));
+						arr.emplace_back(joaat::hash(c.reinterpretAsStr().value));
 					}
 				}
 				strarrs.emplace(joaat::hash(e.first->reinterpretAsStr().value), std::move(arr));
