@@ -401,7 +401,7 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
-		if (auto jr = json::decode(request->body.getData()); jr && jr->isObj())
+		if (auto jr = json::decode(request->body.getData(), request->body.getSize()); jr && jr->isObj())
 		{
 			if (autologin && !did_auto_login)
 			{
@@ -467,7 +467,7 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	std::string url_buf = uri.toString();
 	request->url.setUnownedData(url_buf.data(), url_buf.size());
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
-	if (auto jr = json::decode(request->body.getData()); jr && jr->isObj())
+	if (auto jr = json::decode(request->body.getData(), request->body.getSize()); jr && jr->isObj())
 	{
 		if (auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
 		{
