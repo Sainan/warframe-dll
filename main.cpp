@@ -728,17 +728,16 @@ static void do_logout()
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 
-template <typename T>
-static void process_args_str(T* str)
+static void process_args_str(const char* str)
 {
 #if LOGGING
-	std::cout << "parse_arguments: " << str->getData() << std::endl;
+	std::cout << "parse_arguments: " << str << std::endl;
 #endif
 
 	if (!processed_args)
 	{
 		processed_args = true;
-		for (const auto& arg : string::explode<std::string>(str->getData(), ' '))
+		for (const auto& arg : string::explode<std::string>(str, ' '))
 		{
 			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
 			{
@@ -788,15 +787,15 @@ static void parse_arguments_detour(void* _arguments, void* _str, void* a3)
 {
 	if (is_35_5_0_or_above)
 	{
-		process_args_str((GameString*)_str);
+		process_args_str(((GameString*)_str)->getData());
 	}
 	else if (is_19_0_0_or_above)
 	{
-		process_args_str((LegacyGameString*)_str);
+		process_args_str(((LegacyGameString*)_str)->getData());
 	}
 	else
 	{
-		process_args_str((LegacyGameStringU18*)_str);
+		process_args_str(((LegacyGameStringU18*)_str)->getData());
 	}
 
 	reinterpret_cast<decltype(&parse_arguments_detour)>(parse_arguments_hook.original)(_arguments, _str, a3);
