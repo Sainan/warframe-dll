@@ -1603,22 +1603,22 @@ owfScript::owfScript()
 		MemoryRefReader mr(data, size);
 		mr.skip(20);
 		uint32_t num_entries;
-		mr.u32le(num_entries);
+		mr.u32_le(num_entries);
 		cm->entries.reserve(num_entries);
 		for (uint32_t i = 0; i != num_entries; ++i)
 		{
 			std::string path;
-			mr.str_lp<u32le_t>(path);
+			mr.str_lp<u32_le_t>(path);
 			CacheManifest::Entry& e = cm->entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
 			mr.str(sizeof(e.hash), e.hash);
 			mr.str(sizeof(e.unk), e.unk);
 		}
-		mr.u32le(num_entries);
+		mr.u32_le(num_entries);
 		cm->stripped_entries.reserve(num_entries);
 		for (uint32_t i = 0; i != num_entries; ++i)
 		{
 			std::string path;
-			mr.str_lp<u32le_t>(path);
+			mr.str_lp<u32_le_t>(path);
 			CacheManifest::Entry& e = cm->stripped_entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
 			mr.str(sizeof(e.hash), e.hash);
 			mr.str(sizeof(e.unk), e.unk);
@@ -1671,18 +1671,18 @@ owfScript::owfScript()
 		auto cm = (CacheManifest*)lua_touserdata(L, 1);
 		StringWriter sw;
 		uint32_t num_entries = cm->entries.size();
-		sw.u32le(num_entries);
+		sw.u32_le(num_entries);
 		for (auto& e : cm->entries)
 		{
-			sw.str_lp<u32le_t>(e.first);
+			sw.str_lp<u32_le_t>(e.first);
 			sw.str(sizeof(e.second.hash), e.second.hash);
 			sw.str(sizeof(e.second.unk), e.second.unk);
 		}
 		num_entries = cm->stripped_entries.size();
-		sw.u32le(num_entries);
+		sw.u32_le(num_entries);
 		for (auto& e : cm->stripped_entries)
 		{
-			sw.str_lp<u32le_t>(e.first);
+			sw.str_lp<u32_le_t>(e.first);
 			sw.str(sizeof(e.second.hash), e.second.hash);
 			sw.str(sizeof(e.second.unk), e.second.unk);
 		}

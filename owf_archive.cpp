@@ -26,7 +26,7 @@ bool owfArchive::loadHotfix(const char* data, size_t size, uint32_t version_hash
 {
 	MemoryRefReader r(data, size);
 	uint32_t target_version_hash;
-	if (r.u32le(target_version_hash) && target_version_hash == version_hash)
+	if (r.u32_le(target_version_hash) && target_version_hash == version_hash)
 	{
 		const auto off = r.getPosition();
 		this->load(data + off, size - off);
@@ -41,8 +41,8 @@ const char* owfArchive::find(uint32_t key, uint32_t& out_len) const
 	while (r.hasMore())
 	{
 		uint32_t e_key;
-		r.u32le(e_key);
-		r.u32le(out_len);
+		r.u32_le(e_key);
+		r.u32_le(out_len);
 		if (e_key == key)
 		{
 			return this->data.data() + r.getPosition();
