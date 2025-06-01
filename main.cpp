@@ -621,6 +621,56 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
+static Server serv;
+
+#if ASK_SERVER_FOR_TUNABLES
+struct owfTunablesTask : public soup::Task
+{
+	HttpRequestTask hrt;
+
+	owfTunablesTask()
+		: hrt(server_host, ObfusString("/custom/tunables.json"))
+	{
+		hrt.hr.port = https_port;
+		hrt.hr.use_tls = true;
+	}
+
+	void onTick() final
+	{
+		if (hrt.tickUntilDone())
+		{
+			bool ok = false;
+			if (hrt.result)
+			{
+				if (hrt.result->status_code == 200)
+				{
+					std::lock_guard lock(g_server_tunables_mtx);
+					ok = g_server_tunables.load(hrt.result->body.data(), hrt.result->body.size());
+				}
+			}
+			prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
+			prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
+			prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
+
+			if (!ok)
+			{
+				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
+				auto msg = ObfusString("Failed to verify that the server at ").str();
+				msg.append(hrt.hr.getHost());
+				msg.append(ObfusString(" on port ").str());
+				msg.append(std::to_string(hrt.hr.port));
+				msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
+				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONWARNING);
+			}
+
+			owfOverlay::redraw();
+
+			setWorkDone();
+		}
+	}
+};
+#endif
+
 static void on_got_server_host()
 {
 	string::lower(server_host);
@@ -636,40 +686,7 @@ static void on_got_server_host()
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
-	Thread thrd([](Capture&&)
-	{
-		HttpRequest hr(server_host, ObfusString("/custom/tunables.json"));
-		hr.port = https_port;
-		hr.use_tls = true;
-		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
-
-		bool ok = false;
-		if (auto res = hr.execute())
-		{
-			if (res->status_code == 200)
-			{
-				std::lock_guard lock(g_server_tunables_mtx);
-				ok = g_server_tunables.load(res->body.data(), res->body.size());
-			}
-		}
-		prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
-		prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
-		prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
-
-		if (!ok)
-		{
-			// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
-			auto msg = ObfusString("Failed to verify that the server at ").str();
-			msg.append(hr.getHost());
-			msg.append(ObfusString(" on port ").str());
-			msg.append(std::to_string(hr.port));
-			msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
-			MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONWARNING);
-		}
-
-		owfOverlay::redraw();
-	});
-	thrd.detach();
+	serv.add<owfTunablesTask>();
 #endif
 }
 
@@ -1839,8 +1856,6 @@ static void log_optional_scan_failure(bool important)
 		std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
 	}
 }
-
-static Server serv;
 
 struct owfWebsocketTag
 {
@@ -4624,6 +4639,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				if (serv.bind(client_http_port, &srv))
 				{
+					netConfig::get().certchain_validator = &Socket::certchain_validator_none;
 					serv.run();
 				}
 				else
