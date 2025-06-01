@@ -1,6 +1,22 @@
 if arg[1] and arg[2] then
-	local json = require "json"
-	arg[1] |> io.contents |> json.decode|json.withorder + json.withnull| |> json.encode |> |data| -> io.contents(arg[2], data)
+	local { crypto, json } = require "*"
+	local data = arg[1] |> io.contents |> json.decode|json.withorder + json.withnull|
+	if arg[1] == "OpenWF/tunables.json" then
+		assert(json.encode({ 0, true, json.null }, "msgpack") == "\x93\x00\xc3\xc0")
+		local packed = {
+			__order = {}
+		}
+		for data.__order as k do
+			local v = data[k]
+			k = crypto.joaat(k)
+			packed.__order:insert(k)
+			packed[k] = v:mapped(crypto.joaat)
+		end
+		data = json.encode(packed, "msgpack")
+	else
+		data = json.encode(data)
+	end
+	io.contents(arg[2], data)
 else
 	print("Syntax: pluto json_minify.pluto <in file> <out file>")
 end

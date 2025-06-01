@@ -4144,7 +4144,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			uint32_t size;
 			auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
-			g_client_tunables.load(data, size);
+			g_client_tunables.loadMsgpack(data, size);
 		}
 
 		start_bgscript();
@@ -4488,7 +4488,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								uint32_t size;
 								auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 								std::lock_guard lock(g_client_tunables_mtx);
-								g_client_tunables.load(data, size);
+								g_client_tunables.loadMsgpack(data, size);
 							}
 
 							restart_bgscript();
@@ -4516,7 +4516,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								uint32_t size;
 								data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 								std::lock_guard lock(g_client_tunables_mtx);
-								g_client_tunables.load(data, size);
+								g_client_tunables.loadMsgpack(data, size);
 							}
 							ServerWebService::sendText(s, {});
 						}

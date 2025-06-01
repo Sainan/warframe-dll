@@ -2,6 +2,7 @@
 
 #include <joaat.hpp>
 #include <json.hpp>
+#include <MemoryRefReader.hpp>
 
 #include "owf_archive.hpp"
 
@@ -78,6 +79,44 @@ bool owfClientTunables::load(const char* data, size_t size)
 					}
 				}
 				strarrs.emplace(joaat::hash(e.first->reinterpretAsStr().value), std::move(arr));
+			}
+		}
+	}
+	return true;
+}
+
+bool owfClientTunables::loadMsgpack(const char* data, size_t size)
+{
+	strarrs.clear();
+
+	MemoryRefReader r(data, size);
+	auto jr = json::msgpackDecode(r);
+	if (!jr || !jr->isObj())
+	{
+		return false;
+	}
+	for (const auto& e : jr->reinterpretAsObj().children)
+	{
+		if (e.first->isInt())
+		{
+			/*if (e.second->isBool())
+			{
+				if (e.second->reinterpretAsBool().value)
+				{
+					bools.emplace_back(e.first->reinterpretAsInt().value);
+				}
+			}
+			else*/ if (e.second->isArr())
+			{
+				std::vector<uint32_t> arr;
+				for (const auto& c : e.second->reinterpretAsArr())
+				{
+					if (c.isInt())
+					{
+						arr.emplace_back(c.reinterpretAsInt().value);
+					}
+				}
+				strarrs.emplace(e.first->reinterpretAsInt().value, std::move(arr));
 			}
 		}
 	}
