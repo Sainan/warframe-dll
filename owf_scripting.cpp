@@ -1524,12 +1524,21 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "owf_command_raw");
 
+	// Undocumented
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pluto_pushstring(L, static_cast<owfScript*>(L->l_G->user_data)->name);
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "owf_script_get_path");
+
+	// Undocumented
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, static_cast<owfScript*>(L->l_G->user_data)->instance_id);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_get_instance_id");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
