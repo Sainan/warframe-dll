@@ -200,7 +200,7 @@ static void save_config()
 	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
 	config.add(ObfusString("client_http_port"), client_http_port);
 
-	string::toFile(ObfusString("OpenWF/client_config.json").str(), config.encodePretty());
+	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
 }
 
 
@@ -2258,15 +2258,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
 		SOUP_RETHROW_FALSE(check_ec(ec));
-		if (std::filesystem::exists(ObfusString("client_config.json").str())
-			&& !std::filesystem::exists(ObfusString("OpenWF/client_config.json").str())
-			)
+		if (!std::filesystem::exists(ObfusString("OpenWF/Client Config.json").str()))
 		{
-			std::filesystem::rename(ObfusString("client_config.json").str(), ObfusString("OpenWF/client_config.json").str(), ec);
-			SOUP_RETHROW_FALSE(check_ec(ec));
+			if (std::filesystem::exists(ObfusString("OpenWF/client_config.json").str()))
+			{
+				std::filesystem::rename(ObfusString("OpenWF/client_config.json").str(), ObfusString("OpenWF/Client Config.json").str(), ec);
+				SOUP_RETHROW_FALSE(check_ec(ec));
+			}
+			else if (std::filesystem::exists(ObfusString("client_config.json").str()))
+			{
+				std::filesystem::rename(ObfusString("client_config.json").str(), ObfusString("OpenWF/Client Config.json").str(), ec);
+				SOUP_RETHROW_FALSE(check_ec(ec));
+			}
 		}
 		{
-			UniquePtr<JsonNode> config = json::decodeFile(ObfusString("OpenWF/client_config.json").str());
+			UniquePtr<JsonNode> config = json::decodeFile(ObfusString("OpenWF/Client Config.json").str());
 			if (!config || !config->isObj())
 			{
 				config = soup::make_unique<JsonObject>();

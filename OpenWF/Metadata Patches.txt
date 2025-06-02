@@ -8,6 +8,6 @@
 #
 # When this patch is applied and the type has been loaded by the game, you can get the effective metadata via the http interface:
 # http://localhost:6155/get_effective_metadata?/Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
-# For logging only, you can supply an empty patch or enable "save_all_metadata" in the client_config at the expense of slower loading.
+# For logging only, you can supply an empty patch or enable "save_all_metadata" in the Client Config at the expense of slower loading.
 #
 # Modifications to this file will only apply after a restart of the game.
