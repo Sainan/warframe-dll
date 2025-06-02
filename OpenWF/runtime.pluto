@@ -2332,7 +2332,17 @@ class PlayerProfile extends owfUserdata
 	end
 end
 
-class LotusProfileData extends owfUserdata end
+class LotusProfileData extends owfUserdata
+	function SyncInventoryFromDB(callback)
+		ivkr_push_object(get_gamedata())
+		if callback then
+			ivkr_push_callback(callback)
+		else
+			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
+		end
+		ivkr_call(ivkr_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
+	end
+end
 
 Engine = {}
 
@@ -2629,15 +2639,20 @@ setmetatable(_G, {
 	function __index(name)
 		if name == "gGameRules" then
 			return gRegion:GetGameRules()
-		end
-		if name == "gStarChart" then
+		elseif name == "gGameData" then
+			if addr := get_gamedata() then
+				ivkr_push_object(addr)
+				return new LotusProfileData()
+			end
+		elseif name == "gStarChart" then
 			local gr = gRegion:GetGameRules()
 			if gr instanceof LotusAttractModeGameRules then
 				return gr:GetStarChart()
 			end
 			return gr:GetCurrentStarChart()
+		else
+			return rawget(self, name)
 		end
-		return rawget(self, name)
 	end
 })
 
@@ -2652,18 +2667,6 @@ gFlashMgr = {
 		resource:pushToIvkr()
 		ivkr_call(ivkr_find_method("FlashMgr", "GotoMovie"), 2)
 		return new FlashInstance()
-	end,
-}
-
-gGameData = {
-	function SyncInventoryFromDB(callback)
-		ivkr_push_object(get_gamedata())
-		if callback then
-			ivkr_push_callback(callback)
-		else
-			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
-		end
-		ivkr_call(ivkr_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
 	end,
 }
 
