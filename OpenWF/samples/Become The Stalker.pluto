@@ -1,4 +1,9 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
+local name = "/Lotus/Powersuits/Stalker/Stalker"
+
+local loader = UISys.ScriptResLoader_Create({ name })
+repeat yield() until loader:IsDone()
+
 gRegion:GetLocalPlayerAvatar():InventoryControl():RemoveItem(Engine.SLOT_4, true)
-gRegion:GetLocalPlayerAvatar():GiveItem(Type("/Lotus/Powersuits/Stalker/Stalker"), true)
+gRegion:GetLocalPlayerAvatar():GiveItem(Type(name), true)
 gRegion:GetLocalPlayerAvatar():InventoryControl():GetActivePowerSuit():SetXP(1600000)
