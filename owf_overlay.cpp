@@ -41,7 +41,7 @@ void owfOverlay::init()
 		{
 			// Avoid picking up on a message box
 			const auto [width, height] = Window(hwnd).getSize();
-			if (width > 400)
+			if (height > 400)
 			{
 				s_game_hwnd = hwnd;
 				/*char buf[100];
