@@ -23,14 +23,14 @@ function add_file_to_archive($path, $archive_path)
 	{
 		echo " [compiled]";
 		passthru("tools\plutoc ".escapeshellarg($path));
-		$cont = file_get_contents("plutoc.out");
+		$cont = file_get_contents("plutoc.out") or die("Failed to comile $path");
 		unlink("plutoc.out");
 	}
 	else if (substr($path, -5) == ".json" && $path != "OpenWF/Hotkeys.json")
 	{
 		echo " [minified]";
 		passthru("pluto tools/json_minify.pluto ".escapeshellarg($path)." min.json");
-		$cont = file_get_contents("min.json");
+		$cont = file_get_contents("min.json") or die("Failed to minify $path");
 		unlink("min.json");
 	}
 	echo "\n";
