@@ -146,8 +146,12 @@ then
 	end
 
 	local any_mods = false
-	io.mkdir("OpenWF/content (managed)")
-	if io.isdir("OpenWF/content (managed)/0") then
+	if io.isdir("OpenWF/content (managed)") then
+		io.rename("OpenWF/content (managed)", "OpenWF/Content Replacements")
+	else
+		io.mkdir("OpenWF/Content Replacements")
+	end
+	if io.isdir("OpenWF/Content Replacements/0") then
 		local t = os.millis()
 
 		do
@@ -163,13 +167,13 @@ then
 			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
 
 			local paths = {}
-			for io.listdir("OpenWF/content (managed)/0", true) as file do
+			for io.listdir("OpenWF/Content Replacements/0", true) as file do
 				if io.isfile(file) then
 					file = file:sub(27):replace("\\", "/")
 					any_mods = true
 
 					io.mkdirs(io.part("OpenWF/content/0"..file, "parent"))
-					io.copy("OpenWF/content (managed)/0"..file, "OpenWF/content/0"..file)
+					io.copy("OpenWF/Content Replacements/0"..file, "OpenWF/content/0"..file)
 
 					local path = file:split("!")[1]
 					if hash := paths[path] then
