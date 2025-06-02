@@ -1,4 +1,9 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
+local function streaming_request(names)
+	local loader = UISys.ScriptResLoader_Create(names)
+	repeat yield() until loader:IsDone()
+end
+
 local commands = {}
 commands["god"] = function()
 	local avatar = gRegion:GetLocalPlayerAvatar()
@@ -29,9 +34,11 @@ commands["killall"] = function()
 	end
 end
 commands["kdrive"] = function()
+	streaming_request({ "/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar" })
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Corpus/Venus/Hoverboard/CrpHoverboardUnmannedAvatar"))
 end
 commands["dargyn"] = function()
+	streaming_request({ "/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar" })
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar"))
 end
 commands["simulacrum"] = function()
