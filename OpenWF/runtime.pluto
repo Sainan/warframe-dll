@@ -2826,11 +2826,11 @@ function owf_get_running_scripts()
 end
 
 function owf_start_script(name)
-	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script?"..url.encode("OpenWF/scripts/"..name))
+	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script?"..url.encode("OpenWF/Scripts/"..name))
 end
 
 function owf_stop_script(name)
-	owf_command("stop_script?OpenWF/scripts/"..name)
+	owf_command("stop_script?OpenWF/Scripts/"..name)
 end
 
 function owf_toggle_script(name)

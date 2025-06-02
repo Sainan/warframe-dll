@@ -1094,7 +1094,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 static JsonArray get_available_scripts()
 {
 	JsonArray arr;
-	for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/scripts").str()))
+	for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/Scripts").str()))
 	{
 		if (std::filesystem::is_regular_file(file))
 		{
@@ -4165,7 +4165,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (!auto_start_scripts.empty())
 		{
-			ObfusString base_path("OpenWF/scripts/");
+			ObfusString base_path("OpenWF/Scripts/");
 			for (const auto& path : auto_start_scripts)
 			{
 				start_script_from_file(base_path.str() + path);

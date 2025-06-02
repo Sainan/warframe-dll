@@ -167,7 +167,7 @@
 						const input = document.createElement("input");
 						input.id = script;
 						input.type = "checkbox";
-						input.setAttribute("data-path", "OpenWF/scripts/" + script);
+						input.setAttribute("data-path", "OpenWF/Scripts/" + script);
 						input.onchange = function() {
 							fetch((this.checked ? "/start_script?" : "/stop_script?") + this.getAttribute("data-path"));
 						};
