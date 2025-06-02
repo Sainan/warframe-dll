@@ -30,8 +30,14 @@ end
 
 local { base64, crypto, http, json } = require "*"
 
-if not io.exists("OpenWF/Metadata Patches.txt") then
-	io.contents("OpenWF/Metadata Patches.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
+if io.exists("OpenWF/Metadata Patches.txt") then
+	if not io.exists("OpenWF/Metadata Patches/Untitled.txt") then
+		io.mkdir("OpenWF/Metadata Patches")
+		io.rename("OpenWF/Metadata Patches.txt", "OpenWF/Metadata Patches/Untitled.txt")
+	end
+elseif not io.exists("OpenWF/Metadata Patches") then
+	io.mkdir("OpenWF/Metadata Patches")
+	io.contents("OpenWF/Metadata Patches/Untitled.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
 end
 
 if owf_overlay_get_size() == 0xFFFFFFFF -- Heuristic to avoid managing content again after applying hotfix

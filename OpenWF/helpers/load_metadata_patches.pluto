@@ -80,9 +80,6 @@ function load_metadata_patches(str)
 	end
 end
 
-if str := io.contents("OpenWF/Metadata Patches.txt") then
-	load_metadata_patches(str)
-end
 if io.exists("OpenWF/Metadata Patches/") then
 	for io.listdir("OpenWF/Metadata Patches/") as path do
 		if str := io.contents(path) then
