@@ -383,7 +383,7 @@ register_pseudo_command("check_for_updates", function()
 end)
 
 while pcall(yield) do
-	if os.millis() - last_status_update >= 20 then
+	if os.millis() - last_status_update >= 40 then
 		local status = {
 			camtype = "gamecam",
 			pos = "",
