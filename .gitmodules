@@ -4,3 +4,6 @@
 [submodule "Translations"]
 	path = modules/openwf-translations
 	url = https://onlyg.it/OpenWF/Translations
+[submodule "Soup"]
+	path = modules/Soup
+	url = https://github.com/calamity-inc/Soup
