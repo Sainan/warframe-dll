@@ -1,9 +1,9 @@
 Write-Host "Fetching latest version..."
 $latest = Invoke-RestMethod -Uri "https://openwf.io/supplementals/client%20drop-in/meta" -Method Get
 
-$dll_path = "../dwmapi.dll"
-if (Test-Path "../wtsapi32.dll") {
-	$dll_path = "../wtsapi32.dll"
+$dll_path = "../wtsapi32.dll"
+if (Test-Path "../dwmapi.dll") {
+	$dll_path = "../dwmapi.dll"
 }
 if (Test-Path "../version.dll") {
 	$dll_path = "../version.dll"
