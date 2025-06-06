@@ -73,6 +73,7 @@ class Entity extends BaseEntity
 	function GetSpeed()
 	function Destroy()
 	function SetMaterialParam(symbol, f1, f2 = 3.4028235e38, f3 = 3.4028235e38, f4 = 3.4028235e38, b = false)
+	function RunScript(resource, funcSymbol, b)
 
 class BaseAvatar extends Entity
 	function GetMaxHealth(b = true)

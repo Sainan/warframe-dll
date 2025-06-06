@@ -532,6 +532,14 @@ class Entity extends BaseEntity
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("Entity", "SetMaterialParam"), 7)
 	end
+
+	function RunScript(resource, funcSymbol, b)
+		self:pushToIvkr()
+		resource:pushToIvkr()
+		funcSymbol:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("Entity", "RunScript"), 4)
+	end
 end
 
 class BaseAvatar extends Entity
