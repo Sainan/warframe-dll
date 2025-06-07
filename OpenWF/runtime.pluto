@@ -402,6 +402,12 @@ class Entity extends BaseEntity
 		return ivkr_pop_rotation()
 	end
 
+	function GetSimRotation()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("Entity", "GetSimRotation"), 1)
+		return ivkr_pop_rotation()
+	end
+
 	function SetRotation(rot)
 		self:pushToIvkr()
 		ivkr_push_rotation(rot)

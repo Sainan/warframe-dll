@@ -54,6 +54,7 @@ class Entity extends BaseEntity
 	function SetPosition(pos)
 	function DistanceToEntity(b)
 	function GetRotation()
+	function GetSimRotation()
 	function SetRotation(rot)
 	function GetHealth()
 	function SetHealth(health)
