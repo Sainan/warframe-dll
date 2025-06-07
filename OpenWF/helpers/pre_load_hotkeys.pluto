@@ -1,5 +1,7 @@
-if not io.exists("OpenWF/Hotkeys.json")
-	or require"crypto".fnv1(io.contents("OpenWF/Hotkeys.json")) == 0xB842BE54D70B517B
+local cont = io.contents("OpenWF/Hotkeys.json")
+if not cont
+	or require"crypto".fnv1(cont) == 0xB842BE54D70B517B
+	or require"crypto".fnv1(cont) == 0xA877A453091B68AA
 then
 	io.contents("OpenWF/Hotkeys.json", owf_archive_find("OpenWF/Hotkeys.json"))
 end
