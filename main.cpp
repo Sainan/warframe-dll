@@ -43,6 +43,7 @@
 #include <string.hpp>
 #include <structing.hpp>
 #include <Thread.hpp>
+#include <unicode.hpp>
 #include <Uri.hpp>
 #include <urlenc.hpp>
 #include <version_compare.hpp>
@@ -4705,5 +4706,6 @@ struct owfBroadcastMessageTask final : public Task
 
 void owf_broadcast_message(std::string&& msg, uint32_t recipient /*= 0*/)
 {
+	unicode::utf8_sanitise(msg);
 	serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
 }
