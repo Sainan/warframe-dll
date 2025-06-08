@@ -31,7 +31,6 @@
 #include <memGuard.hpp>
 #include <Module.hpp>
 #include <Mutex.hpp>
-#include <netConfig.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
@@ -655,7 +654,7 @@ struct owfTunablesTask : public soup::Task
 	HttpRequestTask hrt;
 
 	owfTunablesTask()
-		: hrt(server_host, ObfusString("/custom/tunables.json"))
+		: hrt(HttpRequest(server_host, ObfusString("/custom/tunables.json")), &Socket::certchain_validator_none)
 	{
 		hrt.hr.port = https_port;
 		hrt.hr.use_tls = true;
@@ -728,8 +727,7 @@ static void do_logout()
 		HttpRequest hr(server_host, ObfusString("/api/logout.php?").str() + auth_query);
 		hr.port = https_port;
 		hr.use_tls = true;
-		netConfig::get().certchain_validator = &Socket::certchain_validator_none;
-		SOUP_UNUSED(hr.execute());
+		SOUP_UNUSED(hr.execute(&Socket::certchain_validator_none));
 		auth_query.clear();
 
 		owfOverlay::setPrelogin(true);
@@ -1833,7 +1831,7 @@ struct owfContentTask : public Task
 	HttpRequestTask hrt;
 
 	owfContentTask(Socket& _s, HttpRequest&& hr)
-		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr))
+		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr), &Socket::certchain_validator_none)
 	{
 		ServerWebService::setKeepAlive(_s, true);
 	}
@@ -4659,7 +4657,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				};
 				if (serv.bind(client_http_port, &srv))
 				{
-					netConfig::get().certchain_validator = &Socket::certchain_validator_none;
 					serv.run();
 				}
 				else
