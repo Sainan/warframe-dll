@@ -1819,6 +1819,20 @@ static void log_optional_scan_failure(bool important)
 	}
 }
 
+static void report_critical_failure(std::string msg)
+{
+	int ndlls = 0;
+	if (std::filesystem::is_regular_file(ObfusString("wtsapi32.dll").str())) ++ndlls;
+	if (std::filesystem::is_regular_file(ObfusString("dwmapi.dll").str())) ++ndlls;
+	if (std::filesystem::is_regular_file(ObfusString("version.dll").str())) ++ndlls;
+	if (ndlls > 1)
+	{
+		msg.append(ObfusString(" Ensure that only one of the DLLs in your game folder is the bootstrapper.").str());
+	}
+
+	MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+}
+
 struct owfWebsocketTag
 {
 	static inline uint32_t last_id = 0;
@@ -2703,8 +2717,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!game_http_request_caller)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
 			}
 			auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
 			if (is_35_5_0_or_above)
@@ -2797,9 +2810,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
 			{
-				//std::cout << ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.") << std::endl;
-				ObfusString msg("Failed to disable request encryption. This is required for 38.5.0 and above.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				report_critical_failure(ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.").str());
 			}
 		}
 
@@ -2871,8 +2882,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!ssl_verify_internal_caller)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
 			}
 			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
@@ -2909,8 +2919,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!Curl_ossl_verifyhost)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
 			}
 			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
 			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
@@ -2968,8 +2977,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!verify_worldstate_integrity)
 			{
-				ObfusString msg("A mandatory pattern scan has failed. The program will crash now.");
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
