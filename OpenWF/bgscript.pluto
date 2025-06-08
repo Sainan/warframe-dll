@@ -153,7 +153,9 @@ then
 
 	local any_mods = false
 	if io.isdir("OpenWF/content (managed)") then
-		io.rename("OpenWF/content (managed)", "OpenWF/Content Replacements")
+		if not io.isdir("OpenWF/Content Replacements") then
+			io.rename("OpenWF/content (managed)", "OpenWF/Content Replacements")
+		end
 	else
 		io.mkdir("OpenWF/Content Replacements")
 	end
