@@ -646,6 +646,21 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 	return 1;
 }*/
 
+struct FireAndForgetMessageBoxData
+{
+	std::string msg;
+	UINT type;
+};
+
+static void fire_and_forget_messagebox(std::string msg, UINT type)
+{
+	soup::Thread t([](Capture&& _cap)
+	{
+		auto& cap = _cap.get<FireAndForgetMessageBoxData>();
+		MessageBoxA(0, cap.msg.c_str(), BOOTSTRAPPER_TITLE, cap.type);
+	}, FireAndForgetMessageBoxData{ std::move(msg), type });
+	t.detach();
+}
 
 static Server serv;
 
@@ -691,7 +706,7 @@ struct owfTunablesTask : public soup::Task
 				msg.append(ObfusString(" on port ").str());
 				msg.append(std::to_string(hrt.hr.port));
 				msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
-				MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONWARNING);
+				fire_and_forget_messagebox(std::move(msg), MB_OK | MB_ICONWARNING);
 			}
 
 			owfOverlay::redraw();
