@@ -3012,16 +3012,19 @@ _T = setmetatable({}, {
 		if name == "OpenScreen" then
 			return OpenScreen
 		end
-		return rawget(self, name)
-	end,
-	function __newindex(name, value)
-		assert(type(value) == "function")
 		ivkr_push_string("_T")
 		ivkr_gettable(-10002)
-		local cid = #owf_flash_callbacks + 1
-		owf_flash_callbacks[cid] = value
 		ivkr_push_string(name)
-		ivkr_push_callback2(cid)
+		ivkr_gettable(-2)
+		local value = ivkr_pop_any()
+		ivkr_pop(1)
+		return value
+	end,
+	function __newindex(name, value)
+		ivkr_push_string("_T")
+		ivkr_gettable(-10002)
+		ivkr_push_string(name)
+		ivkr_push_any(value)
 		ivkr_settable(-3)
 		ivkr_pop(1)
 	end
@@ -3158,6 +3161,12 @@ ivkr_push_any = function(val)
 				end
 				ivkr_settable(-3)
 			end
+			return true
+
+		case "function":
+			local cid = #owf_flash_callbacks + 1
+			owf_flash_callbacks[cid] = val
+			ivkr_push_callback2(cid)
 			return true
 	end
 	print("Unexpected value: "..dumpvar(val))
