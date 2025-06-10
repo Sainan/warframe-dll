@@ -41,6 +41,9 @@ commands["dargyn"] = function()
 	streaming_request({ "/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar" })
 	gRegion:CreateEntity(Type("/Lotus/Types/Enemies/Grineer/Eidolon/GrineerSkiff/GrineerSkiffUnmannedAvatar"))
 end
+commands["kaithe"] = function()
+	gRegion:GetNpcMgr():CreateAgentAtPosition(Type("/Lotus/Types/NeutralCreatures/ErsatzHorse/ErsatzHorseUnmannedGearSummonItemAgent"), gRegion:GetLocalPlayerAvatar():GetPosition(), ZERO_ROTATION)
+end
 commands["simulacrum"] = function()
 	local args = Engine.OpenLevelArgs()
 	args:SetLevel("/Lotus/Levels/Tenno/SimulacrumEnemySpawnerC.level")
