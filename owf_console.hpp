@@ -1,34 +1,45 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+
+#include "ObfusString.hpp"
 
 extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
 
 struct owfConsole
 {
 	inline static bool active = false;
+	inline static std::string title;
 
-	static void activate(const char* title)
+	static void setTitle(std::string&& str)
+	{
+		title = std::move(str);
+#if PRIVATE
+		title.append(" [Private Build]");
+#endif
+		if (active)
+		{
+			SetConsoleTitleA(title.c_str());
+		}
+	}
+
+	static void activate()
 	{
 		active = true;
 
 		AllocConsole();
-#if PRIVATE
-		std::string str = title;
-		str.append(" [Private Build]");
-		title = str.c_str();
-#endif
-		SetConsoleTitleA(title);
+		SetConsoleTitleA(title.c_str());
 		{
 			FILE* f;
-			freopen_s(&f, ObfusString("CONIN$"), ObfusString("r"), stdin);
-			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stderr);
-			freopen_s(&f, ObfusString("CONOUT$"), ObfusString("w"), stdout);
+			freopen_s(&f, "CONIN$", "r", stdin);
+			freopen_s(&f, "CONOUT$", "w", stderr);
+			freopen_s(&f, "CONOUT$", "w", stdout);
 		}
 		SetConsoleCP(CP_UTF8);
 		SetConsoleOutputCP(CP_UTF8);
 
-		owf_broadcast_message(ObfusString(R"({"console":true})").str());
+		owf_broadcast_message(soup::ObfusString(R"({"console":true})").str());
 	}
 
 	static void deactivate()
@@ -39,6 +50,6 @@ struct owfConsole
 		FreeConsole();
 		PostMessage(conWnd, WM_CLOSE, 0, 0);
 
-		owf_broadcast_message(ObfusString(R"({"console":false})").str());
+		owf_broadcast_message(soup::ObfusString(R"({"console":false})").str());
 	}
 };

@@ -1,3 +1,7 @@
+if OWF_CLIENT_HOTFIX ~= 0 then
+	owf_console_set_title(OWF_CLIENT_TITLE.." hotfix "..OWF_CLIENT_HOTFIX)
+end
+
 owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
 
 io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))

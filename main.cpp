@@ -69,6 +69,8 @@ using namespace soup;
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
 
+const char* g_bootstrapper_title = BOOTSTRAPPER_TITLE;
+
 static uint32_t server_ip_hash = 0;
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
@@ -2164,7 +2166,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			return FALSE;
 		}
 
-		owfConsole::activate(BOOTSTRAPPER_TITLE);
+		owfConsole::setTitle(BOOTSTRAPPER_TITLE);
+		owfConsole::activate();
 
 #if LOGGING
 		std::cout << "base address = " << soup::Process::current()->open()->range.base.as<void*>() << std::endl;
@@ -4392,7 +4395,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						else
 						{
-							owfConsole::activate(BOOTSTRAPPER_TITLE);
+							owfConsole::activate();
 						}
 						ServerWebService::sendText(s, {});
 						break;

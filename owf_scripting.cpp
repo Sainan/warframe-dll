@@ -23,6 +23,7 @@
 #include "owf_archive.hpp"
 #include "owf_cache.hpp"
 #include "owf_config.hpp"
+#include "owf_console.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
 #include "owf_structs.hpp"
@@ -30,7 +31,8 @@
 
 using namespace soup;
 
-extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
+extern const char* g_bootstrapper_title;
+
 extern bool owf_command(const std::string& in, JsonObject& out);
 
 static uint32_t wf_fnv_32(const char* str) noexcept
@@ -155,6 +157,13 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		owfConsole::setTitle(pluto_checkstring(L, 1));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_console_set_title");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		std::lock_guard lock(script_log_mtx);
 		lua_pushinteger(L, script_log.size());
 		return 1;
@@ -212,6 +221,9 @@ void owfScript::openLibs(lua_State* L)
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "owf_get_build_hash");
+
+	lua_pushstring(L, g_bootstrapper_title);
+	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE");
 
 	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port);
 

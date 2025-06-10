@@ -1,3 +1,5 @@
+OWF_CLIENT_HOTFIX = 0
+
 local { cat, http, json, scheduler, url, vector3 } = require "*"
 
 Vector = vector3
