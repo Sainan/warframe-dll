@@ -132,7 +132,7 @@
 		<li>The IRC <code>USER</code> message is adjusted to contain <code>nonce=...</code> in the 'realname' field.</li>
 	</ul>
 	<h2>Metadata Patches</h2>
-	<p>Metadata Patches are loaded from text files in the <code>OpenWF/Metadata Patches/</code> folder.</p>
+	<p>Metadata Patches are loaded from <code>.txt</code> files in the <code>OpenWF/Metadata Patches/</code> folder.</p>
 	<p>They are generally parsed line by line, with roughly the following steps being taken for each line:</p>
 	<ol>
 		<li>If the line starts with <code>/</code>, a new patch for the given absolute path is started. If the line ends on <code>&</code>, the next line that also starts with <code>/</code> will be added to this patch instead of creating a new patch.</li>

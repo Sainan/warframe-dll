@@ -82,8 +82,10 @@ end
 
 if io.exists("OpenWF/Metadata Patches/") then
 	for io.listdir("OpenWF/Metadata Patches/") as path do
-		if str := io.contents(path) then
-			load_metadata_patches(str)
+		if path:sub(-4) == ".txt" then
+			if str := io.contents(path) then
+				load_metadata_patches(str)
+			end
 		end
 	end
 end
