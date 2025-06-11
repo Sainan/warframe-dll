@@ -951,6 +951,22 @@ class LotusInventoryController extends InventoryControllerBase
 		self:pushToIvkr()
 		ivkr_pop(ivkr_call(ivkr_find_method("LotusInventoryController", "DoItemDrop"), 1))
 	end
+
+	function GetConsumableItem(idx)
+		self:pushToIvkr()
+		ivkr_push_int(idx)
+		ivkr_call(ivkr_find_method("LotusInventoryController", "GetConsumableItem"), 2)
+		if ivkr_type(-1) > 0 then
+			return new Object()
+		end
+		ivkr_pop(1)
+	end
+
+	function UseConsumableItem(idx)
+		self:pushToIvkr()
+		ivkr_push_int(idx)
+		ivkr_call(ivkr_find_method("LotusInventoryController", "UseConsumableItem"), 2)
+	end
 end
 
 class ResourceBase extends Object

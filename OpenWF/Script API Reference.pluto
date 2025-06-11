@@ -145,6 +145,8 @@ class InventoryControllerBase extends Object
 class LotusInventoryController extends InventoryControllerBase
 	function GetActivePowerSuit()
 	function DoItemDrop()
+	function GetConsumableItem(idx)
+	function UseConsumableItem(idx)
 
 class ResourceBase extends Object
 
