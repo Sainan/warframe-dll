@@ -473,6 +473,53 @@ class OverlayMgr
 class PlayerProfile
 	function GetAccountIDString()
 
+class LevelInfo
+	postProcess
+
+class PostProcess
+	blur
+	motionBlurStrength
+	bloom
+	targetExposure
+	adaptationRateUp
+	adaptationRateDown
+	exposureConvergeSpeed
+	useBnwBuffer
+	bnwBufferInvert
+	bnwBufferBias
+	useExposureEVCurve
+	skyBloom
+	saturation
+	focalBlur
+	horizonDOF
+	horizonRadius
+	horizonFog
+	horizonFogRadius
+	horizonFogElevation
+	distanceFogDensity
+	heightFogFalloff
+	heightFogDensity
+	heightFogY
+	lightMapBoost
+	attenuateAudio
+	lightning
+	colorCorrectionConverge
+	saturationBias
+	brightnessBias
+	contrastBias
+	grainBias
+	focalNearPlane
+	focalNearDepth
+	focalFarPlane
+	focalFarDepth
+	radialBlurStrength
+	irradianceVolumeGain
+	sunShaftsDensity
+	sunShaftsDecay
+	sunShaftsMultiplier
+	sunShaftsFogAttenuation
+	sunShafts
+
 class Engine.OpenLevelArgs
 	function SetLevel(level)
 	function SetGameRules(gamerules)
@@ -609,6 +656,7 @@ gRegion
 	function CreateEntity(type, pos, rot)
 	function GetNpcMgr()
 	function Raycast(fromPos, toPos, avatar, _reserved_please_set_to_nil, outPos)
+	function GetLevelInfo()
 
 gGameRules
 gStarChart

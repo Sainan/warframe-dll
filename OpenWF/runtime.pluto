@@ -145,6 +145,30 @@ class owfUserdata
 	end
 end
 
+class owfProxy extends owfUserdata
+	function __index(name)
+		if owfUserdata[name] then
+			return owfUserdata[name]
+		end
+		if getter := ivkr_find_getter(getmetatable(self).__name, name) then
+			self:pushToIvkr()
+			assert(ivkr_call(getter, 1) == 1)
+			return ivkr_pop_any()
+		end
+		error("Unknown field: "..name)
+	end
+
+	function __newindex(name, value)
+		if setter := ivkr_find_setter(getmetatable(self).__name, name) then
+			self:pushToIvkr()
+			ivkr_push_any(value)
+			assert(ivkr_call(setter, 2) == 0)
+		else
+			error("Unknown field: "..name)
+		end
+	end
+end
+
 function ivkr_pop_array(mt)
 	local t = {}
 	if ivkr_type(-1) == IVKR_TABLE then
@@ -2533,6 +2557,8 @@ class LotusHub extends RelayHub
 end
 
 class PlayerProfile extends owfUserdata
+	__name = "PlayerProfile"
+
 	function GetAccountIDString()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("PlayerProfile", "GetAccountIDString"), 1)
@@ -2546,7 +2572,10 @@ class PlayerProfile extends owfUserdata
 	end
 end
 
+-- documented as gGameData
 class LotusProfileData extends owfUserdata
+	--__name = "LotusProfileData"
+
 	function SyncInventoryFromDB(callback)
 		ivkr_push_object(get_gamedata())
 		if callback then
@@ -2557,6 +2586,29 @@ class LotusProfileData extends owfUserdata
 		ivkr_call(ivkr_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
 	end
 end
+
+class LevelInfo extends owfUserdata
+	__name = "LevelInfo"
+
+	function __index(name)
+		if owfUserdata[name] then
+			return owfUserdata[name]
+		end
+		switch name do
+			case "postProcess":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("LevelInfo", name), 1)
+				return new PostProcess()
+		end
+	end
+end
+
+class PostProcess extends owfProxy
+	__name = "PostProcess"
+end
+-- A bug in Pluto 0.11.1 is that index metamethods are not being inherited, we need to do it manually for now
+PostProcess.__index = owfProxy.__index
+PostProcess.__newindex = owfProxy.__newindex
 
 Engine = {}
 
@@ -2849,6 +2901,11 @@ gRegion = {
 		outPos.z = vec.z
 
 		return ok
+	end,
+	function GetLevelInfo()
+		ivkr_push_object(get_regionmgr())
+		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetLevelInfo"), 1)
+		return new LevelInfo()
 	end,
 }
 
