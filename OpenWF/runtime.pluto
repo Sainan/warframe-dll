@@ -1,4 +1,4 @@
-OWF_CLIENT_HOTFIX = 0
+OWF_CLIENT_HOTFIX = 1
 
 local { cat, http, json, scheduler, url, vector3 } = require "*"
 
