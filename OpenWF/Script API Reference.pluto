@@ -47,6 +47,30 @@ class HumanPlayer extends Player
 	function AssignAvatar(avatar, b1 = true, b2 = true)
 	function SendGiveItem(resource, amount)
 
+class LotusHumanPlayer extends HumanPlayer
+	function GetLoadOut()
+
+class LoadOut
+	function GetStoredItemStruct(i1, i2)
+
+class MongoId
+
+class LotusProfileTypes.StoredItem
+	mItem
+	mModSlot
+	mCustSlot
+	mAttachedUpgrades
+
+class LotusProfileTypes.WeaponInfo
+	mItemId
+	mItemType
+	mModularParts
+	function GetCustomization()
+
+class LotusProfileTypes.UpgradeInfo
+	mItemType
+	mUpgradeFingerprint
+
 class BaseEntity extends Object
 
 class Entity extends BaseEntity
@@ -160,12 +184,21 @@ class WeaponBase extends Item
 
 class WeaponEx extends WeaponBase
 	function GetActiveImpactBehavior()
+	function AddUpgrade(obj)
 
 class LotusWeapon extends WeaponEx
 	function GetXP()
 	function SetXP(xp)
 	function GetCustomization()
 	function SetCustomization(cust)
+	function SetModularParts(parts, gilded)
+
+class WeaponUpgrade extends Item
+
+class LotusWeaponUpgradeBase extends WeaponUpgrade
+	function InitializeFromFingerprint(str)
+
+class LotusArtifactUpgrade extends LotusWeaponUpgradeBase
 
 class WeaponImpactBehavior extends Object
 	criticalHitChance

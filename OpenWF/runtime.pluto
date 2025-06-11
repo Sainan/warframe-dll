@@ -148,6 +148,16 @@ end
 function ivkr_pop_array(mt)
 	local t = {}
 	if ivkr_type(-1) == IVKR_TABLE then
+		--[[ivkr_push_nil()
+		while ivkr_next(-2) do
+			local v = new mt()
+			ivkr_push_value(-1)
+			if k := ivkr_pop_any() then
+				t[k] = v
+			end
+		end
+		ivkr_pop(1)]]
+
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
 			t:insert(new mt())
@@ -159,6 +169,21 @@ function ivkr_pop_array(mt)
 	end
 	return t
 end
+
+--[[function ivkr_pop_string_array()
+	local t = {}
+	if ivkr_type(-1) == IVKR_TABLE then
+		local i = 1
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(ivkr_pop_string())
+			++i
+		end
+		ivkr_pop(2)
+	else
+		ivkr_pop(1)
+	end
+	return t
+end]]
 
 class ObjectType extends owfUserdata
 	__name = "ObjectType"
@@ -335,6 +360,116 @@ class HumanPlayer extends Player
 		resource:pushToIvkr()
 		ivkr_push_int(amount)
 		ivkr_call(ivkr_find_method("HumanPlayer", "SendGiveItem"), 3)
+	end
+end
+
+class LotusHumanPlayer extends HumanPlayer
+	__name = "LotusHumanPlayer"
+
+	function GetLoadOut()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusHumanPlayer", "GetLoadOut"), 1)
+		return new LoadOut()
+	end
+end
+
+class LoadOut extends owfUserdata
+	__name = "LoadOut"
+
+	function GetStoredItemStruct(i1, i2)
+		self:pushToIvkr()
+		ivkr_push_int(i1)
+		ivkr_push_int(i2)
+		ivkr_call(ivkr_find_method("LoadOut", "GetStoredItemStruct"), 3)
+		return new LotusProfileTypes.StoredItem()
+	end
+end
+
+class MongoId extends owfUserdata
+	__name = "MongoId"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("MongoId", "mId"), 1)
+		self.mId = ivkr_pop_string()
+	end
+end
+
+LotusProfileTypes = {}
+
+class LotusProfileTypes.StoredItem extends owfUserdata
+	__name = "LotusProfileTypes.StoredItem"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("StoredItem", "mItem"), 1)
+		self.mItem = new LotusProfileTypes.WeaponInfo()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("StoredItem", "mModSlot"), 1)
+		self.mModSlot = math.tointeger(ivkr_pop_number())
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("StoredItem", "mCustSlot"), 1)
+		self.mCustSlot = math.tointeger(ivkr_pop_number())
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("StoredItem", "mAttachedUpgrades"), 1)
+		self.mAttachedUpgrades = ivkr_pop_array(LotusProfileTypes.UpgradeInfo)
+	end
+end
+
+class LotusProfileTypes.WeaponInfo extends owfUserdata
+	__name = "LotusProfileTypes.WeaponInfo"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("WeaponInfo", "mItemId"), 1)
+		self.mItemId = new MongoId()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("WeaponInfo", "mItemType"), 1)
+		if ivkr_type(-1) > 0 then
+			self.mItemType = new ObjectType()
+		else
+			ivkr_pop(1)
+		end
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("WeaponInfo", "mModularParts"), 1)
+		self.mModularParts = ivkr_pop_array(ObjectType)
+	end
+
+	function GetCustomization()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("WeaponInfo", "GetCustomization"), 1)
+		return new WeaponCustomization()
+	end
+end
+
+class LotusProfileTypes.UpgradeInfo extends owfUserdata
+	__name = "LotusProfileTypes.UpgradeInfo"
+
+	function __construct()
+		parent:__construct()
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("UpgradeInfo", "mItemType"), 1)
+		if ivkr_type(-1) > 0 then
+			self.mItemType = new ObjectType()
+		else
+			ivkr_pop(1)
+		end
+
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_getter("UpgradeInfo", "mUpgradeFingerprint"), 1)
+		self.mUpgradeFingerprint = ivkr_pop_string()
 	end
 end
 
@@ -600,7 +735,11 @@ class BaseAvatar extends Entity
 		self:pushToIvkr()
 		type:pushToIvkr()
 		ivkr_push_bool(b)
-		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "GiveItem"), 3))
+		ivkr_call(ivkr_find_method("BaseAvatar", "GiveItem"), 3)
+		if ivkr_typename(-1) == "PowerSuit *" then
+			return new PowerSuit()
+		end
+		ivkr_pop(1)
 	end
 
 	function MotionControl()
@@ -1025,6 +1164,12 @@ class WeaponEx extends WeaponBase
 		ivkr_call(ivkr_find_method("WeaponEx", "GetActiveImpactBehavior"), 1)
 		return new WeaponImpactBehavior()
 	end
+
+	function AddUpgrade(obj)
+		self:pushToIvkr()
+		obj:pushToIvkr()
+		ivkr_call(ivkr_find_method("WeaponEx", "AddUpgrade"), 2)
+	end
 end
 
 class LotusWeapon extends WeaponEx
@@ -1053,6 +1198,36 @@ class LotusWeapon extends WeaponEx
 		cust:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusWeapon", "SetCustomization"), 2)
 	end
+
+	function SetModularParts(parts, gilded)
+		self:pushToIvkr()
+		ivkr_newtable()
+		for i, part in ipairs(parts) do
+			ivkr_push_int(i)
+			part:pushToIvkr()
+			ivkr_settable(-3)
+		end
+		ivkr_push_bool(gilded)
+		ivkr_call(ivkr_find_method("LotusWeapon", "SetModularParts"), 3)
+	end
+end
+
+class WeaponUpgrade extends Item
+	__name = "WeaponUpgrade"
+end
+
+class LotusWeaponUpgradeBase extends WeaponUpgrade
+	__name = "LotusWeaponUpgradeBase"
+
+	function InitializeFromFingerprint(str)
+		self:pushToIvkr()
+		ivkr_push_string(str)
+		ivkr_call(ivkr_find_method("LotusWeaponUpgradeBase", "InitializeFromFingerprint"), 2)
+	end
+end
+
+class LotusArtifactUpgrade extends LotusWeaponUpgradeBase
+	__name = "LotusWeaponUpgradeBase"
 end
 
 class WeaponImpactBehavior extends Object
@@ -2228,6 +2403,13 @@ class WeaponCustomization extends owfUserdata
 		v:pushToIvkr()
 		ivkr_call(ivkr_find_method("WeaponCustomization", "SetColors"), 3)
 	end
+
+	function ApplyCustomization(avatar, b)
+		self:pushToIvkr()
+		avatar:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("WeaponCustomization", "ApplyCustomization"), 3)
+	end
 end
 
 class CustomizationColorPalette extends owfUserdata
@@ -2554,7 +2736,7 @@ gRegion = {
 		ivkr_push_object(get_regionmgr())
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "GetLocalPlayer"), 1)
 		if ivkr_type(-1) > 0 then
-			return new HumanPlayer()
+			return new LotusHumanPlayer()
 		end
 	end,
 	function GetLocalPlayerAvatar()
@@ -2629,6 +2811,9 @@ gRegion = {
 		ivkr_push_object(get_regionmgr())
 		type:pushToIvkr()
 		ivkr_call(ivkr_find_method("RegionMgrImpl", "CreateObject"), 2)
+		if ivkr_typename(-1) == "LotusArtifactUpgrade *" then
+			return new LotusArtifactUpgrade()
+		end
 		return new Object()
 	end,
 	function CreateEntity(type, pos, rot)
