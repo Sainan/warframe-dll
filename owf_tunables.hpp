@@ -31,8 +31,19 @@ struct owfClientTunables
 	bool isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept;
 };
 
+struct owfOtaTunables
+{
+	int remote_ip_mode = 0; // 0 = Disallow, 1 = Blacklisting, 2 Whitelisting
+	std::vector<uint32_t> remote_ip_list;
+
+	bool load(const char* data, size_t size);
+};
+
 inline soup::Mutex g_server_tunables_mtx;
 inline owfServerTunables g_server_tunables;
 
 inline soup::Mutex g_client_tunables_mtx;
 inline owfClientTunables g_client_tunables;
+
+inline soup::Mutex g_ota_tunables_mtx;
+inline owfOtaTunables g_ota_tunables;

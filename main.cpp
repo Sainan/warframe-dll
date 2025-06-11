@@ -32,6 +32,7 @@
 #include <memGuard.hpp>
 #include <Module.hpp>
 #include <Mutex.hpp>
+#include <netConfig.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
@@ -72,7 +73,7 @@ using namespace soup;
 
 const char* g_bootstrapper_title = BOOTSTRAPPER_TITLE;
 
-static uint32_t server_ip_hash = 0;
+static uint32_t server_remote_ip = 0;
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
@@ -350,15 +351,31 @@ struct GameHttpRequestU18
 };
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
+static bool can_use_server_host()
+{
+	bool res = true;
+	if (server_remote_ip)
+	{
+		res = false;
+		if (g_ota_tunables.remote_ip_mode)
+		{
+			{
+				std::lock_guard lock(g_ota_tunables_mtx);
+				res = (std::find(g_ota_tunables.remote_ip_list.begin(), g_ota_tunables.remote_ip_list.end(), server_remote_ip) != g_ota_tunables.remote_ip_list.end());
+			}
+			if (g_ota_tunables.remote_ip_mode == 1) // Blacklist
+			{
+				res = !res;
+			}
+		}
+	}
+	return res;
+}
+
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool strip_tls)
 {
 #if REDIRECT_REQUESTS
-	bool server_blacklisted;
-	{
-		std::lock_guard lock(g_client_tunables_mtx);
-		server_blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_ip_hash);
-	}
-	uri.host = server_blacklisted ? ObfusString("localhost").str() : server_host;
+	uri.host = can_use_server_host() ? server_host : ObfusString("localhost").str();
 	if (strip_tls)
 	{
 		uri.scheme = ObfusString("http").str();
@@ -589,21 +606,16 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-	bool server_blacklisted;
-	{
-		std::lock_guard lock(g_client_tunables_mtx);
-		server_blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_ip_hash);
-	}
 	ObfusString localhost("localhost");
-	if (server_blacklisted
-		? localhost.str() != hostname
-		: server_host != hostname
+	if (can_use_server_host()
+		? server_host != hostname
+		: localhost.str() != hostname
 		)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
 
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, server_blacklisted ? localhost.c_str() : server_host.c_str(), port, allowDOH, a5);
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, can_use_server_host() ? server_host.c_str() : localhost.c_str(), port, allowDOH, a5);
 }
 #endif
 
@@ -667,6 +679,46 @@ static void fire_and_forget_messagebox(std::string msg, UINT type)
 
 static DetachedScheduler task_runner;
 
+struct owfOtaTunablesTask : public soup::Task
+{
+	UniquePtr<dnsLookupTask> lt;
+
+	owfOtaTunablesTask()
+		: lt(netConfig::get().getDnsResolver()->makeLookupTask(DNS_TXT, ObfusString("t.openwf.io")))
+	{
+	}
+
+	void onTick() final
+	{
+		if (lt->tickUntilDone())
+		{
+			if (lt->result)
+			{
+				for (const auto& rr : *lt->result)
+				{
+					if (rr->type == DNS_TXT)
+					{
+						std::lock_guard lock(g_ota_tunables_mtx);
+						g_ota_tunables.load(static_cast<const dnsTxtRecord*>(rr.get())->data.data(), static_cast<const dnsTxtRecord*>(rr.get())->data.size());
+#if false
+						std::cout << "remote_ip_mode = " << g_ota_tunables.remote_ip_mode << std::endl;
+						std::cout << "remote_ip_list =";
+						for (const auto& ip : g_ota_tunables.remote_ip_list)
+						{
+							std::cout << " " << ip;
+						}
+						std::cout << std::endl;
+						std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
+#endif
+						break;
+					}
+				}
+			}
+			setWorkDone();
+		}
+	}
+};
+
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
 {
@@ -688,7 +740,18 @@ struct owfTunablesTask : public soup::Task
 			{
 				if (hrt.sock)
 				{
-					server_ip_hash = soup::joaat::hash(hrt.sock->peer.ip.toString());
+					if (hrt.sock->peer.ip.isLocalnet())
+					{
+						server_remote_ip = 0;
+					}
+					else
+					{
+						server_remote_ip = hrt.sock->peer.ip.getV4NativeEndian();
+					}
+#if false
+					std::cout << "server_remote_ip = " << server_remote_ip << std::endl;
+					std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
+#endif
 				}
 
 				if (hrt.result->status_code == 200)
@@ -4703,6 +4766,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			});
 			thrd.detach();
 		}
+
+		task_runner.add<owfOtaTunablesTask>();
 	}
 	return TRUE;
 }

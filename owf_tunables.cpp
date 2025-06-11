@@ -131,3 +131,19 @@ bool owfClientTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const 
 	}
 	return false;
 }
+
+bool owfOtaTunables::load(const char* data, size_t size)
+{
+	auto jr = json::decode(data, size);
+	if (!jr || !jr->isArr())
+	{
+		return false;
+	}
+	remote_ip_mode = jr->reinterpretAsArr().at(0).asInt();
+	remote_ip_list.clear();
+	for (const auto& e : jr->reinterpretAsArr().at(1).asArr())
+	{
+		remote_ip_list.emplace_back(e.asInt());
+	}
+	return true;
+}
