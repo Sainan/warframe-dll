@@ -21,6 +21,7 @@
 #include <CallsiteHook.hpp>
 #include <cat.hpp>
 #include <CompactDetourHook.hpp>
+#include <DetachedScheduler.hpp>
 #include <DetourHook.hpp>
 #include <FileReader.hpp>
 #include <filesystem.hpp>
@@ -664,7 +665,7 @@ static void fire_and_forget_messagebox(std::string msg, UINT type)
 	t.detach();
 }
 
-static Server serv;
+static DetachedScheduler task_runner;
 
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
@@ -734,7 +735,7 @@ static void on_got_server_host()
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
-	serv.add<owfTunablesTask>();
+	task_runner.add<owfTunablesTask>();
 #endif
 }
 
@@ -1849,6 +1850,8 @@ static void report_critical_failure(std::string msg)
 
 	MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 }
+
+static Server serv;
 
 struct owfWebsocketTag
 {
