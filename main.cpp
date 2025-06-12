@@ -4746,6 +4746,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 					}
 				};
+				task_runner.add<owfOtaTunablesTask>();
 				if (serv.bind(client_http_port, &srv))
 				{
 					serv.run();
@@ -4764,8 +4765,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			});
 			thrd.detach();
 		}
-
-		task_runner.add<owfOtaTunablesTask>();
 	}
 	return TRUE;
 }
