@@ -2224,6 +2224,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			return FALSE;
 		}
 
+		if (!std::filesystem::exists("Warframe.x64.exe"))
+		{
+			MessageBoxA(0, "Launched with incorrect working directory; it must be the folder where Warframe.x64.exe is.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			return FALSE;
+		}
+
 		owfConsole::setTitle(BOOTSTRAPPER_TITLE);
 		owfConsole::activate();
 
