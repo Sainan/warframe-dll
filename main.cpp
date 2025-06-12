@@ -32,7 +32,6 @@
 #include <memGuard.hpp>
 #include <Module.hpp>
 #include <Mutex.hpp>
-#include <netConfig.hpp>
 #include <ObfusString.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
@@ -681,38 +680,31 @@ static DetachedScheduler task_runner;
 
 struct owfOtaTunablesTask : public soup::Task
 {
-	UniquePtr<dnsLookupTask> lt;
+	HttpRequestTask hrt;
 
 	owfOtaTunablesTask()
-		: lt(netConfig::get().getDnsResolver()->makeLookupTask(DNS_TXT, ObfusString("t.openwf.io")))
+		: hrt(ObfusString("t.openwf.io"), ObfusString("/"))
 	{
 	}
 
 	void onTick() final
 	{
-		if (lt->tickUntilDone())
+		if (hrt.tickUntilDone())
 		{
-			if (lt->result)
+			if (hrt.result)
 			{
-				for (const auto& rr : *lt->result)
-				{
-					if (rr->type == DNS_TXT)
-					{
-						std::lock_guard lock(g_ota_tunables_mtx);
-						g_ota_tunables.load(static_cast<const dnsTxtRecord*>(rr.get())->data.data(), static_cast<const dnsTxtRecord*>(rr.get())->data.size());
+				std::lock_guard lock(g_ota_tunables_mtx);
+				g_ota_tunables.load(hrt.result->body.data(), hrt.result->body.size());
 #if false
-						std::cout << "remote_ip_mode = " << g_ota_tunables.remote_ip_mode << std::endl;
-						std::cout << "remote_ip_list =";
-						for (const auto& ip : g_ota_tunables.remote_ip_list)
-						{
-							std::cout << " " << ip;
-						}
-						std::cout << std::endl;
-						std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
-#endif
-						break;
-					}
+				std::cout << "remote_ip_mode = " << g_ota_tunables.remote_ip_mode << std::endl;
+				std::cout << "remote_ip_list =";
+				for (const auto& ip : g_ota_tunables.remote_ip_list)
+				{
+					std::cout << " " << ip;
 				}
+				std::cout << std::endl;
+				std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
+#endif
 			}
 			setWorkDone();
 		}
