@@ -793,6 +793,34 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushinteger(L, luau_savestack(luau_L, luau_L->outtop) / sizeof(luau_TValue));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_get_top");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		luau_L->outtop = luau_restorestack(luau_L, luaL_checkinteger(L, 1) * sizeof(luau_TValue));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_set_top");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, luau_savestack(luau_L, luau_L->intop) / sizeof(luau_TValue));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_get_base");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		luau_L->intop = luau_restorestack(luau_L, luaL_checkinteger(L, 1) * sizeof(luau_TValue));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_set_base");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		luau_L->outtop -= luaL_optinteger(L, 1, 1);
 		return 0;
 	});

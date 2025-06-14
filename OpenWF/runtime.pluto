@@ -184,7 +184,12 @@ function ivkr_pop_array(mt)
 
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			local top = ivkr_get_top() - 1
 			t:insert(new mt())
+			if top ~= ivkr_get_top() then
+				print("Misalignment in "..tostring(mt.__name)..".__construct")
+			end
+			ivkr_set_top(top)
 			++i
 		end
 		ivkr_pop(2)
