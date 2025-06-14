@@ -1442,6 +1442,9 @@ owfScript::owfScript()
 				pluto_pushstring(L, ObfusString("text").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
+				pluto_pushstring(L, ObfusString("blocked").str());
+				lua_pushboolean(L, scr->events.front().intdata);
+				lua_settable(L, -3);
 				break;
 
 			case OWF_EVT_CUSTOM_ROUTE_SERVED:
