@@ -28,6 +28,13 @@ enum luau_Type
 	LUAU_TABLE = 6,
 	LUAU_FUNCTION = 7,
 	LUAU_USERDATA = 8,
+	LUAU_TTHREAD = 9,
+	LUAU_TBUFFER = 10,
+
+	// values below this line are used in GCObject tags but may never show up in TValue type tags
+	LUAU_TPROTO = 11,
+	LUAU_TUPVAL = 12,
+	LUAU_TDEADKEY = 13,
 };
 
 struct luau_TValue
@@ -144,9 +151,17 @@ struct luau_Closure
 static_assert(offsetof(luau_Closure, isC) == 0x03);
 static_assert(offsetof(luau_Closure, c.func) == 0x18);
 
+struct luau_UpVal
+{
+	luau_CommonHeader;
+	uint8_t markedopen;
+	luau_TValue* v;
+};
+
 union luau_GCObject
 {
 	luau_Closure cl;
+	luau_UpVal uv;
 };
 
 /*using luau_Alloc = void*(*)(void* ud, void* ptr, size_t osize, size_t nsize);

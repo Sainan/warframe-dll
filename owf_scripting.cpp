@@ -933,7 +933,12 @@ owfScript::owfScript()
 		{
 			luaL_error(L, ObfusString("insufficient space"));
 		}
-		*luau_L->outtop = arr[idx];
+		luau_TValue* tval = &arr[idx];
+		if (tval->type == LUAU_TUPVAL)
+		{
+			tval = tval->value.gc->uv.v;
+		}
+		*luau_L->outtop = *tval;
 		luau_L->outtop++;
 		return 0;
 	});
