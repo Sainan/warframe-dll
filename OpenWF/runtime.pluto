@@ -3049,7 +3049,7 @@ function chat_add_to_sent_history(text)
 			local j = 0
 			while true do
 				ivkr_get_upvalue(i)
-				if ivkr_type(-1) == 7 and ++j == 2 then
+				if ivkr_type(-1) == IVKR_FUNCTION and ++j == 2 then
 					break
 				end
 				ivkr_pop(1)
