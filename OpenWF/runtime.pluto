@@ -3042,6 +3042,18 @@ function get_lang_dict(lang = get_lang_code())
 	return cat.decode(data, "flat")
 end
 
+function chat_system_reply(text)
+	if ivkr_push_chat_redux() then
+		ivkr_push_string("SystemMessage")
+		ivkr_gettable(-2)
+		ivkr_push_value(-2)
+		ivkr_push_string(text)
+		ivkr_call2(2, 0)
+
+		ivkr_pop(1)
+	end
+end
+
 function chat_add_to_sent_history(text)
 	if ivkr_push_chat_redux() then
 		ivkr_push_string("mPanelList")
@@ -3065,18 +3077,6 @@ function chat_add_to_sent_history(text)
 			ivkr_pop(3)
 		end
 		ivkr_pop(2)
-	end
-end
-
-function chat_system_reply(text)
-	if ivkr_push_chat_redux() then
-		ivkr_push_string("SystemMessage")
-		ivkr_gettable(-2)
-		ivkr_push_value(-2)
-		ivkr_push_string(text)
-		ivkr_call2(2, 0)
-
-		ivkr_pop(1)
 	end
 end
 
