@@ -1511,6 +1511,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		static_cast<owfScript*>(L->l_G->user_data)->custom_routes.erase(soup::joaat::hash(luaL_checkstring(L, 1)));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_unregister_custom_route");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		size_t tag_len;
 		auto tag = luaL_checklstring(L, 1, &tag_len);
 
@@ -1537,6 +1544,22 @@ owfScript::owfScript()
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_subscribe_to_script_trigger");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto script = luaL_checkstring(L, 1);
+		const auto func = luaL_checkstring(L, 2);
+
+		uint32_t hash = 0;
+		hash = joaat::partialStr(script, hash);
+		hash = joaat::partialStr(func, hash);
+		joaat::finalise(hash);
+
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_script_triggers.erase(hash);
+
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_unsubscribe_from_script_trigger");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
