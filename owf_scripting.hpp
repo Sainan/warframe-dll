@@ -23,7 +23,7 @@ inline bool active_input_filter_allows_hotkeys;
 
 enum owfScriptEventType : uint8_t
 {
-	OWF_EVT_BLOCKED_CHAT_MESSAGE = 1,
+	OWF_EVT_SUBMIT_CHAT_MESSAGE = 1,
 	OWF_EVT_OUTGOING_CHAT_MESSAGE = 2,
 	OWF_EVT_CUSTOM_ROUTE_SERVED = 3,
 	OWF_EVT_CALLBACK = 4,
@@ -64,7 +64,7 @@ struct owfScript
 		std::string mime;
 		std::string content;
 	};
-	std::unordered_set<std::string> blocked_chat_prefixes;
+	std::unordered_map<std::string, bool> subscribed_chat_prefixes;
 	std::unordered_set<std::string> subscribed_outgoing_chat_prefixes;
 	std::unordered_set<std::string> websocket_message_prefixes;
 	std::unordered_set<std::string> channels;
@@ -86,16 +86,16 @@ struct owfScript
 	bool tick();
 	int tick(int nargs);
 
-	bool isBlockingMessage(const std::string& msg) const noexcept
+	const bool* findChatSendSubscription(const std::string& msg) const noexcept
 	{
-		for (const auto& prefix : blocked_chat_prefixes)
+		for (const auto& e : subscribed_chat_prefixes)
 		{
-			if (msg.starts_with(prefix))
+			if (msg.starts_with(e.first))
 			{
-				return true;
+				return &e.second;
 			}
 		}
-		return false;
+		return nullptr;
 	}
 
 	bool isSubscribedToOutgoingMessage(const std::string_view& msg) const noexcept

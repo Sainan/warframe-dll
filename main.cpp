@@ -1423,34 +1423,25 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 	//std::cout << "lua_FlashInstance_GetStringVariable: " << L->intop[1].getString() << " -> " << L->outtop[-1].getString() << std::endl;
 	if (soup::joaat::hash(L->intop[1].getString()) == soup::joaat::compileTimeHash("Window.SendMessageBar.MessageBox"))
 	{
-		owfScript* blocking_script = nullptr;
+		bool block = false;
 		{
 			std::string current_draft = L->outtop[-1].getString();
 
 			std::lock_guard lock(running_scripts_mtx);
 			for (auto& scr : running_scripts)
 			{
-				if (scr->isBlockingMessage(current_draft))
+				if (auto pBlock = scr->findChatSendSubscription(current_draft))
 				{
-					blocking_script = scr;
-					break;
-				}
-			}
-			/*if (!blocking_script && bgscript && bgscript->isBlockingMessage)
-			{
-				blocking_script = bgscript;
-			}*/
-
-			if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
-			{
-				if (blocking_script != nullptr)
-				{
-					blocking_script->events.emplace_back(OWF_EVT_BLOCKED_CHAT_MESSAGE, std::move(current_draft));
+					block |= *pBlock;
+					if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
+					{
+						scr->events.emplace_back(OWF_EVT_SUBMIT_CHAT_MESSAGE, std::move(current_draft));
+					}
 				}
 			}
 		}
 
-		if (blocking_script != nullptr && luau_pushstring)
+		if (block && luau_pushstring)
 		{
 			// Stop the game from processing this
 			L->outtop--;

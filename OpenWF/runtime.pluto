@@ -3042,6 +3042,11 @@ function get_lang_dict(lang = get_lang_code())
 	return cat.decode(data, "flat")
 end
 
+-- Compatibility
+OWF_EVT_BLOCKED_CHAT_MESSAGE = OWF_EVT_SUBMIT_CHAT_MESSAGE
+chat_block_prefix = |prefix| -> chat_subscribe_prefix(prefix, true)
+chat_unblock_prefix = chat_unsubscribe_prefix
+
 function chat_system_reply(text)
 	if ivkr_push_chat_redux() then
 		ivkr_push_string("SystemMessage")
@@ -3653,7 +3658,7 @@ return function(f)
 						cb(evt.sender, arg)
 						continue
 					end
-				elseif evt.type == OWF_EVT_BLOCKED_CHAT_MESSAGE then
+				elseif evt.type == OWF_EVT_SUBMIT_CHAT_MESSAGE then
 					sched:add(function()
 						chat_add_to_sent_history(evt.text)
 					end)

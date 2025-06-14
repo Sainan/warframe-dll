@@ -1328,31 +1328,31 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.emplace(pluto_checkstring(L, 1));
-		return 0;
-	});
-	OWF_SET_GLOBAL(L, "chat_block_prefix");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.erase(pluto_checkstring(L, 1));
-		return 0;
-	});
-	OWF_SET_GLOBAL(L, "chat_unblock_prefix");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.emplace(pluto_checkstring(L, 1));
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_chat_prefixes.emplace(pluto_checkstring(L, 1), lua_toboolean(L, 2));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "chat_subscribe_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.erase(pluto_checkstring(L, 1));
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_chat_prefixes.erase(pluto_checkstring(L, 1));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "chat_unsubscribe_prefix");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.emplace(pluto_checkstring(L, 1));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "chat_subscribe_outgoing_prefix");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.erase(pluto_checkstring(L, 1));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "chat_unsubscribe_outgoing_prefix");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1417,7 +1417,7 @@ owfScript::owfScript()
 		OWF_SET_GLOBAL(L, "ivkr_call2");
 	}
 
-	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_BLOCKED_CHAT_MESSAGE);
+	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SUBMIT_CHAT_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_OUTGOING_CHAT_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CUSTOM_ROUTE_SERVED);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CALLBACK);
@@ -1438,7 +1438,7 @@ owfScript::owfScript()
 			}
 			switch (scr->events.front().type)
 			{
-			case OWF_EVT_BLOCKED_CHAT_MESSAGE:
+			case OWF_EVT_SUBMIT_CHAT_MESSAGE:
 				pluto_pushstring(L, ObfusString("text").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
