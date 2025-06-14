@@ -33,7 +33,9 @@ function parse_metadata_patches(str)
 			if line[-1] == "&" then
 				line = line:sub(1, -2):strip()
 			end
-			patch.keys:insert(line)
+			for line:split("&") as key do
+				patch.keys:insert(key:strip())
+			end
 		elseif line[1] == ">" then
 			delimit_patch()
 			line = line:sub(2):strip()
