@@ -15,6 +15,7 @@ function parse_metadata_patches(str)
 			else
 				delimit_patch()
 			end
+			line = line:strip()
 			if line[-1] == "&" then
 				ampersand = true
 				line = line:sub(1, -2):strip()
@@ -28,11 +29,10 @@ function parse_metadata_patches(str)
 		ampersand = false
 		if line[1] == "&" then
 			ampersand = true
+			line = line:sub(2):strip()
 			if line[-1] == "&" then
-				ampersand = true
 				line = line:sub(1, -2):strip()
 			end
-			line = line:sub(2):strip()
 			patch.keys:insert(line)
 		elseif line[1] == ">" then
 			delimit_patch()
