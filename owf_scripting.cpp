@@ -944,6 +944,33 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_get_upvalue");
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto idx = (uint8_t)luaL_checkinteger(L, 1);
+		SOUP_IF_UNLIKELY (luau_L->outtop[-2].type != LUAU_FUNCTION)
+		{
+			luaL_error(L, ObfusString("unexpected type"));
+		}
+		const auto closure = reinterpret_cast<luau_Closure*>(luau_L->outtop[-2].value.as_uintptr);
+		SOUP_IF_UNLIKELY (idx >= closure->nupvalues)
+		{
+			luaL_error(L, ObfusString("index out of range"));
+		}
+		luau_TValue* const arr = closure->isC ? closure->c.upvals : closure->l.uprefs;
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		luau_TValue* tval = &arr[idx];
+		if (tval->type == LUAU_TUPVAL)
+		{
+			tval = tval->value.gc->uv.v;
+		}
+		*tval = *(--luau_L->outtop);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_set_upvalue");
+
 	OWF_SET_GLOBAL_INT(L, "IVKR_NIL", LUAU_NIL);
 	OWF_SET_GLOBAL_INT(L, "IVKR_BOOL", LUAU_BOOL);
 	OWF_SET_GLOBAL_INT(L, "IVKR_NUMBER", LUAU_NUMBER);
