@@ -1335,7 +1335,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.erase(pluto_checkstring(L, 2));
+		static_cast<owfScript*>(L->l_G->user_data)->blocked_chat_prefixes.erase(pluto_checkstring(L, 1));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "chat_unblock_prefix");
@@ -1349,7 +1349,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.erase(pluto_checkstring(L, 2));
+		static_cast<owfScript*>(L->l_G->user_data)->subscribed_outgoing_chat_prefixes.erase(pluto_checkstring(L, 1));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "chat_unsubscribe_prefix");
@@ -1363,7 +1363,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.erase(pluto_checkstring(L, 2));
+		static_cast<owfScript*>(L->l_G->user_data)->websocket_message_prefixes.erase(pluto_checkstring(L, 1));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "unregister_websocket_message_prefix");
