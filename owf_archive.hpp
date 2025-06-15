@@ -14,6 +14,7 @@ struct owfArchive
 	const char* find(uint32_t key, uint32_t& out_len) const;
 	std::unordered_map<std::string, std::string> getDict(const std::string& lang) const;
 
+	uint64_t creation;
 	std::string data;
 };
 
