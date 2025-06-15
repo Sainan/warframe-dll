@@ -72,7 +72,7 @@ using namespace soup;
 
 const char* g_bootstrapper_title = BOOTSTRAPPER_TITLE;
 
-static uint32_t server_remote_ip = 0;
+static uint32_t server_remote_ip_hash = 0;
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"
@@ -352,23 +352,22 @@ static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
 static bool can_use_server_host()
 {
-	bool res = true;
-	if (server_remote_ip)
+	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
 	{
-		res = false;
-		if (g_ota_tunables.remote_ip_mode)
+		std::lock_guard lock(g_client_tunables_mtx);
+		if (g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_remote_ip_hash))
 		{
-			{
-				std::lock_guard lock(g_ota_tunables_mtx);
-				res = (std::find(g_ota_tunables.remote_ip_list.begin(), g_ota_tunables.remote_ip_list.end(), server_remote_ip) != g_ota_tunables.remote_ip_list.end());
-			}
-			if (g_ota_tunables.remote_ip_mode == 1) // Blacklist
-			{
-				res = !res;
-			}
+			return false; // Server blacklisted
+		}
+		if (
+			auth_query.empty() // Not currently logged in?
+			&& g_archive.creation + g_client_tunables.ints.at(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
+			)
+		{
+			return false; // To prevent downgrade attacks, disallow this remote connection.
 		}
 	}
-	return res;
+	return true;
 }
 
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool strip_tls)
@@ -678,39 +677,6 @@ static void fire_and_forget_messagebox(std::string msg, UINT type)
 
 static DetachedScheduler task_runner;
 
-struct owfOtaTunablesTask : public soup::Task
-{
-	HttpRequestTask hrt;
-
-	owfOtaTunablesTask()
-		: hrt(ObfusString("t.openwf.io"), ObfusString("/"))
-	{
-	}
-
-	void onTick() final
-	{
-		if (hrt.tickUntilDone())
-		{
-			if (hrt.result)
-			{
-				std::lock_guard lock(g_ota_tunables_mtx);
-				g_ota_tunables.load(hrt.result->body.data(), hrt.result->body.size());
-#if false
-				std::cout << "remote_ip_mode = " << g_ota_tunables.remote_ip_mode << std::endl;
-				std::cout << "remote_ip_list =";
-				for (const auto& ip : g_ota_tunables.remote_ip_list)
-				{
-					std::cout << " " << ip;
-				}
-				std::cout << std::endl;
-				std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
-#endif
-			}
-			setWorkDone();
-		}
-	}
-};
-
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
 {
@@ -734,14 +700,14 @@ struct owfTunablesTask : public soup::Task
 				{
 					if (hrt.sock->peer.ip.isLocalnet())
 					{
-						server_remote_ip = 0;
+						server_remote_ip_hash = 0;
 					}
 					else
 					{
-						server_remote_ip = hrt.sock->peer.ip.getV4NativeEndian();
+						server_remote_ip_hash = soup::joaat::hash(hrt.sock->peer.ip.toString());
 					}
 #if false
-					std::cout << "server_remote_ip = " << server_remote_ip << std::endl;
+					std::cout << "server_remote_ip_hash = " << server_remote_ip_hash << std::endl;
 					std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
 #endif
 				}
@@ -4737,7 +4703,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 					}
 				};
-				task_runner.add<owfOtaTunablesTask>();
 				if (serv.bind(client_http_port, &srv))
 				{
 					serv.run();

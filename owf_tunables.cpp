@@ -57,6 +57,7 @@ std::string owfServerTunables::getProhibitionName(uint32_t hash)
 
 bool owfClientTunables::load(const char* data, size_t size)
 {
+	ints.clear();
 	strarrs.clear();
 
 	auto jr = json::decode(data, size);
@@ -68,7 +69,11 @@ bool owfClientTunables::load(const char* data, size_t size)
 	{
 		if (e.first->isStr())
 		{
-			if (e.second->isArr())
+			if (e.second->isInt())
+			{
+				ints.emplace(joaat::hash(e.first->reinterpretAsStr().value), e.second->reinterpretAsInt().value);
+			}
+			else if (e.second->isArr())
 			{
 				std::vector<uint32_t> arr;
 				for (const auto& c : e.second->reinterpretAsArr())
@@ -87,6 +92,7 @@ bool owfClientTunables::load(const char* data, size_t size)
 
 bool owfClientTunables::loadMsgpack(const char* data, size_t size)
 {
+	ints.clear();
 	strarrs.clear();
 
 	MemoryRefReader r(data, size);
@@ -106,7 +112,11 @@ bool owfClientTunables::loadMsgpack(const char* data, size_t size)
 					bools.emplace_back(e.first->reinterpretAsInt().value);
 				}
 			}
-			else*/ if (e.second->isArr())
+			else*/ if (e.second->isInt())
+			{
+				ints.emplace(e.first->reinterpretAsInt().value, e.second->reinterpretAsInt().value);
+			}
+			else if (e.second->isArr())
 			{
 				std::vector<uint32_t> arr;
 				for (const auto& c : e.second->reinterpretAsArr())
@@ -130,20 +140,4 @@ bool owfClientTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const 
 		return std::find(e->second.begin(), e->second.end(), str_hash) != e->second.end();
 	}
 	return false;
-}
-
-bool owfOtaTunables::load(const char* data, size_t size)
-{
-	auto jr = json::decode(data, size);
-	if (!jr || !jr->isArr())
-	{
-		return false;
-	}
-	remote_ip_mode = jr->reinterpretAsArr().at(0).asInt();
-	remote_ip_list.clear();
-	for (const auto& e : jr->reinterpretAsArr().at(1).asArr())
-	{
-		remote_ip_list.emplace_back(e.asInt());
-	}
-	return true;
 }
