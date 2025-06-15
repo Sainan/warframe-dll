@@ -101,7 +101,7 @@
 		<li><code>fov_override</code> — If not 0, overrides the game's FOV setting. You can use any value from 1 to 226.</li>
 		<li><code>forced_profile_dir</code> — An absolute path to a folder that will be used to read and write your game settings. Notably, this can be used to have the same settings regardless of username.</li>
 		<li><code>auto_start_scripts</code> — A list of scripts to automatically start, e.g. <code>["samples/Cycle Camera Hotkey (K).pluto"]</code>.</li>
-		<li><code>alternative_loading</code> — Enables an alternative loading mode (<code>Server.FastLoad</code>) which also skips some intro cutscenes, e.g. when loading into a relay.</li>
+		<li><code>alternative_loading</code> — Enables an alternative loading mode (<code>Server.FastLoad</code>) which also skips intro cutscenes when loading into a relay. However, this breaks some parts of The New War and possibly other missions.</li>
 		<li><code>dont_resolve_labels</code> — If true, shows language tags instead of their associated value, e.g. <code>/Menu/Confirm_Item_Yes</code> instead of <code>YES</code>.</li>
 		<li><code>save_all_metadata</code> — If true, implicitly creates an empty patch on every metadata read to make it available for get_effective_metadata requests. May degrade performance.</li>
 		<li><code>write_all_metadata_reads_to_console</code> — If true, writes all metadata reads to the console. May degrade performance.</li>
