@@ -3508,6 +3508,37 @@ package.preload["Lotus.Scripts.Libs.ObjectiveText"] = || -> {
 	end,
 }
 
+package.preload["Lotus.Scripts.Libs.DuviriActivityLib"] = || -> {
+	ModifyEncounterLimit = function(type, delta)
+		ivkr_push_string("Lotus.Scripts.Libs.DuviriActivityLib")
+		ivkr_call(ivkr_find_builtin("require"), 1)
+		do
+			ivkr_push_string("ModifyEncounterLimit")
+			ivkr_gettable(-2)
+
+			type:pushToIvkr()
+			ivkr_push_int(delta)
+			ivkr_call2(2, 0)
+		end
+		ivkr_pop(1)
+	end,
+	IsEncounterLimitReached = function(type)
+		local res
+		ivkr_push_string("Lotus.Scripts.Libs.DuviriActivityLib")
+		ivkr_call(ivkr_find_builtin("require"), 1)
+		do
+			ivkr_push_string("IsEncounterLimitReached")
+			ivkr_gettable(-2)
+
+			type:pushToIvkr()
+			ivkr_call2(1, 1)
+			res = ivkr_pop_bool()
+		end
+		ivkr_pop(1)
+		return res
+	end,
+}
+
 coroutine.sleep = function(ms)
 	local t = os.millis() + ms
 	repeat

@@ -773,3 +773,7 @@ _T.OpenScreen -- function(name)
 "Lotus.Scripts.Libs.ObjectiveText"
 	SetPrimaryObjText = function(text)
 	ClearPrimaryObjText = function()
+
+"Lotus.Scripts.Libs.DuviriActivityLib"
+	ModifyEncounterLimit = function(type, delta)
+	IsEncounterLimitReached = function(type)
