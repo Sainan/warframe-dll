@@ -389,6 +389,15 @@ class CameraControllerBase extends Object
 	function SetWallRunRightAimViewOffset(vec)
 
 class EngineNpcMgr extends Object
+	function GetAiDirector()
+
+class EngineAiDirector extends Object
+	function ClearEncounters()
+	function AddEncounter(type)
+	function SelectEncounterHintsWithType(type, minDist, maxDist)
+	function ActivateSpecificEncounterAtSpecificHint(hint, type)
+	function AddGlobalEncounterTag(symbol)
+	function RemoveGlobalEncounterTag(symbol)
 
 class NpcManager extends EngineNpcMgr
 	function PauseAllAgents()

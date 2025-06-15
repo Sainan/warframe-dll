@@ -2177,7 +2177,56 @@ end
 class EngineNpcMgr extends Object
 	__name = "EngineNpcMgr"
 
+	function GetAiDirector()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("EngineNpcMgr", "GetAiDirector"), 1)
+		return new EngineAiDirector()
+	end
 end
+
+class EngineAiDirector extends Object
+	__name = "EngineAiDirector"
+
+	function ClearEncounters()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("EngineAiDirector", "ClearEncounters"), 1)
+	end
+
+	function AddEncounter(type)
+		self:pushToIvkr()
+		type:pushToIvkr()
+		ivkr_call(ivkr_find_method("EngineAiDirector", "AddEncounter"), 2)
+	end
+
+	function SelectEncounterHintsWithType(type, minDist, maxDist)
+		self:pushToIvkr()
+		type:pushToIvkr()
+		ivkr_push_float(minDist)
+		ivkr_push_float(maxDist)
+		ivkr_call(ivkr_find_method("EngineAiDirector", "SelectEncounterHintsWithType"), 4)
+		return ivkr_pop_array(Entity)
+	end
+
+	function ActivateSpecificEncounterAtSpecificHint(hint, type)
+		self:pushToIvkr()
+		hint:pushToIvkr()
+		type:pushToIvkr()
+		ivkr_pop(ivkr_call(ivkr_find_method("EngineAiDirector", "ActivateSpecificEncounterAtSpecificHint"), 3))
+	end
+
+	function AddGlobalEncounterTag(symbol)
+		self:pushToIvkr()
+		symbol:pushToIvkr()
+		ivkr_call(ivkr_find_method("EngineAiDirector", "AddGlobalEncounterTag"), 2)
+	end
+
+	function RemoveGlobalEncounterTag(symbol)
+		self:pushToIvkr()
+		symbol:pushToIvkr()
+		ivkr_call(ivkr_find_method("EngineAiDirector", "RemoveGlobalEncounterTag"), 2)
+	end
+end
+
 class NpcManager extends EngineNpcMgr
 	__name = "NpcManager"
 
