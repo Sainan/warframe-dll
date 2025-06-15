@@ -1425,7 +1425,7 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 	{
 		bool block = false;
 		{
-			std::string current_draft = L->outtop[-1].getString();
+			const std::string current_draft = L->outtop[-1].getString();
 
 			std::lock_guard lock(running_scripts_mtx);
 			for (auto& scr : running_scripts)
@@ -1435,7 +1435,7 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 					block |= *pBlock;
 					if (L->intop[-3].type == LUAU_NIL) // Heuristic to determine if the message was just submitted
 					{
-						scr->events.emplace_back(OWF_EVT_SUBMIT_CHAT_MESSAGE, (uint32_t)*pBlock, std::move(current_draft));
+						scr->events.emplace_back(OWF_EVT_SUBMIT_CHAT_MESSAGE, (uint32_t)*pBlock, current_draft);
 					}
 				}
 			}
