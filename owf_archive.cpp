@@ -14,7 +14,11 @@ using namespace soup;
 
 void owfArchive::load(const char* data, size_t size)
 {
-	this->data = deflate::decompress(data, size).decompressed;
+	MemoryRefReader r(data, size);
+	uint32_t decompressed_size = 0;
+	r.u32_le(decompressed_size);
+	const auto off = r.getPosition();
+	this->data = deflate::decompress(data + off, size - off, decompressed_size).decompressed;
 }
 
 void owfArchive::loadBuiltin()
