@@ -4,8 +4,8 @@ local function disable()
 	if not IsNull(avatar) then
 		avatar:SetCustomAnimController(nil)
 		avatar:SetCustomMotionController(nil)
-		if avatar:MotionControl():IsA(Type("/Lotus/Powersuits/Fairy/FlightMotionController")) then
-			avatar:MotionControl():EnableFlight(false)
+		if (mc := avatar:MotionControl()) instanceof LotusSpaceFlightMotionController then
+			mc:EnableFlight(false)
 		end
 		avatar:SetCustomCameraController(nil)
 		avatar:SetPostureModifier(PostureModifier.PM_AIRBORNE, false)
@@ -19,7 +19,7 @@ repeat
 	end
 	if not IsNull(avatar) then
 		avatar:SetCustomAnimController(Type("/Lotus/Powersuits/Fairy/FairyFlightAnimController"))
-		avatar:SetCustomMotionController(Type("/Lotus/Powersuits/Fairy/FlightMotionController"))
+		avatar:SetCustomMotionController(Type("/Lotus/Types/Game/LotusGroundFlightMotionController"))
 		avatar:SetCustomCameraController(Type("/Lotus/Types/Player/SpaceBattle/SpaceMoveCameraController"))
 		avatar:SetCollisionEnabled(false)
 	end
