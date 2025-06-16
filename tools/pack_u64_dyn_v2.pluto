@@ -1,0 +1,20 @@
+function pack_u64_dyn_v2(v)
+    local out = {}
+    for _i = 1, 8 do
+        local cur = v & 0x7f
+        v = v >> 7
+        if v ~= 0 then
+            out[#out + 1] = string.char(cur | 0x80)
+            v = v - 1 -- v2
+        else
+            out[#out + 1] = string.char(cur)
+            return table.concat(out)
+        end
+    end
+    if v ~= 0 then
+        out[#out + 1] = string.char(v)
+    end
+    return table.concat(out)
+end
+
+print(require"base64".encode(pack_u64_dyn_v2(tonumber(arg[1]))))

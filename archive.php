@@ -52,12 +52,21 @@ function add_folder_to_archive($base, $archive_base)
 	}
 }
 
+function pack_u64_dyn_v2($val)
+{
+	return base64_decode(exec("tools\pluto tools\pack_u64_dyn_v2.pluto ".$val));
+}
+
 add_folder_to_archive("OpenWF/", "OpenWF/");
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/");
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/");
 add_folder_to_archive("modules/openwf-translations/bootstrapper/", "OpenWF/translations/");
 
-$bin_str = pack("VP", strlen($uncompressed), time()).gzcompress($uncompressed, 9);
+$bin_str = pack_u64_dyn_v2(strlen($uncompressed));
+strlen($bin_str) == 3 or die();
+$bin_str .= pack_u64_dyn_v2(time());
+strlen($bin_str) == 8 or die();
+$bin_str .= gzcompress($uncompressed, 9);
 file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
 touch("owf_archive.cpp");
 

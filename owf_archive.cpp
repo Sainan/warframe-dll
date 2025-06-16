@@ -15,9 +15,9 @@ using namespace soup;
 void owfArchive::load(const char* data, size_t size)
 {
 	MemoryRefReader r(data, size);
-	uint32_t decompressed_size = 0;
-	r.u32_le(decompressed_size);
-	r.u64_le(this->creation);
+	uint64_t decompressed_size = 0;
+	r.u64_dyn_v2(decompressed_size);
+	r.u64_dyn_v2(this->creation);
 	const auto off = r.getPosition();
 	this->data = deflate::decompress(data + off, size - off, decompressed_size).decompressed;
 }
