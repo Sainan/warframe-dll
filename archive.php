@@ -52,9 +52,33 @@ function add_folder_to_archive($base, $archive_base)
 	}
 }
 
-function pack_u64_dyn_v2($val)
+function pack_u64_dyn_v2($v)
 {
-	return base64_decode(exec("tools\pluto tools\pack_u64_dyn_v2.pluto ".$val));
+	if (is_float($v))
+	{
+		throw new Exception("Cannot encode a float as u64");
+	}
+	$out = "";
+	for ($i = 0; $i != 8; ++$i)
+	{
+		$cur = $v & 0x7f;
+		$v >>= 7;
+		if ($v != 0)
+		{
+			$out .= chr($cur | 0x80);
+			$v -= 1; // v2
+		}
+		else
+		{
+			$out .= chr($cur);
+			return $out;
+		}
+	}
+	if ($v != 0)
+	{
+		$out .= chr($v);
+	}
+	return $out;
 }
 
 add_folder_to_archive("OpenWF/", "OpenWF/");
