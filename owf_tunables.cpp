@@ -133,6 +133,15 @@ bool owfClientTunables::loadMsgpack(const char* data, size_t size)
 	return true;
 }
 
+uint32_t owfClientTunables::getInt(uint32_t hash) const noexcept
+{
+	if (auto e = ints.find(hash); e != ints.end())
+	{
+		return e->second;
+	}
+	return 0;
+}
+
 bool owfClientTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept
 {
 	if (auto e = strarrs.find(hash); e != strarrs.end())

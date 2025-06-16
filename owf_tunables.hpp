@@ -29,6 +29,7 @@ struct owfClientTunables
 	bool load(const char* data, size_t size);
 	bool loadMsgpack(const char* data, size_t size);
 
+	uint32_t getInt(uint32_t hash) const noexcept;
 	bool isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept;
 };
 

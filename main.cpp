@@ -355,13 +355,18 @@ static bool can_use_server_host()
 	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
-		if (g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_remote_ip_hash))
+		bool blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_remote_ip_hash);
+		if (g_client_tunables.getInt(joaat::compileTimeHash("invipbl")))
 		{
-			return false; // Server blacklisted
+			blacklisted = !blacklisted;
+		}
+		if (blacklisted)
+		{
+			return false;
 		}
 		if (
 			auth_query.empty() // Not currently logged in?
-			&& g_archive.creation + g_client_tunables.ints.at(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
+			&& g_archive.creation + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
 			)
 		{
 			return false; // To prevent downgrade attacks, disallow this remote connection.
