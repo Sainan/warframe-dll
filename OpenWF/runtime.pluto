@@ -2397,6 +2397,12 @@ class BaseMarkerInfo extends Entity
 		end
 		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetDisplayRange"), 2)
 	end
+
+	function SetRadius(f)
+		self:pushToIvkr()
+		ivkr_push_float(f)
+		ivkr_call(ivkr_find_method("BaseMarkerInfo", "SetRadius"), 2)
+	end
 end
 
 class Effect extends Entity
