@@ -729,6 +729,12 @@ struct owfTunablesTask : public soup::Task
 
 			if (!ok)
 			{
+				std::lock_guard lock(g_client_tunables_mtx);
+				ok = g_client_tunables.getInt(joaat::hash("silent_tunables_error"));
+			}
+
+			if (!ok)
+			{
 				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
 				auto msg = ObfusString("Failed to verify that the server at ").str();
 				msg.append(hrt.hr.getHost());
