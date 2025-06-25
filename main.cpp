@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.11.5"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.11.6"
 
 #define REDIRECT_REQUESTS true
 #define ASK_SERVER_FOR_TUNABLES true
