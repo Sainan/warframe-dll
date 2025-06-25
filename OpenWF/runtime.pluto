@@ -1644,6 +1644,11 @@ class RadialSector extends owfUserdata
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "mission"), 1)
 				return new LotusMissionInfo()
+
+			case "challenges":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialSector", "challenges"), 1)
+				return ivkr_pop_array(LotusChallenge)
 		end
 		error("Unknown field: "..name)
 	end
@@ -1840,6 +1845,18 @@ class MissionAI extends owfUserdata
 		end
 		error("Unknown field: "..name)
 	end
+end
+
+class ChallengeBase extends Object
+	__name = "ChallengeBase"
+end
+
+class GenericChallenge extends ChallengeBase
+	__name = "GenericChallenge"
+end
+
+class LotusChallenge extends GenericChallenge
+	__name = "LotusChallenge"
 end
 
 class StoreManifest extends Object

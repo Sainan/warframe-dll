@@ -274,6 +274,7 @@ class RadialSector
 	nodeType
 	missionTag
 	mission
+	challenges
 
 class LotusMissionInfo
 	missionType
@@ -314,6 +315,12 @@ class MissionRewardItem
 
 class MissionAI
 	agent
+
+class ChallengeBase extends Object
+
+class GenericChallenge extends ChallengeBase
+
+class ChallengeBase extends Object
 
 class StoreManifest extends Object
 	function GetStoreItemsOfType(objectType)
