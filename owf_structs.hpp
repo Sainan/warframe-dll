@@ -3,6 +3,7 @@
 #include <structing.hpp>
 
 inline char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
+inline bool is_39_0_0_or_above = false;
 inline bool is_38_5_0_or_above = false;
 inline bool is_37_0_0_or_above = false;
 inline bool is_35_5_0_or_above = false;
@@ -150,6 +151,23 @@ struct LegacyGameStringU18
 		setUnownedData((const char*)block, len);
 	}
 };
+
+struct ArgumentsU39
+{
+	PAD(0, 0x189) bool got_graphicsDriver;
+	/* 0x190 */ GameString graphicsDriver;
+	PAD(0x190 + sizeof(GameString), 0x1AC) bool got_language;
+	/* 0x1B0 */ GameString language;
+	// -languageVO is new here
+	PAD(0x1B0 + sizeof(GameString), 0x1D8) bool got_cluster;
+	/* 0x1E0 */ GameString cluster;
+};
+static_assert(offsetof(ArgumentsU39, got_graphicsDriver) == 0x189);
+static_assert(offsetof(ArgumentsU39, graphicsDriver) == 0x190);
+static_assert(offsetof(ArgumentsU39, got_language) == 0x1AC);
+static_assert(offsetof(ArgumentsU39, language) == 0x1B0);
+static_assert(offsetof(ArgumentsU39, got_cluster) == 0x1D8);
+static_assert(offsetof(ArgumentsU39, cluster) == 0x1E0);
 
 // Update 37-38
 struct ArgumentsU37

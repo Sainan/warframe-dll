@@ -2284,6 +2284,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		std::cout << "build_label = " << std::string(build_label, 16) << std::endl;
 #endif
 
+		is_39_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.06.23.11.39").str()) >= 0);
 		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.09.51").str()) >= 0);
 		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
 		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
@@ -3069,7 +3070,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
 
-				if (is_37_0_0_or_above)
+				if (is_39_0_0_or_above)
+				{
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString>);
+				}
+				else if (is_37_0_0_or_above)
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString>);
 				}
@@ -3631,8 +3636,16 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (is_37_0_0_or_above)
 		{
-			SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0");
-			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
+			if (is_39_0_0_or_above)
+			{
+				SIG_INST("40 53 57 48 83 EC 28 0F B7 41 50 48 8B D9 66 FF C0 49 63 F8");
+				luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
+			}
+			else
+			{
+				SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0");
+				luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
+			}
 #if LOGGING
 			std::cout << "luauD_call = " << (void*)luauD_call << std::endl;
 #endif
