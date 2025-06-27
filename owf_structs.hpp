@@ -158,14 +158,17 @@ struct ArgumentsU39
 	/* 0x190 */ GameString graphicsDriver;
 	PAD(0x190 + sizeof(GameString), 0x1AC) bool got_language;
 	/* 0x1B0 */ GameString language;
-	// -languageVO is new here
-	PAD(0x1B0 + sizeof(GameString), 0x1D8) bool got_cluster;
+	PAD(0x1B0 + sizeof(GameString), 0x1C0) bool got_languageVO;
+	/* 0x1C8 */ GameString languageVO;
+	PAD(0x1C8 + sizeof(GameString), 0x1D8) bool got_cluster;
 	/* 0x1E0 */ GameString cluster;
 };
 static_assert(offsetof(ArgumentsU39, got_graphicsDriver) == 0x189);
 static_assert(offsetof(ArgumentsU39, graphicsDriver) == 0x190);
 static_assert(offsetof(ArgumentsU39, got_language) == 0x1AC);
 static_assert(offsetof(ArgumentsU39, language) == 0x1B0);
+static_assert(offsetof(ArgumentsU39, got_languageVO) == 0x1C0);
+static_assert(offsetof(ArgumentsU39, languageVO) == 0x1C8);
 static_assert(offsetof(ArgumentsU39, got_cluster) == 0x1D8);
 static_assert(offsetof(ArgumentsU39, cluster) == 0x1E0);
 

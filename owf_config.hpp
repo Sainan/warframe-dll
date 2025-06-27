@@ -7,6 +7,7 @@
 
 // Command line arguments
 inline std::string fallback_language;
+inline std::string fallback_languageVO;
 inline std::string fallback_graphicsDriver;
 inline std::string fallback_cluster;
 

@@ -165,6 +165,7 @@ static void save_config()
 	JsonObject config;
 
 	config.add(ObfusString("fallback_language"), fallback_language);
+	config.add(ObfusString("fallback_languageVO"), fallback_languageVO);
 	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
 
@@ -809,17 +810,25 @@ static void process_args_str(const char* str)
 	}
 }
 
-template <typename Args, typename Str, bool has_graphicsDriver>
+template <typename Args, typename Str, bool has_languageVO, bool has_graphicsDriver>
 static void parse_arguments_detour(Args* arguments, Str* str, void* a3)
 {
 	process_args_str(str->getData());
 
-	reinterpret_cast<decltype(&parse_arguments_detour<Args, Str, has_graphicsDriver>)>(parse_arguments_hook.original)(arguments, str, a3);
+	reinterpret_cast<decltype(&parse_arguments_detour<Args, Str, has_languageVO, has_graphicsDriver>)>(parse_arguments_hook.original)(arguments, str, a3);
 	
 	if (!arguments->got_language && !fallback_language.empty())
 	{
 		arguments->got_language = true;
 		arguments->language.setShortData(fallback_language.data(), fallback_language.size());
+	}
+	if constexpr (has_languageVO)
+	{
+		if (!arguments->got_languageVO && !fallback_languageVO.empty())
+		{
+			arguments->got_languageVO = true;
+			arguments->languageVO.setShortData(fallback_languageVO.data(), fallback_languageVO.size());
+		}
 	}
 	if constexpr (has_graphicsDriver)
 	{
@@ -2380,6 +2389,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			}
 
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_languageVO")); it != config->reinterpretAsObj().end() && it->second->isStr())
+			{
+				fallback_languageVO = it->second->reinterpretAsStr().value;
+			}
+			else
+			{
+#if !CONFIG_LOADED_ONLY_ONCE
+				fallback_languageVO.clear();
+#endif
+			}
+
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_graphicsDriver")); it != config->reinterpretAsObj().end() && it->second->isStr())
 			{
 				fallback_graphicsDriver = it->second->reinterpretAsStr().value;
@@ -3072,59 +3092,59 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 				if (is_39_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString, true, true>);
 				}
 				else if (is_37_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString, false, true>);
 				}
 				else if (is_35_5_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString, false, true>);
 				}
 				else if (is_33_6_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString, false, true>);
 				}
 				else if (is_31_5_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString, false, true>);
 				}
 				else if (is_29_10_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString, false, true>);
 				}
 				else if (is_29_6_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString, false, true>);
 				}
 				else if (is_28_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString, false, true>);
 				}
 				else if (is_26_1_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU27, LegacyGameString, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU27, LegacyGameString, false, false>);
 				}
 				else if (is_25_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU25, LegacyGameString, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU25, LegacyGameString, false, false>);
 				}
 				else if (is_23_10_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU24, LegacyGameString, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU24, LegacyGameString, false, false>);
 				}
 				else if (is_19_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU23, LegacyGameString, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU23, LegacyGameString, false, false>);
 				}
 				else if (is_16_5_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU18, LegacyGameStringU18, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU18, LegacyGameStringU18, false, false>);
 				}
 				else
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU16, LegacyGameStringU18, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU16, LegacyGameStringU18, false, false>);
 				}
 				parse_arguments_hook.target = parse_arguments;
 				parse_arguments_hook.create();
