@@ -2,6 +2,7 @@
 	"nhkif": [
 		"/EE/Types/Input/MenuInputFilter", // Chat
 		"/Lotus/Types/Input/LoadoutReduxInputFilter",
+		"/Lotus/Types/Input/DojoSelectionMenuInputFilter", // Dojo Deco Placement Menu
 	],
 	"dns": [
 		"hub.warframe.com",
