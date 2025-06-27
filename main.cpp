@@ -809,7 +809,7 @@ static void process_args_str(const char* str)
 	}
 }
 
-template <typename Args, typename Str, bool has_graphicsDriver = true>
+template <typename Args, typename Str, bool has_graphicsDriver>
 static void parse_arguments_detour(Args* arguments, Str* str, void* a3)
 {
 	process_args_str(str->getData());
@@ -3072,35 +3072,35 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 				if (is_39_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString, true>);
 				}
 				else if (is_37_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString, true>);
 				}
 				else if (is_35_5_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString, true>);
 				}
 				else if (is_33_6_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString, true>);
 				}
 				else if (is_31_5_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString, true>);
 				}
 				else if (is_29_10_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString, true>);
 				}
 				else if (is_29_6_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString, true>);
 				}
 				else if (is_28_0_0_or_above)
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString, true>);
 				}
 				else if (is_26_1_0_or_above)
 				{
