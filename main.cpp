@@ -2660,6 +2660,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		save_config();
 
+#if PRIVATE
+		auto t = time::millis();
+#endif
+
 		// 2018.02.22.14.34 (M:8004325165498360760)
 		/*{
 			SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 00 FA FF FF 48 81 EC 00 07 00 00 48 8B 05 ? ? ? ? 48 33 C4");
@@ -4217,6 +4221,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("Failed to bring up \"logout on request failure\". This option will be non-functional.") << std::endl;
 			}
 		}
+
+#if PRIVATE
+		std::cout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;
+#endif
 
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 		{
