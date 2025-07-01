@@ -115,6 +115,7 @@ end
 commands["sync"] = function()
 	gGameData:SyncInventoryFromDB()
 end
+commands["resync"] = commands["sync"]
 commands["unstick"] = function()
 	gGameRules:UnstickLocalPlayer()
 end
