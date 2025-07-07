@@ -1,4 +1,4 @@
-function parse_metadata_patches(str)
+function parse_metadata_patches(str, filename)
 	local patches = {}
 	local patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
 	local ampersand = false
@@ -8,12 +8,16 @@ function parse_metadata_patches(str)
 		end
 		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
 	end
-	for str:split("\n") as line do
+	for linenum, line in str:split("\n") do
 		if line[1] == "/" then
 			if ampersand then
 				ampersand = false
 			else
 				delimit_patch()
+				print_to_console("[Metadata Patches] Starting a patch via / is deprecated.")
+				print_to_console("[Metadata Patches] - Note: If this was intentional, prefix a right angle bracket (>). Otherwise, use indentation.")
+				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+				print_to_console("[Metadata Patches] - What: "..line)
 			end
 			line = line:strip()
 			if line[-1] == "&" then
@@ -50,13 +54,17 @@ function parse_metadata_patches(str)
 			if sep := line:find("|", 3) then
 				patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 			else
-				print_to_console("[Metadata Patches] Ignoring malformed line: "..line)
+				print_to_console("[Metadata Patches] Ignoring malformed line")
+				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+				print_to_console("[Metadata Patches] - What: "..line)
 			end
 		elseif line:sub(1, 2) == "s|" then
 			if sep := line:find("|", 3) then
 				patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 			else
-				print_to_console("[Metadata Patches] Ignoring malformed line: "..line)
+				print_to_console("[Metadata Patches] Ignoring malformed line")
+				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+				print_to_console("[Metadata Patches] - What: "..line)
 			end
 		elseif #line ~= 0 and line[1] ~= "#" then
 			patch.prefix = patch.prefix .. line .. "\n"
@@ -68,8 +76,8 @@ function parse_metadata_patches(str)
 	return patches
 end
 
-function load_metadata_patches(str)
-	for parse_metadata_patches(str) as patch do
+function load_metadata_patches(str, filename)
+	for parse_metadata_patches(str, filename) as patch do
 		for patch.keys as key do
 			new_patch(key, patch.prefix)
 			for k, v in patch.replacements do
@@ -86,7 +94,7 @@ if io.exists("OpenWF/Metadata Patches/") then
 	for io.listdir("OpenWF/Metadata Patches/") as path do
 		if path:sub(-4) == ".txt" then
 			if str := io.contents(path) then
-				load_metadata_patches(str)
+				load_metadata_patches(str, io.relative(path))
 			end
 		end
 	end

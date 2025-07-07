@@ -134,16 +134,14 @@
 	</ul>
 	<h2>Metadata Patches</h2>
 	<p>Metadata Patches are loaded from <code>.txt</code> files in the <code>OpenWF/Metadata Patches/</code> folder.</p>
-	<p>They are generally parsed line by line, with roughly the following steps being taken for each line:</p>
-	<ol>
-		<li>If the line starts with <code>/</code>, a new patch for the given absolute path is started. If the line ends on <code>&</code>, the next line that also starts with <code>/</code> will be added to this patch instead of creating a new patch.</li>
-		<li>Leading and trailing tabs and spaces are removed from the line.</li>
-		<li>If the line starts with <code>&</code>, that character is removed from the line and the rest of the line is assumed to be an absolute path to be added to the current patch.</li>
-		<li>If the line starts with <code>></code>, that character is removed from the line and the rest of the line is assumed to be an absolute path for which a new patch is created.</li>
-		<li>If the line starts with <code>r|</code>, a replacement is added to the current patch in the form <code>r|A|Z</code> which means <code>A</code> in the metadata will be replaced with <code>Z</code>.</li>
-		<li>If the line starts with <code>s|</code>, a regex substitution is added to the current patch, e.g. <code>s|(.+)=1|$1=0</code> would change <code>HasCooldown=1</code> to be <code>HasCooldown=0</code>.</li>
-		<li>The line is added as a metadata prefix to the current patch. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
-	</ol>
+	<p>They are parsed line by line, with leading and trailing spaces and tabs being ignored:</p>
+	<ul>
+		<li><code>&gt; /Path/Here</code> starts a patch that will be applied to <code>/Path/Here</code>.</li>
+		<li><code>&gt; /First/Path &amp; /Second/Path</code> starts a patch that will be applied to <code>/First/Path</code> and <code>/Second/Path</code>. It is possible to stretch this over multiple lines by either ending a line with <code>&amp;</code> or starting the new line <code>&amp;</code>.</li>
+		<li>Any line not starting with a special token (<code>&gt;</code>, <code>r|</code>, ...) is added as a prefix to all affected metadata. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
+		<li>Lines starting with <code>r|</code> create replacements, e.g. <code>r|A|Z</code> replaces all instances of <code>A</code> with <code>Z</code> in affected metadata.</li>
+		<li>Lines starting with <code>s|</code> create regex substitutions, e.g. <code>s|(.+)=1|$1=0</code> would change <code>HasCooldown=1</code> to be <code>HasCooldown=0</code>.</li>
+	</ul>
 	<p>If multiple patches affect the same absolute path, they are combined.</p>
 	<br>
 </body>
