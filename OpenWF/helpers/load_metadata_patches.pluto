@@ -79,6 +79,10 @@ end
 function load_metadata_patches(str, filename)
 	for parse_metadata_patches(str, filename) as patch do
 		for patch.keys as key do
+			if key[1] ~= "/" then
+				print_to_console("[Metadata Patches] Can't patch invalid path: "..key)
+				continue
+			end
 			new_patch(key, patch.prefix)
 			for k, v in patch.replacements do
 				add_replacement(k, v)
