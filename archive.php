@@ -84,6 +84,7 @@ function pack_u64_dyn_v2($v)
 add_folder_to_archive("OpenWF/", "OpenWF/");
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/");
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/");
+add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/");
 add_folder_to_archive("modules/openwf-translations/bootstrapper/", "OpenWF/translations/");
 
 $bin_str = pack_u64_dyn_v2(strlen($uncompressed));

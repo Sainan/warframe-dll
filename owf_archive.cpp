@@ -57,6 +57,24 @@ const char* owfArchive::find(uint32_t key, uint32_t& out_len) const
 	return nullptr;
 }
 
+uint64_t owfArchive::getVersionedInt(uint32_t path, uint64_t version) const
+{
+	uint32_t size;
+	if (auto data = this->find(path, size))
+	{
+		MemoryRefReader r(data, size);
+		uint64_t ver, val;
+		while (r.u64_dyn_v2(ver) && r.u64_dyn_v2(val))
+		{
+			if (version >= ver)
+			{
+				return val;
+			}
+		}
+	}
+	return 0;
+}
+
 std::unordered_map<std::string, std::string> owfArchive::getDict(const std::string& lang) const
 {
 	std::string buf = string::fromFile(ObfusString("OpenWF/dict.cat.txt").str());

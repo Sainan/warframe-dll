@@ -49,7 +49,7 @@ struct luau_TValue
 
 	[[nodiscard]] Object* getObject() const noexcept
 	{
-		if (is_38_5_0_or_above)
+		if (game_version >= GV(38, 5, 0))
 		{
 			return **(Object***)(value.as_uintptr + 0x18);
 		}
@@ -100,7 +100,7 @@ struct luau_State
 
 	[[nodiscard]] SOUP_PURE void*& global_state_error_longjump_data() noexcept
 	{
-		if (is_38_5_0_or_above)
+		if (game_version >= GV(38, 5, 0))
 		{
 			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->error_longjump_data;
 		}
@@ -109,7 +109,7 @@ struct luau_State
 
 	[[nodiscard]] SOUP_PURE auto& global_state_panic_func() noexcept
 	{
-		if (is_38_5_0_or_above)
+		if (game_version >= GV(38, 5, 0))
 		{
 			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->panic_func;
 		}

@@ -47,7 +47,6 @@
 #include <unicode.hpp>
 #include <Uri.hpp>
 #include <urlenc.hpp>
-#include <version_compare.hpp>
 #include <WebSocketMessage.hpp>
 
 //#include <wininet.h>
@@ -1248,7 +1247,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	raise_script_error_t og_raise;
 
 	luau_L = L;
-	if (is_37_0_0_or_above) // These offsets are very likely wrong for 35.5.0 and below
+	if (game_version >= GV(37, 0, 0)) // These offsets are very likely wrong for 35.5.0 and below
 	{
 		L->global_state_error_longjump_data() = nullptr;
 		L->global_state_panic_func() = [](luau_State* L, int)
@@ -1332,7 +1331,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
-	if (is_37_0_0_or_above)
+	if (game_version >= GV(37, 0, 0))
 	{
 		L->outtop = luau_restorestack(L, og_outtop);
 		L->intop = luau_restorestack(L, og_intop);
@@ -2293,40 +2292,41 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		std::cout << "build_label = " << std::string(build_label, 16) << std::endl;
 #endif
 
-		is_39_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.06.23.11.39").str()) >= 0);
-		is_38_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2025.03.18.09.51").str()) >= 0);
-		is_37_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.09.30.16.56").str()) >= 0);
-		is_35_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2024.03.24.20.00")) >= 0);
-		//const bool is_35_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.11.06.13.39").str()) > 0); // 2023.11.06.13.39 should be 34.0.8, which was the last hotfix for update 34
-		//const bool is_34_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.09.12.09.10").str()) > 0); // 2023.09.12.09.10 should be 33.6.9, which was the last hotfix for update 33
-		is_33_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.07.26.16.38").str()) >= 0);
-		const bool is_33_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2023.04.25.23.40").str()) >= 0);
-		//const bool is_32_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.09.06.19.24").str()) >= 0);
-		const bool is_31_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.06.09.08.45").str()) >= 0);
-		is_31_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2022.04.29.12.53").str()) >= 0);
-		const bool is_30_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.04.13.19.58").str()) >= 0);
-		is_29_10_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.03.19.10.30").str()) >= 0);
-		is_29_6_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2021.01.25.08.49").str()) >= 0);
-		const bool is_29_3_2_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.11.04.18.58").str()) >= 0);
-		const bool is_29_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.08.25.18.35").str()) >= 0);
-		is_28_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2020.06.12.16.46").str()) >= 0);
-		//const bool is_27_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.12.13.00.31").str()) >= 0);
-		is_26_1_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.11.22.21.24").str()) >= 0);
-		const bool is_26_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.10.31.22.42").str()) >= 0);
-		is_25_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2019.05.22.23.12").str()) >= 0);
-		is_23_10_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.10.11.23.29").str()) >= 0);
-		const bool is_23_9_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.09.28.19.09").str()) >= 0);
-		const bool is_23_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.06.14.23.21").str()) >= 0);
-		const bool is_22_15_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2018.03.07.14.18").str()) >= 0);
-		const bool is_21_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.06.29.02.13").str()) >= 0);
-		const bool is_19_12_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2017.03.02.14.59").str()) >= 0);
-		is_19_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.11.11.17.46").str()) >= 0);
-		const bool is_18_18_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.08.19.17.12").str()) >= 0);
-		const bool is_18_7_1_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.31.15.16").str()) >= 0);
-		const bool is_18_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2016.03.04.10.06").str()) >= 0);
-		const bool is_18_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.12.05.18.07").str()) >= 0);
-		const bool is_17_0_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.10.15.12.24").str()) >= 0);
-		is_16_5_0_or_above = (version_compare(std::string(build_label, 16), ObfusString("2015.05.14.16.29").str()) >= 0);
+		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
+		{
+			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+			{
+				std::cout << ObfusString("Hotfix applied") << std::endl;
+			}
+			else
+			{
+				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
+				g_archive.loadBuiltin();
+			}
+		}
+		else
+		{
+			g_archive.loadBuiltin();
+		}
+
+		game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"),
+			static_cast<uint64_t>(build_label[ 0]) * 100000000000ull +
+			static_cast<uint64_t>(build_label[ 1]) * 10000000000ull +
+			static_cast<uint64_t>(build_label[ 2]) * 1000000000ull +
+			static_cast<uint64_t>(build_label[ 3]) * 100000000ull +
+			static_cast<uint64_t>(build_label[ 5]) * 10000000ull +
+			static_cast<uint64_t>(build_label[ 6]) * 1000000ull +
+			static_cast<uint64_t>(build_label[ 8]) * 100000ull +
+			static_cast<uint64_t>(build_label[ 9]) * 10000ull +
+			static_cast<uint64_t>(build_label[11]) * 1000ull +
+			static_cast<uint64_t>(build_label[12]) * 100ull +
+			static_cast<uint64_t>(build_label[14]) * 10ull +
+			static_cast<uint64_t>(build_label[15])
+		));
+
+#if LOGGING
+		std::cout << "game_version = " << game_version << std::endl;
+#endif
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
@@ -2728,7 +2728,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			void* winhttp_connect;
-			if (is_31_5_0_or_above)
+			if (game_version >= GV(31, 5, 0))
 			{
 				SIG_INST("40 53 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 68 0C 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 0C 00 00");
 				winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2750,32 +2750,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				log_optional_scan_failure(is_33_6_0_or_above);
+				log_optional_scan_failure(game_version >= GV(33, 6, 0));
 			}
 		}
 
 		{
 			Pointer game_http_request_caller;
 			size_t offset;
-			if (is_19_12_0_or_above)
+			if (game_version >= GV(19, 12, 0))
 			{
 				SIG_INST("48 8D 53 18 E8 ? ? ? ? 48 8D 8B");
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 5;
 			}
-			else if (is_18_18_0_or_above)
+			else if (game_version >= GV(18, 18, 0))
 			{
 				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 05"); // 2016.12.16.14.33, 2016.09.30.12.04, 2016.08.19.17.12
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
-			else if (is_18_5_0_or_above)
+			else if (game_version >= GV(18, 5, 0))
 			{
 				SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 4F 48"); // 2016.03.31.15.16, 2016.03.04.10.06
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
-			else if (is_18_0_0_or_above)
+			else if (game_version >= GV(18, 0, 0))
 			{
 				SIG_INST("48 8D 53 18 48 8B CF 40 88 6A 30 E8"); // 2015.12.05.18.07
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
@@ -2795,11 +2795,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
 			}
 			auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
-			if (is_35_5_0_or_above)
+			if (game_version >= GV(35, 5, 0))
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequest>);
 			}
-			else if (is_19_0_0_or_above)
+			else if (game_version >= GV(19, 0, 0))
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest, true>);
 			}
@@ -2835,7 +2835,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		// Disable request encryption for 38.5.0 and above
-		if (is_38_5_0_or_above)
+		if (game_version >= GV(38, 5, 0))
 		{
 			{
 				SIG_INST("40 53 57 41 54 48 83 EC 20 44 8B E2 48 8B F9 48 85 C9"); // 38.5.0, 38.5.2, 38.5.3
@@ -2912,7 +2912,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if PRIVATE
 		{
 			void* Curl_resolv;
-			if (is_37_0_0_or_above)
+			if (game_version >= GV(37, 0, 0))
 			{
 				SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
 				Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2939,10 +2939,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-		if (is_35_5_0_or_above) // Just stripping TLS for older versions
+		if (game_version >= GV(35, 5, 0)) // Just stripping TLS for older versions
 		{
 			Pointer ssl_verify_internal_caller;
-			if (is_26_1_0_or_above)
+			if (game_version >= GV(26, 1, 0))
 			{
 				SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F");
 				ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
@@ -2966,20 +2966,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			ssl_verify_internal_hook.enable();
 		}
 
-		if (is_35_5_0_or_above) // Just stripping TLS for older versions
+		if (game_version >= GV(35, 5, 0)) // Just stripping TLS for older versions
 		{
 			void* Curl_ossl_verifyhost;
-			if (is_37_0_0_or_above)
+			if (game_version >= GV(37, 0, 0))
 			{
 				SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_29_0_0_or_above)
+			else if (game_version >= GV(29, 0, 0))
 			{
 				SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_26_1_0_or_above)
+			else if (game_version >= GV(26, 1, 0))
 			{
 				SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.03.24.20.24, 2019.12.13.00.31, 2019.11.22.21.24
 				Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3004,40 +3004,40 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		// This hook allows WorldSeed to be absent or just any value.
 		// 16.5 seemingly does not validate the WorldSeed.
-		if (is_17_0_0_or_above)
+		if (game_version >= GV(17, 0, 0))
 		{
 			void* verify_worldstate_integrity;
-			if (is_35_5_0_or_above)
+			if (game_version >= GV(35, 5, 0))
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_23_0_0_or_above)
+			else if (game_version >= GV(23, 0, 0))
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0), 2024.02.16.17.13 (35.1.0), 2018.06.14.23.21 (23.0.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_22_15_0_or_above)
+			else if (game_version >= GV(22, 15, 0))
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2018.05.17.16.28 (22.20.0), 2018.04.20.02.04 (22.18.0), 2018.03.15.19.39 (22.16.0), 2018.03.07.14.18 (22.15.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_21_0_0_or_above)
+			else if (game_version >= GV(21, 0, 0))
 			{
 				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34 (22.13.4), 2017.06.29.02.13 (21.0.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_19_0_0_or_above)
+			else if (game_version >= GV(19, 0, 0))
 			{
 				SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 57 41 56 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 65 48 8B 04 25"); // 2017.03.06.15.49 (19.13.0)
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_18_7_1_or_above)
+			else if (game_version >= GV(18, 7, 1))
 			{
 				SIG_INST("48 89 5C 24 18 56 57 41 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.09.30.12.04, 2016.03.31.15.16
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else if (is_18_5_0_or_above)
+			else if (game_version >= GV(18, 5, 0))
 			{
 				SIG_INST("48 89 5C 24 18 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.03.04.10.06
 				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3075,7 +3075,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			Pointer parse_arguments_callsite;
-			if (is_19_0_0_or_above)
+			if (game_version >= GV(19, 0, 0))
 			{
 				//SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
 				SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2019.05.22.23.12
@@ -3094,55 +3094,55 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
 
-				if (is_39_0_0_or_above)
+				if (game_version >= GV(39, 0, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString, true, true>);
 				}
-				else if (is_37_0_0_or_above)
+				else if (game_version >= GV(37, 0, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString, false, true>);
 				}
-				else if (is_35_5_0_or_above)
+				else if (game_version >= GV(35, 5, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString, false, true>);
 				}
-				else if (is_33_6_0_or_above)
+				else if (game_version >= GV(33, 6, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString, false, true>);
 				}
-				else if (is_31_5_0_or_above)
+				else if (game_version >= GV(31, 5, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString, false, true>);
 				}
-				else if (is_29_10_0_or_above)
+				else if (game_version >= GV(29, 10, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString, false, true>);
 				}
-				else if (is_29_6_0_or_above)
+				else if (game_version >= GV(29, 6, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString, false, true>);
 				}
-				else if (is_28_0_0_or_above)
+				else if (game_version >= GV(28, 0, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString, false, true>);
 				}
-				else if (is_26_1_0_or_above)
+				else if (game_version >= GV(26, 1, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU27, LegacyGameString, false, false>);
 				}
-				else if (is_25_0_0_or_above)
+				else if (game_version >= GV(25, 0, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU25, LegacyGameString, false, false>);
 				}
-				else if (is_23_10_0_or_above)
+				else if (game_version >= GV(23, 10, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU24, LegacyGameString, false, false>);
 				}
-				else if (is_19_0_0_or_above)
+				else if (game_version >= GV(19, 0, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU23, LegacyGameString, false, false>);
 				}
-				else if (is_16_5_0_or_above)
+				else if (game_version >= GV(16, 5, 0))
 				{
 					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU18, LegacyGameStringU18, false, false>);
 				}
@@ -3177,9 +3177,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		// Emulate a non-stripped build so that no H.Cache is needed (breaks dialogue)
 		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
-		if (!is_33_6_0_or_above)
+		if (game_version < GV(33, 6, 0))
 		{
-			if (is_31_6_0_or_above)
+			if (game_version >= GV(31, 6, 0))
 			{
 				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
 				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
@@ -3203,32 +3203,32 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				uint8_t* insn;
-				if (is_30_0_0_or_above)
+				if (game_version >= GV(30, 0, 0))
 				{
 					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05"); // 2021.09.08.19.27
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_29_3_2_or_above)
+				else if (game_version >= GV(29, 3, 2))
 				{
 					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_26_0_0_or_above)
+				else if (game_version >= GV(26, 0, 0))
 				{
 					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_23_9_1_or_above)
+				else if (game_version >= GV(23, 9, 1))
 				{
 					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_23_0_0_or_above)
+				else if (game_version >= GV(23, 0, 0))
 				{
 					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
-				else if (is_19_0_0_or_above)
+				else if (game_version >= GV(19, 0, 0))
 				{
 					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
@@ -3260,7 +3260,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (!is_33_0_0_or_above)
+		if (game_version < GV(33, 0, 0))
 		{
 			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
 			const auto legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3269,7 +3269,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (legacy_dns_lookup)
 			{
-				if (is_19_0_0_or_above)
+				if (game_version >= GV(19, 0, 0))
 				{
 					legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameString>);
 				}
@@ -3412,7 +3412,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			Pointer nrs_jnz;
-			if (is_17_0_0_or_above)
+			if (game_version >= GV(17, 0, 0))
 			{
 				//SIG_INST("0F 85 4A 20 00 00");
 				SIG_INST("0F 85 ? ? ? ? 48 89 9C 24 ? ? ? ? 4C 89 BC 24 ? ? ? ? E8");
@@ -3441,7 +3441,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_23_10_0_or_above) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
+		if (game_version >= GV(23, 10, 0)) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
 		{
 			// "Sys [Error]: Could not write to "
 			SIG_INST("48 8B 0D ? ? ? ? 48 85 C9 74 14 41 B8 20 00 00 00 48 8D 15 ? ? ? ? E8");
@@ -3462,7 +3462,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_33_0_0_or_above)
+		if (game_version >= GV(33, 0, 0))
 		{
 			SIG_INST("FC 94 94 BF 00 00 00 00 ? ? ? ? ? ? ? ? C0 99 E8 D0 00 00 00 00");
 			auto lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
@@ -3482,7 +3482,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
 			auto lua_set_global = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3521,7 +3521,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
 			auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
@@ -3550,7 +3550,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 6C 24 18 56 48 83 EC 20 48 8B EA 48 8B F1 48 85 D2");
 			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
@@ -3563,7 +3563,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
 			luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
@@ -3576,7 +3576,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
 			luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
@@ -3589,7 +3589,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B D9 49 63 F9 48 8B 49 18 49 8B F0");
 			luau_pushcclosurek = Module(nullptr).range.scan(sig_inst).as<luau_pushcclosurek_t>();
@@ -3602,7 +3602,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("BA 01 00 00 00 41 B8 06 00 00 00 48 8B D9 E8 ? ? ? ? BA 02 00 00 00 48 8B CB E8 ? ? ? ? BA 01 00 00 00 48 8B CB E8");
 			auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
@@ -3615,7 +3615,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 			auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
@@ -3632,7 +3632,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
 			luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
@@ -3645,7 +3645,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("40 53 48 83 EC 20 4C 8B D1 85 D2 7E");
 			luau_settable = Module(nullptr).range.scan(sig_inst).as<luau_settable_t>();
@@ -3658,9 +3658,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
-			if (is_39_0_0_or_above)
+			if (game_version >= GV(39, 0, 0))
 			{
 				SIG_INST("40 53 57 48 83 EC 28 0F B7 41 50 48 8B D9 66 FF C0 49 63 F8");
 				luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
@@ -3679,7 +3679,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			Pointer res[20];
@@ -3714,7 +3714,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_37_0_0_or_above)
+		if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
 			Pointer res[10];
@@ -3806,7 +3806,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (is_33_0_0_or_above) // U32 Veilbreaker (2022.09.06.19.24) seems to crash in this detour
+		if (game_version >= GV(33, 0, 0)) // U32 Veilbreaker (2022.09.06.19.24) seems to crash in this detour
 		{
 			SIG_INST("6F 5D A9 54 00 00 00 00");
 			auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(sig_inst);
@@ -4001,7 +4001,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 #if LABEL_REPLACEMENTS
-		if (is_33_0_0_or_above) // Seems to match something unexpected in 2021.09.08.19.27 (~30.5)
+		if (game_version >= GV(33, 0, 0)) // Seems to match something unexpected in 2021.09.08.19.27 (~30.5)
 		{
 			SIG_INST("4C 8B DC 57 41 ? 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
 			auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4225,23 +4225,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if PRIVATE
 		std::cout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;
 #endif
-
-		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
-		{
-			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
-			{
-				std::cout << ObfusString("Hotfix applied") << std::endl;
-			}
-			else
-			{
-				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
-				g_archive.loadBuiltin();
-			}
-		}
-		else
-		{
-			g_archive.loadBuiltin();
-		}
 
 		{
 			uint32_t size;
@@ -4764,7 +4747,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					std::cout << ObfusString("Failed to bind TCP/").str();
 					std::cout << client_http_port;
 					std::cout << '.';
-					if (is_33_6_0_or_above)
+					if (game_version >= GV(33, 6, 0))
 					{
 						std::cout << ObfusString(" The game will fail to start.").str();
 					}

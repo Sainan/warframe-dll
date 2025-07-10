@@ -3,20 +3,9 @@
 #include <structing.hpp>
 
 inline char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
-inline bool is_39_0_0_or_above = false;
-inline bool is_38_5_0_or_above = false;
-inline bool is_37_0_0_or_above = false;
-inline bool is_35_5_0_or_above = false;
-inline bool is_33_6_0_or_above = false;
-inline bool is_31_5_0_or_above = false;
-inline bool is_29_10_0_or_above = false;
-inline bool is_29_6_0_or_above = false;
-inline bool is_28_0_0_or_above = false;
-inline bool is_26_1_0_or_above = false;
-inline bool is_25_0_0_or_above = false;
-inline bool is_23_10_0_or_above = false;
-inline bool is_19_0_0_or_above = false;
-inline bool is_16_5_0_or_above = false;
+
+#define GV(major, minor, patch) (major * 1000) + (minor * 10) + patch
+inline uint16_t game_version;
 
 inline char build_hash[22] = { 0 };
 
@@ -492,7 +481,7 @@ struct Avatar : public BaseAvatar
 
 	[[nodiscard]] SOUP_PURE bool& followed_by_camera() noexcept
 	{
-		if (is_38_5_0_or_above)
+		if (game_version >= GV(38, 5, 0))
 		{
 			return *reinterpret_cast<bool*>(reinterpret_cast<uintptr_t>(this) + 0x4C1);
 		}
