@@ -1,0 +1,34 @@
+-- Converts a version string (of uniform length) to an integer representation, e.g. "24.12.0" becomes 24120.
+function vv_v2n(ver)
+	local n = 0
+	for i = 1, #ver do
+		local b = ver:byte(i)
+		if b >= 48 and b < 58 then
+			n = n * 10
+			n = n + (b - 48)
+		end
+	end
+	return n
+end
+
+function vv_enc_int(arr)
+	local out = ""
+	for _, e in ipairs(arr) do
+		out = out .. pack_u64_dyn_v2(e[1]) .. pack_u64_dyn_v2(e[2])
+	end
+	return out
+end
+
+function vv_dec_int(str, ver)
+	local i = 1
+	local v
+	while i < #str do
+		v, i = unpack_u64_dyn_v2(str, i)
+		if ver >= v then
+			v, i = unpack_u64_dyn_v2(str, i)
+			return v
+		end
+		v, i = unpack_u64_dyn_v2(str, i)
+	end
+	return 0
+end
