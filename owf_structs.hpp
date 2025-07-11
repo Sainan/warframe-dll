@@ -141,6 +141,16 @@ struct LegacyGameStringU18
 	}
 };
 
+inline uint16_t Arguments_graphicsDriver_bool;
+inline uint16_t Arguments_graphicsDriver_value;
+inline uint16_t Arguments_language_bool;
+inline uint16_t Arguments_language_value;
+inline uint16_t Arguments_languageVO_bool;
+inline uint16_t Arguments_languageVO_value;
+inline uint16_t Arguments_cluster_bool;
+inline uint16_t Arguments_cluster_value;
+
+#if false
 struct ArgumentsU39
 {
 	PAD(0, 0x189) bool got_graphicsDriver;
@@ -364,6 +374,7 @@ static_assert(offsetof(LegacyArgumentsU16, got_language) == 0x2A3);
 static_assert(offsetof(LegacyArgumentsU16, language) == 0x2A8);
 static_assert(offsetof(LegacyArgumentsU16, got_cluster) == 0x2D0);
 static_assert(offsetof(LegacyArgumentsU16, cluster) ==  0x2D8);
+#endif
 
 // Objects
 

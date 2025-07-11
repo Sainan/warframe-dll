@@ -39,8 +39,14 @@ local function add_file_to_archive(path, archive_path)
 			--print(cont:split(""):map(|x| -> string.format("%02x ", x:byte())):concat())
 		elseif path:sub(1, 10) == "OpenWF/vv/" then
 			local arr = {}
-			for cont.__order as buildLabel do
-				arr:insert({ vv_v2n(buildLabel), vv_v2n(cont[buildLabel]) })
+			for cont.__order as ver do
+				local val = cont[ver]
+				if val:sub(1, 2) == "0x" then
+					val = tonumber(val:sub(3), 16)
+				else
+					val = vv_v2n(val)
+				end
+				arr:insert({ vv_v2n(ver), val })
 			end
 			cont = vv_enc_int(arr)
 		else

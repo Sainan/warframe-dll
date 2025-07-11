@@ -809,51 +809,54 @@ static void process_args_str(const char* str)
 	}
 }
 
-template <typename Args, typename Str, bool has_languageVO, bool has_graphicsDriver>
-static void parse_arguments_detour(Args* arguments, Str* str, void* a3)
+template <typename Str/*, bool has_languageVO, bool has_graphicsDriver*/>
+static void parse_arguments_detour(uintptr_t arguments, Str* str, void* a3)
 {
 	process_args_str(str->getData());
 
-	reinterpret_cast<decltype(&parse_arguments_detour<Args, Str, has_languageVO, has_graphicsDriver>)>(parse_arguments_hook.original)(arguments, str, a3);
-	
-	if (!arguments->got_language && !fallback_language.empty())
+	reinterpret_cast<decltype(&parse_arguments_detour<Str/*, has_languageVO, has_graphicsDriver*/>)>(parse_arguments_hook.original)(arguments, str, a3);
+
+	bool& arguments_got_language = *reinterpret_cast<bool*>(arguments + Arguments_language_bool);
+	Str& arguments_language = *reinterpret_cast<Str*>(arguments + Arguments_language_value);
+	if (!arguments_got_language && !fallback_language.empty())
 	{
-		arguments->got_language = true;
-		arguments->language.setShortData(fallback_language.data(), fallback_language.size());
+		arguments_got_language = true;
+		arguments_language.setShortData(fallback_language.data(), fallback_language.size());
 	}
-	if constexpr (has_languageVO)
+	if (arguments_got_language)
 	{
-		if (!arguments->got_languageVO && !fallback_languageVO.empty())
-		{
-			arguments->got_languageVO = true;
-			arguments->languageVO.setShortData(fallback_languageVO.data(), fallback_languageVO.size());
-		}
-	}
-	if constexpr (has_graphicsDriver)
-	{
-		if (!arguments->got_graphicsDriver && !fallback_graphicsDriver.empty())
-		{
-			arguments->got_graphicsDriver = true;
-			arguments->graphicsDriver.setShortData(fallback_graphicsDriver.data(), fallback_graphicsDriver.size());
-		}
-	}
-	if (!arguments->got_cluster)
-	{
-		arguments->got_cluster = true;
-		arguments->cluster.setShortData(fallback_cluster.data(), fallback_cluster.size());
+		lang_code = std::string(arguments_language.getData(), arguments_language.getSize());
 	}
 
-	if (arguments->got_language)
+	if (Arguments_languageVO_bool)
 	{
-		lang_code = std::string(arguments->language.getData(), arguments->language.getSize());
-	}
-	/*if constexpr (has_graphicsDriver)
-	{
-		if (arguments->got_graphicsDriver)
+		bool& arguments_got_languageVO = *reinterpret_cast<bool*>(arguments + Arguments_languageVO_bool);
+		Str& arguments_languageVO = *reinterpret_cast<Str*>(arguments + Arguments_languageVO_value);
+		if (!arguments_got_languageVO && !fallback_languageVO.empty())
 		{
-			graphics_driver = std::string(arguments->graphicsDriver.getData(), arguments->graphicsDriver.getSize());
+			arguments_got_languageVO = true;
+			arguments_languageVO.setShortData(fallback_languageVO.data(), fallback_languageVO.size());
 		}
-	}*/
+	}
+
+	if (Arguments_graphicsDriver_bool)
+	{
+		bool& arguments_got_graphicsDriver = *reinterpret_cast<bool*>(arguments + Arguments_graphicsDriver_bool);
+		Str& arguments_graphicsDriver = *reinterpret_cast<Str*>(arguments + Arguments_graphicsDriver_value);
+		if (!arguments_got_graphicsDriver && !fallback_graphicsDriver.empty())
+		{
+			arguments_got_graphicsDriver = true;
+			arguments_graphicsDriver.setShortData(fallback_graphicsDriver.data(), fallback_graphicsDriver.size());
+		}
+	}
+
+	bool& arguments_got_cluster = *reinterpret_cast<bool*>(arguments + Arguments_cluster_bool);
+	Str& arguments_cluster = *reinterpret_cast<Str*>(arguments + Arguments_cluster_value);
+	if (!arguments_got_cluster)
+	{
+		arguments_got_cluster = true;
+		arguments_cluster.setShortData(fallback_cluster.data(), fallback_cluster.size());
+	}
 }
 
 
@@ -3094,61 +3097,34 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
 
-				if (game_version >= GV(39, 0, 0))
+				Arguments_graphicsDriver_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_graphicsDriver_bool.json"), game_version));
+				Arguments_graphicsDriver_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_graphicsDriver_value.json"), game_version));
+				Arguments_language_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_language_bool.json"), game_version));
+				Arguments_language_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_language_value.json"), game_version));
+				Arguments_languageVO_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_languageVO_bool.json"), game_version));
+				Arguments_languageVO_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_languageVO_value.json"), game_version));
+				Arguments_cluster_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_cluster_bool.json"), game_version));
+				Arguments_cluster_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_cluster_value.json"), game_version));
+
+				/*if (game_version >= GV(39, 0, 0))
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU39, GameString, true, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<GameString, true, true>);
 				}
-				else if (game_version >= GV(37, 0, 0))
+				else*/ if (game_version >= GV(35, 5, 0))
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU37, GameString, false, true>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<GameString/*, false, true*/>);
 				}
-				else if (game_version >= GV(35, 5, 0))
+				/*else if (game_version >= GV(28, 0, 0))
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<ArgumentsU36, GameString, false, true>);
-				}
-				else if (game_version >= GV(33, 6, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU33_6, LegacyGameString, false, true>);
-				}
-				else if (game_version >= GV(31, 5, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30_1, LegacyGameString, false, true>);
-				}
-				else if (game_version >= GV(29, 10, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU30, LegacyGameString, false, true>);
-				}
-				else if (game_version >= GV(29, 6, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU29, LegacyGameString, false, true>);
-				}
-				else if (game_version >= GV(28, 0, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU28, LegacyGameString, false, true>);
-				}
-				else if (game_version >= GV(26, 1, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU27, LegacyGameString, false, false>);
-				}
-				else if (game_version >= GV(25, 0, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU25, LegacyGameString, false, false>);
-				}
-				else if (game_version >= GV(23, 10, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU24, LegacyGameString, false, false>);
-				}
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyGameString, false, true>);
+				}*/
 				else if (game_version >= GV(19, 0, 0))
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU23, LegacyGameString, false, false>);
-				}
-				else if (game_version >= GV(16, 5, 0))
-				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU18, LegacyGameStringU18, false, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyGameString/*, false, false*/>);
 				}
 				else
 				{
-					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyArgumentsU16, LegacyGameStringU18, false, false>);
+					parse_arguments_hook.detour = reinterpret_cast<void*>(&parse_arguments_detour<LegacyGameStringU18/*, false, false*/>);
 				}
 				parse_arguments_hook.target = parse_arguments;
 				parse_arguments_hook.create();
