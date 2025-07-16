@@ -399,6 +399,9 @@ class EngineNpcMgr extends Object
 	function GetAiDirector()
 
 class EngineAiDirector extends Object
+	function SetMaxPopulationSpawnCount(i)
+	function SetMaxAI(i)
+	function SetDifficulty(i)
 	function ClearEncounters()
 	function AddEncounter(type)
 	function SelectEncounterHintsWithType(type, minDist, maxDist)

@@ -2204,6 +2204,24 @@ end
 class EngineAiDirector extends Object
 	__name = "EngineAiDirector"
 
+	function SetMaxPopulationSpawnCount(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("EngineAiDirector", "SetMaxPopulationSpawnCount"), 2)
+	end
+
+	function SetMaxAI(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("EngineAiDirector", "SetMaxAI"), 2)
+	end
+
+	function SetDifficulty(i)
+		self:pushToIvkr()
+		ivkr_push_int(i)
+		ivkr_call(ivkr_find_method("EngineAiDirector", "SetDifficulty"), 2)
+	end
+
 	function ClearEncounters()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("EngineAiDirector", "ClearEncounters"), 1)
