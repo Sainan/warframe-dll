@@ -688,9 +688,8 @@ struct owfTunablesTask : public soup::Task
 	HttpRequestTask hrt;
 
 	owfTunablesTask()
-		: hrt(HttpRequest(server_host, ObfusString("/custom/tunables.json")), &Socket::certchain_validator_none)
+		: hrt(HttpRequest(server_host + ":" + std::to_string(https_port), ObfusString("/custom/tunables.json")), &Socket::certchain_validator_none)
 	{
-		hrt.hr.port = https_port;
 		hrt.hr.use_tls = true;
 	}
 
@@ -738,8 +737,6 @@ struct owfTunablesTask : public soup::Task
 				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
 				auto msg = ObfusString("Failed to verify that the server at ").str();
 				msg.append(hrt.hr.getHost());
-				msg.append(ObfusString(" on port ").str());
-				msg.append(std::to_string(hrt.hr.port));
 				msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
 				fire_and_forget_messagebox(std::move(msg), MB_OK | MB_ICONWARNING);
 			}
@@ -775,8 +772,7 @@ static void do_logout()
 {
 	if (!auth_query.empty())
 	{
-		HttpRequest hr(server_host, ObfusString("/api/logout.php?").str() + auth_query);
-		hr.port = https_port;
+		HttpRequest hr(server_host + ":" + std::to_string(https_port), ObfusString("/api/logout.php?").str() + auth_query);
 		hr.use_tls = true;
 		SOUP_UNUSED(hr.execute(&Socket::certchain_validator_none));
 		auth_query.clear();
@@ -4269,8 +4265,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 
 						// Continue in task to ask SNS
-						HttpRequest hr(server_host, req.path);
-						hr.port = http_port;
+						HttpRequest hr(server_host + ":" + std::to_string(http_port), req.path);
 						hr.use_tls = false;
 						hr.path_is_encoded = true;
 						Scheduler::get()->add<owfContentTask>(s, std::move(hr));
