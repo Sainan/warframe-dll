@@ -11,6 +11,10 @@
 #define VERBOSE_CRC32C false
 #define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
+#define VERBOSE_OODLE false
+#define VERBOSE_SENDCNXLESS false
+#define VERBOSE_LZF false
+#define VERBOSE_UNCOMPRESSPKT false
 
 // Writes all IRC traffic to EE.log
 #define VERBOSE_IRC false
@@ -1822,6 +1826,117 @@ static void serialise_propery_text_detour(void* a1, GameString* str, int a3, cha
 	std::cout << "serialise_propery_text: a3 = " << a3 << ", a4 = " << a4 << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	std::cout.write(str->getData(), str->getSize());
 	return reinterpret_cast<decltype(&serialise_propery_text_detour)>(serialise_propery_text_hook.original)(a1, str, a3, a4);
+}
+#endif
+
+
+#if VERBOSE_OODLE
+struct GameOodleNetworkState
+{
+	PAD(0, 0x38) uint32_t htbits;
+	/* 0x40 */ GameBuffer compacted_state;
+	/* 0x50 */ GameBuffer window;
+	/* 0x60 */ GameBuffer state;
+	/* 0x70 */ GameBuffer shared;
+};
+static_assert(offsetof(GameOodleNetworkState, htbits) == 0x38);
+static_assert(offsetof(GameOodleNetworkState, compacted_state) == 0x40);
+static_assert(offsetof(GameOodleNetworkState, window) == 0x50);
+static_assert(offsetof(GameOodleNetworkState, state) == 0x60);
+static_assert(offsetof(GameOodleNetworkState, shared) == 0x70);
+
+static DetourHook init_oodle_network_state_hook;
+
+static __int64 init_oodle_network_state_detour(GameOodleNetworkState* st)
+{
+	std::cout << "compacted state size: " << st->compacted_state.size << " (allocated " << st->compacted_state.capacity << ")" << std::endl;
+	string::toFile("net_compacted_state.bin", st->compacted_state.data, st->compacted_state.size);
+	const auto ret = reinterpret_cast<decltype(&init_oodle_network_state_detour)>(init_oodle_network_state_hook.original)(st);
+	std::cout << "htbits: " << st->htbits << std::endl;
+	std::cout << "window size: " << st->window.size << " (allocated " << st->window.capacity << ")" << std::endl;
+	string::toFile("net_window.bin", st->window.data, st->window.size);
+	return ret;
+}
+
+static DetourHook compress_packet_oodle_net_hook;
+
+static bool compress_packet_oodle_net_detour(GameBuffer* uncompressed, GameBuffer* compressed, GameOodleNetworkState* st)
+{
+	std::cout << "compress_packet_oodle_net: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
+	return reinterpret_cast<decltype(&compress_packet_oodle_net_detour)>(compress_packet_oodle_net_hook.original)(uncompressed, compressed, st);
+}
+
+static DetourHook compress_packet_oodle_lz_hook;
+
+static bool compress_packet_oodle_lz_detour(GameBuffer* uncompressed, GameBuffer* compressed, int a3)
+{
+	std::cout << "compress_packet_oodle_lz: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
+	return reinterpret_cast<decltype(&compress_packet_oodle_lz_detour)>(compress_packet_oodle_lz_hook.original)(uncompressed, compressed, a3);
+}
+
+static DetourHook oodle_compress_hook;
+
+static bool oodle_compress_detour(char* out, size_t* out_size, const char* data, size_t size, int a5)
+{
+	std::cout << "oodle_compress: " << std::string(data, size) << std::endl;
+	return reinterpret_cast<decltype(&oodle_compress_detour)>(oodle_compress_hook.original)(out, out_size, data, size, a5);
+}
+#endif
+
+
+#if VERBOSE_SENDCNXLESS
+static DetourHook SendConnectionlessData_hook;
+
+static __int64 SendConnectionlessData_detour(void* a1, GameBuffer* data, void* a3, char a4, char a5)
+{
+	std::cout << "SendConnectionlessData: " << string::bin2hex(data->data, data->size) << std::endl;
+	return reinterpret_cast<decltype(&SendConnectionlessData_detour)>(SendConnectionlessData_hook.original)(a1, data, a3, a4, a5);
+}
+#endif
+
+
+#if VERBOSE_LZF
+static DetourHook lzf_compress_hook;
+
+static unsigned int lzf_compress_detour(const char* uncompressed, unsigned int uncompressed_size, char* compressed, unsigned int compressed_size)
+{
+	std::cout << "lzf_compress input: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
+	compressed_size = reinterpret_cast<decltype(&lzf_compress_detour)>(lzf_compress_hook.original)(uncompressed, uncompressed_size, compressed, compressed_size);
+	std::cout << "lzf_compress output: " << string::bin2hex(compressed, compressed_size) << std::endl;
+	return compressed_size;
+}
+
+static DetourHook lzf_decompress_hook;
+
+static unsigned int lzf_decompress_detour(const char* compressed, unsigned int compressed_size, char* uncompressed, unsigned int uncompressed_size)
+{
+	std::cout << "lzf_decompress input: " << string::bin2hex(compressed, compressed_size) << std::endl;
+	uncompressed_size = reinterpret_cast<decltype(&lzf_decompress_detour)>(lzf_decompress_hook.original)(compressed, compressed_size, uncompressed, uncompressed_size);
+	std::cout << "lzf_decompress output: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
+	return uncompressed_size;
+}
+#endif
+
+
+#if VERBOSE_UNCOMPRESSPKT
+struct PacketData
+{
+	PAD(0x00, 0x08) void* GameOodleNetworkState;
+	PAD(0x10, 0x18) GameBuffer uncompressed;
+};
+static_assert(offsetof(PacketData, uncompressed) == 0x18);
+
+static DetourHook UncompressPacket_hook;
+
+static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
+{
+	std::cout << "UncompressPacket input: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
+	if (reinterpret_cast<decltype(&UncompressPacket_detour)>(UncompressPacket_hook.original)(data, buffer))
+	{
+		std::cout << "UncompressPacket output: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
+		return true;
+	}
+	return false;
 }
 #endif
 
@@ -4193,6 +4308,166 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << ObfusString("Failed to bring up \"logout on request failure\". This option will be non-functional.") << std::endl;
 			}
 		}
+
+#if VERBOSE_OODLE
+		{
+			SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B D9 E8 ? ? ? ? 44 8B 43 6C 49 3B C0");
+			auto init_oodle_network_state = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "init_oodle_network_state = " << init_oodle_network_state << std::endl;
+#endif
+			if (init_oodle_network_state)
+			{
+				init_oodle_network_state_hook.detour = reinterpret_cast<void*>(&init_oodle_network_state_detour);
+				init_oodle_network_state_hook.target = init_oodle_network_state;
+				init_oodle_network_state_hook.create();
+				init_oodle_network_state_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+
+		{
+			SIG_INST("48 89 5C 24 20 55 56 57 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 44 8B 71 08 48 8B D9");
+			auto compress_packet_oodle_net = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "compress_packet_oodle_net = " << compress_packet_oodle_net << std::endl;
+#endif
+			if (compress_packet_oodle_net)
+			{
+				compress_packet_oodle_net_hook.detour = reinterpret_cast<void*>(&compress_packet_oodle_net_detour);
+				compress_packet_oodle_net_hook.target = compress_packet_oodle_net;
+				compress_packet_oodle_net_hook.create();
+				compress_packet_oodle_net_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+
+		{
+			SIG_INST("40 53 55 56 57 41 54 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 44 8B 79 08 48 8B F9");
+			auto compress_packet_oodle_lz = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "compress_packet_oodle_lz = " << compress_packet_oodle_lz << std::endl;
+#endif
+			if (compress_packet_oodle_lz)
+			{
+				compress_packet_oodle_lz_hook.detour = reinterpret_cast<void*>(&compress_packet_oodle_lz_detour);
+				compress_packet_oodle_lz_hook.target = compress_packet_oodle_lz;
+				compress_packet_oodle_lz_hook.create();
+				compress_packet_oodle_lz_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+
+		{
+			SIG_INST("40 53 55 57 41 56 41 57 48 81 EC E0 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 D0 00 00 00 48 63 9C 24 30 01 00 00 49 8B E9");
+			auto oodle_compress = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "oodle_compress = " << oodle_compress << std::endl;
+#endif
+			if (oodle_compress)
+			{
+				oodle_compress_hook.detour = reinterpret_cast<void*>(&oodle_compress_detour);
+				oodle_compress_hook.target = oodle_compress;
+				oodle_compress_hook.create();
+				oodle_compress_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+#endif
+
+#if VERBOSE_SENDCNXLESS
+		{
+			SIG_INST("48 89 5C 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 B9");
+			auto SendConnectionlessData = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "SendConnectionlessData = " << SendConnectionlessData << std::endl;
+#endif
+			if (SendConnectionlessData)
+			{
+				SendConnectionlessData_hook.detour = reinterpret_cast<void*>(&SendConnectionlessData_detour);
+				SendConnectionlessData_hook.target = SendConnectionlessData;
+				SendConnectionlessData_hook.create();
+				SendConnectionlessData_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+#endif
+
+#if VERBOSE_LZF
+		{
+			SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 20 4C 89 44 24 18 57 41 54 41 55 41 56 41 57 B8 00 00 04 00 E8 ? ? ? ? 48 2B E0");
+			auto lzf_compress = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "lzf_compress = " << lzf_compress << std::endl;
+#endif
+			if (lzf_compress)
+			{
+				lzf_compress_hook.detour = reinterpret_cast<void*>(&lzf_compress_detour);
+				lzf_compress_hook.target = lzf_compress;
+				lzf_compress_hook.create();
+				lzf_compress_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+
+		{
+			SIG_INST("48 89 5C 24 08 48 89 74 24 10 48 89 7C 24 18 44 8B DA 49 8B F8 4C 03 D9");
+			auto lzf_decompress = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "lzf_decompress = " << lzf_decompress << std::endl;
+#endif
+			if (lzf_decompress)
+			{
+				lzf_decompress_hook.detour = reinterpret_cast<void*>(&lzf_decompress_detour);
+				lzf_decompress_hook.target = lzf_decompress;
+				lzf_decompress_hook.create();
+				lzf_decompress_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+#endif
+
+#if VERBOSE_UNCOMPRESSPKT
+		{
+			SIG_INST("40 55 56 57 41 54 41 56 48 8D 6C 24 C9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 4C 8B 0A");
+			auto UncompressPacket = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "UncompressPacket = " << UncompressPacket << std::endl;
+#endif
+			if (UncompressPacket)
+			{
+				UncompressPacket_hook.detour = reinterpret_cast<void*>(&UncompressPacket_detour);
+				UncompressPacket_hook.target = UncompressPacket;
+				UncompressPacket_hook.create();
+				UncompressPacket_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
+#endif
 
 #if PRIVATE
 		std::cout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;

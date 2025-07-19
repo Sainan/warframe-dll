@@ -609,6 +609,14 @@ struct CacheReader
 	Vtbl* vtbl;
 };
 
+struct GameBuffer
+{
+	const char* data;
+	unsigned int size;
+	unsigned int capacity;
+};
+static_assert(sizeof(GameBuffer) == 0x10);
+
 
 // Added in 38.5.0
 struct EncryptedString
