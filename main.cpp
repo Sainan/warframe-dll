@@ -2043,11 +2043,18 @@ struct owfContentTask : public Task
 				{
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
 					{
-						auto msg = ObfusString("The language that the game was supposed to launch with (").str();
-						msg.append(hrt.hr.path.substr(19, 2));
-						msg.append(ObfusString(") is missing or outdated.").str());
-						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-
+						if (hrt.hr.path.substr(19, 2) == ObfusString("xx").str())
+						{
+							auto msg = ObfusString("The Windows_xx cache is missing or outdated.").str();
+							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+						}
+						else
+						{
+							auto msg = ObfusString("The language that the game was supposed to launch with (").str();
+							msg.append(hrt.hr.path.substr(19, 2));
+							msg.append(ObfusString(") is missing or outdated.").str());
+							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+						}
 						exit(1);
 					}
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
