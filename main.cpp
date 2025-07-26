@@ -2046,6 +2046,8 @@ struct owfContentTask : public Task
 						if (hrt.hr.path.substr(19, 2) == ObfusString("xx").str())
 						{
 							auto msg = ObfusString("The Windows_xx cache is missing or outdated.").str();
+							msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
+							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 						}
 						else
@@ -2053,6 +2055,10 @@ struct owfContentTask : public Task
 							auto msg = ObfusString("The language that the game was supposed to launch with (").str();
 							msg.append(hrt.hr.path.substr(19, 2));
 							msg.append(ObfusString(") is missing or outdated.").str());
+							msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
+							msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
+							msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
+							msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 						}
 						exit(1);
@@ -2062,6 +2068,10 @@ struct owfContentTask : public Task
 						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (dx").str();
 						msg.append(hrt.hr.path.substr(13, 2));
 						msg.append(ObfusString(") is missing or outdated.").str());
+						msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
+						msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
+						msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
+						msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
 						exit(1);
