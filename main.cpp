@@ -2440,24 +2440,27 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			g_archive.loadBuiltin();
 		}
 
-		game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"),
-			static_cast<uint64_t>(build_label[ 0]) * 100000000000ull +
-			static_cast<uint64_t>(build_label[ 1]) * 10000000000ull +
-			static_cast<uint64_t>(build_label[ 2]) * 1000000000ull +
-			static_cast<uint64_t>(build_label[ 3]) * 100000000ull +
-			static_cast<uint64_t>(build_label[ 5]) * 10000000ull +
-			static_cast<uint64_t>(build_label[ 6]) * 1000000ull +
-			static_cast<uint64_t>(build_label[ 8]) * 100000ull +
-			static_cast<uint64_t>(build_label[ 9]) * 10000ull +
-			static_cast<uint64_t>(build_label[11]) * 1000ull +
-			static_cast<uint64_t>(build_label[12]) * 100ull +
-			static_cast<uint64_t>(build_label[14]) * 10ull +
-			static_cast<uint64_t>(build_label[15])
-		));
+		{
+			auto build_label_int = static_cast<uint64_t>(build_label[ 0] - '0') * 100000000000ull +
+				static_cast<uint64_t>(build_label[ 1] - '0') * 10000000000ull +
+				static_cast<uint64_t>(build_label[ 2] - '0') * 1000000000ull +
+				static_cast<uint64_t>(build_label[ 3] - '0') * 100000000ull +
+				static_cast<uint64_t>(build_label[ 5] - '0') * 10000000ull +
+				static_cast<uint64_t>(build_label[ 6] - '0') * 1000000ull +
+				static_cast<uint64_t>(build_label[ 8] - '0') * 100000ull +
+				static_cast<uint64_t>(build_label[ 9] - '0') * 10000ull +
+				static_cast<uint64_t>(build_label[11] - '0') * 1000ull +
+				static_cast<uint64_t>(build_label[12] - '0') * 100ull +
+				static_cast<uint64_t>(build_label[14] - '0') * 10ull +
+				static_cast<uint64_t>(build_label[15] - '0');
+
+			game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
 
 #if LOGGING
-		std::cout << "game_version = " << game_version << std::endl;
+			std::cout << "build_label_int = " << build_label_int << std::endl;
+			std::cout << "game_version = " << game_version << std::endl;
 #endif
+		}
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
