@@ -756,6 +756,7 @@ ColorCustomizationSlot = { PrimaryColors, Attachments, Sigil, Eyes, Facial, Clot
 PowerSuitCustomizationSlot = { Helmet, ArmLeft, LegLeft, CustomEmblem, EventEmblem, AnimationSet, Neckwear, BodySkin, Chest, ArmRight, LegRight, Face, SigilChest, SigilBack, SpecialEvent, FxSet, SpecialFxSet }
 
 _T.AddHudTracker -- function(name, type) or nil
+_T.RemoveHudTracker -- function(name) or nil
 _T.OpenScreen -- function(name)
 
 -- Preloaded modules

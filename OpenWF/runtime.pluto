@@ -3427,6 +3427,17 @@ local function AddHudTracker(name, type)
 	ivkr_call2(2, 0)
 end
 
+local function RemoveHudTracker(name)
+	ivkr_push_string("_T")
+	ivkr_gettable(-10002)
+
+	ivkr_push_string("AddHudTracker")
+	ivkr_gettable(-2)
+
+	ivkr_push_string(name)
+	ivkr_call2(1, 0)
+end
+
 local function OpenScreen(name)
 	ivkr_push_string("_T")
 	ivkr_gettable(-10002)
@@ -3450,6 +3461,14 @@ _T = setmetatable({}, {
 			local ok = ivkr_gettable(-2) > 0
 			ivkr_pop(2)
 			return ok ? AddHudTracker : nil
+		end
+		if name == "RemoveHudTracker" then
+			ivkr_push_string("_T")
+			ivkr_gettable(-10002)
+			ivkr_push_string("RemoveHudTracker")
+			local ok = ivkr_gettable(-2) > 0
+			ivkr_pop(2)
+			return ok ? RemoveHudTracker : nil
 		end
 		if name == "OpenScreen" then
 			return OpenScreen
