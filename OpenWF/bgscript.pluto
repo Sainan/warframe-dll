@@ -38,14 +38,14 @@ if true then
 		io.contents($"OpenWF/Scripts/samples/{sample}.pluto", owf_archive_find($"OpenWF/samples/{sample}.pluto"))
 	end
 	for io.listdir("OpenWF/Scripts/samples") as file do
-		file = file:sub(24)
-		if io.isfile(file) and file:sub(-6) ~= ".pluto" or not file:sub(1, -7) in samples then
-			local target = "OpenWF/Scripts/"..file
+		local name = file:sub(24)
+		if io.isfile(file) and name:sub(-6) ~= ".pluto" or not name:sub(1, -7) in samples then
+			local target = "OpenWF/Scripts/"..name
 			if io.exists(target) then
 				target ..= math.random(1000, 1000000)
 			end
-			print("Evicting OpenWF/Scripts/samples/"..file.." to "..target)
-			io.rename("OpenWF/Scripts/samples/"..file, target)
+			print("Evicting OpenWF/Scripts/samples/"..name.." to "..target)
+			io.rename("OpenWF/Scripts/samples/"..name, target)
 		end
 	end
 end
