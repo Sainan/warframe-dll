@@ -1188,6 +1188,12 @@ end
 class WeaponEx extends WeaponBase
 	__name = "WeaponEx"
 
+	function GetDamageData()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("WeaponEx", "GetDamageData"), 1)
+		return new Engine.DamageData(true)
+	end
+
 	function GetActiveImpactBehavior()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("WeaponEx", "GetActiveImpactBehavior"), 1)
@@ -2745,10 +2751,14 @@ getmetatable(Engine.OpenLevelArgs).__call = || -> new Engine.OpenLevelArgs()
 class Engine.DamageData extends owfUserdata
 	__name = "Engine.DamageData"
 
-	function __construct()
-		ivkr_push_string(tostring(self))
-		ivkr_call(ivkr_find_ctor("DamageData"), 0)
-		ivkr_settable(-10002)
+	function __construct(use_parent_constructor)
+		if use_parent_constructor then
+			parent:__construct()
+		else
+			ivkr_push_string(tostring(self))
+			ivkr_call(ivkr_find_ctor("DamageData"), 0)
+			ivkr_settable(-10002)
+		end
 	end
 
 	function __index(name)
@@ -2756,6 +2766,13 @@ class Engine.DamageData extends owfUserdata
 			return owfUserdata[name]
 		end
 		switch name do
+			case "baseAmount":
+			case "criticalChance":
+			case "criticalMultiplier":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("DamageData", name), 1)
+				return ivkr_pop_number()
+
 			case "injuryType":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("DamageData", name), 1)
@@ -2765,10 +2782,19 @@ class Engine.DamageData extends owfUserdata
 
 	function __newindex(name, value)
 		switch name do
+			case "baseAmount":
+			case "criticalChance":
+			case "criticalMultiplier":
+				self:pushToIvkr()
+				ivkr_push_float(value)
+				ivkr_call(ivkr_find_setter("DamageData", name), 2)
+				break
+
 			case "injuryType":
 				self:pushToIvkr()
 				ivkr_push_int(value)
 				ivkr_call(ivkr_find_setter("DamageData", name), 2)
+				break
 		end
 	end
 end

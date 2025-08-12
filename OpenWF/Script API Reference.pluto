@@ -546,6 +546,9 @@ class Engine.OpenLevelArgs
 	function AddContextObject(objectType)
 
 class Engine.DamageData
+	baseAmount
+	criticalChance
+	criticalMultiplier
 	injuryType
 
 class UISys.ScriptResLoader
