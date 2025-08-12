@@ -199,7 +199,7 @@ then
 			local paths = {}
 			for io.listdir("OpenWF/Content Replacements/0", true) as file do
 				if io.isfile(file) then
-					file = file:sub(27):replace("\\", "/")
+					file = file:sub(30):replace("\\", "/")
 					any_mods = true
 
 					io.mkdirs(io.part("OpenWF/Content/0"..file, "parent"))
