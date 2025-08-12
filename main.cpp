@@ -1514,6 +1514,7 @@ struct MetadataPatch
 
 	std::string final_data;
 	bool is_implicit = false;
+	bool applied = false;
 };
 static Mutex metadata_patches_mtx;
 static std::unordered_map<uint32_t, MetadataPatch> metadata_patches;
@@ -1626,12 +1627,14 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 			should_write_to_console = write_patched_metadata_reads_to_console;
 			should_write_to_ee_log = write_patched_metadata_reads_to_ee_log;
 		}
+		patch.applied = true;
 	}
 	else if (save_all_metadata)
 	{
 		metadata_patches.emplace(hash, MetadataPatch{
 			.final_data = std::string(str->getData(), str->getSize()),
 			.is_implicit = true,
+			.applied = true,
 		});
 	}
 
@@ -4908,7 +4911,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							std::lock_guard lock(metadata_patches_mtx);
 							if (auto e = metadata_patches.find(joaat::hash(urlenc::decode(arr.at(1)))); e != metadata_patches.end())
 							{
-								if (!e->second.final_data.empty())
+								if (e->second.applied)
 								{
 									ServerWebService::sendText(s, e->second.final_data);
 								}
