@@ -262,7 +262,7 @@ static bool legacy_parse_url_detour(LegacyParsedUrl* out, LegacyGameString* in)
 
 static void internet_connect_detour(uintptr_t a1)
 {
-	ObfusString localhost("localhost");
+	ObfusString localhost("127.0.0.1");
 	*reinterpret_cast<HINTERNET*>(a1 + 104) = InternetConnectA(
 		*reinterpret_cast<HINTERNET*>(a1 + 96),
 		localhost.c_str(),
@@ -320,7 +320,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	}
 #endif
 
-	ObfusString localhost("localhost");
+	ObfusString localhost("127.0.0.1");
 	host_1 = localhost.c_str();
 	port = client_http_port;
 
@@ -382,7 +382,7 @@ static bool can_use_server_host()
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool strip_tls)
 {
 #if REDIRECT_REQUESTS
-	uri.host = can_use_server_host() ? server_host : ObfusString("localhost").str();
+	uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
 	if (strip_tls)
 	{
 		uri.scheme = ObfusString("http").str();
@@ -613,7 +613,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-	ObfusString localhost("localhost");
+	ObfusString localhost("127.0.0.1");
 	if (can_use_server_host()
 		? server_host != hostname
 		: localhost.str() != hostname
@@ -706,15 +706,10 @@ struct owfTunablesTask : public soup::Task
 			{
 				if (hrt.sock)
 				{
-					if (hrt.sock->peer.ip.isLocalnet())
-					{
-						server_remote_ip_hash = 0;
-					}
-					else
-					{
-						server_remote_ip_hash = soup::joaat::hash(hrt.sock->peer.ip.toString());
-					}
+					server_host = hrt.sock->peer.ip.toString();
+					server_remote_ip_hash = hrt.sock->peer.ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
 #if false
+					std::cout << "server_host = " << server_host << std::endl;
 					std::cout << "server_remote_ip_hash = " << server_remote_ip_hash << std::endl;
 					std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
 #endif
@@ -758,7 +753,7 @@ static void on_got_server_host()
 	string::lower(server_host);
 	if (server_host.find(ObfusString(".warframe.com").str()) != std::string::npos)
 	{
-		server_host = ObfusString("localhost").str();
+		server_host = ObfusString("127.0.0.1").str();
 	}
 
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
@@ -2494,7 +2489,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				server_host = ObfusString("localhost").str();
+				server_host = ObfusString("127.0.0.1").str();
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
