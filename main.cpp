@@ -1555,7 +1555,7 @@ static void load_metadata_patches()
 	{
 		if (current_patch)
 		{
-			current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1)), pluto_checkstring(L, 2));
+			current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1), luaL_checkstring(L, 3)), pluto_checkstring(L, 2));
 		}
 		return 0;
 	});

@@ -60,7 +60,13 @@ function parse_metadata_patches(str, filename)
 			end
 		elseif line:sub(1, 2) == "s|" then
 			if sep := line:find("|", 3) then
-				patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				local sub = line:sub(sep + 1)
+				local flags = ""
+				if fsep := sub:rfind("|") then
+					flags = sub:sub(fsep + 1)
+					sub = sub:sub(1, fsep - 1)
+				end
+				patch.substitutions[line:sub(3, sep - 1)] = { sub = sub, flags = flags }
 			else
 				print_to_console("[Metadata Patches] Ignoring malformed line")
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
@@ -88,7 +94,7 @@ function load_metadata_patches(str, filename)
 				add_replacement(k, v)
 			end
 			for k, v in patch.substitutions do
-				add_substitution(k, v)
+				add_substitution(k, v.sub, v.flags)
 			end
 		end
 	end
