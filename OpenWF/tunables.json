@@ -14,10 +14,13 @@
 		"irc.warframe.com:6697", // U15
 	],
 	"remote_allowed_days": 20,
+	//"invipbl": 0,
 	"ipbl": [
 		"116.62.185.186",
 		"106.58.32.47", // (mail.mahao.ltd, HTTPS on 444)
 	],
-	//"invipbl": 0,
+	"hnbl": [
+		"mail.mahao.ltd",
+	],
 	//"silent_tunables_error": 1,
 }

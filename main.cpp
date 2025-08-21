@@ -755,6 +755,18 @@ static void on_got_server_host()
 	{
 		server_host = ObfusString("127.0.0.1").str();
 	}
+	else
+	{
+		while (server_host.c_str()[server_host.size()] == '.')
+		{
+			server_host.pop_back();
+		}
+		std::lock_guard lock(g_client_tunables_mtx);
+		if (g_client_tunables.isStringInArray(joaat::compileTimeHash("hnbl"), joaat::hash(server_host)))
+		{
+			server_host = ObfusString("127.0.0.1").str();
+		}
+	}
 
 	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
 	if (autologin && !did_auto_login)
