@@ -222,10 +222,38 @@ void owfScript::openLibs(lua_State* L)
 	});
 	OWF_SET_GLOBAL(L, "owf_get_build_hash");
 
-	lua_pushstring(L, g_bootstrapper_title);
-	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE");
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		pluto_pushstring(L, server_host);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_get_server_host");
 
-	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port);
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, http_port);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_get_http_port");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, https_port);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_get_https_port");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		pluto_pushstring(L, auth_query);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_get_auth_query");
+
+	lua_pushstring(L, g_bootstrapper_title);
+	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE"); // undocumented
+
+	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port); // undocumented
 
 #if PRIVATE
 	lua_pushboolean(L, true);
