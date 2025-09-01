@@ -68,6 +68,7 @@ end
 
 add_folder_to_archive("OpenWF/", "OpenWF/")
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/")
+add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/")
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/")
 add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/")
 add_folder_to_archive("modules/openwf-translations/bootstrapper/", "OpenWF/translations/")
