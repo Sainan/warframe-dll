@@ -478,6 +478,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	else if (uri.path == ObfusString("/api/logout.php").str())
 	{
 		owfOverlay::setPrelogin(true);
+		auth_query.clear();
 	}
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
 	if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
