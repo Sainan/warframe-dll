@@ -751,7 +751,7 @@ struct owfTunablesTask : public soup::Task
 static void on_got_server_host()
 {
 	string::lower(server_host);
-	if (server_host.find(ObfusString(".warframe.com").str()) != std::string::npos)
+	if (server_host.find(ObfusString("warframe.com").str()) != std::string::npos)
 	{
 		server_host = ObfusString("127.0.0.1").str();
 	}
@@ -1398,11 +1398,8 @@ static int lua_OpenWebBrowser_detour(luau_State* L)
 #if LOGGING
 	std::cout << "lua_OpenWebBrowser: " << L->intop[0].getString() << std::endl;
 #endif
-	ObfusString sub1(".warframe.com");
-	ObfusString sub2("/warframe.com");
-	if (strstr(L->intop[0].getString(), sub1.c_str()) == nullptr
-		&& strstr(L->intop[0].getString(), sub2.c_str()) == nullptr
-		)
+	ObfusString sub("warframe.com");
+	if (strstr(L->intop[0].getString(), sub.c_str()) == nullptr)
 	{
 		return lua_OpenWebBrowser_og(L);
 	}
