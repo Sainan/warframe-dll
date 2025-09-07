@@ -1562,11 +1562,19 @@ static void load_metadata_patches()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		int pushed = 0;
 		if (current_patch)
 		{
-			current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1), luaL_checkstring(L, 3)), pluto_checkstring(L, 2));
+			try
+			{
+				current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1), luaL_checkstring(L, 3)), pluto_checkstring(L, 2));
+			}
+			catch (std::exception& e)
+			{
+				lua_pushstring(L, e.what()); ++pushed;
+			}
 		}
-		return 0;
+		return pushed;
 	});
 	{ ObfusString name("add_substitution"); lua_setglobal(L, name.c_str()); }
 

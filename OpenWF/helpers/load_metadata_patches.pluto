@@ -100,7 +100,9 @@ function load_metadata_patches(str, filename)
 				add_replacement(k, v)
 			end
 			for k, v in patch.substitutions do
-				add_substitution(k, v, "")
+				if err := add_substitution(k, v, "") then
+					print_to_console("[Metadata Patches] Regex parsing failed for "..k..": "..err)
+				end
 			end
 		end
 	end
