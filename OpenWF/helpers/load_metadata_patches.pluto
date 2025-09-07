@@ -69,9 +69,10 @@ function parse_metadata_patches(str, filename)
 						print_to_console("[Metadata Patches] Suffixed regex flags are deprecated.")
 						print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 						print_to_console("[Metadata Patches] - What: "..flags)
+						sub = "(?" .. flags .. ")" .. sub
 					end
 				end
-				patch.substitutions[line:sub(3, sep - 1)] = { sub = sub, flags = flags }
+				patch.substitutions[line:sub(3, sep - 1)] = sub
 			else
 				print_to_console("[Metadata Patches] Ignoring malformed line")
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
@@ -99,7 +100,7 @@ function load_metadata_patches(str, filename)
 				add_replacement(k, v)
 			end
 			for k, v in patch.substitutions do
-				add_substitution(k, v.sub, v.flags)
+				add_substitution(k, v, "")
 			end
 		end
 	end
