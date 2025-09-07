@@ -65,6 +65,11 @@ function parse_metadata_patches(str, filename)
 				if fsep := sub:rfind("|") then
 					flags = sub:sub(fsep + 1)
 					sub = sub:sub(1, fsep - 1)
+					if flags ~= "" then
+						print_to_console("[Metadata Patches] Suffixed regex flags are deprecated.")
+						print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+						print_to_console("[Metadata Patches] - What: "..flags)
+					end
 				end
 				patch.substitutions[line:sub(3, sep - 1)] = { sub = sub, flags = flags }
 			else
