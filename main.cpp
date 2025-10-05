@@ -4859,6 +4859,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 							load_hotkeys();
 
+							{
+								uint32_t size;
+								if (auto data = g_archive.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size))
+								{
+									start_script_from_string(std::string(data, size));
+								}
+							}
+
 							ServerWebService::sendText(s, {});
 						}
 						break;

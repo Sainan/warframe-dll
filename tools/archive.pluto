@@ -53,6 +53,10 @@ local function add_file_to_archive(path, archive_path)
 			cont = json.encode(cont)
 		end
 	end
+	if cont == "" then
+		io.write(" [empty, skipping]\n")
+		return
+	end
 	io.write("\n")
 	uncompressed ..= "I4s4":pack(crypto.joaat(archive_path), cont)
 end
