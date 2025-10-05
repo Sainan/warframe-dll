@@ -1,5 +1,21 @@
 if OWF_CLIENT_HOTFIX ~= 0 then
 	owf_console_set_title(OWF_CLIENT_TITLE.." hotfix "..OWF_CLIENT_HOTFIX)
+	if owf_script_get_instance_id() ~= 0 then
+		owf_create_thread(function()
+			print("Restarting scripts...")
+			local this_script = owf_script_get_path():sub(16)
+			local scripts = owf_get_running_scripts():filter(|x| -> x ~= this_script):countvalues()
+			for script in scripts do
+				owf_stop_script(script)
+			end
+			repeat
+				yield()
+			until #owf_get_running_scripts() == 0
+			for script in scripts do
+				owf_start_script(script)
+			end
+		end)
+	end
 else
 	owf_console_set_title(OWF_CLIENT_TITLE)
 end
