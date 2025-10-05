@@ -1926,6 +1926,18 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "owf_script_send_message");
 
+	// Undocumented
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (auto scr = get_script_by_name(pluto_checkstring(L, 1)))
+		{
+			lua_pushinteger(L, scr->getHotfixVersion());
+			return 1;
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_get_hotfix_version");
+
 	std::string runtime;
 #if PRIVATE
 	runtime = string::fromFile(R"(OpenWF/runtime.pluto)");
@@ -2016,4 +2028,13 @@ int owfScript::tick(int nargs)
 		return 0;
 	}
 	return nresults;
+}
+
+lua_Integer owfScript::getHotfixVersion() const
+{
+	ObfusString str("OWF_CLIENT_HOTFIX");
+	lua_getglobal(main, str.c_str());
+	const auto res = lua_tointeger(main, -1);
+	lua_pop(main, 1);
+	return res;
 }

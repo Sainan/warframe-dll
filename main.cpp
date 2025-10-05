@@ -1230,18 +1230,6 @@ static void start_script_from_string(const std::string& code)
 	broadcast_running_scripts_locked();
 }
 
-static owfScript* get_script_by_name(const std::string& name)
-{
-	for (const auto& scr : running_scripts)
-	{
-		if (scr->name == name)
-		{
-			return scr;
-		}
-	}
-	return nullptr;
-}
-
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
 
 using raise_script_error_t = bool(*)(const char** err);

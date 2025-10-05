@@ -86,6 +86,8 @@ struct owfScript
 	bool tick();
 	int tick(int nargs);
 
+	lua_Integer getHotfixVersion() const;
+
 	const bool* findChatSendSubscription(const std::string& msg) const noexcept
 	{
 		for (const auto& e : subscribed_chat_prefixes)
@@ -164,3 +166,15 @@ struct owfScript
 inline soup::RecursiveMutex running_scripts_mtx;
 inline std::vector<owfScript*> running_scripts;
 inline owfScript* bgscript = nullptr;
+
+inline owfScript* get_script_by_name(const std::string& name)
+{
+	for (const auto& scr : running_scripts)
+	{
+		if (scr->name == name)
+		{
+			return scr;
+		}
+	}
+	return nullptr;
+}
