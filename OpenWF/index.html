@@ -158,6 +158,7 @@
 				}
 
 				if ("available_scripts" in obj) {
+					document.getElementById("scripts-container").innerHTML = "";
 					obj.available_scripts.forEach(script => {
 						const p = document.createElement("p");
 						const label = document.createElement("label");
@@ -312,7 +313,6 @@
 			};
 			ws.onerror = function(e) {
 				console.error(e);
-				onConnectionLost();
 			};
 			ws.onclose = function() {
 				fetch("/ping").then(() => {
