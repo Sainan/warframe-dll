@@ -3811,6 +3811,7 @@ return function(f)
 	sched:add(function()
 		repeat
 			simple_yield()
+			collectgarbage("step") -- fix stuttering when a script has been running for ~1h (at 120fps)
 			while evt := owf_internal_next_event() do
 				if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
 					local path, arg = url.decode(evt.path):split("?", 2):unpack()
