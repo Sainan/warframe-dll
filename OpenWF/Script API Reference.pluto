@@ -576,6 +576,7 @@ function UISys.ScriptResLoader_Create(names)
 -- OpenWF global functions
 
 function yield()
+function owf_get_stop_requested()
 function owf_create_thread(f)
 function get_lang_code()
 function get_lang_dict(lang = get_lang_code())
