@@ -2707,9 +2707,6 @@ end
 class PostProcess extends owfProxy
 	__name = "PostProcess"
 end
--- A bug in Pluto 0.11.1 is that index metamethods are not being inherited, we need to do it manually for now
-PostProcess.__index = owfProxy.__index
-PostProcess.__newindex = owfProxy.__newindex
 
 Engine = {}
 
