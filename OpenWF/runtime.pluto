@@ -3304,6 +3304,10 @@ function owf_get_running_scripts()
 	return owf_command("running_scripts").running_scripts:filter(|x| -> x:sub(1, 15) == "OpenWF/Scripts/"):map(|x| -> x:sub(16))
 end
 
+function owf_get_running_scripts_ex()
+	return owf_command("running_scripts").running_scripts
+end
+
 function owf_start_script(name)
 	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script?"..url.encode("OpenWF/Scripts/"..name))
 end
