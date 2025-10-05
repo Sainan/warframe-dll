@@ -3304,7 +3304,7 @@ function owf_get_available_scripts()
 end
 
 function owf_get_running_scripts()
-	return owf_command("running_scripts").running_scripts:map(|x| -> x:sub(16))
+	return owf_command("running_scripts").running_scripts:filter(|x| -> x:sub(1, 15) == "OpenWF/Scripts/"):map(|x| -> x:sub(16))
 end
 
 function owf_start_script(name)
