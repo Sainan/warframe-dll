@@ -3311,6 +3311,10 @@ function owf_start_script(name)
 	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script?"..url.encode("OpenWF/Scripts/"..name))
 end
 
+function owf_start_script_inline(code)
+	http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/start_script_inline?"..url.encode(code))
+end
+
 function owf_stop_script(name)
 	owf_command("stop_script?OpenWF/Scripts/"..name)
 end
