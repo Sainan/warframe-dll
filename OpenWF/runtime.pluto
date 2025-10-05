@@ -3645,7 +3645,7 @@ ivkr_push_callback = function(callback)
 	if type(callback) == "function" then
 		owf_lambda_callbacks[callbackName] = callback
 	end
-	ivkr_push_string("OWF_"..owf_script_get_path()..callbackName)
+	ivkr_push_string("OWF_"..owf_script_get_name()..callbackName)
 	owf_register_callback(callbackName)
 end
 
@@ -3763,16 +3763,16 @@ function register_pseudo_command(cmd, cb)
 end
 
 return function(f)
-	owf_script_route_base = owf_script_get_path()
+	owf_script_route_base = owf_script_get_name()
 	local is_bgscript = (owf_script_route_base == "OpenWF Background Script")
 	if is_bgscript then
 		owf_script_route_base = "/"..owf_script_route_base
 	else
-		owf_script_route_base = owf_script_get_path():sub(7)
+		owf_script_route_base = owf_script_get_name():sub(7)
 	end
 	register_pseudo_command(owf_script_route_base:sub(2).."/request_broadcast", function(sender)
 		owf_broadcast_message(json.encode({
-			from = owf_script_get_path(),
+			from = owf_script_get_name(),
 			script_broadcast = {
 				toggles = owf_script_toggles,
 			},
@@ -3833,7 +3833,7 @@ return function(f)
 						end)
 					end
 				elseif evt.type == OWF_EVT_CALLBACK then
-					evt.name = evt.name:sub(1 + #owf_script_get_path())
+					evt.name = evt.name:sub(1 + #owf_script_get_name())
 					if cb := owf_lambda_callbacks[evt.name] then
 						sched:add(cb)
 						owf_lambda_callbacks[evt.name] = nil

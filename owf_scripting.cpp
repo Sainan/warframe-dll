@@ -1552,7 +1552,7 @@ owfScript::owfScript()
 		size_t tag_len;
 		auto tag = luaL_checklstring(L, 1, &tag_len);
 
-		std::string name = static_cast<owfScript*>(L->l_G->user_data)->name; // owf_script_get_path
+		std::string name = static_cast<owfScript*>(L->l_G->user_data)->name; // owf_script_get_name
 		name.append(tag, tag_len);
 		static_cast<owfScript*>(L->l_G->user_data)->callbacks.emplace(std::move(name));
 		return 0;
@@ -1655,7 +1655,7 @@ owfScript::owfScript()
 		pluto_pushstring(L, static_cast<owfScript*>(L->l_G->user_data)->name);
 		return 1;
 	});
-	OWF_SET_GLOBAL(L, "owf_script_get_path");
+	OWF_SET_GLOBAL(L, "owf_script_get_name");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
