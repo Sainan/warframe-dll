@@ -563,16 +563,24 @@ static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 	return reinterpret_cast<decltype(&encstr_append_detour)>(encstr_append_hook.original)(a1, a2);
 }
 
-
 static DetourHook encstr_discharge_hook;
 //static std::atomic<size_t> leaked_memory = 0;
+
+using string_resize_t = void(*)(GameString*, size_t);
+static string_resize_t string_resize;
 
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
 	//std::cout << "encstr_discharge: " << (void*)a1->app << std::endl;
 #if REDIRECT_REQUESTS
+	if (string_resize)
 	{
-		// Maybe not the most memory efficient approach but should be fine for now.
+		string_resize(out, dec_buf.size());
+		memcpy(out->getData(), dec_buf.data(), dec_buf.size());
+	}
+	else
+	{
+		// If we don't have string_resize, we'll need to be a bit more stupid.
 		std::lock_guard lock(label_replacements_mtx);
 		auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
 		out->setUnownedData(ps->data, ps->size);
@@ -3021,6 +3029,24 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
 			{
 				report_critical_failure(ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.").str());
+			}
+
+			{
+				//SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B FA 48 8B D9 E8 ? ? ? ? 80 7B 0F FF 75 1D");
+				//string_resize = Module(nullptr).range.scan(sig_inst).as<string_resize_t>();
+				SIG_INST("C6 45 F6 0F E8 ? ? ? ? 0F B6 7D B6");
+				auto string_resize_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+				std::cout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
+#endif
+				if (string_resize_callsite)
+				{
+					string_resize = string_resize_callsite.add(5).rip().as<string_resize_t>();
+				}
+				else
+				{
+					log_optional_scan_failure(false);
+				}
 			}
 		}
 
