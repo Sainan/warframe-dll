@@ -15,6 +15,8 @@ end
 repeat
 	if avatar ~= gRegion:GetLocalPlayerAvatar() then
 		disable()
+		local loader = UISys.ScriptResLoader_Create({ "/Lotus/Powersuits/Fairy/FairyFlightAnimController", "/Lotus/Types/Game/LotusGroundFlightMotionController", "/Lotus/Types/Player/SpaceBattle/SpaceMoveCameraController" })
+		repeat yield() until loader:IsDone()
 		avatar = gRegion:GetLocalPlayerAvatar()
 	end
 	if not IsNull(avatar) then
