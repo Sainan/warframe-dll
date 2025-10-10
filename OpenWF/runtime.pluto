@@ -1684,6 +1684,8 @@ class LotusMissionInfo extends owfUserdata
 
 			case "levelOverride":
 			case "gameRules":
+			case "enemySpec":
+			case "extraEnemySpec":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				if ivkr_type(-1) > 0 then 
@@ -1692,6 +1694,7 @@ class LotusMissionInfo extends owfUserdata
 				ivkr_pop(1)
 				return nil
 
+			case "customAdvancedSpawners":
 			case "buddyAgents":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
