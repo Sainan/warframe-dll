@@ -257,7 +257,7 @@ then
 
 	owf_cache_close()
 
-	if not any_mods then
+	if not any_mods and not io.exists("OpenWF/Content/0/UNMANAGED") then
 		io.copy("OpenWF/Content/0/H.Cache.bin!D_---------------------w.bak", "OpenWF/Content/0/H.Cache.bin!D_---------------------w")
 	end
 end
