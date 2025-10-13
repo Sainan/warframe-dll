@@ -28,6 +28,10 @@ bool owfServerTunables::load(const char* data, size_t size)
 					bools.emplace_back(joaat::hash(e.first->reinterpretAsStr().value));
 				}
 			}
+			else if (e.second->isStr())
+			{
+				strings.emplace(joaat::hash(e.first->reinterpretAsStr().value), e.second->reinterpretAsStr().value);
+			}
 		}
 	}
 	return true;

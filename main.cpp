@@ -455,6 +455,14 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 			uri.query.append(ObfusString("&metadataPatchesInUse=1").str());
 		}
 #endif
+		{
+			std::lock_guard lock(g_server_tunables_mtx);
+			if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("token")); e != g_server_tunables.strings.end())
+			{
+				uri.query.append(ObfusString("&token=").str());
+				uri.query.append(e->second);
+			}
+		}
 	}
 	else if (uri.path == ObfusString("/api/inbox.php").str())
 	{

@@ -116,15 +116,15 @@
 	<h2>Command Line Arguments</h2>
 	<p>The bootstrapper adds the <code>owfServerHost</code> command line argument, which can be used to override the <code>server_host</code> in the config.</p>
 	<h2>Tunables</h2>
-	<p>When connecting to a server, the bootstrapper requests <code>/custom/tunables.json</code> to check the JSON object for the presence of the following fields:</p>
+	<p>When connecting to a server, the bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
-		<li><code>prohibit_skip_mission_start_timer</code></li>
-		<li><code>prohibit_fov_override</code></li>
-		<li><code>prohibit_freecam</code></li>
-		<li><code>prohibit_teleport</code></li>
-		<li><code>prohibit_scripts</code></li>
+		<li><code>token</code> — if given, this string will be provided as a query parameter in the login request to indicate acknowledgement of the tunables</li>
+		<li><code>prohibit_skip_mission_start_timer</code> — if true, prohibits <code>skip_mission_start_timer</code></li>
+		<li><code>prohibit_fov_override</code> — if true, prohibits <code>fov_override</code></li>
+		<li><code>prohibit_freecam</code> — if true, prohibits <code>freecam</code></li>
+		<li><code>prohibit_teleport</code> — if true, prohibits <code>teleport</code></li>
+		<li><code>prohibit_scripts</code> — if true, prohibits the execution of user-defined scripts</li>
 	</ul>
-	<p>The presence of a field disables the respective feature.</p>
 	<p>To aid in troubleshooting, the bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
 	<h2>Traffic Deviations</h2>
 	<ul>
