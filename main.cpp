@@ -4777,7 +4777,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-					case soup::joaat::compileTimeHash("/stop_bgscript"):
+					case soup::joaat::compileTimeHash("/stop_bgscript"): // Undocumented
 						if (bgscript)
 						{
 							bgscript->stop_requested = true;
@@ -4785,7 +4785,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
-					case soup::joaat::compileTimeHash("/start_bgscript"):
+					case soup::joaat::compileTimeHash("/start_bgscript"): // Undocumented
 						if (!bgscript)
 						{
 							start_bgscript();
@@ -4793,7 +4793,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						ServerWebService::sendText(s, {});
 						break;
 
-					case soup::joaat::compileTimeHash("/restart_bgscript"):
+					case soup::joaat::compileTimeHash("/restart_bgscript"): // Undocumented
 						restart_bgscript();
 						ServerWebService::sendText(s, {});
 						break;
@@ -4894,7 +4894,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						break;
 
 #if PRIVATE
-					case soup::joaat::compileTimeHash("/reload_tunables"):
+					case soup::joaat::compileTimeHash("/reload_tunables"): // Undocumented
 						{
 							size_t size;
 							if (auto data = (const char*)filesystem::createFileMapping("OpenWF/tunables.json", size))

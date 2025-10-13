@@ -113,6 +113,7 @@
 	</ul>
 	<h2>HTTP Interface</h2>
 	<p>While the game is running, you can visit <a href="http://localhost:6155/" target="_blank">http://localhost:6155/</a> to modify some of the above options, access additional features like teleportation, and use scripts.</p>
+	<p>Developers can also use this interface to interact with the bootstrapper. In addition to commands (documented below), the following routes are available: <code>/ping</code>, <code>/save_all_metadata</code>, <code>/write_all_metadata_reads_to_console</code>, <code>/write_all_metadata_reads_to_ee_log</code>, <code>/write_patched_metadata_reads_to_console</code>, <code>/write_patched_metadata_reads_to_ee_log</code>, <code>/pause_always_stops_time</code>, <code>/server_host</code>, <code>/status</code>, <code>/toggle_console</code>, <code>/scripts</code>, <code>/start_script</code>, <code>/start_script_inline</code>, <code>/autostart_scripts</code>, <code>/add_autostart_script</code>, <code>/remove_autostart_script</code>, <code>/apply_hotfix</code>, <code>/version</code>, <code>/game_version</code>, <code>/check_label_replacements</code>, <code>/memory</code>, <code>/get_effective_metadata</code></p>
 	<h2>Command Line Arguments</h2>
 	<p>The bootstrapper adds the <code>owfServerHost</code> command line argument, which can be used to override the <code>server_host</code> in the config.</p>
 	<h2>Tunables</h2>
@@ -154,6 +155,9 @@
 	</ul>
 	<h2>WebSocket Connection to Server</h2>
 	<p>After login, the bootstrapper will attempt to establish a WebSocket connection with <code>ws://server_host:http_port/custom/ws</code>. If the WebSocket upgrade succeeds, the bootstrapper sends <code>{"auth_game":{"accountId":...,"nonce":...}}</code>. With this connection in place, the server can send <code>{"sync_inventory":true}</code> to cause the client to resync from <code>inventory.php</code>.</p>
+	<h2>Command API</h2>
+	<p>The command API is a versatile way for developers to interact with the bootstrapper. Commands are available via HTTP, WebSocket, and the scripting API. For example, to enable <code>skip_mission_start_timer</code>, one can use HTTP with <code>/skip_mission_start_timer?true</code>, WebSocket with <code>send("skip_mission_start_timer?true")</code> or scripting with <code>owf_command("skip_mission_start_timer?true")</code>.</p>
+	<p>The following commands are available: <code>logout</code>, <code>save_config</code>, <code>reload_hotkeys</code>, <code>reload_label_replacements</code>, <code>reload_metadata_patches</code>, <code>available_scripts</code>, <code>running_scripts</code>, <code>autostart_scripts</code>, <code>script_log</code>, <code>clear_script_log</code>, <code>stop_script</code>, <code>high_damage_numbers_patch</code>, <code>skip_mission_start_timer</code>, <code>simulacrum_blacklisted</code>, <code>simulacrum_whitelisted</code>, <code>alternative_loading</code>, <code>ee_log_in_console</code>, <code>dont_resolve_labels</code>, <code>fov_override</code></p>
 	<br>
 </body>
 </html>
