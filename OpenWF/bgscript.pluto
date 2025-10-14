@@ -421,7 +421,7 @@ local wscoro = coroutine.create(function()
 					while data := sock:wsRecv() do
 						--print("Received: "..data)
 						data = json.decode(data)
-						if data.sync_inventory then
+						if data.sync_inventory and ivkr_available then
 							gGameData:SyncInventoryFromDB()
 						end
 						if data.tunables then
