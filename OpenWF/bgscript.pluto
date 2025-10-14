@@ -424,6 +424,9 @@ local wscoro = coroutine.create(function()
 						if data.sync_inventory then
 							gGameData:SyncInventoryFromDB()
 						end
+						if data.tunables then
+							owf_tunables_load(json.encode(data.tunables))
+						end
 					end
 					--print("Got nil from wsRecv")
 				else

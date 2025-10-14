@@ -684,6 +684,7 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 	return 1;
 }*/
 
+
 struct FireAndForgetMessageBoxData
 {
 	std::string msg;
@@ -700,7 +701,12 @@ static void fire_and_forget_messagebox(std::string msg, UINT type)
 	t.detach();
 }
 
-static DetachedScheduler task_runner;
+void memoise_server_tunables()
+{
+	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
+	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
+	prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
+}
 
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
@@ -737,9 +743,11 @@ struct owfTunablesTask : public soup::Task
 					ok = g_server_tunables.load(hrt.result->body.data(), hrt.result->body.size());
 				}
 			}
-			prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
-			prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
-			prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
+
+			{
+				std::lock_guard lock(g_server_tunables_mtx);
+				memoise_server_tunables();
+			}
 
 			if (!ok)
 			{
@@ -763,6 +771,8 @@ struct owfTunablesTask : public soup::Task
 	}
 };
 #endif
+
+static DetachedScheduler task_runner;
 
 static void on_got_server_host()
 {

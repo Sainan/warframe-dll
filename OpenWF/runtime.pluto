@@ -3776,6 +3776,7 @@ return function(f)
 		owf_script_route_base = "/"..owf_script_route_base
 	else
 		owf_script_route_base = owf_script_get_name():sub(7)
+		owf_tunables_load = nil
 	end
 	register_pseudo_command(owf_script_route_base:sub(2).."/request_broadcast", function(sender)
 		owf_broadcast_message(json.encode({

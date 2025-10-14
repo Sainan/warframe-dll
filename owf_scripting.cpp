@@ -33,6 +33,7 @@ using namespace soup;
 
 extern const char* g_bootstrapper_title;
 
+extern void memoise_server_tunables();
 extern bool owf_command(const std::string& in, JsonObject& out);
 
 static uint32_t wf_fnv_32(const char* str) noexcept
@@ -1524,6 +1525,21 @@ owfScript::owfScript()
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "get_active_input_filter_allows_hotkeys");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t size;
+		const char* data = luaL_checklstring(L, 1, &size);
+		bool ok;
+		{
+			std::lock_guard lock(g_server_tunables_mtx);
+			ok = g_server_tunables.load(data, size);
+			memoise_server_tunables();
+		}
+		lua_pushboolean(L, ok);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_tunables_load");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
