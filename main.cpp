@@ -2492,6 +2492,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			std::cout << "game_version = " << game_version << std::endl;
 #endif
 		}
+#if !PRIVATE
+		if (game_version == GV(65, 53, 5))
+		{
+			ObfusString msg("Your game version is too new and not (yet) supported by the bootstrapper. Please refer to the openwf.io website for further guidance.");
+			MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			return FALSE;
+		}
+#endif
 
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
