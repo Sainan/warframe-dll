@@ -5,7 +5,10 @@ require modules/Soup/soup
 require modules/Pluto/src
 arg -Wno-invalid-offsetof
 
-arg -O3
-
 arg -DLOGGING=false
 arg -DPRIVATE=false
+
+arg -O3
+
+global_arg -flto
+linker_arg -fuse-ld=lld
