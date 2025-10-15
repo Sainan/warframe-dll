@@ -3297,6 +3297,10 @@ function owf_command(cmd)
 	if res := owf_command_raw(cmd) then
 		return json.decode(res)
 	end
+	local channel, text = cmd:split("?", 2):unpack()
+	if owf_script_send_message(channel, text or "") then
+		return {}
+	end
 end
 
 function owf_get_available_scripts()
@@ -3767,6 +3771,7 @@ function register_pseudo_command(cmd, cb)
 	pseudo_commands[cmd] = cb
 	owf_register_custom_route("/" .. cmd, "text/plain", "")
 	register_websocket_message_prefix(cmd)
+	owf_script_register_channel(cmd)
 end
 
 return function(f)
@@ -3859,6 +3864,10 @@ return function(f)
 					evt.data = nil
 				elseif evt.type == OWF_EVT_SCRIPT_MESSAGE then
 					local data = json.decode(evt.data)
+					if cb := pseudo_commands[data.channel] then
+						cb(0, data.text)
+						continue
+					end
 					evt.channel = data.channel
 					evt.text = data.text
 					evt.data = nil
