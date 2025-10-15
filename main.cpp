@@ -19,6 +19,8 @@
 // Writes all IRC traffic to EE.log
 #define VERBOSE_IRC false
 
+#include "main.hpp"
+
 #include <iostream>
 #include <mutex>
 

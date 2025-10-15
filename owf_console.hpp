@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <string>
 
-#include "ObfusString.hpp"
+#include <ObfusString.hpp>
 
-extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
+#include "main.hpp"
 
 struct owfConsole
 {

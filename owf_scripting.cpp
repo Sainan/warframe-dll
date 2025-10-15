@@ -20,6 +20,7 @@
 #include <lstate.h>
 #include <lstring.h> // plutoS_prealloc, plutoS_commit
 
+#include "main.hpp"
 #include "owf_archive.hpp"
 #include "owf_cache.hpp"
 #include "owf_config.hpp"
@@ -30,11 +31,6 @@
 #include "owf_tunables.hpp"
 
 using namespace soup;
-
-extern const char* g_bootstrapper_title;
-
-extern void memoise_server_tunables();
-extern bool owf_command(const std::string& in, JsonObject& out);
 
 static uint32_t wf_fnv_32(const char* str) noexcept
 {
