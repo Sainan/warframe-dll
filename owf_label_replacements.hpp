@@ -47,6 +47,6 @@ inline uint32_t lower_hash(const char* data, size_t size)
 	return (0x8001 * (((uint32_t)(9 * val) >> 11) ^ (9 * val)));
 }
 
-inline soup::Mutex label_replacements_mtx;
 inline std::unordered_map<uint32_t, PermanentString*> label_replacements;
 #endif
+inline soup::Mutex label_replacements_mtx;
