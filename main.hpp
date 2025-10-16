@@ -1,6 +1,8 @@
 #pragma once
 
-#include <JsonObject.hpp>
+#include <string>
+
+#include <fwd.hpp>
 
 extern const char* g_bootstrapper_title;
 
