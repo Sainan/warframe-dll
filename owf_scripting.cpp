@@ -1170,6 +1170,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushinteger(L, wf_hash(luaL_checkstring(L, 1)));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_hash");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		void* res = nullptr;
 		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
 		{
