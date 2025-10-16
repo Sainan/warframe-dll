@@ -3466,9 +3466,17 @@ ivkr_typename = function(idx)
 	return ivkr_pop_string()
 end
 
-local function AddHudTracker(name, type)
-	ivkr_push_string("_T")
+function ivkr_push_t()
+	if compareversions(owf_get_build_version(), "2025.10.14.16.10") >= 0 then
+		ivkr_push_int_as_bool(ivkr_hash("_T"))
+	else
+		ivkr_push_string("_T")
+	end
 	ivkr_gettable(-10002)
+end
+
+local function AddHudTracker(name, type)
+	ivkr_push_t()
 
 	ivkr_push_string("AddHudTracker")
 	ivkr_gettable(-2)
@@ -3479,8 +3487,7 @@ local function AddHudTracker(name, type)
 end
 
 local function RemoveHudTracker(name)
-	ivkr_push_string("_T")
-	ivkr_gettable(-10002)
+	ivkr_push_t()
 
 	ivkr_push_string("AddHudTracker")
 	ivkr_gettable(-2)
@@ -3490,8 +3497,7 @@ local function RemoveHudTracker(name)
 end
 
 local function OpenScreen(name)
-	ivkr_push_string("_T")
-	ivkr_gettable(-10002)
+	ivkr_push_t()
 
 	ivkr_push_string("OpenScreen")
 	ivkr_gettable(-2)
@@ -3506,16 +3512,14 @@ end
 _T = setmetatable({}, {
 	function __index(name)
 		if name == "AddHudTracker" then
-			ivkr_push_string("_T")
-			ivkr_gettable(-10002)
+			ivkr_push_t()
 			ivkr_push_string("AddHudTracker")
 			local ok = ivkr_gettable(-2) > 0
 			ivkr_pop(2)
 			return ok ? AddHudTracker : nil
 		end
 		if name == "RemoveHudTracker" then
-			ivkr_push_string("_T")
-			ivkr_gettable(-10002)
+			ivkr_push_t()
 			ivkr_push_string("RemoveHudTracker")
 			local ok = ivkr_gettable(-2) > 0
 			ivkr_pop(2)
@@ -3524,8 +3528,7 @@ _T = setmetatable({}, {
 		if name == "OpenScreen" then
 			return OpenScreen
 		end
-		ivkr_push_string("_T")
-		ivkr_gettable(-10002)
+		ivkr_push_t()
 		ivkr_push_string(name)
 		ivkr_gettable(-2)
 		local value = ivkr_pop_any()
@@ -3533,8 +3536,7 @@ _T = setmetatable({}, {
 		return value
 	end,
 	function __newindex(name, value)
-		ivkr_push_string("_T")
-		ivkr_gettable(-10002)
+		ivkr_push_t()
 		ivkr_push_string(name)
 		ivkr_push_any(value)
 		ivkr_settable(-3)
