@@ -311,6 +311,9 @@ struct SwigTypeField
 static_assert(sizeof(SwigTypeField) == 0x20);
 
 inline std::unordered_map<uint32_t, SwigTypeDesc*> swig_types;
+#if PRIVATE
+inline std::vector<std::string> swig_type_names;
+#endif
 
 struct SwigEnum
 {

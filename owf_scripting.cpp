@@ -1067,10 +1067,10 @@ owfScript::owfScript()
 	{
 		lua_Integer i = 0;
 		lua_newtable(L);
-		for (const auto& entry : swig_types)
+		for (const auto& name : swig_type_names)
 		{
 			lua_pushinteger(L, ++i);
-			lua_pushstring(L, entry.second->name);
+			pluto_pushstring(L, name);
 			lua_settable(L, -3);
 		}
 		return 1;

@@ -3866,6 +3866,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						//std::cout << "\t- " << (*entry)->type_desc->name << std::endl;
 #endif
 						swig_types.emplace(soup::joaat::hash((*entry)->type_desc->name), (*entry)->type_desc);
+#if PRIVATE
+						swig_type_names.emplace_back((*entry)->type_desc->name);
+#endif
 					}
 				}
 			}
