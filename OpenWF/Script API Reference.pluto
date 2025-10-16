@@ -608,8 +608,6 @@ function chat_get_sent_history_index()
 function chat_set_sent_history_index(idx)
 function owf_register_custom_route(path, mime, content)
 function owf_unregister_custom_route(path)
-function owf_subscribe_to_script_trigger(script, func, block)
-function owf_unsubscribe_from_script_trigger(script, func)
 function owf_script_add_toggle(name, value = false)
 function owf_script_register_channel(name)
 function owf_script_send_message(channel, text)
@@ -661,9 +659,8 @@ OWF_EVT_SUBMIT_CHAT_MESSAGE = 1
 OWF_EVT_OUTGOING_CHAT_MESSAGE = 2
 OWF_EVT_CUSTOM_ROUTE_SERVED = 3
 OWF_EVT_CALLBACK = 4
-OWF_EVT_SCRIPT_TRIGGERED = 5
-OWF_EVT_WEBSOCKET_MESSAGE = 6
-OWF_EVT_SCRIPT_MESSAGE = 7
+OWF_EVT_WEBSOCKET_MESSAGE = 5
+OWF_EVT_SCRIPT_MESSAGE = 6
 
 function owf_next_event()
 

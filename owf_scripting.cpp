@@ -1446,7 +1446,7 @@ owfScript::owfScript()
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_OUTGOING_CHAT_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CUSTOM_ROUTE_SERVED);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CALLBACK);
-	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_TRIGGERED);
+	//OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_TRIGGERED);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_WEBSOCKET_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_MESSAGE);
 
@@ -1484,7 +1484,7 @@ owfScript::owfScript()
 				lua_settable(L, -3);
 				break;
 
-			case OWF_EVT_SCRIPT_TRIGGERED:
+			//case OWF_EVT_SCRIPT_TRIGGERED:
 			case OWF_EVT_OUTGOING_CHAT_MESSAGE:
 			case OWF_EVT_SCRIPT_MESSAGE:
 				pluto_pushstring(L, ObfusString("data").str());
@@ -1571,7 +1571,7 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "owf_register_callback");
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	/*lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		const auto script = luaL_checkstring(L, 1);
 		const auto func = luaL_checkstring(L, 2);
@@ -1602,7 +1602,7 @@ owfScript::owfScript()
 
 		return 0;
 	});
-	OWF_SET_GLOBAL(L, "owf_unsubscribe_from_script_trigger");
+	OWF_SET_GLOBAL(L, "owf_unsubscribe_from_script_trigger");*/
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

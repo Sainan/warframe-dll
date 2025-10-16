@@ -1686,6 +1686,7 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 #endif
 
 
+#if false
 static DetourHook ScriptMgr_startInstance_hook;
 
 static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, void* a3, void* a4*/)
@@ -1730,6 +1731,7 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 
 	return reinterpret_cast<decltype(&ScriptMgr_startInstance_detour)>(ScriptMgr_startInstance_hook.original)(_this, inst/*, a3, a4*/);
 }
+#endif
 
 
 static DetourHook irc_send_raw_hook;
@@ -4262,6 +4264,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+#if false // This one is definitely problematic for 40.0.0
 		{
 			//SIG_INST("48 89 6C 24 18 57 41 56 41 57 48 83 EC 30 4C 8B F1 4D 8B F9 48 8B CA 49 8B F8 48 8B EA E8"); // startInstance (4 arguments, void return)
 			SIG_INST("48 89 5C 24 20 55 56 57 48 83 EC 30 48 8B E9 48 8B FA 48 8D 0D"); // startInstanceInternal (2 arguments, bool return)
@@ -4281,6 +4284,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 		{
 			SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
