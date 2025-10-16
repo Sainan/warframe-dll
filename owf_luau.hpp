@@ -327,7 +327,14 @@ struct SwigEnum
 };
 static_assert(sizeof(SwigEnum) == 0x38);
 
-inline std::vector<SwigEnum*> swig_enums;
+inline std::vector<SwigEnum*> swig_enums1;
+
+struct SwigEnumSelfAllocated
+{
+	const char* name;
+	int32_t value;
+};
+inline std::vector<std::vector<SwigEnumSelfAllocated>> swig_enums2;
 
 
 using wf_hash_t = uint32_t(*)(const char*);
