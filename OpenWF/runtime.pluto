@@ -2822,10 +2822,23 @@ class UISys.ScriptResLoader extends owfUserdata
 	end
 end
 
+local ivkr_find_global_cache = {}
+function ivkr_find_global(name)
+	local res = ivkr_find_global_cache[name]
+	if not res then
+		local hash = ivkr_hash(name)
+		res = mem_scan_exe(string.format("%02X %02X %02X %02X 00 00 00 00", hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff, hash >> 24))
+		assert(res ~= 0)
+		res = mem_read_i64(res + 8)
+		ivkr_find_global_cache[name] = res
+	end
+	return res
+end
+
 function IsNull(val)
 	if val instanceof owfUserdata then
 		val:pushToIvkr()
-		ivkr_call(mem_read_i64(mem_scan_exe("33 82 99 7B 00 00 00 00") + 8), 1)
+		ivkr_call(ivkr_find_global("IsNull"), 1)
 		return ivkr_pop_bool()
 	end
 	return not val
@@ -2837,14 +2850,14 @@ class Type
 
 	function pushToIvkr()
 		ivkr_push_string(self.name)
-		ivkr_call(mem_read_i64(mem_scan_exe("5E C2 EF 88 00 00 00 00") + 8), 1)
+		ivkr_call(ivkr_find_global("Type"), 1)
 	end
 end
 setmetatable(Type, { __call = |_, name| -> new Type(name) })
 
 function Resource(name)
 	ivkr_push_string(name)
-	ivkr_call(mem_read_i64(mem_scan_exe("C6 BB 09 B0 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("Resource"), 1)
 	if name == "/Lotus/Types/Lore/PrimaryCodexManifest" then
 		return new CodexManifest()
 	end
@@ -2853,7 +2866,7 @@ end
 
 function WeakResource(name)
 	ivkr_push_string(name)
-	ivkr_call(mem_read_i64(mem_scan_exe("56 A9 D0 7E 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("WeakResource"), 1)
 	return new ObjectType()
 end
 
@@ -2878,13 +2891,13 @@ function Localize(loctag, subs = {})
 		ivkr_push_string(v)
 		ivkr_settable(-3)
 	end
-	ivkr_call(mem_read_i64(mem_scan_exe("AD 36 36 60 00 00 00 00") + 8), 2)
+	ivkr_call(ivkr_find_global("Localize"), 2)
 	return ivkr_pop_string()
 end
 
 function Engine.OpenLevel(args)
 	args:pushToIvkr()
-	ivkr_call(mem_read_i64(mem_scan_exe("FC 1D 0A 4E 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("OpenLevel"), 1)
 end
 
 function UISys.ScriptResLoader_Create(names)
@@ -2894,13 +2907,13 @@ function UISys.ScriptResLoader_Create(names)
 		ivkr_push_string(v)
 		ivkr_settable(-3)
 	end
-	ivkr_call(mem_read_i64(mem_scan_exe("A3 5D 64 42 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("ScriptResLoader_Create"), 1)
 	return new UISys.ScriptResLoader()
 end
 
 function AngleToDirection(rot)
 	ivkr_push_rotation(rot)
-	ivkr_call(mem_read_i64(mem_scan_exe("05 E5 C6 F6 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("AngleToDirection"), 1)
 	return ivkr_pop_vector()
 end
 
@@ -3449,7 +3462,7 @@ end
 
 ivkr_typename = function(idx)
 	ivkr_push_value(idx)
-	ivkr_call(mem_read_i64(mem_scan_exe("31 FD 5E 4F 00 00 00 00") + 8), 1)
+	ivkr_call(ivkr_find_global("GetTypeName"), 1)
 	return ivkr_pop_string()
 end
 
