@@ -9,17 +9,17 @@ function ivkr_push_vector(vec)
 	ivkr_push_float(vec.x)
 	ivkr_push_float(vec.y)
 	ivkr_push_float(vec.z)
-	ivkr_call(ivkr_find_ctor("Vector"), 3)
+	ivkr_call(ivkr_find_ctor("Vector3"), 3)
 end
 
 function ivkr_pop_vector()
 	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Vector", "x"), 1)
+	ivkr_call(ivkr_find_getter("Vector3", "x"), 1)
 	local x = ivkr_pop_number()
 	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Vector", "y"), 1)
+	ivkr_call(ivkr_find_getter("Vector3", "y"), 1)
 	local y = ivkr_pop_number()
-	ivkr_call(ivkr_find_getter("Vector", "z"), 1)
+	ivkr_call(ivkr_find_getter("Vector3", "z"), 1)
 	local z = ivkr_pop_number()
 	return new Vector(x, y, z)
 end
@@ -38,17 +38,17 @@ function ivkr_push_rotation(rot)
 	ivkr_push_float(rot.heading)
 	ivkr_push_float(rot.pitch)
 	ivkr_push_float(rot.bank)
-	ivkr_call(ivkr_find_ctor("Rotation"), 3)
+	ivkr_call(ivkr_find_ctor("Euler"), 3)
 end
 
 function ivkr_pop_rotation()
 	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Rotation", "heading"), 1)
+	ivkr_call(ivkr_find_getter("Euler", "heading"), 1)
 	local heading = ivkr_pop_number()
 	ivkr_push_value(-1)
-	ivkr_call(ivkr_find_getter("Rotation", "pitch"), 1)
+	ivkr_call(ivkr_find_getter("Euler", "pitch"), 1)
 	local pitch = ivkr_pop_number()
-	ivkr_call(ivkr_find_getter("Rotation", "bank"), 1)
+	ivkr_call(ivkr_find_getter("Euler", "bank"), 1)
 	local bank = ivkr_pop_number()
 	return new Rotation(heading, pitch, bank)
 end
@@ -2013,29 +2013,29 @@ end
 CodexTypes = {}
 
 class CodexTypes.Entry extends owfUserdata
-	__name = "CodexTypes.Entry"
+	__name = "CodexTypes::Entry"
 
 	function __construct()
 		parent:__construct()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("Entry", "locName"), 1)
+		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "locName"), 1)
 		self.locName = ivkr_pop_symbol()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("Entry", "icon"), 1)
+		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "icon"), 1)
 		self.icon = new Texture()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("Entry", "reqScans"), 1)
+		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "reqScans"), 1)
 		self.reqScans = math.tointeger(ivkr_pop_number())
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("Entry", "secret"), 1)
+		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "secret"), 1)
 		self.secret = ivkr_pop_bool()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("Entry", "type"), 1)
+		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "type"), 1)
 		self.type = new ObjectType()
 	end
 end
@@ -2366,23 +2366,23 @@ class LotusHudStatus extends HudStatus
 end
 
 class FlashMarker extends owfUserdata
-	__name = "FlashMarker"
+	__name = "LotusHudStatusTypes::FlashMarker"
 
 	function ScreenX()
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("FlashMarker", "ScreenX"), 1)
+		ivkr_call(ivkr_find_method("LotusHudStatusTypes::FlashMarker", "ScreenX"), 1)
 		return ivkr_pop_number()
 	end
 
 	function ScreenY()
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("FlashMarker", "ScreenY"), 1)
+		ivkr_call(ivkr_find_method("LotusHudStatusTypes::FlashMarker", "ScreenY"), 1)
 		return ivkr_pop_number()
 	end
 
 	function ScreenZ()
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("FlashMarker", "ScreenZ"), 1)
+		ivkr_call(ivkr_find_method("LotusHudStatusTypes::FlashMarker", "ScreenZ"), 1)
 		return ivkr_pop_number()
 	end
 
@@ -2393,30 +2393,30 @@ class FlashMarker extends owfUserdata
 		switch name do
 			case "garbage":
 				self:pushToIvkr()
-				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				ivkr_call(ivkr_find_getter("LotusHudStatusTypes::FlashMarker", name), 1)
 				return ivkr_pop_bool()
 
 			case "markerType":
 				self:pushToIvkr()
-				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				ivkr_call(ivkr_find_getter("LotusHudStatusTypes::FlashMarker", name), 1)
 				return math.tointeger(ivkr_pop_number())
 
 			case "distanceToEye":
 				self:pushToIvkr()
-				ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+				ivkr_call(ivkr_find_getter("LotusHudStatusTypes::FlashMarker", name), 1)
 				return ivkr_pop_number()
 
 			case "pos":
 				do
 					self:pushToIvkr()
-					ivkr_call(ivkr_find_getter("FlashMarker", name), 1)
+					ivkr_call(ivkr_find_getter("LotusHudStatusTypes::FlashMarker", name), 1)
 					return ivkr_pop_vector()
 				end
 				break
 
 			case "baseMarkerInfo":
 				self:pushToIvkr()
-				ivkr_call(ivkr_find_getter("FlashMarker", "baseMarkerInfo"), 1)
+				ivkr_call(ivkr_find_getter("LotusHudStatusTypes::FlashMarker", "baseMarkerInfo"), 1)
 				return new BaseMarkerInfo()
 		end
 		error("Unknown field: "..name)
@@ -3003,7 +3003,7 @@ gRegion = {
 		return new NpcManager()
 	end,
 	function Raycast(fromPos, toPos, avatar, _, outPos)
-		ivkr_call(ivkr_find_ctor("Vector"), 0)
+		ivkr_call(ivkr_find_ctor("Vector3"), 0)
 
 		ivkr_push_object(get_regionmgr())
 		ivkr_push_vector(fromPos)

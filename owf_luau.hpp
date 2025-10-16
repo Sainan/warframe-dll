@@ -258,7 +258,11 @@ static_assert(sizeof(SwigAttribute) == 0x18);
 
 struct SwigTypeDesc
 {
-	/* 0x00 */ const char* name; // e.g. "Object"
+	union
+	{
+		/* 0x00 */ const char* name_str; // < U40, e.g. "Object"
+		/* 0x00 */ uint64_t name_unk; // >= U40
+	};
 	PAD(0x08, 0x10) luau_CFunction ctor;
 	PAD(0x18, 0x20) SwigMethod* methods;
 	/* 0x28 */ SwigAttribute* attributes;
@@ -304,8 +308,8 @@ static_assert(sizeof(SwigTypeDesc) == 0x40);
 
 struct SwigTypeField
 {
-	/* 0x00 */ const char* field_name; // e.g. "_p_Object"
-	/* 0x08 */ const char* type_name; // e.g. "Object *"
+	/* 0x00 */ const char* field_name; // e.g. "_p_LotusHudStatusTypes__FlashMarker"
+	/* 0x08 */ const char* type_name; // e.g. "LotusHudStatusTypes::FlashMarker *"
 	PAD(0x10, 0x18) SwigTypeDesc* type_desc;
 };
 static_assert(sizeof(SwigTypeField) == 0x20);

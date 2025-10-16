@@ -3863,11 +3863,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					if ((*entry)->type_desc)
 					{
 #if LOGGING
-						//std::cout << "\t- " << (*entry)->type_desc->name << std::endl;
+						//std::cout << "\t- " << (*entry)->type_name << " " << (*entry)->field_name << std::endl;
 #endif
-						swig_types.emplace(soup::joaat::hash((*entry)->type_desc->name), (*entry)->type_desc);
+						swig_types.emplace(soup::joaat::hashRange((*entry)->type_name, strlen((*entry)->type_name) - 2), (*entry)->type_desc);
 #if PRIVATE
-						swig_type_names.emplace_back((*entry)->type_desc->name);
+						swig_type_names.emplace_back(std::string((*entry)->type_name, strlen((*entry)->type_name) - 2));
 #endif
 					}
 				}
