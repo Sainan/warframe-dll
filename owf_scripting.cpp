@@ -32,9 +32,12 @@
 
 using namespace soup;
 
-static uint32_t wf_fnv_32(const char* str) noexcept
+using wf_hash_t = uint32_t(*)(const char*);
+static wf_hash_t wf_hash;
+
+static uint32_t wf_fnv_1(const char* str) noexcept
 {
-	uint32_t hash = 0xF42E1C3E; // They use this non-standard initial value
+	uint32_t hash = 0xF42E1C3E;
 	for (; *str; ++str)
 	{
 		hash ^= (uint8_t)*str;
@@ -65,6 +68,19 @@ static T lua_checkpointer(lua_State* L, int i)
 		luaL_error(L, err.c_str());
 	}
 	return ptr;
+}
+
+void owfScript::init()
+{
+	if (game_version >= GV(40, 0, 0))
+	{
+		wf_hash = wf_fnv_2;
+	}
+	else
+	{
+		wf_hash = wf_fnv_1;
+	}
+	// Before this FNV-based hashing function, they used MurmurHash2 afaik.
 }
 
 static ObfusString runtime_script_name("OpenWF Script Runtime");
@@ -1169,7 +1185,7 @@ owfScript::owfScript()
 		void* res = nullptr;
 		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
 		{
-			res = reinterpret_cast<void*>(e->second->findMethod(lua_type(L, 2) == LUA_TNUMBER ? luaL_checkinteger(L, 2) : wf_fnv_32(luaL_checkstring(L, 2))));
+			res = reinterpret_cast<void*>(e->second->findMethod(lua_type(L, 2) == LUA_TNUMBER ? luaL_checkinteger(L, 2) : wf_hash(luaL_checkstring(L, 2))));
 		}
 		lua_pushpointer(L, res);
 		return 1;
@@ -1181,7 +1197,7 @@ owfScript::owfScript()
 		void* res = nullptr;
 		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
 		{
-			res = reinterpret_cast<void*>(e->second->findGetter(wf_fnv_32(luaL_checkstring(L, 2))));
+			res = reinterpret_cast<void*>(e->second->findGetter(wf_hash(luaL_checkstring(L, 2))));
 		}
 		lua_pushpointer(L, res);
 		return 1;
@@ -1193,7 +1209,7 @@ owfScript::owfScript()
 		void* res = nullptr;
 		if (auto e = swig_types.find(soup::joaat::hash(luaL_checkstring(L, 1))); e != swig_types.end())
 		{
-			res = reinterpret_cast<void*>(e->second->findSetter(wf_fnv_32(luaL_checkstring(L, 2))));
+			res = reinterpret_cast<void*>(e->second->findSetter(wf_hash(luaL_checkstring(L, 2))));
 		}
 		lua_pushpointer(L, res);
 		return 1;

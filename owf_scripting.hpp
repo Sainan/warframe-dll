@@ -72,6 +72,8 @@ struct owfScript
 	//std::unordered_map<uint32_t, bool> subscribed_script_triggers;
 	std::deque<Event> events;
 
+	static void init();
+
 	static void logNl(std::string msg);
 	static void log(std::string msg);
 

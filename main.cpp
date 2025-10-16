@@ -4561,6 +4561,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			g_client_tunables.loadMsgpack(data, size);
 		}
 
+		owfScript::init();
+
 		start_bgscript();
 
 		load_hotkeys();
