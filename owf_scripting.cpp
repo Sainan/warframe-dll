@@ -516,13 +516,13 @@ owfScript::owfScript()
 		const auto cache_key = soup::joaat::hashRange(str, len);
 		if (auto e = lua_exe_scan_cache.find(cache_key); e != lua_exe_scan_cache.end())
 		{
-			lua_pushinteger(L, e->second);
+			lua_pushpointer(L, reinterpret_cast<void*>(e->second));
 		}
 		else
 		{
 			const auto res = Module(nullptr).range.scan(Pattern(str, len)).as<uintptr_t>();
 			lua_exe_scan_cache.emplace(cache_key, res);
-			lua_pushinteger(L, res);
+			lua_pushpointer(L, reinterpret_cast<void*>(res));
 		}
 		return 1;
 	});

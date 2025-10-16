@@ -2827,9 +2827,7 @@ function ivkr_find_global(name)
 	local res = ivkr_find_global_cache[name]
 	if not res then
 		local hash = ivkr_hash(name)
-		res = mem_scan_exe(string.format("%02X %02X %02X %02X 00 00 00 00", hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff, hash >> 24))
-		assert(res ~= 0)
-		res = mem_read_i64(res + 8)
+		res = mem_read_i64(mem_scan_exe(string.format("%02X %02X %02X %02X 00 00 00 00", hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff, hash >> 24)) + 8)
 		ivkr_find_global_cache[name] = res
 	end
 	return res
