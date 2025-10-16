@@ -604,6 +604,19 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		luau_L->outtop->value.as_bool = (uint32_t)luaL_checkinteger(L, 1);
+		luau_L->outtop->type = LUAU_BOOL;
+		luau_L->outtop++;
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_push_int_as_bool");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		SOUP_IF_UNLIKELY (!luau_push_number(luau_L, static_cast<float>(luaL_checkinteger(L, 1))))
 		{
 			luaL_error(L, ObfusString("insufficient space"));

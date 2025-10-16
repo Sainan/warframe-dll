@@ -13,7 +13,7 @@ using luau_Continuation = void*;
 union luau_Value
 {
 	uintptr_t as_uintptr;
-	int as_bool;
+	uint32_t as_bool;
 	float as_float;
 	luau_GCObject* gc;
 };
