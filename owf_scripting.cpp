@@ -1173,31 +1173,70 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_get_parent");
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	if (game_version >= GV(40, 0, 0))
 	{
-		lua_newtable(L);
-		lua_Integer n = 0;
-		for (const auto& first : swig_enums)
+		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			for (auto i = first; i->name != nullptr; ++i)
+			lua_newtable(L);
+			lua_Integer n1 = 0;
+			for (const auto& e1 : swig_enums2)
 			{
-				lua_pushinteger(L, ++n);
+				lua_pushinteger(L, ++n1);
 				lua_newtable(L);
+				lua_Integer n2 = 0;
+				for (const auto& e2 : e1)
 				{
-					lua_pushstring(L, "name");
-					lua_pushstring(L, i->name);
-					lua_settable(L, -3);
-				}
-				{
-					lua_pushstring(L, "value");
-					lua_pushinteger(L, i->value);
+					lua_pushinteger(L, ++n2);
+					lua_newtable(L);
+					{
+						lua_pushstring(L, "name");
+						lua_pushstring(L, e2.name);
+						lua_settable(L, -3);
+					}
+					{
+						lua_pushstring(L, "value");
+						lua_pushinteger(L, e2.value);
+						lua_settable(L, -3);
+					}
 					lua_settable(L, -3);
 				}
 				lua_settable(L, -3);
 			}
-		}
-		return 1;
-	});
+			return 1;
+		});
+	}
+	else
+	{
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			lua_newtable(L);
+			lua_Integer n1 = 0;
+			for (const auto& first : swig_enums1)
+			{
+				lua_pushinteger(L, ++n1);
+				lua_newtable(L);
+				lua_Integer n2 = 0;
+				for (auto i = first; i->name != nullptr; ++i)
+				{
+					lua_pushinteger(L, ++n2);
+					lua_newtable(L);
+					{
+						lua_pushstring(L, "name");
+						lua_pushstring(L, i->name);
+						lua_settable(L, -3);
+					}
+					{
+						lua_pushstring(L, "value");
+						lua_pushinteger(L, i->value);
+						lua_settable(L, -3);
+					}
+					lua_settable(L, -3);
+				}
+				lua_settable(L, -3);
+			}
+			return 1;
+		});
+	}
 	OWF_SET_GLOBAL(L, "ivkr_get_enums");
 #endif
 
@@ -1256,22 +1295,44 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_find_setter");
 
-	lua_pushcfunction(L, [](lua_State* L) -> int
+	if (game_version >= GV(40, 0, 0))
 	{
-		const auto target = luaL_checkstring(L, 1);
-		for (const auto& first : swig_enums)
+		lua_pushcfunction(L, [](lua_State* L) -> int
 		{
-			for (auto i = first; i->name != nullptr; ++i)
+			const auto target = luaL_checkstring(L, 1);
+			for (const auto& e1 : swig_enums2)
 			{
-				if (strcmp(i->name, target) == 0)
+				for (const auto& e2 : e1)
 				{
-					lua_pushinteger(L, i->value);
-					return 1;
+					if (strcmp(e2.name, target) == 0)
+					{
+						lua_pushinteger(L, e2.value);
+						return 1;
+					}
 				}
 			}
-		}
-		return 0;
-	});
+			return 0;
+		});
+	}
+	else
+	{
+		lua_pushcfunction(L, [](lua_State* L) -> int
+		{
+			const auto target = luaL_checkstring(L, 1);
+			for (const auto& first : swig_enums1)
+			{
+				for (auto i = first; i->name != nullptr; ++i)
+				{
+					if (strcmp(i->name, target) == 0)
+					{
+						lua_pushinteger(L, i->value);
+						return 1;
+					}
+				}
+			}
+			return 0;
+		});
+	}
 	OWF_SET_GLOBAL(L, "ivkr_get_enum_value");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
