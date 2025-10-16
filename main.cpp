@@ -3064,14 +3064,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				//SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B FA 48 8B D9 E8 ? ? ? ? 80 7B 0F FF 75 1D");
 				//string_resize = Module(nullptr).range.scan(sig_inst).as<string_resize_t>();
-				SIG_INST("C6 45 F6 0F E8 ? ? ? ? 0F B6 7D B6");
+				SIG_INST("48 8D 4B 18 33 D2 E8 ? ? ? ? 33 D2 48 8D 4B 38 E8 ? ? ? ? 48 8B 4C 24 30");
 				auto string_resize_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 				std::cout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
 #endif
 				if (string_resize_callsite)
 				{
-					string_resize = string_resize_callsite.add(5).rip().as<string_resize_t>();
+					string_resize = string_resize_callsite.add(7).rip().as<string_resize_t>();
 				}
 				else
 				{
