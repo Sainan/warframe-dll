@@ -32,9 +32,6 @@
 
 using namespace soup;
 
-using wf_hash_t = uint32_t(*)(const char*);
-static wf_hash_t wf_hash;
-
 static uint32_t wf_fnv_1(const char* str) noexcept
 {
 	uint32_t hash = 0xF42E1C3E;

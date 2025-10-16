@@ -2354,6 +2354,35 @@ bool owf_command(const std::string& in, JsonObject& out)
 	return false;
 }
 
+static soup::Pattern hash_to_pattern(uint32_t hash)
+{
+	char data[23];
+	data[0] = soup::string::charset_hex[(hash >> 4) & 0xf];
+	data[1] = soup::string::charset_hex[(hash >> 0) & 0xf];
+	data[2] = ' ';
+	data[3] = soup::string::charset_hex[(hash >> 12) & 0xf];
+	data[4] = soup::string::charset_hex[(hash >> 8) & 0xf];
+	data[5] = ' ';
+	data[6] = soup::string::charset_hex[(hash >> 20) & 0xf];
+	data[7] = soup::string::charset_hex[(hash >> 16) & 0xf];
+	data[8] = ' ';
+	data[9] = soup::string::charset_hex[(hash >> 28) & 0xf];
+	data[10] = soup::string::charset_hex[(hash >> 24) & 0xf];
+	data[11] = ' ';
+	data[12] = '0';
+	data[13] = '0';
+	data[14] = ' ';
+	data[15] = '0';
+	data[16] = '0';
+	data[17] = ' ';
+	data[18] = '0';
+	data[19] = '0';
+	data[20] = ' ';
+	data[21] = '0';
+	data[22] = '0';
+	return Pattern(data, sizeof(data));
+}
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
@@ -2832,6 +2861,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 		save_config();
+
+		owfScript::init();
 
 #if PRIVATE
 		auto t = time::millis();
@@ -3492,8 +3523,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			SIG_INST("98 76 66 8E 00 00 00 00");
-			auto lua_SquadSetCountdownTimer_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("SquadSetCountdownTimer");
+			auto lua_SquadSetCountdownTimer_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_SquadSetCountdownTimer_hash = " << lua_SquadSetCountdownTimer_hash.as<void*>() << std::endl;
 #endif
@@ -3667,8 +3698,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("C2 96 84 6B 00 00 00 00");
-			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("UpdateFlashMarkers");
+			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
 #endif
@@ -3928,8 +3959,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("1E 90 F4 FC 00 00 00 00");
-			auto excludedFromSimulacrum_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("excludedFromSimulacrum");
+			auto excludedFromSimulacrum_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "excludedFromSimulacrum_hash = " << excludedFromSimulacrum_hash.as<void*>() << std::endl;
 #endif
@@ -3975,8 +4006,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (game_version >= GV(33, 0, 0)) // U32 Veilbreaker (2022.09.06.19.24) seems to crash in this detour
 		{
-			SIG_INST("6F 5D A9 54 00 00 00 00");
-			auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("GetStringVariable");
+			auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
 #endif
@@ -3994,8 +4025,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("A0 F4 CB 14 00 00 00 00");
-			auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("OpenWebBrowser");
+			auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_OpenWebBrowser_hash = " << lua_OpenWebBrowser_hash.as<void*>() << std::endl;
 #endif
@@ -4030,8 +4061,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("FF 51 68 4F 00 00 00 00");
-			auto lua_SetSeed_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("SetSeed");
+			auto lua_SetSeed_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_SetSeed_hash = " << lua_SetSeed_hash.as<void*>() << std::endl;
 #endif
@@ -4049,8 +4080,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("05 3F 88 84 00 00 00 00");
-			auto lua_ChurnSeed_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("ChurnSeed");
+			auto lua_ChurnSeed_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_ChurnSeed_hash = " << lua_ChurnSeed_hash.as<void*>() << std::endl;
 #endif
@@ -4068,8 +4099,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("F8 4C 6E DD 00 00 00 00 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? F9 62 5E 0C 00 00 00 00");
-			auto lua_SRandom_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("SRandom");
+			auto lua_SRandom_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_SRandom_hash = " << lua_SRandom_hash.as<void*>() << std::endl;
 #endif
@@ -4087,8 +4118,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("F9 62 5E 0C 00 00 00 00 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 5B CF 93 5F 00 00 00 00");
-			auto lua_SRandomInt_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("SRandomInt");
+			auto lua_SRandomInt_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_SRandomInt_hash = " << lua_SRandomInt_hash.as<void*>() << std::endl;
 #endif
@@ -4106,8 +4137,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("51 E0 F5 F1 00 00 00 00");
-			auto lua_HashCrc32_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("HashCrc32");
+			auto lua_HashCrc32_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_HashCrc32_hash = " << lua_HashCrc32_hash.as<void*>() << std::endl;
 #endif
@@ -4369,8 +4400,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			SIG_INST("8D 25 CF A6 00 00 00 00");
-			auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(sig_inst);
+			ObfusString str("WebSubscribeToFailure");
+			auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 			std::cout << "lua_WebSubscribeToFailure_hash = " << lua_WebSubscribeToFailure_hash.as<void*>() << std::endl;
 #endif
@@ -4560,8 +4591,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 			g_client_tunables.loadMsgpack(data, size);
 		}
-
-		owfScript::init();
 
 		start_bgscript();
 

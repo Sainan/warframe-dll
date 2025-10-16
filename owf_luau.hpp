@@ -330,6 +330,9 @@ static_assert(sizeof(SwigEnum) == 0x38);
 inline std::vector<SwigEnum*> swig_enums;
 
 
+using wf_hash_t = uint32_t(*)(const char*);
+inline wf_hash_t wf_hash; // owfScript::init
+
 inline constexpr uint32_t rol(const uint32_t value, const size_t bits) noexcept
 {
 	return (value << bits) | (value >> (32 - bits));
