@@ -6,6 +6,8 @@
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
 #define METADATA_PATCHES true
+#define DISABLE_WSINTCHK true
+#define MINIMAL_HOOKS false
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
@@ -640,7 +642,7 @@ static void queue_http_request_internal_detour(void* a1, GameString* url, GameSt
 }*/
 
 
-#if PRIVATE
+#if PRIVATE || MINIMAL_HOOKS
 static DetourHook Curl_resolv_hook;
 
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
@@ -650,6 +652,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 #endif
 
 	ObfusString localhost("127.0.0.1");
+#if !MINIMAL_HOOKS
 	if (can_use_server_host()
 		? server_host != hostname
 		: localhost.str() != hostname
@@ -657,6 +660,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
+#endif
 
 	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, can_use_server_host() ? server_host.c_str() : localhost.c_str(), port, allowDOH, a5);
 }
@@ -2863,6 +2867,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if !MINIMAL_HOOKS
 		{
 			Pointer game_http_request_caller;
 			size_t offset;
@@ -2946,6 +2951,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			game_http_request_hook.create();
 			game_http_request_hook.enable();
 		}
+#endif
 
 		// 38.5.0
 		/*{
@@ -3058,7 +3064,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
-#if PRIVATE
+#if PRIVATE || MINIMAL_HOOKS
 		{
 			void* Curl_resolv;
 			if (game_version >= GV(37, 0, 0))
@@ -3151,6 +3157,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			Curl_ossl_verifyhost_hook.enable();
 		}
 
+#if DISABLE_WSINTCHK
 		// This hook allows WorldSeed to be absent or just any value.
 		// 16.5 seemingly does not validate the WorldSeed.
 		if (game_version >= GV(17, 0, 0))
@@ -3217,6 +3224,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			verify_worldstate_integrity_hook.create();
 			verify_worldstate_integrity_hook.enable();
 		}
+#endif
 
 		// This hook allows any WorldSeed be considered valid.
 		/*{
@@ -3231,6 +3239,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			int_rsa_verify_hook.enable();
 		}*/
 
+#if !MINIMAL_HOOKS
 		{
 			Pointer parse_arguments_callsite;
 			if (game_version >= GV(40, 0, 0))
@@ -3286,6 +3295,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 #if false
 		{
@@ -3428,6 +3438,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
+#if !MINIMAL_HOOKS
 		{
 			ObfusString str("SquadSetCountdownTimer");
 			auto lua_SquadSetCountdownTimer_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
@@ -3446,7 +3457,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? FE FF FF 48 81 EC ? 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 98 68 FF FF FF 44 0F 29 A0 58 FF FF FF 44 0F 29 A8 48 FF FF FF 44 0F 29 B0 38 FF FF FF 44 0F 29 B8 28 FF FF FF");
 			auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -3560,7 +3573,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			auto nrs_jnz = Module(nullptr).range.scan(g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/nrs_jnz.json"), game_version));
 #if LOGGING
@@ -3580,7 +3595,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailnrs").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		if (game_version >= GV(23, 10, 0)) // Seems to match something unexpected in 2018.06.14.23.21 & 2018.02.22.14.34
 		{
 			// "Sys [Error]: Could not write to "
@@ -3601,7 +3618,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		if (game_version >= GV(33, 0, 0))
 		{
 			Pointer lua_FlashMgr_GetConfigBool_hash;
@@ -3630,7 +3649,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		if (game_version >= GV(40, 0, 0))
 		{
 			SIG_INST("BA 4C 1E E4 A0 E8");
@@ -3676,7 +3697,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			ObfusString str("UpdateFlashMarkers");
 			auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
@@ -3695,6 +3718,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 		if (game_version >= GV(37, 0, 0))
 		{
@@ -3911,6 +3935,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		if (game_version >= GV(40, 0, 0))
 		{
+#if !MINIMAL_HOOKS
 			SIG_INST("49 8D 43 D8 49 89 43 F0 E8 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C4 58 E9");
 			auto register_enum_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
@@ -3929,6 +3954,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				log_optional_scan_failure(false);
 			}
+#endif
 		}
 		else if (game_version >= GV(37, 0, 0))
 		{
@@ -3949,6 +3975,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+#if !MINIMAL_HOOKS
 		{
 			// "Using profile dir "
 			Pointer get_profile_dir;
@@ -3984,7 +4011,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			ObfusString str("excludedFromSimulacrum");
 			auto excludedFromSimulacrum_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
@@ -4011,7 +4040,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 48 8B D9 E8");
 			auto is_pause_allowed = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4030,7 +4061,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		if (game_version >= GV(33, 0, 0)) // U32 Veilbreaker (2022.09.06.19.24) seems to crash in this detour
 		{
 			ObfusString str("GetStringVariable");
@@ -4050,7 +4083,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			ObfusString str("OpenWebBrowser");
 			auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
@@ -4069,6 +4104,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 #if VERBOSE_RNG
 		{
@@ -4365,6 +4401,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+#if !MINIMAL_HOOKS
 		if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/irc_send_raw.json"), game_version); !sig_inst.bytes.empty())
 		{
 			auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4394,6 +4431,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
 #if VERBOSE_IRC
 		{
@@ -4415,6 +4453,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+#if !MINIMAL_HOOKS
 		// Allow GetOnVehicle with an operator avatar
 		// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
 		{
@@ -4435,7 +4474,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		// Needed to make RequestSlomo work outside of Captura
 		{
 			SIG_INST("FF 90 ? ? 00 00 84 C0 74 ? F3 0F 11 73");
@@ -4454,7 +4495,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				log_optional_scan_failure(false);
 			}
 		}
+#endif
 
+#if !MINIMAL_HOOKS
 		{
 			ObfusString str("WebSubscribeToFailure");
 			auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
@@ -4477,6 +4520,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
 			}
 		}
+#endif
 
 #if VERBOSE_OODLE
 		{
