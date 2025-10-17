@@ -56,6 +56,9 @@
 #include <urlenc.hpp>
 #include <WebSocketMessage.hpp>
 
+#include <windows.h>
+#include <wintrust.h>
+#include <softpub.h>
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
 #include <Lmcons.h> // UNLEN
@@ -692,13 +695,14 @@ static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 
 
 static ReplacementHook Curl_ossl_verifyhost_hook;
+static bool tampered_exe = false;
 
-static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
+static bool Curl_ossl_verifyhost_detour(void* a1, void* a2)
 {
 	//std::cout << "Curl_ossl_verifyhost_detour called" << std::endl;
 	/*auto ret = reinterpret_cast<decltype(&Curl_ossl_verifyhost_detour)>(Curl_ossl_verifyhost_hook.original)(a1, a2);
 	std::cout << "Curl_ossl_verifyhost returned " << ret << std::endl;*/
-	return 0;
+	return tampered_exe;
 }
 
 
@@ -4802,6 +4806,36 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			Thread thrd([](Capture&&)
 			{
+				// Make sure the EXE version we read earlier is actually to be trusted.
+				// Can't do this in DllMain, so doing it here/now.
+				if (game_version >= GV(35, 5, 0))
+				{
+					ObfusString Warframe_x64_exe("Warframe.x64.exe");
+					auto wstr_Warframe_x64_exe = unicode::utf8_to_utf16(Warframe_x64_exe.str());
+
+					WINTRUST_FILE_INFO fileInfo = {};
+					fileInfo.cbStruct = sizeof(fileInfo);
+					fileInfo.pcwszFilePath = wstr_Warframe_x64_exe.c_str();
+
+					WINTRUST_DATA trustData = {};
+					trustData.cbStruct = sizeof(trustData);
+					trustData.dwUIChoice = WTD_UI_NONE;
+					trustData.fdwRevocationChecks = WTD_REVOKE_NONE;
+					trustData.dwUnionChoice = WTD_CHOICE_FILE;
+					trustData.pFile = &fileInfo;
+					trustData.dwStateAction = 0;
+					trustData.dwProvFlags = WTD_SAFER_FLAG;
+
+					GUID policyGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+					ObfusString str_wintrust("wintrust");
+					ObfusString str_WinVerifyTrust("WinVerifyTrust");
+					auto hWintrust = LoadLibraryA(str_wintrust.c_str());
+					auto WinVerifyTrust_fp = reinterpret_cast<decltype(&WinVerifyTrust)>(GetProcAddress(hWintrust, str_WinVerifyTrust.c_str()));
+					tampered_exe = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) != ERROR_SUCCESS);
+					FreeLibrary(hWintrust);
+				}
+
 				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 				{
 #if LOGGING
