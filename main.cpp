@@ -2212,6 +2212,13 @@ static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
 #endif
 
 
+static ReplacementHook anticheat_sideloading_check_hook;
+
+static void do_nothing()
+{
+}
+
+
 // Called before core dict is initialised!
 static bool check_ec(const std::error_code& ec)
 {
@@ -4695,6 +4702,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 #endif
+
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("40 55 56 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 70 01 00 00");
+			auto anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+			std::cout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
+#endif
+			if (anticheat_sideloading_check)
+			{
+				anticheat_sideloading_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
+				anticheat_sideloading_check_hook.target = anticheat_sideloading_check;
+				anticheat_sideloading_check_hook.enable();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
+			}
+		}
 
 #if PRIVATE
 		std::cout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;
