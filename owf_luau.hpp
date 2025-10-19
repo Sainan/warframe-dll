@@ -332,19 +332,3 @@ inline std::vector<SwigEnum*> swig_enums;
 
 using wf_hash_t = uint32_t(*)(const char*);
 inline wf_hash_t wf_hash; // owfScript::init
-
-inline constexpr uint32_t rol(const uint32_t value, const size_t bits) noexcept
-{
-	return (value << bits) | (value >> (32 - bits));
-}
-inline constexpr uint32_t wf_fnv_2(const char* str) noexcept
-{
-	uint32_t hash = 0xAD77979C;
-	for (; *str; ++str)
-	{
-		hash ^= (uint8_t)*str;
-		hash *= 16777619u;
-	}
-	hash = ~hash;
-	return rol(hash, 17);
-}
