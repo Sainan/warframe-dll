@@ -4628,6 +4628,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					if (req.path.size() > 1
 						&& (req.path[1] == '0'
 							|| req.path[1] == '7'
+							|| req.path[1] == '8'
 							)
 						)
 					{
