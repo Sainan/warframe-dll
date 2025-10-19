@@ -70,7 +70,14 @@ static T lua_checkpointer(lua_State* L, int i)
 
 void owfScript::init()
 {
-	wf_hash = wf_fnv_1;
+	if (game_version >= GV(40, 0, 0))
+	{
+		wf_hash = wf_fnv_2;
+	}
+	else
+	{
+		wf_hash = wf_fnv_1;
+	}
 	// Before this FNV-based hashing function, they used MurmurHash2 afaik.
 }
 
