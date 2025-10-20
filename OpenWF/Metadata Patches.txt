@@ -10,4 +10,4 @@
 # http://localhost:6155/get_effective_metadata?/Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
 # For logging only, you can supply an empty patch or enable "save_all_metadata" in the Client Config at the expense of slower loading.
 #
-# Modifications to this file will only apply after a restart of the game.
+# Modifications to metadata patches will only apply after a restart of the game.
