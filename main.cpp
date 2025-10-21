@@ -212,6 +212,27 @@ static void save_config()
 }
 
 
+static std::string get_core_string_utf8(std::string key)
+{
+	if (auto e = g_core_dict.find(key); e != g_core_dict.end())
+	{
+		return e->second;
+	}
+#if PRIVATE
+	if (g_core_dict.empty())
+	{
+		key.append(" (could not be resolved because core dict is not initialised yet)");
+	}
+#endif
+	return key;
+}
+
+static std::wstring get_core_string(std::string key)
+{
+	return soup::unicode::utf8_to_utf16(get_core_string_utf8(key));
+}
+
+
 /*struct ParsedUrl
 {
 	char pad[16];
@@ -796,10 +817,14 @@ static void on_got_server_host()
 		}
 	}
 
-	std::cout << ObfusString("Redirecting requests to ") << server_host << std::endl;
+	{
+		auto msg = get_core_string_utf8(ObfusString("gotsh").str());
+		soup::string::replaceAll(msg, ObfusString("|HOST|").str(), server_host);
+		std::wcout << soup::unicode::utf8_to_utf16(msg) << std::endl;
+	}
 	if (autologin && !did_auto_login)
 	{
-		std::cout << ObfusString("Will automatically log in") << std::endl;
+		std::wcout << get_core_string(ObfusString("alpend")) << std::endl;
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
@@ -1992,6 +2017,7 @@ static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
 	return true;
 }
 
+// Called before core dict is initialised!
 static bool check_ec(const std::error_code& ec)
 {
 	if (ec)
@@ -2007,15 +2033,15 @@ static void log_optional_scan_failure(bool important)
 {
 	if (important)
 	{
-		std::cout << ObfusString("An important pattern scan has failed. The game will likely fail to start.") << std::endl;
+		std::wcout << get_core_string(ObfusString("sigfailimp").str()) << std::endl;
 	}
 	else
 	{
-		std::cout << ObfusString("An optional pattern scan has failed. Functionality may be limited beyond core precepts.") << std::endl;
+		std::wcout << get_core_string(ObfusString("sigfailopt").str()) << std::endl;
 	}
 }
 
-static void report_critical_failure(std::string msg)
+static void report_critical_failure(std::wstring msg)
 {
 	int ndlls = 0;
 	if (std::filesystem::is_regular_file(ObfusString("wtsapi32.dll").str())) ++ndlls;
@@ -2023,10 +2049,12 @@ static void report_critical_failure(std::string msg)
 	if (std::filesystem::is_regular_file(ObfusString("version.dll").str())) ++ndlls;
 	if (ndlls > 1)
 	{
-		msg.append(ObfusString(" Ensure that only one of the DLLs in your game folder is the bootstrapper.").str());
+		msg.push_back(' ');
+		msg.append(get_core_string(ObfusString("appmdll").str()));
 	}
 
-	MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+	auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
+	MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 }
 
 static Server serv;
@@ -2485,53 +2513,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		std::cout << "build_label = " << std::string(build_label, 16) << std::endl;
 #endif
 
-		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
-		{
-			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
-			{
-				std::cout << ObfusString("Hotfix applied") << std::endl;
-			}
-			else
-			{
-				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
-				g_archive.loadBuiltin();
-			}
-		}
-		else
-		{
-			g_archive.loadBuiltin();
-		}
-
-		{
-			auto build_label_int = static_cast<uint64_t>(build_label[ 0] - '0') * 100000000000ull +
-				static_cast<uint64_t>(build_label[ 1] - '0') * 10000000000ull +
-				static_cast<uint64_t>(build_label[ 2] - '0') * 1000000000ull +
-				static_cast<uint64_t>(build_label[ 3] - '0') * 100000000ull +
-				static_cast<uint64_t>(build_label[ 5] - '0') * 10000000ull +
-				static_cast<uint64_t>(build_label[ 6] - '0') * 1000000ull +
-				static_cast<uint64_t>(build_label[ 8] - '0') * 100000ull +
-				static_cast<uint64_t>(build_label[ 9] - '0') * 10000ull +
-				static_cast<uint64_t>(build_label[11] - '0') * 1000ull +
-				static_cast<uint64_t>(build_label[12] - '0') * 100ull +
-				static_cast<uint64_t>(build_label[14] - '0') * 10ull +
-				static_cast<uint64_t>(build_label[15] - '0');
-
-			game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
-
-#if LOGGING
-			std::cout << "build_label_int = " << build_label_int << std::endl;
-			std::cout << "game_version = " << game_version << std::endl;
-#endif
-		}
-#if !PRIVATE
-		if (game_version == GV(65, 53, 5))
-		{
-			ObfusString msg("Your game version is too new and not (yet) supported by the bootstrapper. Please refer to the openwf.io website for further guidance.");
-			MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-			return FALSE;
-		}
-#endif
-
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
 		SOUP_RETHROW_FALSE(check_ec(ec));
@@ -2862,6 +2843,60 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		save_config();
 
+		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
+		{
+			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+			{
+				std::cout << ObfusString("Hotfix applied") << std::endl;
+			}
+			else
+			{
+				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
+				g_archive.loadBuiltin();
+			}
+		}
+		else
+		{
+			g_archive.loadBuiltin();
+		}
+
+		g_core_dict = g_archive.getCoreDict(fallback_language);
+		/*for (auto& e : g_archive.getCoreDict(fallback_language))
+		{
+			g_core_dict.emplace(soup::joaat::hash(e.first), std::move(e.second));
+		}*/
+
+		{
+			auto build_label_int = static_cast<uint64_t>(build_label[ 0] - '0') * 100000000000ull +
+				static_cast<uint64_t>(build_label[ 1] - '0') * 10000000000ull +
+				static_cast<uint64_t>(build_label[ 2] - '0') * 1000000000ull +
+				static_cast<uint64_t>(build_label[ 3] - '0') * 100000000ull +
+				static_cast<uint64_t>(build_label[ 5] - '0') * 10000000ull +
+				static_cast<uint64_t>(build_label[ 6] - '0') * 1000000ull +
+				static_cast<uint64_t>(build_label[ 8] - '0') * 100000ull +
+				static_cast<uint64_t>(build_label[ 9] - '0') * 10000ull +
+				static_cast<uint64_t>(build_label[11] - '0') * 1000ull +
+				static_cast<uint64_t>(build_label[12] - '0') * 100ull +
+				static_cast<uint64_t>(build_label[14] - '0') * 10ull +
+				static_cast<uint64_t>(build_label[15] - '0');
+
+			game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
+
+#if LOGGING
+			std::cout << "build_label_int = " << build_label_int << std::endl;
+			std::cout << "game_version = " << game_version << std::endl;
+#endif
+		}
+//#if !PRIVATE
+		if (game_version == GV(65, 53, 5))
+		{
+			auto msg = get_core_string(ObfusString("toonew").str());
+			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
+			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
+			return FALSE;
+		}
+//#endif
+
 		owfScript::init();
 
 #if PRIVATE
@@ -2996,7 +3031,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!game_http_request_caller)
 			{
-				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
+				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 			}
 			auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
 			if (game_version >= GV(35, 5, 0))
@@ -3089,7 +3124,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 			if (!encstr_append_hook.target || !encstr_discharge_hook.target)
 			{
-				report_critical_failure(ObfusString("Failed to disable request encryption. This is required for 38.5.0 and above.").str());
+				report_critical_failure(get_core_string(ObfusString("sigfailenc").str()));
 			}
 
 			{
@@ -3179,7 +3214,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!ssl_verify_internal_caller)
 			{
-				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
+				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 			}
 			auto ssl_verify_internal = ssl_verify_internal_caller.add(7).rip().as<void*>();
 			ssl_verify_internal_hook.detour = reinterpret_cast<void*>(&ssl_verify_internal_detour);
@@ -3216,7 +3251,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!Curl_ossl_verifyhost)
 			{
-				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
+				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 			}
 			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
 			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
@@ -3274,7 +3309,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (!verify_worldstate_integrity)
 			{
-				report_critical_failure(ObfusString("A mandatory pattern scan has failed. The program will crash now.").str());
+				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
@@ -3478,7 +3513,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("An important pattern scan has failed. You may experience stuttering.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
 			}
 		}
 
@@ -3497,7 +3532,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to disable XP-based level cap.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
 			}
 		}
 #endif
@@ -3537,7 +3572,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"skip mission start timer\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
 			}
 		}
 
@@ -3601,7 +3636,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
 			}
 		}
 
@@ -3632,7 +3667,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"disable NRS connection\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailnrs").str()) << std::endl;
 			}
 		}
 
@@ -3954,7 +3989,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"forced profile dir\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
 			}
 		}
 
@@ -3981,7 +4016,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"simulacrum whitelisted/blacklisted\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
 			}
 		}
 
@@ -4000,7 +4035,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"pause always stops time\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
 			}
 		}
 
@@ -4219,7 +4254,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up Label Replacements.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
 			}
 		}
 #endif
@@ -4272,7 +4307,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up Metadata Patches.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
 			}
 		}
 #endif
@@ -4418,7 +4453,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::cout << ObfusString("Failed to bring up \"logout on request failure\". This option will be non-functional.") << std::endl;
+				std::wcout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
 			}
 		}
 
@@ -4691,7 +4726,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/dict.js"):
 						{
 							JsonObject obj;
-							auto dict = g_archive.getDict(webui_lang_code);
+							auto dict = g_archive.getWebuiDict(webui_lang_code);
 							for (const auto& e : dict)
 							{
 								obj.add(std::move(e.first), std::move(e.second));

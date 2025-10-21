@@ -75,16 +75,33 @@ uint64_t owfArchive::getVersionedInt(uint32_t path, uint64_t version) const
 	return 0;
 }
 
-std::unordered_map<std::string, std::string> owfArchive::getDict(const std::string& lang) const
+std::unordered_map<std::string, std::string> owfArchive::getCoreDict(const std::string& lang) const
 {
-	std::string buf = string::fromFile(ObfusString("OpenWF/dict.cat.txt").str());
+	MemoryRefReader r(nullptr, 0);
+	r.data = (const uint8_t*)this->find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/translations/core/"), lang), ObfusString(".cat.txt").str()), *(uint32_t*)&r.size);
+	if (!r.data)
+	{
+		r.data = (const uint8_t*)this->find(soup::joaat::compileTimeHash("OpenWF/translations/core/en.cat.txt"), *(uint32_t*)&r.size);
+	}
+
+	if (auto root = soup::cat::parse(r))
+	{
+		soup::catTreeReader tr;
+		return tr.toMap(root.get(), false);
+	}
+	return {};
+}
+
+std::unordered_map<std::string, std::string> owfArchive::getWebuiDict(const std::string& lang) const
+{
+	std::string buf = string::fromFile(ObfusString("OpenWF/webui-dict.cat.txt").str());
 	MemoryRefReader r(buf.data(), buf.size());
 	if (buf.empty())
 	{
-		r.data = (const uint8_t*)this->find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/translations/"), lang), ObfusString(".cat.txt").str()), *(uint32_t*)&r.size);
+		r.data = (const uint8_t*)this->find(soup::joaat::concat(soup::joaat::concat(soup::joaat::compileTimeHash("OpenWF/translations/webui/"), lang), ObfusString(".cat.txt").str()), *(uint32_t*)&r.size);
 		if (!r.data)
 		{
-			r.data = (const uint8_t*)this->find(soup::joaat::compileTimeHash("OpenWF/translations/en.cat.txt"), *(uint32_t*)&r.size);
+			r.data = (const uint8_t*)this->find(soup::joaat::compileTimeHash("OpenWF/translations/webui/en.cat.txt"), *(uint32_t*)&r.size);
 		}
 	}
 
