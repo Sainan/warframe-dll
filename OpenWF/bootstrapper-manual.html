@@ -137,11 +137,12 @@
 	</ul>
 	<h2>Metadata Patches</h2>
 	<p>Metadata Patches are loaded from <code>.txt</code> files in the <code>OpenWF/Metadata Patches/</code> folder.</p>
-	<p>They are parsed line by line, with leading and trailing spaces and tabs being ignored:</p>
+	<p>They are parsed line by line. If a line starts with <code>/</code>, a new patch for the given absolute path is started.</p>
+	<p>It is possible to have a single patch affect multiple paths by using ampersands. The start of a patch can also take up multiple lines if the ampersand is at the end of the line or the beginning of the next line.</p>
+	<p>For the remaining processing, leading and trailing spaces and tabs are ignored:</p>
 	<ul>
-		<li><code>&gt; /Path/Here</code> starts a patch that will be applied to <code>/Path/Here</code>.</li>
-		<li><code>&gt; /First/Path &amp; /Second/Path</code> starts a patch that will be applied to <code>/First/Path</code> and <code>/Second/Path</code>. It is possible to stretch this over multiple lines by either ending a line with <code>&amp;</code> or starting the new line <code>&amp;</code>.</li>
-		<li>Any line not starting with a special token (<code>&gt;</code>, <code>r|</code>, ...) is added as a prefix to all affected metadata. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
+		<li>Lines starting with <code>&gt;</code> also start a new patch but can be used at any indentation level.</li>
+		<li>Any line not starting with a special token (<code>&gt;</code>, <code>r|</code>, ...) is added as a prefix to the effective metadata. This works to add top-level properties but also to replace them because the game resolves duplicates by ignoring subsequent entries.</li>
 		<li>Lines starting with <code>r|</code> create replacements, e.g. <code>r|A|Z</code> replaces all instances of <code>A</code> with <code>Z</code> in affected metadata.</li>
 		<li>Lines starting with <code>s|</code> create regex substitutions, e.g. <code>s|(?m)^(.+)=1$|$1=0</code> would replace a value of 1 on any line with a 0, using the 'm' flag here so ^ and $ also match on line boundaries. See <a href="https://github.com/calamity-inc/Soup/blob/senpai/docs/user/regex.md" target="_blank">here</a> for more information about the Regex engine.</li>
 	</ul>

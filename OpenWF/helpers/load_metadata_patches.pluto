@@ -14,10 +14,6 @@ function parse_metadata_patches(str, filename)
 				ampersand = false
 			else
 				delimit_patch()
-				print_to_console("[Metadata Patches] Starting a patch via / is deprecated.")
-				print_to_console("[Metadata Patches] - Note: If this was intentional, prefix a right angle bracket (>). Otherwise, use indentation.")
-				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
-				print_to_console("[Metadata Patches] - What: "..line)
 			end
 			line = line:strip()
 			if line[-1] == "&" then
