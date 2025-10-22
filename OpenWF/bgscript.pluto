@@ -262,6 +262,14 @@ then
 	end
 end
 
+if io.isdir("OpenWF/Content/8") then
+	for io.listdir("OpenWF/Content/8", true) as path do
+		if io.isfile(path) then
+			owf_register_custom_route(path:replace("\\", "/"):sub(15), "text/plain", io.contents(path))
+		end
+	end
+end
+
 local requested_versions = false
 local current_version = ""
 local version_is_latest = nil
