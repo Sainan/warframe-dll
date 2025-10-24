@@ -717,17 +717,17 @@ end
 class BaseAvatar extends Entity
 	__name = "BaseAvatar"
 
-	function GetMaxHealth(b = true)
+	function GetMaxHealth(scaled = true)
 		self:pushToIvkr()
-		ivkr_push_bool(b)
+		ivkr_push_bool(scaled)
 		ivkr_call(ivkr_find_method("BaseAvatar", "GetMaxHealth"), 2)
 		return math.tointeger(ivkr_pop_number())
 	end
 
-	function SetMaxHealth(health, b = false)
+	function SetMaxHealth(health, setBase = false)
 		self:pushToIvkr()
 		ivkr_push_int(health)
-		ivkr_push_bool(b)
+		ivkr_push_bool(setBase)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetMaxHealth"), 3)
 	end
 

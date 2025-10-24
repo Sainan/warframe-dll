@@ -101,8 +101,8 @@ class Entity extends BaseEntity
 	function RunScript(resource, funcSymbol, b)
 
 class BaseAvatar extends Entity
-	function GetMaxHealth(b = true)
-	function SetMaxHealth(health, b = false)
+	function GetMaxHealth(scaled = true)
+	function SetMaxHealth(health, setBase = false)
 	function Suicide()
 	function DamageControl()
 	function InventoryControl()
