@@ -44,7 +44,7 @@ strlen($bin_str) == 3 or die();
 $bin_str .= pack_u64_dyn_v2(time());
 strlen($bin_str) == 8 or die();
 $bin_str .= gzcompress($uncompressed, 9);
-file_put_contents("owf_archive_data.hpp", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
+file_put_contents("owf_archive_data.inc", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
 touch("owf_archive.cpp");
 
 $target_version = substr(trim(explode("\n", file_get_contents("main.cpp"))[0]), 28, -1);

@@ -8,7 +8,7 @@
 #include <ObfusString.hpp>
 #include <string.hpp>
 
-#include "owf_archive_data.hpp"
+#include "owf_archive_data.inc"
 
 using namespace soup;
 

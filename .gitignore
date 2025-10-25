@@ -5,4 +5,4 @@ int/
 *.lib
 *.pdb
 Hotfix.owf
-owf_archive_data.hpp
+owf_archive_data.inc
