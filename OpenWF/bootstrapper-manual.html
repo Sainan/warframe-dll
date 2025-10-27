@@ -121,6 +121,7 @@
 	<p>When connecting to a server, the bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
 		<li><code>token</code> — if given, this string will be provided as a query parameter in the login request to indicate acknowledgement of the tunables</li>
+		<li><code>disable_websocket</code> — if true, the bootstrapper will not attempt to establish a websocket connection to the server (documented below)</li>
 		<li><code>prohibit_skip_mission_start_timer</code> — if true, prohibits <code>skip_mission_start_timer</code></li>
 		<li><code>prohibit_fov_override</code> — if true, prohibits <code>fov_override</code></li>
 		<li><code>prohibit_freecam</code> — if true, prohibits <code>freecam</code></li>

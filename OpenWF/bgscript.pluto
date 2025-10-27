@@ -409,7 +409,7 @@ end)
 
 local wscoro = coroutine.create(function()
 	while true do
-		if owf_get_auth_query() == "" then
+		if owf_get_auth_query() == "" or owf_tunables_has("disable_websocket") then
 			coroutine.yield()
 		else
 			try
