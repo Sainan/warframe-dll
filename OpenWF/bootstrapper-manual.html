@@ -75,9 +75,9 @@
 </head>
 <body>
 	<h1>OpenWF Bootstrapper Manual</h1>
-	<p>While the main feature of the bootstrapper (wtsapi32.dll, dwmapi.dll, or version.dll) is to use a custom server with the game, it has other features as well.</p>
+	<p>While the main feature of the Bootstrapper (wtsapi32.dll, dwmapi.dll, or version.dll) is to use a custom server with the game, it has other features as well.</p>
 	<h2>Client Config.json</h2>
-	<p>The bootstrapper's configuration is in <code>OpenWF/Client Config.json</code> relative to your game folder. It has the following fields:</p>
+	<p>The Bootstrapper's configuration is in <code>OpenWF/Client Config.json</code> relative to your game folder. It has the following fields:</p>
 	<ul>
 		<li><code>fallback_language</code> — If not empty, this language will be used when Warframe.x64.exe is invoked without a <code>language</code> command line argument.</li>
 		<li><code>fallback_languageVO</code> — If not empty, this voiceover language will be used when Warframe.x64.exe is invoked without a <code>languageVO</code> command line argument.</li>
@@ -114,21 +114,21 @@
 	<h2>HTTP Interface</h2>
 	<p>While the game is running, you can visit <a href="http://localhost:6155/" target="_blank">http://localhost:6155/</a> to modify some of the above options, access additional features like teleportation, and use scripts.</p>
 	<p>This web interface uses the game's language or <code>?lang=</code> query parameter to check for translations. The builtin translations are mirrored from <a href="https://onlyg.it/OpenWF/Translations">https://onlyg.it/OpenWF/Translations</a>. You can provide a <code>OpenWF/webui-dict.cat.txt</code> file to provide a custom work-in-progress translation.</p>
-	<p>Developers can also use the HTTP interface to interact with the bootstrapper. In addition to commands (documented below), the following routes are available: <code>/ping</code>, <code>/save_all_metadata</code>, <code>/write_all_metadata_reads_to_console</code>, <code>/write_all_metadata_reads_to_ee_log</code>, <code>/write_patched_metadata_reads_to_console</code>, <code>/write_patched_metadata_reads_to_ee_log</code>, <code>/pause_always_stops_time</code>, <code>/server_host</code>, <code>/status</code>, <code>/toggle_console</code>, <code>/scripts</code>, <code>/start_script</code>, <code>/start_script_inline</code>, <code>/autostart_scripts</code>, <code>/add_autostart_script</code>, <code>/remove_autostart_script</code>, <code>/apply_hotfix</code>, <code>/version</code>, <code>/game_version</code>, <code>/check_label_replacements</code>, <code>/memory</code>, <code>/get_effective_metadata</code></p>
+	<p>Developers can also use the HTTP interface to interact with the Bootstrapper. In addition to commands (documented below), the following routes are available: <code>/ping</code>, <code>/save_all_metadata</code>, <code>/write_all_metadata_reads_to_console</code>, <code>/write_all_metadata_reads_to_ee_log</code>, <code>/write_patched_metadata_reads_to_console</code>, <code>/write_patched_metadata_reads_to_ee_log</code>, <code>/pause_always_stops_time</code>, <code>/server_host</code>, <code>/status</code>, <code>/toggle_console</code>, <code>/scripts</code>, <code>/start_script</code>, <code>/start_script_inline</code>, <code>/autostart_scripts</code>, <code>/add_autostart_script</code>, <code>/remove_autostart_script</code>, <code>/apply_hotfix</code>, <code>/version</code>, <code>/game_version</code>, <code>/check_label_replacements</code>, <code>/memory</code>, <code>/get_effective_metadata</code></p>
 	<h2>Command Line Arguments</h2>
-	<p>The bootstrapper adds the <code>owfServerHost</code> command line argument, which can be used to override the <code>server_host</code> in the config.</p>
+	<p>The Bootstrapper adds the <code>owfServerHost</code> command line argument, which can be used to override the <code>server_host</code> in the config.</p>
 	<h2>Tunables</h2>
-	<p>When connecting to a server, the bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
+	<p>When connecting to a server, the Bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
 		<li><code>token</code> — if given, this string will be provided as a query parameter in the login request to indicate acknowledgement of the tunables</li>
-		<li><code>disable_websocket</code> — if true, the bootstrapper will not attempt to establish a websocket connection to the server (documented below)</li>
+		<li><code>disable_websocket</code> — if true, the Bootstrapper will not attempt to establish a websocket connection to the server (documented below)</li>
 		<li><code>prohibit_skip_mission_start_timer</code> — if true, prohibits <code>skip_mission_start_timer</code></li>
 		<li><code>prohibit_fov_override</code> — if true, prohibits <code>fov_override</code></li>
 		<li><code>prohibit_freecam</code> — if true, prohibits <code>freecam</code></li>
 		<li><code>prohibit_teleport</code> — if true, prohibits <code>teleport</code></li>
 		<li><code>prohibit_scripts</code> — if true, prohibits the execution of user-defined scripts</li>
 	</ul>
-	<p>To aid in troubleshooting, the bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
+	<p>To aid in troubleshooting, the Bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
 	<h2>Traffic Deviations</h2>
 	<ul>
 		<li>login.php & worldState.php requests have the extra query parameter <code>buildLabel</code> to indicate the client's buildLabel.</li>
@@ -149,20 +149,20 @@
 	</ul>
 	<p>If multiple patches affect the same absolute path, they are combined.</p>
 	<h2>Content Management</h2>
-	<p>The bootstrapper handles the client's content requests by consulting the <code>OpenWF/Content/</code> folder, forwarding the request to the configured server in case a file is not found.</p>
-	<p>At minimum, the client will request <code>/0/H.Cache.bin!D_---------------------w</code>. The bootstrapper has 3 modes for managing this file:</p>
+	<p>The Bootstrapper handles the client's content requests by consulting the <code>OpenWF/Content/</code> folder, forwarding the request to the configured server in case a file is not found.</p>
+	<p>At minimum, the client will request <code>/0/H.Cache.bin!D_---------------------w</code>. The Bootstrapper has 3 modes for managing this file:</p>
 	<ul>
 		<li><b>Managed</b> — If content replacements are in use, they are copied over into the content folder along with backups, and new cache manifests (<code>B.Cache.Windows.bin</code> and <code>H.Cache.bin</code>) will be created to ensure your content is loaded. Otherwise,</li>
 		<li><b>Unmanaged</b> — If <code>OpenWF/Content/0/UNMANAGED</code> exists, it is assumed that <code>OpenWF/Content/0/H.Cache.bin!D_---------------------w</code> is correctly in place and no attempts to correct it will be made. Otherwise,</li>
-		<li><b>Default</b> — The bootstrapper will provide a <code>OpenWF/Content/0/H.Cache.bin!D_---------------------w</code> file that should require no extra content requests except for undoing content replacements.</li>
+		<li><b>Default</b> — The Bootstrapper will provide a <code>OpenWF/Content/0/H.Cache.bin!D_---------------------w</code> file that should require no extra content requests except for undoing content replacements.</li>
 	</ul>
 	<h2>WebSocket Connection to Server</h2>
-	<p>After login, the bootstrapper will attempt to establish a WebSocket connection with <code>ws://server_host:http_port/custom/ws</code>. If the WebSocket upgrade succeeds, the bootstrapper sends <code>{"auth_game":{"accountId":...,"nonce":...}}</code>. With this connection in place, the server can send <code>{"sync_inventory":true}</code> to cause the client to resync from <code>inventory.php</code> or <code>{"tunables":{...}}</code> to send updated tunables.</p>
+	<p>After login, the Bootstrapper will attempt to establish a WebSocket connection with <code>ws://server_host:http_port/custom/ws</code>. If the WebSocket upgrade succeeds, the Bootstrapper sends <code>{"auth_game":{"accountId":...,"nonce":...}}</code>. With this connection in place, the server can send <code>{"sync_inventory":true}</code> to cause the client to resync from <code>inventory.php</code> or <code>{"tunables":{...}}</code> to send updated tunables.</p>
 	<h2>Command API</h2>
-	<p>The command API is a versatile way for developers to interact with the bootstrapper. Commands are available via HTTP, WebSocket, and the scripting API. For example, to enable <code>skip_mission_start_timer</code>, one can use HTTP with <code>/skip_mission_start_timer?true</code>, WebSocket with <code>send("skip_mission_start_timer?true")</code> or scripting with <code>owf_command("skip_mission_start_timer?true")</code>.</p>
+	<p>The command API is a versatile way for developers to interact with the Bootstrapper. Commands are available via HTTP, WebSocket, and the scripting API. For example, to enable <code>skip_mission_start_timer</code>, one can use HTTP with <code>/skip_mission_start_timer?true</code>, WebSocket with <code>send("skip_mission_start_timer?true")</code> or scripting with <code>owf_command("skip_mission_start_timer?true")</code>.</p>
 	<p>The following commands are available: <code>logout</code>, <code>save_config</code>, <code>reload_hotkeys</code>, <code>reload_label_replacements</code>, <code>reload_metadata_patches</code>, <code>available_scripts</code>, <code>running_scripts</code>, <code>autostart_scripts</code>, <code>script_log</code>, <code>clear_script_log</code>, <code>stop_script</code>, <code>high_damage_numbers_patch</code>, <code>skip_mission_start_timer</code>, <code>simulacrum_blacklisted</code>, <code>simulacrum_whitelisted</code>, <code>alternative_loading</code>, <code>ee_log_in_console</code>, <code>dont_resolve_labels</code>, <code>fov_override</code>, <code>freecam</code>, <code>lockcam</code>, <code>gamecam</code>, <code>teleport</code>, <code>enable_pause_always_stops_time</code>, <code>disable_pause_always_stops_time</code>, <code>request_bgscript_broadcasts</code>, <code>download_latest_hotfix</code>, <code>check_for_updates</code></p>
 	<h2>Feedback</h2>
-	<p>I hope this document was useful. If you have any feature requests or bug reports regarding the bootstrapper, feel free to submit them at <a href="https://onlyg.it/OpenWF/Bootstrapper/issues">https://onlyg.it/OpenWF/Bootstrapper/issues</a>.</p>
+	<p>I hope this document was useful. If you have any feature requests or bug reports regarding the Bootstrapper, feel free to submit them at <a href="https://onlyg.it/OpenWF/Bootstrapper/issues">https://onlyg.it/OpenWF/Bootstrapper/issues</a>.</p>
 	<br>
 </body>
 </html>

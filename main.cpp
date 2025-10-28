@@ -2108,7 +2108,7 @@ struct owfContentTask : public Task
 						{
 							auto msg = ObfusString("The Windows_xx cache is missing or outdated.").str();
 							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());*/
+							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());*/
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 						}
 						else
@@ -2118,7 +2118,7 @@ struct owfContentTask : public Task
 							msg.append(ObfusString(") is missing or outdated.").str());
 							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
 							msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-							msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
+							msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
 							msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 						}
@@ -2131,7 +2131,7 @@ struct owfContentTask : public Task
 						msg.append(ObfusString(") is missing or outdated.").str());
 						/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
 						msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-						msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
+						msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
 						msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
 						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 
@@ -2417,7 +2417,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	{
 		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
 		{
-			MessageBoxA(0, "Please don't keep the bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than Warframe.x64.exe.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than Warframe.x64.exe.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 
