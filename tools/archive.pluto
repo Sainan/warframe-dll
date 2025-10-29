@@ -1,7 +1,6 @@
 local { crypto, json } = require "*"
 assert(json.encode({ 0, true, json.null }, "msgpack") == "\x93\x00\xc3\xc0")
 
-require "u64_dyn"
 require "vv"
 
 io.chdir("..")

@@ -16,8 +16,8 @@ void owfArchive::load(const char* data, size_t size)
 {
 	MemoryRefReader r(data, size);
 	uint64_t decompressed_size = 0;
-	r.u64_dyn_b(decompressed_size);
-	r.u64_dyn_b(this->creation);
+	r.u64_dyn_bp(decompressed_size);
+	r.u64_dyn_bp(this->creation);
 	const auto off = r.getPosition();
 	this->data = deflate::decompress(data + off, size - off, decompressed_size).decompressed;
 }
@@ -64,7 +64,7 @@ uint64_t owfArchive::getVersionedInt(uint32_t path, uint64_t version) const
 	{
 		MemoryRefReader r(data, size);
 		uint64_t ver, val;
-		while (r.u64_dyn_b(ver) && r.u64_dyn_b(val))
+		while (r.u64_dyn_bp(ver) && r.u64_dyn_bp(val))
 		{
 			if (version >= ver)
 			{

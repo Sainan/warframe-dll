@@ -1,36 +1,9 @@
 <?php
+require "tools/u64_dyn.php";
+
 function joaat(string $str): int
 {
 	return hexdec(hash("joaat", $str));
-}
-
-function pack_u64_dyn_v2($v)
-{
-	if (is_float($v))
-	{
-		throw new Exception("Cannot encode a float as u64");
-	}
-	$out = "";
-	for ($i = 0; $i != 8; ++$i)
-	{
-		$cur = $v & 0x7f;
-		$v >>= 7;
-		if ($v != 0)
-		{
-			$out .= chr($cur | 0x80);
-			$v -= 1; // v2
-		}
-		else
-		{
-			$out .= chr($cur);
-			return $out;
-		}
-	}
-	if ($v != 0)
-	{
-		$out .= chr($v);
-	}
-	return $out;
 }
 
 chdir("tools");
@@ -39,9 +12,9 @@ chdir("..");
 $uncompressed = file_get_contents("archive.tmp");
 unlink("archive.tmp");
 
-$bin_str = pack_u64_dyn_v2(strlen($uncompressed));
+$bin_str = pack_u64_dyn_bp(strlen($uncompressed));
 strlen($bin_str) == 3 or die();
-$bin_str .= pack_u64_dyn_v2(time());
+$bin_str .= pack_u64_dyn_bp(time());
 strlen($bin_str) == 8 or die();
 $bin_str .= gzcompress($uncompressed, 9);
 file_put_contents("owf_archive_data.inc", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");

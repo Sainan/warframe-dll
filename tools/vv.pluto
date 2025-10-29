@@ -1,3 +1,5 @@
+require "u64_dyn"
+
 -- Converts a version string (of uniform length) to an integer representation, e.g. "24.12.0" becomes 24120.
 function vv_v2n(ver)
 	local n = 0
@@ -14,7 +16,7 @@ end
 function vv_enc_int(arr)
 	local out = ""
 	for _, e in ipairs(arr) do
-		out = out .. pack_u64_dyn_v2(e[1]) .. pack_u64_dyn_v2(e[2])
+		out = out .. pack_u64_dyn_bp(e[1]) .. pack_u64_dyn_bp(e[2])
 	end
 	return out
 end
@@ -23,12 +25,12 @@ function vv_dec_int(str, ver)
 	local i = 1
 	local v
 	while i < #str do
-		v, i = unpack_u64_dyn_v2(str, i)
+		v, i = unpack_u64_dyn_bp(str, i)
 		if ver >= v then
-			v, i = unpack_u64_dyn_v2(str, i)
+			v, i = unpack_u64_dyn_bp(str, i)
 			return v
 		end
-		v, i = unpack_u64_dyn_v2(str, i)
+		v, i = unpack_u64_dyn_bp(str, i)
 	end
 	return 0
 end
