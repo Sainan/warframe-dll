@@ -2897,6 +2897,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 //#endif
 
+		std::wcout << get_core_string(ObfusString("freenote").str()) << std::endl;
+
 		owfScript::init();
 
 #if PRIVATE
