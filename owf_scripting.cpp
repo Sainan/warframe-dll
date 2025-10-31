@@ -1931,6 +1931,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		static_cast<owfScript*>(L->l_G->user_data)->channels.erase(pluto_checkstring(L, 1));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_unregister_channel");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		auto channel = pluto_checkstring(L, 1);
 		auto text = pluto_checkstring(L, 2);
 
