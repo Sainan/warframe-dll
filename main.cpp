@@ -183,6 +183,7 @@ static void save_config()
 	config.add(ObfusString("fallback_language"), fallback_language);
 	config.add(ObfusString("fallback_languageVO"), fallback_languageVO);
 	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
+	config.add(ObfusString("fallback_windowMode"), fallback_windowMode);
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
 
 	config.add(ObfusString("server_host"), server_host);
@@ -935,6 +936,7 @@ static std::string process_args_str(const char* str)
 		bool got_language = false;
 		bool got_languageVO = false;
 		bool got_graphicsDriver = false;
+		bool got_windowMode = false;
 		bool got_cluster = false;
 		for (const auto& arg : string::explode<std::string>(str, ' '))
 		{
@@ -953,6 +955,10 @@ static std::string process_args_str(const char* str)
 			else if (arg.size() > 16 && arg.substr(0, 16) == ObfusString("-graphicsDriver:").str())
 			{
 				got_graphicsDriver = true;
+			}
+			else if (arg.size() > 12 && (arg.substr(0, 12) == ObfusString("-windowMode:").str() || arg.substr(0, 12) == ObfusString("-fullscreen:").str()))
+			{
+				got_windowMode = true;
 			}
 			else if (arg.size() > 9 && arg.substr(0, 9) == ObfusString("-cluster:").str())
 			{
@@ -978,6 +984,16 @@ static std::string process_args_str(const char* str)
 			arguments_to_inject.append(ObfusString("-graphicsDriver:").str());
 			arguments_to_inject.append(fallback_graphicsDriver);
 			arguments_to_inject.push_back(' ');
+		}
+		if (!got_windowMode && fallback_windowMode >= 0)
+		{
+			const int max = (game_version >= GV(40, 0, 0)) ? 2 : 1;
+			if (fallback_windowMode <= max)
+			{
+				arguments_to_inject.append(game_version >= GV(40, 0, 0) ? ObfusString("-windowMode:").str() : ObfusString("-fullscreen:").str());
+				arguments_to_inject.append(std::to_string(fallback_windowMode));
+				arguments_to_inject.push_back(' ');
+			}
 		}
 		if (game_version >= GV(8, 0, 0))
 		{
@@ -2799,6 +2815,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				fallback_graphicsDriver = ObfusString("dx11").str();
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_windowMode")); it != config->reinterpretAsObj().end() && it->second->isInt())
+			{
+				fallback_windowMode = it->second->reinterpretAsInt().value;
+			}
+			else
+			{
+				fallback_windowMode = -1;
 			}
 
 #if !CONFIG_LOADED_ONLY_ONCE

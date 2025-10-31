@@ -9,6 +9,7 @@
 inline std::string fallback_language;
 inline std::string fallback_languageVO;
 inline std::string fallback_graphicsDriver;
+inline int fallback_windowMode;
 inline std::string fallback_cluster;
 
 // Server connection
