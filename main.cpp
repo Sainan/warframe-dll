@@ -849,74 +849,87 @@ static void do_logout()
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 
-static void process_args_str(const char* str)
+static std::string process_args_str(const char* str)
 {
-#if LOGGING
-	std::cout << "parse_arguments: " << str << std::endl;
-#endif
-
+	std::string arguments_to_inject;
 	if (!processed_args)
 	{
 		processed_args = true;
+		bool got_language = false;
+		bool got_languageVO = false;
+		bool got_graphicsDriver = false;
+		bool got_cluster = false;
 		for (const auto& arg : string::explode<std::string>(str, ' '))
 		{
 			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
 			{
 				server_host = arg.substr(15);
 			}
+			else if (arg.size() > 10 && arg.substr(0, 10) == ObfusString("-language:").str())
+			{
+				got_language = true;
+			}
+			else if (arg.size() > 12 && arg.substr(0, 12) == ObfusString("-languageVO:").str())
+			{
+				got_languageVO = true;
+			}
+			else if (arg.size() > 16 && arg.substr(0, 16) == ObfusString("-graphicsDriver:").str())
+			{
+				got_graphicsDriver = true;
+			}
+			else if (arg.size() > 9 && arg.substr(0, 9) == ObfusString("-cluster:").str())
+			{
+				got_cluster = true;
+			}
 		}
 		on_got_server_host();
+
+		if (!got_language && !fallback_language.empty())
+		{
+			arguments_to_inject.append(ObfusString("-language:").str());
+			arguments_to_inject.append(fallback_language);
+			arguments_to_inject.push_back(' ');
+		}
+		if (game_version >= GV(39, 0, 0) && !got_languageVO && !fallback_languageVO.empty())
+		{
+			arguments_to_inject.append(ObfusString("-languageVO:").str());
+			arguments_to_inject.append(fallback_languageVO);
+			arguments_to_inject.push_back(' ');
+		}
+		if (!got_graphicsDriver && !fallback_graphicsDriver.empty())
+		{
+			arguments_to_inject.append(ObfusString("-graphicsDriver:").str());
+			arguments_to_inject.append(fallback_graphicsDriver);
+			arguments_to_inject.push_back(' ');
+		}
+		if (!got_cluster)
+		{
+			arguments_to_inject.append(ObfusString("-cluster:").str());
+			arguments_to_inject.append(fallback_cluster);
+			arguments_to_inject.push_back(' ');
+		}
 	}
+#if LOGGING
+	if (!arguments_to_inject.empty())
+	{
+		std::cout << "parse_arguments (injected): " << arguments_to_inject << std::endl;
+	}
+	std::cout << "parse_arguments: " << str << std::endl;
+#endif
+	return arguments_to_inject;
 }
 
 template <typename Str/*, bool has_languageVO, bool has_graphicsDriver*/>
 static void parse_arguments_detour(uintptr_t arguments, Str* str, void* a3)
 {
-	process_args_str(str->getData());
+	if (auto arguments_to_inject = process_args_str(str->getData()); !arguments_to_inject.empty())
+	{
+		Str tmp;
+		tmp.setUnownedData(arguments_to_inject.data(), arguments_to_inject.size());
+		reinterpret_cast<decltype(&parse_arguments_detour<Str/*, has_languageVO, has_graphicsDriver*/>)>(parse_arguments_hook.original)(arguments, &tmp, a3);
+	}
 
 	reinterpret_cast<decltype(&parse_arguments_detour<Str/*, has_languageVO, has_graphicsDriver*/>)>(parse_arguments_hook.original)(arguments, str, a3);
-
-	bool& arguments_got_language = *reinterpret_cast<bool*>(arguments + Arguments_language_bool);
-	Str& arguments_language = *reinterpret_cast<Str*>(arguments + Arguments_language_value);
-	if (!arguments_got_language && !fallback_language.empty())
-	{
-		arguments_got_language = true;
-		arguments_language.setShortData(fallback_language.data(), fallback_language.size());
-	}
-	if (arguments_got_language)
-	{
-		lang_code = std::string(arguments_language.getData(), arguments_language.getSize());
-	}
-
-	if (Arguments_languageVO_bool)
-	{
-		bool& arguments_got_languageVO = *reinterpret_cast<bool*>(arguments + Arguments_languageVO_bool);
-		Str& arguments_languageVO = *reinterpret_cast<Str*>(arguments + Arguments_languageVO_value);
-		if (!arguments_got_languageVO && !fallback_languageVO.empty())
-		{
-			arguments_got_languageVO = true;
-			arguments_languageVO.setShortData(fallback_languageVO.data(), fallback_languageVO.size());
-		}
-	}
-
-	if (Arguments_graphicsDriver_bool)
-	{
-		bool& arguments_got_graphicsDriver = *reinterpret_cast<bool*>(arguments + Arguments_graphicsDriver_bool);
-		Str& arguments_graphicsDriver = *reinterpret_cast<Str*>(arguments + Arguments_graphicsDriver_value);
-		if (!arguments_got_graphicsDriver && !fallback_graphicsDriver.empty())
-		{
-			arguments_got_graphicsDriver = true;
-			arguments_graphicsDriver.setShortData(fallback_graphicsDriver.data(), fallback_graphicsDriver.size());
-		}
-	}
-
-	bool& arguments_got_cluster = *reinterpret_cast<bool*>(arguments + Arguments_cluster_bool);
-	Str& arguments_cluster = *reinterpret_cast<Str*>(arguments + Arguments_cluster_value);
-	if (!arguments_got_cluster)
-	{
-		arguments_got_cluster = true;
-		arguments_cluster.setShortData(fallback_cluster.data(), fallback_cluster.size());
-	}
 }
 
 
@@ -3352,15 +3365,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (parse_arguments_callsite)
 			{
 				auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
-
-				Arguments_graphicsDriver_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_graphicsDriver_bool.json"), game_version));
-				Arguments_graphicsDriver_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_graphicsDriver_value.json"), game_version));
-				Arguments_language_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_language_bool.json"), game_version));
-				Arguments_language_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_language_value.json"), game_version));
-				Arguments_languageVO_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_languageVO_bool.json"), game_version));
-				Arguments_languageVO_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_languageVO_value.json"), game_version));
-				Arguments_cluster_bool = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_cluster_bool.json"), game_version));
-				Arguments_cluster_value = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/Arguments_cluster_value.json"), game_version));
 
 				/*if (game_version >= GV(39, 0, 0))
 				{
