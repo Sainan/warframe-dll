@@ -8,6 +8,7 @@
 #include <lua.h> // lua_State
 
 #include "owf_overlay.hpp"
+#include "owf_web.hpp"
 
 inline soup::Mutex script_log_mtx;
 inline std::string script_log;
@@ -25,10 +26,11 @@ enum owfScriptEventType : uint8_t
 {
 	OWF_EVT_SUBMIT_CHAT_MESSAGE = 1,
 	OWF_EVT_OUTGOING_CHAT_MESSAGE = 2,
-	OWF_EVT_CUSTOM_ROUTE_SERVED = 3,
-	OWF_EVT_CALLBACK = 4,
-	OWF_EVT_WEBSOCKET_MESSAGE = 5,
-	OWF_EVT_SCRIPT_MESSAGE = 6,
+	OWF_EVT_CUSTOM_ROUTE_REQUEST = 3,
+	OWF_EVT_CUSTOM_ROUTE_SERVED = 4,
+	OWF_EVT_CALLBACK = 5,
+	OWF_EVT_WEBSOCKET_MESSAGE = 6,
+	OWF_EVT_SCRIPT_MESSAGE = 7,
 };
 
 struct owfScript
@@ -45,7 +47,7 @@ struct owfScript
 	struct Event
 	{
 		owfScriptEventType type;
-		uint32_t intdata;
+		uint64_t intdata;
 		std::string data;
 
 		Event(owfScriptEventType type, std::string data)
@@ -53,21 +55,17 @@ struct owfScript
 		{
 		}
 
-		Event(owfScriptEventType type, uint32_t intdata, std::string data)
+		Event(owfScriptEventType type, uint64_t intdata, std::string data)
 			: type(type), intdata(intdata), data(std::move(data))
 		{
 		}
-	};
-	struct CustomRoute
-	{
-		std::string mime;
-		std::string content;
 	};
 	std::unordered_map<std::string, bool> subscribed_chat_prefixes;
 	std::unordered_set<std::string> subscribed_outgoing_chat_prefixes;
 	std::unordered_set<std::string> websocket_message_prefixes;
 	std::unordered_set<std::string> channels;
-	std::unordered_map<uint32_t, CustomRoute> custom_routes;
+	std::unordered_map<uint32_t, CustomRouteResponse> static_custom_routes;
+	std::unordered_set<uint32_t> dynamic_custom_routes;
 	std::unordered_set<std::string> callbacks;
 	//std::unordered_map<uint32_t, bool> subscribed_script_triggers;
 	std::deque<Event> events;
@@ -125,13 +123,22 @@ struct owfScript
 		return false;
 	}
 
-	const CustomRoute* findCustomRoute(uint32_t hash) const noexcept
+	const CustomRouteResponse* findStaticCustomRoute(uint32_t hash) const noexcept
 	{
-		if (auto e = custom_routes.find(hash); e != custom_routes.end())
+		if (auto e = static_custom_routes.find(hash); e != static_custom_routes.end())
 		{
 			return &e->second;
 		}
 		return nullptr;
+	}
+
+	bool handlesRouteDynamically(uint32_t hash) const noexcept
+	{
+		if (auto e = dynamic_custom_routes.find(hash); e != dynamic_custom_routes.end())
+		{
+			return true;
+		}
+		return false;
 	}
 
 	/*const bool* findSubscribedScriptTrigger(uint32_t hash) const noexcept
@@ -179,3 +186,5 @@ inline owfScript* get_script_by_name(const std::string& name)
 	}
 	return nullptr;
 }
+
+extern owfScript* get_script_by_instance_id(size_t instance_id);

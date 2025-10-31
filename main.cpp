@@ -5087,20 +5087,33 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							std::lock_guard lock(running_scripts_mtx);
 							for (auto& scr : running_scripts)
 							{
-								if (auto route = scr->findCustomRoute(route_hash))
+								if (auto route = scr->findStaticCustomRoute(route_hash))
 								{
 									ServerWebService::sendData(s, route->mime.c_str(), route->content);
 									scr->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
 									handled = true;
 									break;
 								}
+								if (auto route = scr->handlesRouteDynamically(route_hash))
+								{
+									auto spTask = Scheduler::get()->add<owfScriptRouteTask>(s, scr->instance_id);
+									scr->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_REQUEST, reinterpret_cast<uint64_t>(spTask.toDumb()), req.path);
+									handled = true;
+									break;
+								}
 							}
 							if (!handled && bgscript)
 							{
-								if (auto route = bgscript->findCustomRoute(route_hash))
+								if (auto route = bgscript->findStaticCustomRoute(route_hash))
 								{
 									ServerWebService::sendData(s, route->mime.c_str(), route->content);
 									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
+									handled = true;
+								}
+								if (auto route = bgscript->handlesRouteDynamically(route_hash))
+								{
+									auto spTask = Scheduler::get()->add<owfScriptRouteTask>(s, bgscript->instance_id);
+									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_REQUEST, reinterpret_cast<uint64_t>(spTask.toDumb()), req.path);
 									handled = true;
 								}
 							}
@@ -5199,4 +5212,35 @@ void owf_broadcast_message(std::string&& msg, uint32_t recipient /*= 0*/)
 {
 	unicode::utf8_sanitise(msg);
 	serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
+}
+
+owfScriptRouteTask::owfScriptRouteTask(soup::Socket& _s, size_t script_instance_id)
+	: s(Scheduler::get()->getShared(_s)), script_instance_id(script_instance_id)
+{
+	ServerWebService::setKeepAlive(_s, true);
+}
+
+void owfScriptRouteTask::onTick() /*final*/
+{
+	if (auto response = this->response.load())
+	{
+		ServerWebService::sendData(*static_cast<Socket*>(s.get()), response->mime.c_str(), std::move(response->content));
+		delete response;
+		return setWorkDone();
+	}
+	if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
+	{
+#if LOGGING
+		std::cout << "owfScriptRouteTask: client socket is gone" << std::endl;
+#endif
+		return setWorkDone();
+	}
+	if (get_script_by_instance_id(script_instance_id) == nullptr)
+	{
+#if LOGGING
+		std::cout << "owfScriptRouteTask: script instance is gone" << std::endl;
+#endif
+		ServerWebService::sendContent(*static_cast<Socket*>(s.get()), "500 Internal Server Error", ObfusString("Sorry, this request was supposed to be handled by a script, but that script is no longer running now.").str());
+		return setWorkDone();
+	}
 }

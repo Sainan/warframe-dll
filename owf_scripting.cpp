@@ -264,7 +264,7 @@ void owfScript::openLibs(lua_State* L)
 #endif
 }
 
-static owfScript* get_script_by_instance_id(size_t instance_id)
+owfScript* get_script_by_instance_id(size_t instance_id)
 {
 	std::lock_guard lock(running_scripts_mtx);
 	for (const auto& scr : running_scripts)
@@ -273,6 +273,10 @@ static owfScript* get_script_by_instance_id(size_t instance_id)
 		{
 			return scr;
 		}
+	}
+	if (bgscript && bgscript->instance_id == instance_id)
+	{
+		return bgscript;
 	}
 	return nullptr;
 }
@@ -1470,6 +1474,7 @@ owfScript::owfScript()
 
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SUBMIT_CHAT_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_OUTGOING_CHAT_MESSAGE);
+	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CUSTOM_ROUTE_REQUEST);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CUSTOM_ROUTE_SERVED);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_CALLBACK);
 	//OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SCRIPT_TRIGGERED);
@@ -1498,6 +1503,14 @@ owfScript::owfScript()
 				lua_settable(L, -3);
 				break;
 
+			case OWF_EVT_CUSTOM_ROUTE_REQUEST:
+				{
+					pluto_pushstring(L, ObfusString("inst").str());
+					const auto& spTask = pluto_newclassinst(L, soup::SharedPtr<owfScriptRouteTask>, soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(scr->events.front().intdata)));
+					SOUP_UNUSED(spTask);
+					lua_settable(L, -3);
+				}
+				[[fallthrough]];
 			case OWF_EVT_CUSTOM_ROUTE_SERVED:
 				pluto_pushstring(L, ObfusString("path").str());
 				pluto_pushstring(L, scr->events.front().data);
@@ -1573,17 +1586,50 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->custom_routes.emplace(soup::joaat::hash(luaL_checkstring(L, 1)), CustomRoute{ pluto_checkstring(L, 2), pluto_checkstring(L, 3) });
+		static_cast<owfScript*>(L->l_G->user_data)->static_custom_routes.emplace(soup::joaat::hash(luaL_checkstring(L, 1)), CustomRouteResponse{ pluto_checkstring(L, 2), pluto_checkstring(L, 3) });
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_register_custom_route");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		static_cast<owfScript*>(L->l_G->user_data)->custom_routes.erase(soup::joaat::hash(luaL_checkstring(L, 1)));
+		static_cast<owfScript*>(L->l_G->user_data)->static_custom_routes.erase(soup::joaat::hash(luaL_checkstring(L, 1)));
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_unregister_custom_route");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->dynamic_custom_routes.emplace(soup::joaat::hash(luaL_checkstring(L, 1)));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_register_dynamic_custom_route");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		static_cast<owfScript*>(L->l_G->user_data)->dynamic_custom_routes.erase(soup::joaat::hash(luaL_checkstring(L, 1)));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_unregister_dynamic_custom_route");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto& spTask = *(soup::SharedPtr<owfScriptRouteTask>*)luaL_checkudata(L, 1, "soup::SharedPtr<owfScriptRouteTask>");
+		auto pTask = spTask.get();
+		if (pTask == nullptr)
+		{
+			ObfusString msg("Request does not exist?! This should not happen.");
+			luaL_error(L, msg.c_str());
+		}
+		if (pTask->response.load() != nullptr)
+		{
+			ObfusString msg("Request was already responded to");
+			luaL_error(L, msg.c_str());
+		}
+		pTask->response.store(new CustomRouteResponse{ pluto_checkstring(L, 2), pluto_checkstring(L, 3) });
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_dynamic_custom_route_response");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
