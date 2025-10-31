@@ -7,3 +7,6 @@
 [submodule "Soup"]
 	path = modules/Soup
 	url = https://github.com/calamity-inc/Soup
+[submodule "ee-notation-parser"]
+	path = modules/ee-notation-parser
+	url = https://github.com/Sainan/ee-notation-parser

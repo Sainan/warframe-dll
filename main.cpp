@@ -62,6 +62,8 @@
 
 #include <lauxlib.h>
 
+#include "modules/ee-notation-parser/EeNotationParser.hpp"
+
 using namespace soup;
 
 #include "owf_archive.hpp"
@@ -5056,6 +5058,29 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								if (e->second.applied)
 								{
 									ServerWebService::sendText(s, e->second.final_data);
+								}
+								else
+								{
+									ServerWebService::sendText(s, ObfusString("patch not applied (yet)").str());
+								}
+							}
+							else
+							{
+								ServerWebService::sendText(s, ObfusString("no such patch").str());
+							}
+						}
+						break;
+
+					case soup::joaat::compileTimeHash("/get_effective_metadata_as_json"):
+						{
+							std::lock_guard lock(metadata_patches_mtx);
+							if (auto e = metadata_patches.find(joaat::hash(urlenc::decode(arr.at(1)))); e != metadata_patches.end())
+							{
+								if (e->second.applied)
+								{
+									EeNotationParser par;
+									auto json = par.parse(e->second.final_data);
+									ServerWebService::sendText(s, json->encodePretty());
 								}
 								else
 								{
