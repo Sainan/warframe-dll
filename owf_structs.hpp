@@ -151,6 +151,16 @@ inline uint16_t Arguments_cluster_bool;
 inline uint16_t Arguments_cluster_value;
 
 #if false
+// U40:
+// - got_graphicsDriver: 0x189
+// - graphicsDriver: 0x190
+// - got_language: 0x1B2
+// - language: 0x1B8
+// - got_languageVO: 0x1C8
+// - languageVO: 0x1D0
+// - got_cluster: 0x1E0
+// - cluster: 0x1E8
+
 struct ArgumentsU39
 {
 	PAD(0, 0x189) bool got_graphicsDriver;
