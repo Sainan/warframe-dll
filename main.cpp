@@ -2276,6 +2276,10 @@ static void owf_broadcast_value(std::string name, T value)
 bool owf_command(const std::string& in, JsonObject& out)
 {
 	auto args = string::explode(in, '?');
+	SOUP_IF_UNLIKELY (args.empty())
+	{
+		return false;
+	}
 	switch (joaat::hash(args[0]))
 	{
 	case joaat::compileTimeHash("logout"):
