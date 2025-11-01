@@ -661,6 +661,10 @@ function owf_script_send_reply(inst, text)
 function owf_script_is_reply_pending(inst)
 function owf_script_get_reply(inst)
 
+function owf_command(cmd)
+function owf_register_command(cmd, cb)
+function owf_unregister_command(cmd)
+
 -- OpenWF events
 
 OWF_EVT_SUBMIT_CHAT_MESSAGE = 1

@@ -270,15 +270,19 @@ local hotfix_available = ""
 local hotfix_available_sha256 = ""
 local downloading_hotfix = false
 
-local function send_version_broadcast(recipient)
+local function get_version_broadcast()
+	return {
+		current = current_version,
+		latest = version_is_latest,
+		hotfix = current_hotfix,
+		hotfix_available = hotfix_available,
+	}
+end
+
+local function send_version_broadcast()
 	owf_broadcast_message(json.encode{
-		version_broadcast = {
-			current = current_version,
-			latest = version_is_latest,
-			hotfix = current_hotfix,
-			hotfix_available = hotfix_available,
-		}
-	}, recipient)
+		version_broadcast = get_version_broadcast()
+	})
 end
 
 local function check_for_updates()
@@ -321,15 +325,9 @@ local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.12
 local last_status_update = 0
 local last_status_string
 
-local function send_status_broadcast(recipient)
-	owf_broadcast_message(json.encode{
-		bgscript_status_string = last_status_string
-	}, recipient)
-end
-
 local script_log_len = 0
 
-register_pseudo_command("freecam", function()
+owf_register_command("freecam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
 			ply:setControllingCamera(true)
@@ -337,7 +335,7 @@ register_pseudo_command("freecam", function()
 		end
 	end
 end)
-register_pseudo_command("lockcam", function()
+owf_register_command("lockcam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
 			ply:setControllingCamera(false)
@@ -345,7 +343,7 @@ register_pseudo_command("lockcam", function()
 		end
 	end
 end)
-register_pseudo_command("gamecam", function()
+owf_register_command("gamecam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
 			ply:setControllingCamera(false)
@@ -353,7 +351,7 @@ register_pseudo_command("gamecam", function()
 		end
 	end
 end)
-register_pseudo_command("teleport", function(_, pos)
+owf_register_command("teleport", function(_, pos)
 	if ivkr_available and not owf_tunables_has("prohibit_teleport") then
 		local arr = pos:split(",")
 		if #arr == 3 then
@@ -361,27 +359,28 @@ register_pseudo_command("teleport", function(_, pos)
 		end
 	end
 end)
-register_pseudo_command("enable_pause_always_stops_time", function()
+owf_register_command("enable_pause_always_stops_time", function()
 	set_pause_always_stops_time(true)
 	owf_broadcast_message[[{"pause_always_stops_time":true}]]
 end)
-register_pseudo_command("disable_pause_always_stops_time", function()
+owf_register_command("disable_pause_always_stops_time", function()
 	gGameRules:RequestUnpause()
 	set_pause_always_stops_time(false)
 	owf_broadcast_message[[{"pause_always_stops_time":false}]]
 end)
-register_pseudo_command("request_bgscript_broadcasts", function(sender)
-	if last_status_string then
-		send_status_broadcast(sender)
-	end
+owf_register_command("request_bgscript_broadcasts", function()
+	local r = {
+		bgscript_status_string = last_status_string,
+	}
 	if not requested_versions then
 		requested_versions = true
 		check_for_updates()
 	else
-		send_version_broadcast(sender)
+		r.version_broadcast = get_version_broadcast()
 	end
+	return r
 end)
-register_pseudo_command("download_latest_hotfix", function()
+owf_register_command("download_latest_hotfix", function()
 	if not downloading_hotfix then
 		downloading_hotfix = true
 		owf_create_thread(function()
@@ -403,7 +402,7 @@ register_pseudo_command("download_latest_hotfix", function()
 		end)
 	end
 end)
-register_pseudo_command("check_for_updates", function()
+owf_register_command("check_for_updates", function()
 	check_for_updates()
 end)
 
@@ -477,7 +476,9 @@ while pcall(yield) do
 		local status_string = json.encode(status)
 		if status_string ~= last_status_string then
 			last_status_string = status_string
-			send_status_broadcast()
+			owf_broadcast_message(json.encode{
+				bgscript_status_string = last_status_string
+			})
 		end
 		if (script_log_nlen := owf_get_script_log_len()) ~= script_log_len then
 			if script_log_nlen > script_log_len then

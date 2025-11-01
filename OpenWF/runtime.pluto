@@ -3319,8 +3319,13 @@ function owf_command(cmd)
 		return json.decode(res)
 	end
 	local channel, text = cmd:split("?", 2):unpack()
-	if owf_script_send_message(channel, text or "") then
-		return {}
+	if inst := owf_script_send_message(channel, text or "") then
+		while owf_script_is_reply_pending(inst) do
+			yield()
+		end
+		if r := owf_script_get_reply(inst) then
+			return json.decode(r)
+		end
 	end
 end
 
@@ -3785,12 +3790,24 @@ function owf_internal_callback(cid, nargs)
 	return 0
 end
 
-local pseudo_commands = {}
-function register_pseudo_command(cmd, cb)
-	pseudo_commands[cmd] = cb
-	owf_register_custom_route("/" .. cmd, "text/plain", "")
+local script_commands = {}
+function owf_register_command(cmd, cb)
+	script_commands[cmd] = cb
+	owf_register_dynamic_custom_route("/" .. cmd)
 	register_websocket_message_prefix(cmd)
 	owf_script_register_channel(cmd)
+end
+function owf_unregister_command(cmd)
+	script_commands[cmd] = nil
+	owf_unregister_dynamic_custom_route("/" .. cmd)
+	unregister_websocket_message_prefix(cmd)
+	owf_script_unregister_channel(cmd)
+end
+local function format_command_response(cmd, r)
+	if type(r) ~= "table" then
+		r = { [cmd] = r }
+	end
+	return json.encode(r)
 end
 
 return function(f)
@@ -3802,15 +3819,15 @@ return function(f)
 		owf_script_route_base = owf_script_get_name():sub(7)
 		owf_tunables_load = nil
 	end
-	register_pseudo_command(owf_script_route_base:sub(2).."/request_broadcast", function(sender)
-		owf_broadcast_message(json.encode({
+	owf_register_command(owf_script_route_base:sub(2).."/request_broadcast", function()
+		return {
 			from = owf_script_get_name(),
 			script_broadcast = {
 				toggles = owf_script_toggles,
 			},
-		}), sender)
+		}
 	end)
-	register_pseudo_command(owf_script_route_base:sub(2).."/set_toggle", function(_, arg)
+	owf_register_command(owf_script_route_base:sub(2).."/set_toggle", function(_, arg)
 		local value = arg:sub(1, 1) == "1"
 		local name = arg:sub(2)
 		if toggle := owf_script_toggles:find(|x| -> x.name == name) then
@@ -3846,16 +3863,19 @@ return function(f)
 			simple_yield()
 			collectgarbage("step") -- fix stuttering when a script has been running for ~1h (at 120fps)
 			while evt := owf_internal_next_event() do
-				if evt.type == OWF_EVT_CUSTOM_ROUTE_SERVED then
+				if evt.type == OWF_EVT_CUSTOM_ROUTE_REQUEST then
 					local path, arg = url.decode(evt.path):split("?", 2):unpack()
-					if cb := pseudo_commands[path:sub(2)] then
-						cb(0, arg)
+					if cb := script_commands[path:sub(2)] then
+						owf_dynamic_custom_route_response(evt.inst, "text/plain", format_command_response(path:sub(2), cb(arg)))
 						continue
 					end
 				elseif evt.type == OWF_EVT_WEBSOCKET_MESSAGE then
 					local cmd, arg = evt.text:split("?", 2):unpack()
-					if cb := pseudo_commands[cmd] then
-						cb(evt.sender, arg)
+					if cb := script_commands[cmd] then
+						local r = format_command_response(cmd, cb(arg))
+						if #r > 2 then
+							owf_broadcast_message(r, evt.sender)
+						end
 						continue
 					end
 				elseif evt.type == OWF_EVT_SUBMIT_CHAT_MESSAGE then
@@ -3883,8 +3903,8 @@ return function(f)
 					evt.data = nil
 				elseif evt.type == OWF_EVT_SCRIPT_MESSAGE then
 					local data = json.decode(evt.data)
-					if cb := pseudo_commands[data.channel] then
-						cb(0, data.text)
+					if cb := script_commands[data.channel] then
+						owf_script_send_reply(evt.inst, format_command_response(data.channel, cb(data.text)))
 						continue
 					end
 					evt.channel = data.channel
