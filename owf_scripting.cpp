@@ -2048,6 +2048,39 @@ owfScript::owfScript()
 	}
 }
 
+owfScript::~owfScript()
+{
+	lua_close(main);
+
+	if (!overlay_items.empty())
+	{
+		bool need_redraw = false;
+		for (auto& id : overlay_items)
+		{
+			owfOverlay::remove(id);
+			need_redraw |= (id->type >= 0);
+		}
+		if (need_redraw)
+		{
+			owfOverlay::redraw();
+		}
+		overlay_items.clear();
+	}
+
+	while (!events.empty())
+	{
+		switch (events.front().type)
+		{
+		case OWF_EVT_CUSTOM_ROUTE_REQUEST:
+			SOUP_UNUSED(soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(events.front().intdata)));
+			break;
+
+		default:;
+		}
+		events.pop_front();
+	}
+}
+
 bool owfScript::loadFile(std::string&& path)
 {
 	this->name = std::move(path);

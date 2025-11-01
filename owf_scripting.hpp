@@ -80,6 +80,7 @@ struct owfScript
 	static void openLibs(lua_State* L);
 
 	owfScript();
+	~owfScript();
 
 	bool loadFile(std::string&& path);
 	bool loadString(const std::string& name, const std::string& code);
@@ -151,26 +152,6 @@ struct owfScript
 		}
 		return nullptr;
 	}*/
-
-	~owfScript()
-	{
-		lua_close(main);
-
-		if (!overlay_items.empty())
-		{
-			bool need_redraw = false;
-			for (auto& id : overlay_items)
-			{
-				owfOverlay::remove(id);
-				need_redraw |= (id->type >= 0);
-			}
-			if (need_redraw)
-			{
-				owfOverlay::redraw();
-			}
-			overlay_items.clear();
-		}
-	}
 };
 
 inline soup::RecursiveMutex running_scripts_mtx;
