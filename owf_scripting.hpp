@@ -22,6 +22,8 @@ inline bool active_input_filter_allows_hotkeys;
 #define OWF_SET_GLOBAL_INT(L, name, value) lua_pushinteger(L, value); OWF_SET_GLOBAL(L, name);
 #define OWF_EXPOSE_INT_CONSTANT(L, e) OWF_SET_GLOBAL_INT(L, #e, e);
 
+#define OWF_PLUTO_NEWCLASSINST(L, T, ...) (T*)pluto_setupgcmt(L, new (lua_newuserdata(L, sizeof(T))) T(__VA_ARGS__), soup::ObfusString(#T).c_str(), [](lua_State *L2) { std::destroy_at<>((T*)luaL_checkudata(L2, 1, soup::ObfusString(#T).c_str())); return 0; })
+
 enum owfScriptEventType : uint8_t
 {
 	OWF_EVT_SUBMIT_CHAT_MESSAGE = 1,

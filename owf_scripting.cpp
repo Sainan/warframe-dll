@@ -1506,7 +1506,7 @@ owfScript::owfScript()
 			case OWF_EVT_CUSTOM_ROUTE_REQUEST:
 				{
 					pluto_pushstring(L, ObfusString("inst").str());
-					const auto& spTask = pluto_newclassinst(L, soup::SharedPtr<owfScriptRouteTask>, soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(scr->events.front().intdata)));
+					const auto& spTask = OWF_PLUTO_NEWCLASSINST(L, soup::SharedPtr<owfScriptRouteTask>, soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(scr->events.front().intdata)));
 					SOUP_UNUSED(spTask);
 					lua_settable(L, -3);
 				}
@@ -1614,7 +1614,7 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		auto& spTask = *(soup::SharedPtr<owfScriptRouteTask>*)luaL_checkudata(L, 1, "soup::SharedPtr<owfScriptRouteTask>");
+		auto& spTask = *(soup::SharedPtr<owfScriptRouteTask>*)luaL_checkudata(L, 1, soup::ObfusString("soup::SharedPtr<owfScriptRouteTask>").c_str());
 		auto pTask = spTask.get();
 		if (pTask == nullptr)
 		{
