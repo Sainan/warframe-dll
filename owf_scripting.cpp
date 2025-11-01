@@ -14,6 +14,7 @@
 #include <Pattern.hpp>
 #include <SharedLibrary.hpp>
 #include <StringWriter.hpp>
+#include <WeakRef.hpp>
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -123,6 +124,21 @@ static std::string concat_arguments(lua_State* L)
 	}
 	return msg;
 }
+
+struct owfScriptReplyReceiver;
+
+struct owfScriptReplySender
+{
+	soup::TransientToken transient_token;
+	soup::WeakRef<owfScriptReplyReceiver> receiver;
+};
+
+struct owfScriptReplyReceiver
+{
+	soup::TransientToken transient_token;
+	soup::WeakRef<owfScriptReplySender> sender;
+	soup::Optional<std::string> response;
+};
 
 void owfScript::openLibs(lua_State* L)
 {
@@ -1506,8 +1522,7 @@ owfScript::owfScript()
 			case OWF_EVT_CUSTOM_ROUTE_REQUEST:
 				{
 					pluto_pushstring(L, ObfusString("inst").str());
-					const auto& spTask = OWF_PLUTO_NEWCLASSINST(L, soup::SharedPtr<owfScriptRouteTask>, soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(scr->events.front().intdata)));
-					SOUP_UNUSED(spTask);
+					SOUP_UNUSED(OWF_PLUTO_NEWCLASSINST(L, soup::SharedPtr<owfScriptRouteTask>, soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(scr->events.front().intdata))));
 					lua_settable(L, -3);
 				}
 				[[fallthrough]];
@@ -1523,9 +1538,15 @@ owfScript::owfScript()
 				lua_settable(L, -3);
 				break;
 
+			case OWF_EVT_SCRIPT_MESSAGE:
+				{
+					pluto_pushstring(L, ObfusString("inst").str());
+					SOUP_UNUSED(OWF_PLUTO_NEWCLASSINST(L, soup::UniquePtr<owfScriptReplySender>, reinterpret_cast<owfScriptReplySender*>(scr->events.front().intdata)));
+					lua_settable(L, -3);
+				}
+				[[fallthrough]];
 			//case OWF_EVT_SCRIPT_TRIGGERED:
 			case OWF_EVT_OUTGOING_CHAT_MESSAGE:
-			case OWF_EVT_SCRIPT_MESSAGE:
 				pluto_pushstring(L, ObfusString("data").str());
 				pluto_pushstring(L, scr->events.front().data);
 				lua_settable(L, -3);
@@ -2003,19 +2024,57 @@ owfScript::owfScript()
 
 		if (target)
 		{
+			auto pReplyReceiver = OWF_PLUTO_NEWCLASSINST(L, owfScriptReplyReceiver);
+			auto pReplySender = new owfScriptReplySender();
+
+			pReplyReceiver->sender = pReplySender;
+			pReplySender->receiver = pReplyReceiver;
+
 			JsonObject obj;
 			obj.add(ObfusString("channel"), std::move(channel));
 			obj.add(ObfusString("text"), std::move(text));
-			target->events.emplace_back(OWF_EVT_SCRIPT_MESSAGE, obj.encode());
-			lua_pushboolean(L, true);
+			target->events.emplace_back(OWF_EVT_SCRIPT_MESSAGE, reinterpret_cast<uint64_t>(pReplySender), obj.encode());
+			return 1;
 		}
-		else
-		{
-			lua_pushboolean(L, false);
-		}
-		return 1;
+		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_script_send_message");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto& upReplySender = *(soup::UniquePtr<owfScriptReplySender>*)luaL_checkudata(L, 1, soup::ObfusString("soup::UniquePtr<owfScriptReplySender>").c_str());
+		if (auto pReplyReceiver = upReplySender->receiver.getPointer())
+		{
+			if (pReplyReceiver->response.has_value())
+			{
+				ObfusString msg("A reply was already sent");
+				luaL_error(L, msg.c_str());
+			}
+			pReplyReceiver->response = pluto_checkstring(L, 2);
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_send_reply");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto& replyReceiver = *(owfScriptReplyReceiver*)luaL_checkudata(L, 1, soup::ObfusString("owfScriptReplyReceiver").c_str());
+		lua_pushboolean(L, replyReceiver.sender.isValid());
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_is_reply_pending");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		auto& replyReceiver = *(owfScriptReplyReceiver*)luaL_checkudata(L, 1, soup::ObfusString("owfScriptReplyReceiver").c_str());
+		if (replyReceiver.response.has_value())
+		{
+			pluto_pushstring(L, replyReceiver.response.value());
+			return 1;
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_script_get_reply");
 
 	// Undocumented
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -2073,6 +2132,10 @@ owfScript::~owfScript()
 		{
 		case OWF_EVT_CUSTOM_ROUTE_REQUEST:
 			SOUP_UNUSED(soup::SharedPtr<owfScriptRouteTask>::fromDumb(reinterpret_cast<void*>(events.front().intdata)));
+			break;
+
+		case OWF_EVT_SCRIPT_MESSAGE:
+			SOUP_UNUSED(soup::UniquePtr<owfScriptReplySender>(reinterpret_cast<owfScriptReplySender*>(events.front().intdata)));
 			break;
 
 		default:;

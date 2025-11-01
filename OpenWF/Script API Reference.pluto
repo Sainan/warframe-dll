@@ -612,9 +612,6 @@ function owf_register_dynamic_custom_route(path)
 function owf_unregister_dynamic_custom_route(path)
 function owf_dynamic_custom_route_response(inst, mime, content)
 function owf_script_add_toggle(name, value = false)
-function owf_script_register_channel(name)
-function owf_script_unregister_channel(name)
-function owf_script_send_message(channel, text)
 function owf_script_get_name()
 function owf_script_get_instance_id()
 function owf_get_available_scripts()
@@ -656,6 +653,13 @@ function owf_reload_hotkeys()
 function register_websocket_message_prefix(prefix)
 function unregister_websocket_message_prefix(prefix)
 function owf_broadcast_message(message, optionalRecipient)
+
+function owf_script_register_channel(name)
+function owf_script_unregister_channel(name)
+function owf_script_send_message(channel, text)
+function owf_script_send_reply(inst, text)
+function owf_script_is_reply_pending(inst)
+function owf_script_get_reply(inst)
 
 -- OpenWF events
 
