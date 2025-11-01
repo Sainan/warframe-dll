@@ -1,13 +1,14 @@
 # Lines starting with # are a comment.
 #
-# An example patch that renames "Vitality" to "Moar Health" and changes it from +9% to +100%:
+# An example patch that changes "Fever Strike" to be called "Saryn Strike" and replaces Toxin with Corrosive:
 #
-# /Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
-#     LocalizeTag=Moar Health
-#     r|Value=0.090910003|Value=1
+# /Lotus/Upgrades/Mods/Melee/WeaponToxinDamageMod
+#     LocalizeTag=Saryn Strike
+#     r|DT_POISON|DT_CORROSIVE
+#     q|Upgrades.0.LocTag|/Lotus/Language/Upgrades/WeaponCorrosiveDamage
 #
 # When this patch is applied and the type has been loaded by the game, you can get the effective metadata via the http interface:
-# http://localhost:6155/get_effective_metadata?/Lotus/Upgrades/Mods/Warframe/AvatarHealthMaxMod
+# http://localhost:6155/get_effective_metadata?/Lotus/Upgrades/Mods/Melee/WeaponToxinDamageMod
 # For logging only, you can supply an empty patch or enable "save_all_metadata" in the Client Config at the expense of slower loading.
 #
 # Modifications to metadata patches will only apply after a restart of the game.

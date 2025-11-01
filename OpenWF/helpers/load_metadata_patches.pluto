@@ -1,12 +1,12 @@
 function parse_metadata_patches(str, filename)
 	local patches = {}
-	local patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
+	local patch = { keys = {}, prefix = "", replacements = {}, substitutions = {}, query_assignments = {} }
 	local ampersand = false
 	local function delimit_patch()
 		if #patch.keys ~= 0 then
 			patches:insert(patch)
 		end
-		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {} }
+		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {}, query_assignments = {} }
 	end
 	for linenum, line in str:split("\n") do
 		if line[1] == "/" then
@@ -68,6 +68,14 @@ function parse_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 				print_to_console("[Metadata Patches] - What: "..line)
 			end
+		elseif line:sub(1, 2) == "q|" then
+			if sep := line:find("|", 3) then
+				patch.query_assignments[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+			else
+				print_to_console("[Metadata Patches] Ignoring malformed line")
+				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+				print_to_console("[Metadata Patches] - What: "..line)
+			end
 		elseif #line ~= 0 and line[1] ~= "#" then
 			patch.prefix = patch.prefix .. line .. "\n"
 		end
@@ -93,6 +101,9 @@ function load_metadata_patches(str, filename)
 				if err := add_substitution(k, v, "") then
 					print_to_console("[Metadata Patches] Regex parsing failed for "..k..": "..err)
 				end
+			end
+			for k, v in patch.query_assignments do
+				add_query_assignment(k, v)
 			end
 		end
 	end

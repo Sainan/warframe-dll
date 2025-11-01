@@ -1571,6 +1571,7 @@ struct MetadataPatch
 	std::string prefix;
 	std::vector<std::pair<std::string, std::string>> replacements;
 	std::vector<std::pair<soup::Regex, std::string>> substitutions;
+	std::vector<std::pair<std::string, std::string>> query_assignments;
 
 	std::string final_data;
 	bool is_implicit = false;
@@ -1625,7 +1626,7 @@ static void load_metadata_patches()
 			{
 				current_patch->substitutions.emplace_back(soup::Regex(pluto_checkstring(L, 1), luaL_checkstring(L, 3)), pluto_checkstring(L, 2));
 			}
-			catch (std::exception& e)
+			catch (const std::exception& e)
 			{
 				lua_pushstring(L, e.what()); ++pushed;
 			}
@@ -1633,6 +1634,16 @@ static void load_metadata_patches()
 		return pushed;
 	});
 	{ ObfusString name("add_substitution"); lua_setglobal(L, name.c_str()); }
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		if (current_patch)
+		{
+			current_patch->query_assignments.emplace_back(pluto_checkstring(L, 1), pluto_checkstring(L, 2));
+		}
+		return 0;
+	});
+	{ ObfusString name("add_query_assignment"); lua_setglobal(L, name.c_str()); }
 
 	uint32_t size;
 	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/load_metadata_patches.pluto"), size);
@@ -1671,7 +1682,7 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 		buf.clear();
 		buf.reserve(patch.prefix.size() + str->getSize());
 		buf.append(patch.prefix);
-		if (patch.replacements.empty() && patch.substitutions.empty())
+		if (patch.replacements.empty() && patch.substitutions.empty() && patch.query_assignments.empty())
 		{
 			buf.append(str->getData(), str->getSize());
 		}
@@ -1685,6 +1696,37 @@ static void object_type_serialise_propery_text_detour(void* a1, GameString* str,
 			for (const auto& substitution : patch.substitutions)
 			{
 				text = substitution.first.substituteAll(text, substitution.second);
+			}
+			if (!patch.query_assignments.empty())
+			{
+				try
+				{
+					EeNotationParser par;
+					auto jr = par.parse(text);
+					for (const auto& qa : patch.query_assignments)
+					{
+						if (auto n = jr->query(qa.first.c_str()))
+						{
+							if (n->isStr())
+							{
+								n->reinterpretAsStr().value = qa.second;
+							}
+							else if (n->isInt())
+							{
+								n->reinterpretAsInt().value = std::stod(qa.second);
+							}
+							else
+							{
+								n->asFloat().value = soup::string::toIntOpt<int64_t>(qa.second).value();
+							}
+						}
+					}
+					text = EeNotationParser::unparse(*jr);
+				}
+				catch (const std::exception& e)
+				{
+					std::cout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
+				}
 			}
 			buf.append(text);
 		}
