@@ -424,6 +424,9 @@ local wscoro = coroutine.create(function()
 						if data.sync_inventory and ivkr_available then
 							gGameData:SyncInventoryFromDB()
 						end
+						if data.sync_world_state and ivkr_available then
+							gGameData:SyncWorldStateFromDB()
+						end
 						if data.tunables then
 							owf_tunables_load(json.encode(data.tunables))
 						end

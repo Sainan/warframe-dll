@@ -2689,6 +2689,16 @@ class LotusProfileData extends owfUserdata
 		end
 		ivkr_call(ivkr_find_method("LotusProfileData", "SyncInventoryFromDB"), 2)
 	end
+
+	function SyncWorldStateFromDB(callback)
+		ivkr_push_object(get_gamedata())
+		if callback then
+			ivkr_push_callback(callback)
+		else
+			ivkr_push_string("WantsEndOfMatchPreview") -- Basically a no-op
+		end
+		ivkr_call(ivkr_find_method("LotusProfileData", "SyncWorldStateFromDB"), 2)
+	end
 end
 
 class LevelInfo extends owfUserdata

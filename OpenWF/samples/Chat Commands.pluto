@@ -114,6 +114,7 @@ commands["script"] = function(text)
 end
 commands["sync"] = function()
 	gGameData:SyncInventoryFromDB()
+	gGameData:SyncWorldStateFromDB()
 end
 commands["resync"] = commands["sync"]
 commands["unstick"] = function()

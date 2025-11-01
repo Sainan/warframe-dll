@@ -713,6 +713,7 @@ gFlashMgr
 
 gGameData
 	function SyncInventoryFromDB(callback)
+	function SyncWorldStateFromDB(callback)
 
 gPlayerProfileMgr
 	function IsLoggedIn()
