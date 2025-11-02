@@ -378,6 +378,14 @@ struct GameHttpRequestU18
 };
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
 
+struct GameHttpRequestU8
+{
+	/* 0x00 */ LegacyGameStringU18 url;
+	char pad[0x18];
+	/* 0x30 */ LegacyGameStringU18 body;
+};
+static_assert(offsetof(GameHttpRequestU8, body) == 0x30);
+
 static bool can_use_server_host()
 {
 	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
@@ -993,6 +1001,15 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 	}
 	//ret = FLT_MAX;
 	return ret;
+}
+
+
+static DetourHook init_cache_fetching_hook;
+
+static void init_cache_fetching_detour(void* a1, bool a2, bool is_stripped, bool a4, bool a5, bool a6, uint8_t a7)
+{
+	is_stripped = false;
+	reinterpret_cast<decltype(&init_cache_fetching_detour)>(init_cache_fetching_hook.original)(a1, a2, is_stripped, a4, a5, a6, a7);
 }
 
 
@@ -3083,9 +3100,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 12;
 			}
-			else
+			else if (game_version >= GV(15, 0, 0))
 			{
 				SIG_INST("48 8B CF 44 88 72 30 E8"); // 2015.10.21.12.48
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 8;
+			}
+			else
+			{
+				SIG_INST("48 8B CF 40 88 6A 58 E8"); // 2013.05.23.16.06
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
@@ -3105,9 +3128,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest, true>);
 			}
-			else
+			else if (game_version >= GV(15, 0, 0))
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU18, true>);
+			}
+			else
+			{
+				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU8, true>);
 			}
 			game_http_request_hook.target = game_http_request;
 			game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
@@ -3484,7 +3511,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					log_optional_scan_failure(true);
 				}
 			}
-			else
+			else if (game_version >= GV(15, 0, 0))
 			{
 				uint8_t* insn;
 				if (game_version >= GV(30, 0, 0))
@@ -3528,6 +3555,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				if (insn)
 				{
 					memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
+					// xor eax, eax
 					insn[0] = 0x31;
 					insn[1] = 0xc0;
 					insn[2] = 0x90;
@@ -3536,6 +3564,25 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					insn[5] = 0x90;
 					insn[6] = 0x90;
 					insn[7] = 0x90;
+				}
+				else
+				{
+					log_optional_scan_failure(true);
+				}
+			}
+			else
+			{
+				SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 48 89 78 20 41 54 41 55 41 56 48 83 EC 40 48 8B E9");
+				const auto init_cache_fetching = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+				std::cout << "init_cache_fetching = " << init_cache_fetching << std::endl;
+#endif
+				if (init_cache_fetching)
+				{
+					init_cache_fetching_hook.detour = reinterpret_cast<void*>(&init_cache_fetching_detour);
+					init_cache_fetching_hook.target = init_cache_fetching;
+					init_cache_fetching_hook.create();
+					init_cache_fetching_hook.enable();
 				}
 				else
 				{
