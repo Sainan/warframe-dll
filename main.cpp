@@ -58,6 +58,8 @@
 
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
+#include <Lmcons.h> // UNLEN
+#pragma comment(lib, "Advapi32.lib") // GetUserNameW
 
 #include "whirlpool.hpp"
 
@@ -871,6 +873,7 @@ static void do_logout()
 
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
+static uint64_t* device_id_ptr = nullptr;
 
 static std::string process_args_str(const char* str)
 {
@@ -930,6 +933,26 @@ static std::string process_args_str(const char* str)
 			arguments_to_inject.append(ObfusString("-cluster:").str());
 			arguments_to_inject.append(fallback_cluster);
 			arguments_to_inject.push_back(' ');
+		}
+
+		// This prevents the game from modifying H.Misc.cache by pre-populating the "device id".
+		// It needs to be done here because DllMain runs before static initialisers.
+		if (device_id_ptr)
+		{
+			//std::cout << "The device id is a crispy obfuscated 0 aka. " << *device_id_ptr << std::endl;
+
+			wchar_t name[MAX_COMPUTERNAME_LENGTH > UNLEN ? MAX_COMPUTERNAME_LENGTH + 1 : UNLEN + 1];
+
+			DWORD size = sizeof(name) / sizeof(wchar_t);
+			GetComputerNameW(name, &size);
+			uint32_t computer_name_hash = soup::joaat::hashRange((const char*)name, size * sizeof(wchar_t));
+
+			size = sizeof(name) / sizeof(wchar_t);
+			GetUserNameW(name, &size);
+			uint32_t user_name_hash = soup::joaat::hashRange((const char*)name, size * sizeof(wchar_t));
+
+			*device_id_ptr = (static_cast<uint64_t>(computer_name_hash) << 32) | user_name_hash;
+			// Because the device_id is an obfuscated int, the observed "date" will differ across game versions.
 		}
 	}
 #if LOGGING
@@ -3624,6 +3647,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				std::wcout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
+			}
+		}
+
+		{
+			SIG_INST("48 C1 C8 ? 48 89 05 ? ? ? ? 48 33 C1 48 89 05 ? ? ? ? C3"); // Alternatively: CC 48 B9 ? ? ? ? ? ? ? ? 48 8D 05
+			auto device_id_insn = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			std::cout << "device_id_insn = " << device_id_insn.as<void*>() << std::endl;
+#endif
+			if (device_id_insn)
+			{
+				//device_id_mask = device_id_insn.add(3).as<uint64_t&>();
+				device_id_ptr = device_id_insn.add(7).rip().as<uint64_t*>();
+			}
+			else
+			{
+				log_optional_scan_failure(false);
 			}
 		}
 
