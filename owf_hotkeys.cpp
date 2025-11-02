@@ -9,7 +9,7 @@
 
 #include <lauxlib.h>
 
-#include "owf_archive.hpp"
+#include "owf_repo.hpp"
 #include "owf_scripting.hpp"
 
 using namespace soup;
@@ -18,8 +18,8 @@ void load_hotkeys()
 {
 	auto L = luaL_newstate();
 	owfScript::openLibs(L);
-	uint32_t size;
-	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/pre_load_hotkeys.pluto"), size);
+	size_t size;
+	auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/helpers/pre_load_hotkeys.pluto"), size);
 	if (luaL_loadbuffer(L, data, size, nullptr) != LUA_OK
 		|| lua_pcall(L, 0, 0, 0) != LUA_OK
 		)

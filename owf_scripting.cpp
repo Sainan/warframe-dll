@@ -22,12 +22,12 @@
 #include <lstring.h> // plutoS_prealloc, plutoS_commit
 
 #include "main.hpp"
-#include "owf_archive.hpp"
 #include "owf_cache.hpp"
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
+#include "owf_repo.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
 
@@ -206,16 +206,16 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		std::lock_guard lock(g_archive_mtx);
-		uint32_t size;
-		if (auto data = g_archive.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
+		std::lock_guard lock(g_repo_mtx);
+		size_t size;
+		if (auto data = g_repo.find(soup::joaat::hash(luaL_checkstring(L, 1)), size))
 		{
 			lua_pushlstring(L, data, size);
 			return 1;
 		}
 		return 0;
 	});
-	OWF_SET_GLOBAL(L, "owf_archive_find");
+	OWF_SET_GLOBAL(L, "owf_repo_find");
 
 	if (string_pool)
 	{
@@ -2094,9 +2094,9 @@ owfScript::owfScript()
 	if (runtime.empty())
 #endif
 	{
-		std::lock_guard lock(g_archive_mtx);
-		uint32_t size;
-		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
+		std::lock_guard lock(g_repo_mtx);
+		size_t size;
+		auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
 		runtime = std::string(data, size);
 	}
 	if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) != LUA_OK

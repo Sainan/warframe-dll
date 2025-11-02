@@ -6,20 +6,24 @@
 
 #include <Mutex.hpp>
 
-struct owfArchive
+class owfRepo
 {
-	void load(const char* data, size_t size);
-	void loadBuiltin();
+public:
+	void loadArchive(const char* data, size_t size);
+	void loadBuiltinArchive();
+	static bool readHotfixHeader(const char* data, size_t size, uint32_t version_hash, uint64_t& timestamp);
+	void loadHotfix(const char* data, size_t size);
 	bool loadHotfix(const char* data, size_t size, uint32_t version_hash);
-	const char* find(uint32_t key, uint32_t& out_len) const;
+	const char* find(uint32_t key, size_t& out_len) const;
 	uint64_t getVersionedInt(uint32_t path, uint64_t ver) const;
 	std::unordered_map<std::string, std::string> getCoreDict(const std::string& lang) const;
 	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
 
-	uint64_t creation;
-	std::string data;
+	uint64_t timestamp;
+protected:
+	std::unordered_map<uint32_t, std::string> data;
 };
 
-inline soup::Mutex g_archive_mtx;
-inline owfArchive g_archive;
+inline soup::Mutex g_repo_mtx;
+inline owfRepo g_repo;
 inline std::unordered_map<std::string, std::string> g_core_dict;

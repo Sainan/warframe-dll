@@ -3172,9 +3172,9 @@ Lotus_Game.TINT_COLOR2 = Symbol("TintColor2")
 Lotus_Game.TINT_COLOR3 = Symbol("TintColor3")
 
 function get_lang_dict(lang = get_lang_code())
-	local data = owf_archive_find("OpenWF/translations/"..lang..".cat.txt")
+	local data = owf_repo_find("OpenWF/translations/"..lang..".cat.txt")
 	if not data then
-		data = owf_archive_find("OpenWF/translations/en.cat.txt")
+		data = owf_repo_find("OpenWF/translations/en.cat.txt")
 	end
 	return cat.decode(data, "flat")
 end

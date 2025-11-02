@@ -4,7 +4,7 @@
 #include <json.hpp>
 #include <MemoryRefReader.hpp>
 
-#include "owf_archive.hpp"
+#include "owf_repo.hpp"
 
 using namespace soup;
 
@@ -39,10 +39,10 @@ bool owfServerTunables::load(const char* data, size_t size)
 
 std::string owfServerTunables::getProhibitionName(uint32_t hash)
 {
-	g_archive_mtx.lock();
-	uint32_t size;
-	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/prohibition_names.json"), size);
-	g_archive_mtx.unlock();
+	g_repo_mtx.lock();
+	size_t size;
+	auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/prohibition_names.json"), size);
+	g_repo_mtx.unlock();
 	if (data)
 	{
 		if (auto jr = soup::json::decode(std::string(data, size)))

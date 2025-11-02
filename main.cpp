@@ -66,13 +66,13 @@
 
 using namespace soup;
 
-#include "owf_archive.hpp"
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_hotkeys.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
 #include "owf_overlay.hpp"
+#include "owf_repo.hpp"
 #include "owf_scripting.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
@@ -402,7 +402,7 @@ static bool can_use_server_host()
 		}
 		if (
 			auth_query.empty() // Not currently logged in?
-			&& g_archive.creation + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
+			&& g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
 			)
 		{
 			return false; // To prevent downgrade attacks, disallow this remote connection.
@@ -1662,8 +1662,8 @@ static void load_metadata_patches()
 	});
 	{ ObfusString name("add_query_assignment"); lua_setglobal(L, name.c_str()); }
 
-	uint32_t size;
-	auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/helpers/load_metadata_patches.pluto"), size);
+	size_t size;
+	auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/helpers/load_metadata_patches.pluto"), size);
 	if (luaL_loadbuffer(L, data, size, nullptr) != LUA_OK
 		|| lua_pcall(L, 0, 0, 0) != LUA_OK
 		)
@@ -2227,8 +2227,8 @@ static void start_bgscript()
 	if (code.empty())
 #endif
 	{
-		uint32_t size;
-		auto data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
+		size_t size;
+		auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/bgscript.pluto"), size);
 		code = std::string(data, size);
 	}
 
@@ -2921,25 +2921,21 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		save_config();
 
+		g_repo.loadBuiltinArchive();
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 		{
-			if (g_archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+			if (g_repo.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
 			{
 				std::cout << ObfusString("Hotfix applied") << std::endl;
 			}
 			else
 			{
 				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
-				g_archive.loadBuiltin();
 			}
 		}
-		else
-		{
-			g_archive.loadBuiltin();
-		}
 
-		g_core_dict = g_archive.getCoreDict(fallback_language);
-		/*for (auto& e : g_archive.getCoreDict(fallback_language))
+		g_core_dict = g_repo.getCoreDict(fallback_language);
+		/*for (auto& e : g_repo.getCoreDict(fallback_language))
 		{
 			g_core_dict.emplace(soup::joaat::hash(e.first), std::move(e.second));
 		}*/
@@ -2958,7 +2954,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				static_cast<uint64_t>(build_label[14] - '0') * 10ull +
 				static_cast<uint64_t>(build_label[15] - '0');
 
-			game_version = static_cast<uint16_t>(g_archive.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
+			game_version = static_cast<uint16_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
 
 #if LOGGING
 			std::cout << "build_label_int = " << build_label_int << std::endl;
@@ -4723,8 +4719,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			uint32_t size;
-			auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+			size_t size;
+			auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 			g_client_tunables.loadMsgpack(data, size);
 		}
 
@@ -4818,8 +4814,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						else
 #endif
 						{
-							uint32_t size;
-							const char* data = g_archive.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
+							size_t size;
+							const char* data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
 							ServerWebService::sendHtml(s, data, size);
 						}
 						break;
@@ -4827,7 +4823,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/dict.js"):
 						{
 							JsonObject obj;
-							auto dict = g_archive.getWebuiDict(webui_lang_code);
+							auto dict = g_repo.getWebuiDict(webui_lang_code);
 							for (const auto& e : dict)
 							{
 								obj.add(std::move(e.first), std::move(e.second));
@@ -5034,25 +5030,34 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 					case soup::joaat::compileTimeHash("/apply_hotfix"):
 						{
-							owfArchive archive;
 							if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 							{
-								if (!archive.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+								uint64_t timestamp;
+								if (!owfRepo::readHotfixHeader(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE), timestamp))
 								{
 									ServerWebService::sendText(s, ObfusString("Failed to apply hotfix as it was made for a different DLL version").str());
 									break;
 								}
-								if (archive.data == g_archive.data)
+								if (timestamp == g_repo.timestamp)
 								{
 									ServerWebService::sendText(s, ObfusString("No changes").str());
 									break;
+								}
+								{
+									std::lock_guard lock(g_repo_mtx);
+									g_repo.loadBuiltinArchive();
+									g_repo.loadHotfix(hotfix.data(), hotfix.size());
 								}
 								ServerWebService::sendText(s, ObfusString("Hotfix applied").str());
 							}
 							else
 							{
-								archive.loadBuiltin();
-								if (archive.data == g_archive.data)
+								const auto prev_timestamp = g_repo.timestamp;
+								{
+									std::lock_guard lock(g_repo_mtx);
+									g_repo.loadBuiltinArchive();
+								}
+								if (g_repo.timestamp == prev_timestamp)
 								{
 									ServerWebService::sendText(s, ObfusString("No changes").str());
 									break;
@@ -5061,13 +5066,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 
 							{
-								std::lock_guard lock(g_archive_mtx);
-								g_archive = std::move(archive);
-							}
-
-							{
-								uint32_t size;
-								auto data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+								size_t size;
+								auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 								std::lock_guard lock(g_client_tunables_mtx);
 								g_client_tunables.loadMsgpack(data, size);
 							}
@@ -5077,8 +5077,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							load_hotkeys();
 
 							{
-								uint32_t size;
-								if (auto data = g_archive.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size))
+								size_t size;
+								if (auto data = g_repo.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size))
 								{
 									start_script_from_string(std::string(data, size));
 								}
@@ -5102,8 +5102,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							}
 							else
 							{
-								uint32_t size;
-								data = g_archive.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+								size_t size;
+								data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
 								std::lock_guard lock(g_client_tunables_mtx);
 								g_client_tunables.loadMsgpack(data, size);
 							}

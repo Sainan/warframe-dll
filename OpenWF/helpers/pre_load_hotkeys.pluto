@@ -1,3 +1,3 @@
 if not io.exists("OpenWF/Hotkeys.json") then
-	io.contents("OpenWF/Hotkeys.json", owf_archive_find("OpenWF/Hotkeys.json"))
+	io.contents("OpenWF/Hotkeys.json", owf_repo_find("OpenWF/Hotkeys.json"))
 end

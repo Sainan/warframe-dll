@@ -1,6 +1,7 @@
 local { crypto, json } = require "*"
 assert(json.encode({ 0, true, json.null }, "msgpack") == "\x93\x00\xc3\xc0")
 
+require "u64_dyn"
 require "vv"
 
 io.chdir("..")
@@ -8,9 +9,7 @@ io.chdir("..")
 -- Do a translation update so all target dicts have all source strings
 os.execute("cd modules/openwf-translations && php update.php")
 
-local uncompressed = ""
-
-local function add_file_to_archive(path, archive_path)
+local function pack_file(path, archive_path)
 	io.write(path.." -> "..archive_path)
 	local cont = io.contents(path)
 	if path == "OpenWF/runtime.pluto" then
@@ -52,29 +51,52 @@ local function add_file_to_archive(path, archive_path)
 			cont = json.encode(cont)
 		end
 	end
-	if cont == "" then
-		io.write(" [empty, skipping]\n")
-		return
-	end
-	io.write("\n")
-	uncompressed ..= "I4s4":pack(crypto.joaat(archive_path), cont)
+	--return "I4s4":pack(crypto.joaat(archive_path), cont)
+	return "I4":pack(crypto.joaat(archive_path)) .. pack_u64_dyn_bp(#cont) .. cont
 end
 
-local function add_folder_to_archive(base, archive_base)
+local all_pack = ""
+local changed_pack = ""
+local function add_folder_to_archive(base, archive_base, changelist)
 	for io.listdir(base) as path do
 		if io.isfile(path) then
 			local archive_path = archive_base..io.part(path, "name")
-			add_file_to_archive(path, archive_path)
+			local packed = pack_file(path, archive_path)
+			all_pack ..= packed
+			if changelist and not archive_path in changelist then
+				io.write(" [unchanged]")
+			else
+				changed_pack ..= packed
+			end
+			io.write("\n")
 		end
 	end
 end
 
-add_folder_to_archive("OpenWF/", "OpenWF/")
-add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/")
-add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/")
-add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/")
-add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/")
-add_folder_to_archive("modules/openwf-translations/bootstrapper-core/", "OpenWF/translations/core/")
-add_folder_to_archive("modules/openwf-translations/bootstrapper-webui/", "OpenWF/translations/webui/")
+local code_version = io.contents("main.cpp"):split("\n")[1]:sub(29 + #"OpenWF Bootstrapper v", -3)
+local all_tags
+do
+	local p <close> = io.popen("git tag --list", "r")
+	all_tags = p:read("a"):strip():split("\n")
+end
+local changelist, trans_changelist
+if code_version in all_tags then
+	do
+		local p <close> = io.popen("git diff --name-only "..code_version, "r")
+		changelist = p:read("a"):strip():split("\n")
+	end
+	trans_changelist = "modules/openwf-translations" in changelist ? nil : {}
+end
 
-io.contents("archive.tmp", uncompressed)
+add_folder_to_archive("OpenWF/", "OpenWF/", changelist)
+add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/", changelist)
+add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/", changelist)
+add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/", changelist)
+add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/", changelist)
+add_folder_to_archive("modules/openwf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
+add_folder_to_archive("modules/openwf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)
+
+io.contents("archive_all.tmp", all_pack)
+if changelist then
+	io.contents("archive_changed.tmp", changed_pack)
+end

@@ -4,11 +4,11 @@ else
 	owf_console_set_title(OWF_CLIENT_TITLE)
 end
 
-owf_register_custom_route("/favicon.ico", "image/png", owf_archive_find("OpenWF/favicon.png"))
+owf_register_custom_route("/favicon.ico", "image/png", owf_repo_find("OpenWF/favicon.png"))
 
-io.contents("OpenWF/Download Latest DLL.ps1", owf_archive_find("OpenWF/Download Latest DLL.ps1"))
-io.contents("OpenWF/Reference Manual.html", owf_archive_find("OpenWF/bootstrapper-manual.html"))
-io.contents("OpenWF/Script API Reference.pluto", owf_archive_find("OpenWF/Script API Reference.pluto"))
+io.contents("OpenWF/Download Latest DLL.ps1", owf_repo_find("OpenWF/Download Latest DLL.ps1"))
+io.contents("OpenWF/Reference Manual.html", owf_repo_find("OpenWF/bootstrapper-manual.html"))
+io.contents("OpenWF/Script API Reference.pluto", owf_repo_find("OpenWF/Script API Reference.pluto"))
 if true then
 	io.mkdirs("OpenWF/Scripts/samples")
 	os.remove("OpenWF/Scripts/samples/Cycle Camera Hotkey (K).pluto") -- pre-0.11.0
@@ -35,7 +35,7 @@ if true then
 		"Watermark",
 	}
 	for samples as sample do
-		io.contents($"OpenWF/Scripts/samples/{sample}.pluto", owf_archive_find($"OpenWF/samples/{sample}.pluto"))
+		io.contents($"OpenWF/Scripts/samples/{sample}.pluto", owf_repo_find($"OpenWF/samples/{sample}.pluto"))
 	end
 	for io.listdir("OpenWF/Scripts/samples") as file do
 		local name = file:sub(24)
@@ -51,7 +51,7 @@ if true then
 end
 
 local { base64, crypto, http, json, socket } = require "*"
-load(owf_archive_find("OpenWF/lib/websocket.pluto"))()
+load(owf_repo_find("OpenWF/lib/websocket.pluto"))()
 
 if io.exists("OpenWF/Metadata Patches.txt") then
 	if not io.exists("OpenWF/Metadata Patches/Untitled.txt") then
@@ -60,7 +60,7 @@ if io.exists("OpenWF/Metadata Patches.txt") then
 	end
 elseif not io.exists("OpenWF/Metadata Patches") then
 	io.mkdir("OpenWF/Metadata Patches")
-	io.contents("OpenWF/Metadata Patches/Untitled.txt", owf_archive_find("OpenWF/Metadata Patches.txt"))
+	io.contents("OpenWF/Metadata Patches/Untitled.txt", owf_repo_find("OpenWF/Metadata Patches.txt"))
 end
 
 if owf_script_get_instance_id() == 0 -- Heuristic to avoid managing content again after applying hotfix
