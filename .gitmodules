@@ -10,3 +10,6 @@
 [submodule "ee-notation-parser"]
 	path = modules/ee-notation-parser
 	url = https://github.com/Sainan/ee-notation-parser
+[submodule "warframe-cache-tools"]
+	path = modules/warframe-cache-tools
+	url = https://github.com/Sainan/warframe-cache-tools

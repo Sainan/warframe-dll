@@ -50,7 +50,7 @@ if true then
 	end
 end
 
-local { base64, crypto, http, json, socket } = require "*"
+local { crypto, http, json, socket } = require "*"
 load(owf_repo_find("OpenWF/lib/websocket.pluto"))()
 
 if io.exists("OpenWF/Metadata Patches.txt") then
@@ -66,58 +66,7 @@ end
 if owf_script_get_instance_id() == 0 -- Heuristic to avoid managing content again after applying hotfix
 	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
 then
-	local function b64m_encode(data)
-		return base64.encode(data, false):replace("/", "-")
-	end
-
-	local function b64m_decode(data)
-		return base64.decode(data:replace("-", "/"))
-	end
-
-	local function shcc_decompress_chunk_oodle(bin, i, decompressed_size)
-		local decompressed = ""
-		while #decompressed < decompressed_size do
-			local block_info = bin:sub(i, i + 7)
-			i += 8
-			assert(block_info:byte(1) == 0x80)
-			assert((block_info:byte(8) & 0x0F) == 0x01)
-			local num1 = (block_info:byte(1) << 24) | (block_info:byte(2) << 16) | (block_info:byte(3) << 8) | block_info:byte(4)
-			local num2 = (block_info:byte(5) << 24) | (block_info:byte(6) << 16) | (block_info:byte(7) << 8) | block_info:byte(8)
-			local block_compressed_size = (num1 >> 2) & 0xFFFFFF
-			local block_decompressed_size = (num2 >> 5) & 0xFFFFFF
-			assert(bin:byte(i) == 0x8C)
-			decompressed ..= oodle_decompress(bin:sub(i, i + block_compressed_size - 1), block_decompressed_size)
-			i += block_compressed_size
-		end
-		return decompressed, i
-	end
-
-	local function shcc_decompress_chunk(bin, i)
-		local chunk_type, decompressed_size, compressed_size
-		chunk_type, i = string.unpack("<I1", bin, i)	
-		decompressed_size, i = string.unpack("<I4", bin, i)
-		compressed_size, i = string.unpack("<I4", bin, i)
-		if chunk_type == 0 then
-			assert(compressed_size == decompressed_size)
-			local data = bin:sub(i, i + compressed_size - 1)
-			i += decompressed_size
-			return data, i
-		end
-		assert(chunk_type == 2)
-		return shcc_decompress_chunk_oodle(bin, i, decompressed_size)
-	end
-
-	local function shcc_unpack(bin)
-		local i = 1
-		i += 8
-		local data = {}
-		data.H, i = shcc_decompress_chunk(bin, i)
-		try
-			data.B, i = shcc_decompress_chunk(bin, i)
-		catch _ then
-		end
-		return data
-	end
+	load(owf_repo_find("OpenWF/lib/cachelib.pluto"))()
 
 	local class CacheManifest
 		function __construct(bin)
