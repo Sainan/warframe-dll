@@ -1,6 +1,7 @@
 #define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.11.14"
 
 #define REDIRECT_REQUESTS true
+#define SERVER_IPS_ONLY true
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
@@ -759,6 +760,7 @@ struct owfTunablesTask : public soup::Task
 			bool ok = false;
 			if (hrt.result)
 			{
+#if !SERVER_IPS_ONLY
 				if (hrt.sock)
 				{
 					server_host = hrt.sock->peer.ip.toString();
@@ -769,6 +771,7 @@ struct owfTunablesTask : public soup::Task
 					std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
 #endif
 				}
+#endif
 
 				if (hrt.result->status_code == 200)
 				{
@@ -809,6 +812,15 @@ static DetachedScheduler task_runner;
 
 static void on_got_server_host()
 {
+#if SERVER_IPS_ONLY
+	IpAddr server_ip;
+	if (!server_ip.fromString(server_host))
+	{
+		server_ip = SOUP_IPV4_NWE(127, 0, 0, 1);
+	}
+	server_host = server_ip.toString();
+	server_remote_ip_hash = server_ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
+#else
 	string::lower(server_host);
 	if (server_host.find(ObfusString("warframe.com").str()) != std::string::npos)
 	{
@@ -826,6 +838,7 @@ static void on_got_server_host()
 			server_host = ObfusString("127.0.0.1").str();
 		}
 	}
+#endif
 
 	{
 		auto msg = get_core_string_utf8(ObfusString("gotsh").str());
