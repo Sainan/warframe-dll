@@ -2089,16 +2089,21 @@ owfScript::owfScript()
 	OWF_SET_GLOBAL(L, "owf_script_get_hotfix_version");
 
 	std::string runtime;
-#if PRIVATE
-	runtime = string::fromFile(R"(OpenWF/runtime.pluto)");
-	if (runtime.empty())
-#endif
 	{
 		std::lock_guard lock(g_repo_mtx);
+
+		OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HOTFIX", g_repo.hotfix);
+
 		size_t size;
 		auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/runtime.pluto"), size);
 		runtime = std::string(data, size);
 	}
+#if PRIVATE
+	if (auto from_file = string::fromFile(R"(OpenWF/runtime.pluto)"); !from_file.empty())
+	{
+		runtime = std::move(from_file);
+	}
+#endif
 	if (luaL_loadbuffer(L, runtime.data(), runtime.size(), runtime_script_name.c_str()) != LUA_OK
 		|| lua_pcall(L, 0, 1, 0) != LUA_OK
 		)

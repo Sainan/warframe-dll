@@ -25,6 +25,7 @@ void owfRepo::loadArchive(const char* data, size_t size)
 	}
 	std::string tar = deflate::decompress(data, size, decompressed_size).decompressed;
 	MemoryRefReader r(tar);
+	r.u64_dyn_bp(this->hotfix);
 	while (r.hasMore())
 	{
 		uint32_t key; r.u32_le(key);

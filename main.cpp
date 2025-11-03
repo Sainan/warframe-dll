@@ -5098,7 +5098,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 								}
 								{
 									std::lock_guard lock(g_repo_mtx);
-									g_repo.loadBuiltinArchive();
+									if (g_repo.hotfix) // Replacing one hotfix with another?
+									{
+										g_repo.loadBuiltinArchive();
+									}
 									g_repo.loadHotfix(hotfix.data(), hotfix.size());
 								}
 								ServerWebService::sendText(s, ObfusString("Hotfix applied").str());

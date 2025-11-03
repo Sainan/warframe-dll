@@ -28,7 +28,7 @@ touch("owf_repo.cpp");
 
 if (file_exists("archive_changed.tmp"))
 {
-	echo ">>> Hotfix.owf only contains files changed since tag ".substr($target_version, strlen("OpenWF Bootstrapper v"))."\n";
+	//echo ">>> Hotfix.owf only contains files changed since tag ".substr($target_version, strlen("OpenWF Bootstrapper v"))."\n";
 	$bin_str = wrap_archive(file_get_contents("archive_changed.tmp"));
 	unlink("archive_changed.tmp");
 }

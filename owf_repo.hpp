@@ -20,6 +20,7 @@ public:
 	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
 
 	uint64_t timestamp;
+	uint64_t hotfix;
 protected:
 	std::unordered_map<uint32_t, std::string> data;
 };

@@ -55,8 +55,7 @@ local function pack_file(path, archive_path)
 	return "I4":pack(crypto.joaat(archive_path)) .. pack_u64_dyn_bp(#cont) .. cont
 end
 
-local all_pack = ""
-local changed_pack = ""
+local all_pack, changed_pack
 
 local function add_file_to_archive(path, archive_path, changelist)
 	local packed = pack_file(path, archive_path)
@@ -84,8 +83,13 @@ do
 	local p <close> = io.popen("git tag --list", "r")
 	all_tags = p:read("a"):strip():split("\n")
 end
+local hotfix = 0
 local changelist, trans_changelist, cachelib_changelist
 if code_version in all_tags then
+	repeat
+		++hotfix
+	until not $"{code_version}-hotfix-{hotfix}" in all_tags
+	print $">>> Generating partial Hotfix.owf for hotfix {hotfix}"
 	do
 		local p <close> = io.popen("git diff --name-only "..code_version, "r")
 		changelist = p:read("a"):strip():split("\n")
@@ -93,6 +97,9 @@ if code_version in all_tags then
 	trans_changelist = "modules/openwf-translations" in changelist ? nil : {}
 	cachelib_changelist = "modules/warframe-cache-tools" in changelist ? nil : {}
 end
+
+all_pack = pack_u64_dyn_bp(hotfix)
+changed_pack = all_pack
 
 add_folder_to_archive("OpenWF/", "OpenWF/", changelist)
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/", changelist)
