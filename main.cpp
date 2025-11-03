@@ -5133,8 +5133,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							load_hotkeys();
 
 							{
-								size_t size;
-								if (auto data = g_repo.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size))
+								size_t size = 0;
+								auto data = g_repo.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size);
+								if (size)
 								{
 									start_script_from_string(std::string(data, size));
 								}
