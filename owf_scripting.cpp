@@ -11,6 +11,7 @@
 #include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
+#include <os.hpp>
 #include <Pattern.hpp>
 #include <SharedLibrary.hpp>
 #include <StringWriter.hpp>
@@ -2075,6 +2076,17 @@ owfScript::owfScript()
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_script_get_reply");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto x = luaL_checkinteger(L, 1);
+		const auto y = luaL_checkinteger(L, 2);
+		const auto width = luaL_checkinteger(L, 3);
+		const auto height = luaL_checkinteger(L, 4);
+		pluto_pushstring(L, soup::os::makeScreenshotBmp(x, y, width, height));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "make_screenshot_bmp");
 
 	// Undocumented
 	lua_pushcfunction(L, [](lua_State* L) -> int

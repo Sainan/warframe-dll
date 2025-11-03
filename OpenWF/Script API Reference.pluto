@@ -622,6 +622,7 @@ function owf_start_script_inline(code)
 function owf_stop_script(name)
 function owf_toggle_script(name)
 function owf_logout()
+function make_screenshot_bmp(x, y, width, height)
 
 function owf_reload_label_replacements()
 function owf_replace_label(tag, str)
