@@ -10,6 +10,9 @@ io.chdir("..")
 os.execute("cd modules/openwf-translations && php update.php")
 
 local function pack_file(path, archive_path)
+	if archive_path == "OpenWF/bootstrapper-manual.html" then
+		archive_path = "OpenWF/Reference Manual.html"
+	end
 	io.write(path.." -> "..archive_path)
 	local cont = io.contents(path)
 	if path == "OpenWF/runtime.pluto" then
