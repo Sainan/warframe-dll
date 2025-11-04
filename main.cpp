@@ -509,6 +509,10 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 #if PROVIDE_VERSION_INFO
 		if (build_label[0])
 		{
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
 			uri.query.append(ObfusString("buildLabel=").str());
 			uri.query.append(build_label, 16);
 			uri.query.push_back('/');
