@@ -1,3 +1,9 @@
 *.pluto linguist-language=Lua
+
+tools/pluto.exe linguist-vendored
+tools/plutoc.exe linguist-vendored
+tools/u64_dyn.lua linguist-vendored
+tools/u64_dyn.php linguist-vendored
+
 whirlpool.cpp linguist-vendored
 whirlpool.hpp linguist-vendored
