@@ -3608,13 +3608,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 48 89 78 20 41 54 41 55 41 56 48 83 EC 40 48 8B E9");
-				const auto init_cache_fetching = Module(nullptr).range.scan(sig_inst).as<void*>();
+				SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17
+				const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-				std::cout << "init_cache_fetching = " << init_cache_fetching << std::endl;
+				std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
 #endif
-				if (init_cache_fetching)
+				if (init_cache_fetching_callsite)
 				{
+					auto init_cache_fetching = init_cache_fetching_callsite.add(5).rip().as<void*>();
+
 					init_cache_fetching_hook.detour = reinterpret_cast<void*>(&init_cache_fetching_detour);
 					init_cache_fetching_hook.target = init_cache_fetching;
 					init_cache_fetching_hook.create();
