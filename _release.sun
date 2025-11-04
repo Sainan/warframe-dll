@@ -12,3 +12,4 @@ arg -O3
 
 global_arg -flto
 linker_arg -fuse-ld=lld
+linker_arg version.res
