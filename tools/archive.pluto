@@ -63,7 +63,7 @@ local all_pack, changed_pack
 local function add_file_to_archive(path, archive_path, changelist)
 	local packed = pack_file(path, archive_path)
 	all_pack ..= packed
-	if changelist and not archive_path in changelist then
+	if changelist and not path in changelist then
 		io.write(" [unchanged]")
 	else
 		changed_pack ..= packed
@@ -97,7 +97,10 @@ if code_version in all_tags then
 		local p <close> = io.popen("git diff --name-only "..code_version, "r")
 		changelist = p:read("a"):strip():split("\n")
 	end
-	trans_changelist = "modules/openwf-translations" in changelist ? nil : {}
+	if "modules/openwf-translations" in changelist then
+		local p <close> = io.popen("cd modules/openwf-translations && git diff --name-only "..code_version, "r")
+		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/openwf-translations/" .. x)
+	end
 	cachelib_changelist = "modules/warframe-cache-tools" in changelist ? nil : {}
 end
 
