@@ -3825,7 +3825,7 @@ return function(f)
 			},
 		}
 	end)
-	owf_register_command(owf_script_route_base:sub(2).."/set_toggle", function(_, arg)
+	owf_register_command(owf_script_route_base:sub(2).."/set_toggle", function(arg)
 		local value = arg:sub(1, 1) == "1"
 		local name = arg:sub(2)
 		if toggle := owf_script_toggles:find(|x| -> x.name == name) then
