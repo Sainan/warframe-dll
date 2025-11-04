@@ -3859,7 +3859,11 @@ return function(f)
 	sched:add(function()
 		repeat
 			simple_yield()
-			collectgarbage("step") -- fix stuttering when a script has been running for ~1h (at 120fps)
+
+			-- Any instance we may have should be GC'd ASAP. This is necessary logic-wise for script replies.
+			-- This should also avoid stuttering with long-running scripts as those may slow down Luau if they don't release references in a timely manner.
+			collectgarbage("step")
+
 			while evt := owf_internal_next_event() do
 				if evt.type == OWF_EVT_CUSTOM_ROUTE_REQUEST then
 					local path, arg = url.decode(evt.path):split("?", 2):unpack()
