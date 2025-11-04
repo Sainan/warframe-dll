@@ -3142,6 +3142,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
+			else if (game_version >= GV(9, 0, 0))
+			{
+				SIG_INST("48 8B CE 44 88 62 58 E8"); // 2013.07.15.20.46
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 8;
+			}
 			else
 			{
 				SIG_INST("48 8B CF 40 88 6A 58 E8"); // 2013.05.23.16.06
