@@ -3665,9 +3665,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		if (game_version < GV(33, 0, 0))
 		{
 			void* legacy_dns_lookup;
-			if (game_version >= GV(15, 0, 0))
+			if (game_version >= GV(14, 0, 0))
 			{
-				SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
+				SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33, 2014.07.21.18.38
 				legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else if (game_version >= GV(13, 4, 0))
