@@ -7,7 +7,7 @@ require "vv"
 io.chdir("..")
 
 -- Do a translation update so all target dicts have all source strings
-os.execute("cd modules/openwf-translations && php update.php")
+os.execute("cd modules/owf-translations && php update.php")
 
 local function pack_file(path, archive_path)
 	if archive_path == "OpenWF/bootstrapper-manual.html" then
@@ -97,9 +97,9 @@ if code_version in all_tags then
 		local p <close> = io.popen("git diff --name-only "..code_version, "r")
 		changelist = p:read("a"):strip():split("\n")
 	end
-	if "modules/openwf-translations" in changelist then
-		local p <close> = io.popen("cd modules/openwf-translations && git diff --name-only "..code_version, "r")
-		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/openwf-translations/" .. x)
+	if "modules/owf-translations" in changelist then
+		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..code_version, "r")
+		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/owf-translations/" .. x)
 	end
 	cachelib_changelist = "modules/warframe-cache-tools" in changelist ? nil : {}
 end
@@ -113,8 +113,8 @@ add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/", changelist)
 add_file_to_archive("modules/warframe-cache-tools/lib/cachelib.pluto", "OpenWF/lib/cachelib.pluto", cachelib_changelist)
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/", changelist)
 add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/", changelist)
-add_folder_to_archive("modules/openwf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
-add_folder_to_archive("modules/openwf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)
+add_folder_to_archive("modules/owf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
+add_folder_to_archive("modules/owf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)
 
 io.contents("archive_all.tmp", all_pack)
 if changelist then
