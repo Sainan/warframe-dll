@@ -87,6 +87,7 @@ union LegacyGameString
 			lng.ptr = (char*)data;
 			lng.len = len;
 			lng.ownership = -1;
+			shrt.inv_len = 0xFF;
 		}
 		else
 		{
