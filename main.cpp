@@ -1055,22 +1055,43 @@ static void init_cache_fetching_detour(void* a1, bool a2, bool is_stripped, bool
 
 static DetourHook legacy_dns_lookup_hook;
 
-static bool should_block_dns_lookup(const char* data, size_t size)
+static std::string process_legacy_dns_lookup(const char* data, size_t size)
 {
 #if LOGGING
-	std::cout << "legacy_dns_lookup: " << data << std::endl;
+	std::cout << "legacy_dns_lookup: " << data;
 #endif
 
-	std::lock_guard lock(g_client_tunables_mtx);
-	return g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(data, size));
+	bool should_block;
+	{
+		std::lock_guard lock(g_client_tunables_mtx);
+		should_block = g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(data, size));
+	}
+
+	if (should_block)
+	{
+		std::string override = server_host;
+		if (const char* sep = strchr(data, ':'))
+		{
+			override.append(sep);
+		}
+#if LOGGING
+	std::cout << " -> " << override << std::endl;
+#endif
+		return override;
+	}
+#if LOGGING
+	std::cout << std::endl;
+#endif
+	return {};
 }
 
 template <typename T>
 static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
 {
-	if (should_block_dns_lookup(name->getData(), name->getSize()))
+	auto override = process_legacy_dns_lookup(name->getData(), name->getSize());
+	if (!override.empty())
 	{
-		name->setUnownedData(server_host.data(), server_host.size());
+		name->setUnownedData(override.data(), override.size());
 	}
 	return reinterpret_cast<decltype(&legacy_dns_lookup_detour<T>)>(legacy_dns_lookup_hook.original)(out, name, a3);
 }
