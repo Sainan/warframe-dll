@@ -754,9 +754,9 @@ struct owfTunablesTask : public soup::Task
 	HttpRequestTask hrt;
 
 	owfTunablesTask()
-		: hrt(HttpRequest(server_host + ":" + std::to_string(https_port), ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE).str()), &Socket::certchain_validator_none)
+		: hrt(HttpRequest(server_host + ":" + std::to_string(game_version >= GV(35, 5, 0) ? https_port : http_port), ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE).str()), &Socket::certchain_validator_none)
 	{
-		hrt.hr.use_tls = true;
+		hrt.hr.use_tls = (game_version >= GV(35, 5, 0));
 	}
 
 	void onTick() final
