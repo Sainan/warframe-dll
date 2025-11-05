@@ -3142,6 +3142,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
+			else if (game_version >= GV(12, 0, 0))
+			{
+				SIG_INST("48 8B CE 44 88 62 30 E8"); // 2014.02.07.16.15
+				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
+				offset = 8;
+			}
 			else if (game_version >= GV(9, 0, 0))
 			{
 				SIG_INST("48 8B CE 44 88 62 58 E8"); // 2013.07.15.20.46
@@ -3170,7 +3176,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest, true>);
 			}
-			else if (game_version >= GV(15, 0, 0))
+			else if (game_version >= GV(12, 0, 0))
 			{
 				game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU18, true>);
 			}
