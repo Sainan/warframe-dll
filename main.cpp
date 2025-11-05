@@ -3643,6 +3643,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
 				legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
+			else if (game_version >= GV(11, 0, 0))
+			{
+				SIG_INST("48 89 5C 24 20 55 56 41 54 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2013.11.29.16.33
+				legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 			else
 			{
 				SIG_INST("40 55 53 41 54 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2013.11.12.14.03
