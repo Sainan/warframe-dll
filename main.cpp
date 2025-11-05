@@ -932,11 +932,22 @@ static std::string process_args_str(const char* str)
 			arguments_to_inject.append(fallback_graphicsDriver);
 			arguments_to_inject.push_back(' ');
 		}
-		if (!got_cluster)
+		if (game_version >= GV(8, 0, 0))
 		{
-			arguments_to_inject.append(ObfusString("-cluster:").str());
-			arguments_to_inject.append(fallback_cluster);
-			arguments_to_inject.push_back(' ');
+			if (!got_cluster)
+			{
+				arguments_to_inject.append(ObfusString("-cluster:").str());
+				arguments_to_inject.append(fallback_cluster);
+				arguments_to_inject.push_back(' ');
+			}
+		}
+		else
+		{
+			arguments_to_inject.append(ObfusString("-webserver:http://").str());
+			arguments_to_inject.append(server_host);
+			arguments_to_inject.push_back(':');
+			arguments_to_inject.append(std::to_string(http_port));
+			arguments_to_inject.append(ObfusString("/api/ ").str());
 		}
 
 		// This prevents the game from modifying H.Misc.cache by pre-populating the "device id".
