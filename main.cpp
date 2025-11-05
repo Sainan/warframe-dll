@@ -3157,9 +3157,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 12;
 			}
-			else if (game_version >= GV(15, 0, 0))
+			else if (game_version >= GV(13, 4, 0))
 			{
-				SIG_INST("48 8B CF 44 88 72 30 E8"); // 2015.10.21.12.48
+				SIG_INST("48 8B CF 44 88 72 30 E8"); // 2015.10.21.12.48, 2014.05.23.12.12
 				game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 				offset = 8;
 			}
@@ -3580,7 +3580,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					log_optional_scan_failure(true);
 				}
 			}
-			else if (game_version >= GV(15, 0, 0))
+			else if (game_version >= GV(13, 4, 0))
 			{
 				uint8_t* insn;
 				if (game_version >= GV(30, 0, 0))
@@ -3615,7 +3615,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else
 				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17
+					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17, 2014.05.23.12.12
 					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
 				}
 #if LOGGING
@@ -3641,7 +3641,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17
+				SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17, 2014.05.23.12.12
 				const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 				std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
@@ -3668,6 +3668,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (game_version >= GV(15, 0, 0))
 			{
 				SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33
+				legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else if (game_version >= GV(13, 4, 0))
+			{
+				SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2014.05.23.12.12
 				legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 			else if (game_version >= GV(11, 0, 0))
