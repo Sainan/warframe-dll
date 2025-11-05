@@ -42,7 +42,7 @@ union GameString
 		}
 	}
 
-	void setShortData(const char* data, size_t len) noexcept
+	/*void setShortData(const char* data, size_t len) noexcept
 	{
 		if (len > sizeof(shrt.data))
 		{
@@ -51,7 +51,7 @@ union GameString
 		memcpy(shrt.data, data, len);
 		shrt.data[len] = 0;
 		shrt.inv_len = sizeof(shrt.data) - len;
-	}
+	}*/
 
 	/*void clear() noexcept
 	{
@@ -97,7 +97,7 @@ union LegacyGameString
 		}
 	}
 
-	void setShortData(const char* data, size_t len) noexcept
+	/*void setShortData(const char* data, size_t len) noexcept
 	{
 		if (len > sizeof(shrt.data))
 		{
@@ -106,7 +106,7 @@ union LegacyGameString
 		memcpy(shrt.data, data, len);
 		shrt.data[len] = 0;
 		shrt.inv_len = sizeof(shrt.data) - len;
-	}
+	}*/
 
 	/*void clear() noexcept
 	{
@@ -121,7 +121,7 @@ struct LegacyGameStringU18
 	size_t len;
 	size_t ownership;
 
-	//[[nodiscard]] bool isLong() const noexcept { return true; }
+	[[nodiscard]] bool isLong() const noexcept { return true; }
 	//[[nodiscard]] bool willFreeData() const noexcept { return ownership != -1; }
 	[[nodiscard]] char* getData() noexcept { return ptr; }
 	[[nodiscard]] size_t getSize() const noexcept { return len; }
@@ -133,13 +133,13 @@ struct LegacyGameStringU18
 		this->ownership = -1;
 	}
 
-	void setShortData(const char* data, size_t len) noexcept
+	/*void setShortData(const char* data, size_t len) noexcept
 	{
 		// If it's short, then I guess it's fine to leak it.
 		auto block = soup::malloc(len);
 		memcpy(block, data, len);
 		setUnownedData((const char*)block, len);
-	}
+	}*/
 };
 
 // Objects
