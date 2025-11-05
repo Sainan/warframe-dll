@@ -17,6 +17,11 @@
 		"irc.warframe.com:6667", // 2013.11.12.14.03
 		"irc.warframe.com:6668", // 2013.11.12.14.03
 		"irc.warframe.com:6669", // 2013.11.12.14.03
+		"nrs.playwarframe.com:3960", // U8
+		"nrs2.playwarframe.com:3960", // U8
+		"irc.playwarframe.com:6666", // U8
+		"irc.playwarframe.com:6668", // U8
+		"irc.playwarframe.com:6669", // U8
 	],
 	//"remote_allowed_days": 20,
 	"invipbl": 1, // All the public instances I can find are in China, most likely none of them have good intentions: https://www.shodan.io/search?query=http.title%3A%22OpenWF+WebUI%22
