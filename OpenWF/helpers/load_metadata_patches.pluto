@@ -91,6 +91,7 @@ function load_metadata_patches(str, filename)
 		for patch.keys as key do
 			if key[1] ~= "/" then
 				print_to_console("[Metadata Patches] Can't patch invalid path: "..key)
+				print_to_console("[Metadata Patches] - Note: > and & are used to start new patches and therefore need to be followed by valid paths to patch.")
 				continue
 			end
 			new_patch(key, patch.prefix)
