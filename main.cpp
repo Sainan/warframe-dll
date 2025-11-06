@@ -368,10 +368,10 @@ static_assert(offsetof(GameHttpRequest, body) == 0x38);
 struct LegacyGameHttpRequest
 {
 	/* 0x00 */ LegacyGameString url;
-	char pad[0x28];
-	/* 0x48 */ LegacyGameString body;
+	char pad[0x20];
+	/* 0x40 */ LegacyGameString body;
 };
-static_assert(offsetof(LegacyGameHttpRequest, body) == 0x48);
+static_assert(offsetof(LegacyGameHttpRequest, body) == 0x40); // 2016.12.16.14.33
 
 struct GameHttpRequestU18
 {
