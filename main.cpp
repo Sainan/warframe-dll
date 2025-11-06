@@ -703,10 +703,11 @@ static int64_t Curl_ossl_verifyhost_detour(void* a1, void* a2)
 }
 
 
-static ReplacementHook verify_worldstate_integrity_hook;
+static DetourHook verify_worldstate_integrity_hook;
 
-static bool verify_worldstate_integrity_detour()
+static bool verify_worldstate_integrity_detour(void* outStr, void* inStr)
 {
+	reinterpret_cast<decltype(&verify_worldstate_integrity_detour)>(verify_worldstate_integrity_hook.original)(outStr, inStr);
 	return true;
 }
 
@@ -3483,7 +3484,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
-			//verify_worldstate_integrity_hook.create();
+			verify_worldstate_integrity_hook.create();
 			verify_worldstate_integrity_hook.enable();
 		}
 
