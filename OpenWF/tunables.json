@@ -17,6 +17,8 @@
 		"irc.warframe.com:6667", // 2013.11.12.14.03
 		"irc.warframe.com:6668", // 2013.11.12.14.03
 		"irc.warframe.com:6669", // 2013.11.12.14.03
+		"irc.warframe.com:6665", // U10 (2013.10.11.17.01)
+		"irc.warframe.com:6666", // U10 (2013.10.11.17.01)
 		"nrs.playwarframe.com:3960", // U8
 		"nrs2.playwarframe.com:3960", // U8
 		"irc.playwarframe.com:6666", // U8
