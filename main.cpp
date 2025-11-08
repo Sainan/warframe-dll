@@ -420,7 +420,7 @@ static bool can_use_server_host()
 	return true;
 }
 
-static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool strip_tls)
+static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login, bool strip_tls)
 {
 #if REDIRECT_REQUESTS
 	uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
@@ -457,6 +457,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
+		is_login = true;
 		if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 		{
 			if (autologin && !did_auto_login)
@@ -569,6 +570,22 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 #endif
 }
 
+static void process_login_response(const char* data, size_t size)
+{
+	if (auto jr = json::decode(data, size); jr && jr->isObj())
+	{
+		const auto pjId = jr->reinterpretAsObj().find(ObfusString("id").str());
+		const auto pjNonce = jr->reinterpretAsObj().find(ObfusString("Nonce").str());
+		if (pjId && pjNonce && pjId->isStr() && pjNonce->isInt())
+		{
+			auth_query = ObfusString("accountId=").str() + pjId->reinterpretAsStr().value + ObfusString("&nonce=").str() + std::to_string(pjNonce->reinterpretAsInt().value);
+#if LOGGING
+			std::cout << "Constructed auth_query from login response: " << auth_query << std::endl;
+#endif
+		}
+	}
+}
+
 template <typename T, bool strip_tls = false>
 static void* game_http_request_detour(void* a1, T* request, void* a3)
 {
@@ -584,7 +601,8 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 	const char* body_data = request->body.getData();
 	size_t body_size = request->body.getSize();
 	std::string body_buf;
-	process_game_http_request(uri, body_data, body_size, body_buf, strip_tls);
+	bool is_login = false;
+	process_game_http_request(uri, body_data, body_size, body_buf, is_login, strip_tls);
 	std::string url_buf = uri.toString();
 	request->url.setUnownedData(url_buf.data(), url_buf.size());
 	if (body_data != request->body.getData())
@@ -601,6 +619,11 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 		std::cout << request->body.getData() << std::endl;
 	}*/
 #endif
+
+	if (is_login)
+	{
+		process_login_response(request->body.getData(), request->body.getSize());
+	}
 
 	return ret;	
 }
