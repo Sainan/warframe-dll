@@ -82,7 +82,9 @@ using namespace soup;
 
 const char* g_bootstrapper_title = BOOTSTRAPPER_TITLE;
 
+#if !SERVER_IPS_ONLY
 static uint32_t server_remote_ip_hash = 0;
+#endif
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static bool metadata_patches_in_use = false;
@@ -391,6 +393,7 @@ static_assert(offsetof(GameHttpRequestU8, body) == 0x30);
 
 static bool can_use_server_host()
 {
+#if !SERVER_IPS_ONLY
 	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
@@ -411,6 +414,7 @@ static bool can_use_server_host()
 			return false; // To prevent downgrade attacks, disallow this remote connection.
 		}
 	}
+#endif
 	return true;
 }
 
@@ -826,7 +830,21 @@ static void on_got_server_host()
 		server_ip = SOUP_IPV4_NWE(127, 0, 0, 1);
 	}
 	server_host = server_ip.toString();
-	server_remote_ip_hash = server_ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
+	if (!server_ip.isLocalnet()) // Connecting to a server outside of the localnet?
+	{
+		std::lock_guard lock(g_client_tunables_mtx);
+		bool blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), soup::joaat::hash(server_host));
+		if (g_client_tunables.getInt(joaat::compileTimeHash("invipbl")))
+		{
+			blacklisted = !blacklisted;
+		}
+		if (blacklisted
+			|| g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
+			)
+		{
+			server_host = ObfusString("127.0.0.1").str();
+		}
+	}
 #else
 	string::lower(server_host);
 	if (server_host.find(ObfusString("warframe.com").str()) != std::string::npos)
