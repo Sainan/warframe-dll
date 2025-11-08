@@ -2003,7 +2003,8 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 
 static DetourHook irc_send_raw_hook;
 
-static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
+template <typename Str>
+static void irc_send_raw_detour(void* a1, Str* str, bool bLogIt)
 {
 #if VERBOSE_IRC
 	bLogIt = true;
@@ -2020,9 +2021,9 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 		{
 			buf.append(arr[1]);
 		}
-		GameString tmp;
+		Str tmp;
 		tmp.setUnownedData(buf.data(), buf.size());
-		return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
+		return reinterpret_cast<decltype(&irc_send_raw_detour<Str>)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
 	}
 #endif
 	if (str->getSize() > 10 && soup::joaat::hashRange(str->getData(), 8) == soup::joaat::compileTimeHash("PRIVMSG "))
@@ -2046,7 +2047,7 @@ static void irc_send_raw_detour(void* a1, GameString* str, bool bLogIt)
 			}
 		}
 	}
-	return reinterpret_cast<decltype(&irc_send_raw_detour)>(irc_send_raw_hook.original)(a1, str, bLogIt);
+	return reinterpret_cast<decltype(&irc_send_raw_detour<Str>)>(irc_send_raw_hook.original)(a1, str, bLogIt);
 }
 
 
@@ -4611,6 +4612,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
+		if (game_version >= GV(9, 0, 0)) // Pattern works in U8 but truncates the USER message for it because it sends the nonce directly
 		{
 			// "IRC out: "
 			void* irc_send_raw;
@@ -4619,9 +4621,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SIG_INST("40 55 57 41 56 41 57 48 8D 6C 24 C1 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 17 80 79 69 00");
 				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
-			else
+			else if (game_version >= GV(19, 0, 0))
 			{
 				SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
+				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("4C 8B DC 55 56 41 54 49 8D 6B ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 80 79 ? 00 48 8B F2"); // 2013.05.23.16.06
 				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
 			}
 #if LOGGING
@@ -4629,7 +4636,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			if (irc_send_raw)
 			{
-				irc_send_raw_hook.detour = reinterpret_cast<void*>(&irc_send_raw_detour);
+				if (game_version >= GV(35, 5, 0))
+				{
+					irc_send_raw_hook.detour = reinterpret_cast<void*>(&irc_send_raw_detour<GameString>);
+				}
+				else if (game_version >= GV(19, 0, 0))
+				{
+					irc_send_raw_hook.detour = reinterpret_cast<void*>(&irc_send_raw_detour<LegacyGameString>);
+				}
+				else
+				{
+					irc_send_raw_hook.detour = reinterpret_cast<void*>(&irc_send_raw_detour<LegacyGameStringU18>);
+				}
 				irc_send_raw_hook.target = irc_send_raw;
 				irc_send_raw_hook.create();
 				irc_send_raw_hook.enable();
