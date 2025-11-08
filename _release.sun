@@ -4,6 +4,7 @@ dynamic
 require modules/Soup/soup
 require modules/Pluto/src
 arg -Wno-invalid-offsetof
+linker_arg -fuse-ld=lld
 
 arg -DLOGGING=false
 arg -DPRIVATE=false
@@ -11,5 +12,4 @@ arg -DPRIVATE=false
 arg -O3
 
 global_arg -flto
-linker_arg -fuse-ld=lld
 linker_arg version.res
