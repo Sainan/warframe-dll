@@ -3,8 +3,8 @@ local code_version = io.contents("main.cpp"):split("\n")[1]:sub(29 + #"OpenWF Bo
 io.contents("version.rc", [[#include <winres.h>
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION ]]..code_version:replace(".", ",").."\n"..[[
- PRODUCTVERSION ]]..code_version:replace(".", ",").."\n"..[[
+ FILEVERSION ]]..code_version:split("-")[1]:replace(".", ",").."\n"..[[
+ PRODUCTVERSION ]]..code_version:split("-")[1]:replace(".", ",").."\n"..[[
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
