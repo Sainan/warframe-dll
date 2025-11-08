@@ -2763,11 +2763,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				fallback_graphicsDriver = ObfusString("dx11").str();
 			}
 
+#if !CONFIG_LOADED_ONLY_ONCE
+			fallback_cluster.clear();
+#endif
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_cluster")); it != config->reinterpretAsObj().end() && it->second->isStr())
 			{
 				fallback_cluster = it->second->reinterpretAsStr().value;
 			}
-			else
+			if (fallback_cluster.empty())
 			{
 				fallback_cluster = ObfusString("public").str();
 			}
