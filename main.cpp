@@ -805,9 +805,8 @@ struct owfTunablesTask : public soup::Task
 			if (!ok)
 			{
 				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
-				auto msg = ObfusString("Failed to verify that the server at ").str();
-				msg.append(hrt.hr.getHost());
-				msg.append(ObfusString(" is online and running compatible software. Login may fail.").str());
+				auto msg = get_core_string_utf8(ObfusString("tunafail").str());
+				soup::string::replaceAll(msg, ObfusString("|HOST|").str(), hrt.hr.getHost());
 				fire_and_forget_messagebox(std::move(msg), MB_OK | MB_ICONWARNING);
 			}
 
