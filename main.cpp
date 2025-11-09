@@ -3882,18 +3882,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		{
-			Pointer nrs_jnz;
-			if (game_version >= GV(17, 0, 0))
-			{
-				//SIG_INST("0F 85 4A 20 00 00");
-				SIG_INST("0F 85 ? ? ? ? 48 89 9C 24 ? ? ? ? 4C 89 BC 24 ? ? ? ? E8");
-				nrs_jnz = Module(nullptr).range.scan(sig_inst);
-			}
-			else
-			{
-				SIG_INST("0F 85 ? ? ? ? 49 8D 9D ? ? ? ? 48 8D 15 ? ? ? ? 48 8B CB E8"); // 2015.05.14.16.29
-				nrs_jnz = Module(nullptr).range.scan(sig_inst);
-			}
+			auto nrs_jnz = Module(nullptr).range.scan(g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/nrs_jnz.json"), game_version));
 #if LOGGING
 			std::cout << "nrs_jnz = " << nrs_jnz.as<void*>() << std::endl;
 #endif

@@ -6,6 +6,7 @@
 #include <joaat.hpp>
 #include <MemoryRefReader.hpp>
 #include <ObfusString.hpp>
+#include <Pattern.hpp>
 #include <string.hpp>
 
 #include "owf_archive_data.inc"
@@ -106,6 +107,25 @@ uint64_t owfRepo::getVersionedInt(uint32_t path, uint64_t version) const
 		}
 	}
 	return 0;
+}
+
+Pattern owfRepo::getVersionedPattern(uint32_t path, uint64_t version) const
+{
+	size_t size;
+	if (auto data = this->find(path, size))
+	{
+		MemoryRefReader r(data, size);
+		uint64_t ver;
+		Pattern val;
+		while (r.u64_dyn_bp(ver) && val.io(r))
+		{
+			if (version >= ver)
+			{
+				return val;
+			}
+		}
+	}
+	return Pattern();
 }
 
 std::unordered_map<std::string, std::string> owfRepo::getCoreDict(const std::string& lang) const

@@ -4,6 +4,36 @@ assert(json.encode({ 0, true, json.null }, "msgpack") == "\x93\x00\xc3\xc0")
 require "u64_dyn"
 require "vv"
 
+local function pack_pattern(ida_str)
+	ida_str = ida_str:upper()
+	local arr = ida_str:split(" ")
+
+	local bin = pack_u64_dyn_bp(#arr)
+
+	local none_value = 0
+	if arr:find(|x| -> x == "?") then
+		::retry::
+		local none_value_str = string.format("%02X", none_value)
+		for arr as byte do
+			if byte == none_value_str then
+				assert(none_value ~= 0xff)
+				++none_value
+				goto retry
+			end
+		end
+		bin ..= pack_i64_dyn_bp(none_value)
+	else
+		bin ..= pack_i64_dyn_bp(-1)
+	end
+
+	for arr as byte do
+		local v = byte == "?" ? none_value : tonumber(byte, 16)
+		bin ..= "I1":pack(v)
+	end
+
+	return bin
+end
+
 io.chdir("..")
 
 -- Do a translation update so all target dicts have all source strings
@@ -39,17 +69,25 @@ local function pack_file(path, archive_path)
 			cont = json.encode(packed, "msgpack")
 			--print(cont:split(""):map(|x| -> string.format("%02x ", x:byte())):concat())
 		elseif path:sub(1, 10) == "OpenWF/vv/" then
-			local arr = {}
-			for cont.__order as ver do
-				local val = cont[ver]
-				if val:sub(1, 2) == "0x" then
-					val = tonumber(val:sub(3), 16)
-				else
-					val = vv_v2n(val)
+			if path:sub(1, 14) == "OpenWF/vv/sig/" then
+				local arr = {}
+				for cont.__order as ver do
+					arr:insert({ vv_v2n(ver), cont[ver] })
 				end
-				arr:insert({ vv_v2n(ver), val })
+				cont = vv_enc(pack_pattern, arr)
+			else
+				local arr = {}
+				for cont.__order as ver do
+					local val = cont[ver]
+					if val:sub(1, 2) == "0x" then
+						val = tonumber(val:sub(3), 16)
+					else
+						val = vv_v2n(val)
+					end
+					arr:insert({ vv_v2n(ver), val })
+				end
+				cont = vv_enc_int(arr)
 			end
-			cont = vv_enc_int(arr)
 		else
 			cont = json.encode(cont)
 		end
@@ -113,6 +151,7 @@ add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/", changelist)
 add_file_to_archive("modules/warframe-cache-tools/lib/cachelib.pluto", "OpenWF/lib/cachelib.pluto", cachelib_changelist)
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/", changelist)
 add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/", changelist)
+add_folder_to_archive("OpenWF/vv/sig/", "OpenWF/vv/sig/", changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)
 

@@ -13,6 +13,14 @@ function vv_v2n(ver)
 	return n
 end
 
+function vv_enc(packer, arr)
+	local out = ""
+	for _, e in ipairs(arr) do
+		out = out .. pack_u64_dyn_bp(e[1]) .. packer(e[2])
+	end
+	return out
+end
+
 function vv_enc_int(arr)
 	local out = ""
 	for _, e in ipairs(arr) do
