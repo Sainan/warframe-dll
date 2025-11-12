@@ -3591,106 +3591,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
 		if (game_version < GV(33, 6, 0))
 		{
-			if (game_version >= GV(31, 6, 0))
-			{
-				SIG_INST("0F B6 44 24 70 40 0F B6 CF 88 05");
-				auto insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
+			SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17, 2014.05.23.12.12, 2017.03.06.15.49, 2021.04.13.19.58, 2023.04.25.23.40
+			const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
+			std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
 #endif
-				if (insn)
-				{
-					memGuard::setAllowedAccess(insn, 5, memGuard::ACC_RWX);
-					insn[0] = 0x31;
-					insn[1] = 0xc0;
-					insn[2] = 0x90;
-					insn[3] = 0x90;
-					insn[4] = 0x90;
-				}
-				else
-				{
-					log_optional_scan_failure(true);
-				}
-			}
-			else if (game_version >= GV(13, 4, 0))
+			if (init_cache_fetching_callsite)
 			{
-				uint8_t* insn;
-				if (game_version >= GV(30, 0, 0))
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 0F B6 CF 88 05"); // 2021.09.08.19.27
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (game_version >= GV(29, 3, 2))
-				{
-					SIG_INST("0F B6 84 24 90 00 00 00 0F B6 8C 24 A8 00 00 00 88 05"); // 2020.11.04.18.58
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (game_version >= GV(26, 0, 0))
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 0F B6 CB 88 05"); // 2020.03.24.20.24, 2019.10.31.22.42
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (game_version >= GV(23, 9, 1))
-				{
-					SIG_INST("0F B6 84 24 80 00 00 00 88 05"); // 2019.09.09.12.43
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (game_version >= GV(23, 0, 0))
-				{
-					SIG_INST("0F B6 84 24 A0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.06.14.23.21
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else if (game_version >= GV(19, 0, 0))
-				{
-					SIG_INST("0F B6 84 24 B0 00 00 00 88 05 ? ? ? ? 0F B6 84 24"); // 2018.02.22.14.34
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-				else
-				{
-					SIG_INST("0F B6 84 24 ? 00 00 00 40 88 2D ? ? ? ? 88 05"); // 2016.09.30.12.04, 2015.03.21.08.17, 2014.05.23.12.12
-					insn = Module(nullptr).range.scan(sig_inst).as<uint8_t*>();
-				}
-#if LOGGING
-				std::cout << "is_stripped_insn = " << (void*)insn << std::endl;
-#endif
-				if (insn)
-				{
-					memGuard::setAllowedAccess(insn, 8, memGuard::ACC_RWX);
-					// xor eax, eax
-					insn[0] = 0x31;
-					insn[1] = 0xc0;
-					insn[2] = 0x90;
-					insn[3] = 0x90;
-					insn[4] = 0x90;
-					insn[5] = 0x90;
-					insn[6] = 0x90;
-					insn[7] = 0x90;
-				}
-				else
-				{
-					log_optional_scan_failure(true);
-				}
+				auto init_cache_fetching = init_cache_fetching_callsite.add(5).rip().as<void*>();
+
+				init_cache_fetching_hook.detour = reinterpret_cast<void*>(&init_cache_fetching_detour);
+				init_cache_fetching_hook.target = init_cache_fetching;
+				init_cache_fetching_hook.create();
+				init_cache_fetching_hook.enable();
 			}
 			else
 			{
-				SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17, 2014.05.23.12.12
-				const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-				std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
-#endif
-				if (init_cache_fetching_callsite)
-				{
-					auto init_cache_fetching = init_cache_fetching_callsite.add(5).rip().as<void*>();
-
-					init_cache_fetching_hook.detour = reinterpret_cast<void*>(&init_cache_fetching_detour);
-					init_cache_fetching_hook.target = init_cache_fetching;
-					init_cache_fetching_hook.create();
-					init_cache_fetching_hook.enable();
-				}
-				else
-				{
-					log_optional_scan_failure(true);
-				}
+				log_optional_scan_failure(true);
 			}
 		}
 
