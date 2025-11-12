@@ -273,6 +273,9 @@ void owfScript::openLibs(lua_State* L)
 	lua_pushstring(L, g_bootstrapper_title);
 	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE"); // undocumented
 
+	pluto_pushstring(L, dll_path_utf8);
+	OWF_SET_GLOBAL(L, "OWF_CLIENT_DLL_PATH"); // undocumented
+
 	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port); // undocumented
 
 #if PRIVATE

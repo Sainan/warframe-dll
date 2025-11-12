@@ -2603,6 +2603,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
+			wchar_t lpFilename[MAX_PATH] = { 0 };
+			GetModuleFileNameW(hmod, lpFilename, MAX_PATH);
+			dll_path_utf8 = unicode::utf16_to_utf8<std::wstring>(lpFilename);
+#if LOGGING
+			std::cout << "dll_path_utf8 = " << dll_path_utf8 << std::endl;
+#endif
+		}
+
+		{
 			std::wstring path(_wgetenv(L"windir"));
 			path.append(LR"(\System32\dwmapi.dll)");
 			og_dwmapi = LoadLibraryW(path.c_str());
