@@ -47,6 +47,7 @@
 #include <ReplacementHook.hpp>
 #include <Server.hpp>
 #include <ServerWebService.hpp>
+#include <sha256.hpp>
 #include <Socket.hpp>
 #include <string.hpp>
 #include <structing.hpp>
@@ -695,23 +696,45 @@ static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 
 
 static ReplacementHook Curl_ossl_verifyhost_hook;
-static bool tampered_exe = false;
+static volatile const uint8_t expected_dll_sha256[0x20] = { 0x6D, 0xF7, 0xA9, 0x52, 0x20, 0x76, 0x2E, 0x5F, 0xF9, 0x75, 0x01, 0xAA, 0x67, 0x37, 0x7F, 0xCA, 0x3C, 0x1B, 0x2C, 0xA0, 0x24, 0x73, 0xFB, 0xEA, 0xF4, 0xBD, 0xEF, 0x8B, 0x43, 0xDF, 0x1E, 0xAE };
 
-static bool Curl_ossl_verifyhost_detour(void* a1, void* a2)
+static int verify_dll_integrity()
+{
+#if PRIVATE
+	return 0;
+#else
+	auto dll = string::fromFile(dll_path_utf8);
+	string::replaceAll(dll, std::string((const char*)expected_dll_sha256, sizeof(expected_dll_sha256)), {});
+	uint8_t actual_dll_sha256[0x20];
+	{
+		soup::sha256::State st;
+		st.append(dll.data(), dll.size());
+		st.finalise();
+		st.getDigest(actual_dll_sha256);
+	}
+	//std::cout << "expected_dll_sha256 = " << string::bin2hex((const char*)expected_dll_sha256, sizeof(expected_dll_sha256)) << std::endl;
+	//std::cout << "actual_dll_sha256 = " << string::bin2hex((const char*)actual_dll_sha256, sizeof(actual_dll_sha256)) << std::endl;
+	return memcmp(actual_dll_sha256, (const void*)expected_dll_sha256, 0x20);
+#endif
+}
+
+static int Curl_ossl_verifyhost_detour(void* a1, void* a2)
 {
 	//std::cout << "Curl_ossl_verifyhost_detour called" << std::endl;
 	/*auto ret = reinterpret_cast<decltype(&Curl_ossl_verifyhost_detour)>(Curl_ossl_verifyhost_hook.original)(a1, a2);
 	std::cout << "Curl_ossl_verifyhost returned " << ret << std::endl;*/
-	return tampered_exe;
+	static auto res = verify_dll_integrity();
+	return res; // we want 0 here
 }
 
 
 static DetourHook verify_worldstate_integrity_hook;
+static bool exe_signed = true;
 
 static bool verify_worldstate_integrity_detour(void* outStr, void* inStr)
 {
 	reinterpret_cast<decltype(&verify_worldstate_integrity_detour)>(verify_worldstate_integrity_hook.original)(outStr, inStr);
-	return true;
+	return exe_signed; // we want true here
 }
 
 
@@ -4832,7 +4855,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					ObfusString str_WinVerifyTrust("WinVerifyTrust");
 					auto hWintrust = LoadLibraryA(str_wintrust.c_str());
 					auto WinVerifyTrust_fp = reinterpret_cast<decltype(&WinVerifyTrust)>(GetProcAddress(hWintrust, str_WinVerifyTrust.c_str()));
-					tampered_exe = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) != ERROR_SUCCESS);
+					exe_signed = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) == ERROR_SUCCESS);
 					FreeLibrary(hWintrust);
 				}
 
