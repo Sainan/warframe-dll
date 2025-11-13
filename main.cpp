@@ -315,7 +315,9 @@ struct GameHttpRequest
 	char pad[0x28];
 	/* 0x38 */ GameString body;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(GameHttpRequest, body) == 0x38);
+#endif
 
 struct LegacyGameHttpRequest
 {
@@ -323,7 +325,9 @@ struct LegacyGameHttpRequest
 	char pad[0x20];
 	/* 0x40 */ LegacyGameString body;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(LegacyGameHttpRequest, body) == 0x40); // 2016.12.16.14.33
+#endif
 
 struct GameHttpRequestU18
 {
@@ -331,7 +335,9 @@ struct GameHttpRequestU18
 	char pad[0x30];
 	/* 0x48 */ LegacyGameStringU18 body;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
+#endif
 
 struct GameHttpRequestU8
 {
@@ -339,7 +345,9 @@ struct GameHttpRequestU8
 	char pad[0x18];
 	/* 0x30 */ LegacyGameStringU18 body;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(GameHttpRequestU8, body) == 0x30);
+#endif
 
 static bool can_use_server_host()
 {
@@ -587,6 +595,7 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 }
 
 
+#if SOUP_BITS == 64
 static DetourHook encstr_append_hook;
 static EncryptedString::AppendData* last_enc_str = nullptr;
 static std::string dec_buf;
@@ -635,6 +644,7 @@ static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 
 	dec_buf.clear();
 }
+#endif
 
 
 /*static DetourHook queue_http_request_internal_hook;
@@ -1720,7 +1730,7 @@ static void check_string_substitutions_detour(GameString* str, void* substitutio
 #endif
 
 
-#if METADATA_PATCHES
+#if METADATA_PATCHES && SOUP_BITS == 64
 struct MetadataPatch
 {
 	std::string prefix;
@@ -2110,11 +2120,13 @@ struct GameOodleNetworkState
 	/* 0x60 */ GameBuffer state;
 	/* 0x70 */ GameBuffer shared;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(GameOodleNetworkState, htbits) == 0x38);
 static_assert(offsetof(GameOodleNetworkState, compacted_state) == 0x40);
 static_assert(offsetof(GameOodleNetworkState, window) == 0x50);
 static_assert(offsetof(GameOodleNetworkState, state) == 0x60);
 static_assert(offsetof(GameOodleNetworkState, shared) == 0x70);
+#endif
 
 static DetourHook init_oodle_network_state_hook;
 
@@ -2195,7 +2207,9 @@ struct PacketData
 	PAD(0x00, 0x08) void* GameOodleNetworkState;
 	PAD(0x10, 0x18) GameBuffer uncompressed;
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(PacketData, uncompressed) == 0x18);
+#endif
 
 static DetourHook UncompressPacket_hook;
 
@@ -2448,7 +2462,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		return true;
 #endif
 
-#if METADATA_PATCHES
+#if METADATA_PATCHES && SOUP_BITS == 64
 	case joaat::compileTimeHash("reload_metadata_patches"):
 		if (object_type_serialise_propery_text_hook.target)
 		{
@@ -2611,19 +2625,25 @@ static soup::Pattern hash_to_pattern(uint32_t hash)
 	return Pattern(data, sizeof(data));
 }
 
+#if SOUP_BITS == 32
+#define EXE_NAME "Warframe.exe"
+#else
+#define EXE_NAME "Warframe.x64.exe"
+#endif
+
 BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
-		if (auto proc = soup::Process::current(); proc->name != "Warframe.x64.exe")
+		if (auto proc = soup::Process::current(); proc->name != EXE_NAME)
 		{
-			MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than Warframe.x64.exe.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than " EXE_NAME ".", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 
-		if (!std::filesystem::exists("Warframe.x64.exe"))
+		if (!std::filesystem::exists(EXE_NAME))
 		{
-			MessageBoxA(0, "Launched with incorrect working directory; it must be the folder where Warframe.x64.exe is.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+			MessageBoxA(0, "Launched with incorrect working directory; it must be the folder where " EXE_NAME " is.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 
@@ -2694,10 +2714,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		{
 			DWORD dwHandle;
-			DWORD version_info_size = og_GetFileVersionInfoSizeA("Warframe.x64.exe", &dwHandle);
+			DWORD version_info_size = og_GetFileVersionInfoSizeA(EXE_NAME, &dwHandle);
 
 			void* data = soup::malloc(version_info_size);
-			og_GetFileVersionInfoA("Warframe.x64.exe", 0, version_info_size, data);
+			og_GetFileVersionInfoA(EXE_NAME, 0, version_info_size, data);
 
 			/*struct LANGANDCODEPAGE {
 				WORD wLanguage;
@@ -2993,6 +3013,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}*/
 
+#if SOUP_BITS == 64
 		// Disable request encryption for 38.5.0 and above
 		if (game_version >= GV(38, 5, 0))
 		{
@@ -3065,6 +3086,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 			}
 		}
+#endif
 
 		// 38.5.0
 		/*{
@@ -4344,7 +4366,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-#if METADATA_PATCHES
+#if METADATA_PATCHES && SOUP_BITS == 64
 		{
 			SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
 			auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
@@ -4743,7 +4765,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-#if METADATA_PATCHES
+#if METADATA_PATCHES && SOUP_BITS == 64
 		if (object_type_serialise_propery_text_hook.target)
 		{
 			load_metadata_patches();
@@ -4762,6 +4784,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			Thread thrd([](Capture&&)
 			{
+#if SOUP_BITS == 64
 				// Make sure the EXE version we read earlier is actually to be trusted.
 				// Can't do this in DllMain, so doing it here/now.
 				if (game_version >= GV(35, 5, 0)
@@ -4793,6 +4816,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					exe_signed = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) == ERROR_SUCCESS);
 					FreeLibrary(hWintrust);
 				}
+#endif
 
 				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 				{
@@ -5186,7 +5210,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-#if METADATA_PATCHES
+#if METADATA_PATCHES && SOUP_BITS == 64
 					case soup::joaat::compileTimeHash("/get_effective_metadata"):
 						{
 							std::lock_guard lock(metadata_patches_mtx);

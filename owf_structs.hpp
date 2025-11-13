@@ -72,7 +72,9 @@ union GameString
 		shrt.inv_len = sizeof(shrt.data);
 	}*/
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(GameString) == 0x10);
+#endif
 
 union LegacyGameString
 {
@@ -271,7 +273,9 @@ struct BaseAvatar : public Entity
 		PAD(0x8F0, 0x8F8) LotusInventoryController*(*getInventoryController)(BaseAvatar*);
 		PAD(0x900, 0xC40) void(*Suicide)(BaseAvatar*);
 	};
+	#if SOUP_BITS == 64
 	static_assert(sizeof(Vftable) == 0xC40 + 8);
+	#endif
 
 	Object* getDamageController() { return reinterpret_cast<Vftable*>(vftable)->getDamageController(this); }
 	LotusInventoryController* getInventoryController() { return reinterpret_cast<Vftable*>(vftable)->getInventoryController(this); }
@@ -317,7 +321,9 @@ struct Player : public Object
 
 	[[nodiscard]] Avatar* getAvatar() const noexcept { return *avatar; }
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(Player, controlling_camera) == 0x158);
+#endif
 
 struct Camera : public Entity
 {
@@ -345,7 +351,9 @@ struct RegionMgr : public Object
 	PAD(0x210, 0x218) LotusGameRules** game_rules;
 	PAD(0x220, 0x2C8) Camera** game_camera;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(RegionMgr) == 0x2C8 + 8);
+#endif
 
 struct StringPoolBucket
 {
@@ -372,7 +380,9 @@ struct TextureLayer
 	/* 0x0C */ uint32_t rowPitch;
 	PAD(0x10, 0x18);
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(TextureLayer) == 0x18);
+#endif
 
 struct Texture : public Object
 {
@@ -394,7 +404,9 @@ struct DxTexture
 	/* 0x98 */ uint32_t total_size_bytes;
 	PAD(0x9C, 0xA8) TextureLayer* layers;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(DxTexture) == 0xB0);
+#endif
 
 struct CacheReader
 {
@@ -412,10 +424,13 @@ struct GameBuffer
 	unsigned int size;
 	unsigned int capacity;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(GameBuffer) == 0x10);
+#endif
 
 
 // Added in 38.5.0
+#if SOUP_BITS == 64
 struct EncryptedString
 {
 	struct AppendData
@@ -428,6 +443,7 @@ struct EncryptedString
 	PAD(0x08, 0x58) GameString out_buf;
 };
 static_assert(offsetof(EncryptedString, out_buf) == 0x58);
+#endif
 
 
 inline Object* regionmgr = nullptr;
