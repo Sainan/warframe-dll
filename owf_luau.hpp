@@ -56,7 +56,9 @@ struct luau_TValue
 		return ***(Object****)(value.as_uintptr + 0x18);
 	}
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(luau_TValue) == 0x10);
+#endif
 
 // 38.0.x
 struct luau_GlobalState_38_0_x
@@ -66,7 +68,9 @@ struct luau_GlobalState_38_0_x
 	PAD(0xC18, 0xC50) void(*panic_func)(luau_State* L, int status);
 	PAD(0xC58, 0x1168);
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(luau_GlobalState_38_0_x) == 0x1168);
+#endif
 
 // 38.5.0
 struct luau_GlobalState_38_5_0
@@ -121,7 +125,9 @@ struct luau_State
 		return idx < 0 ? &outtop[idx] : &intop[idx - 1];
 	}
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(luau_State) == 0x90);
+#endif
 
 struct luau_Closure
 {
@@ -148,8 +154,10 @@ struct luau_Closure
 		} l;
 	};
 };
+#if SOUP_BITS == 64
 static_assert(offsetof(luau_Closure, isC) == 0x03);
 static_assert(offsetof(luau_Closure, c.func) == 0x18);
+#endif
 
 struct luau_UpVal
 {
@@ -246,7 +254,9 @@ struct SwigMethod
 	uint32_t hash;
 	luau_CFunction func;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(SwigMethod) == 0x10);
+#endif
 
 struct SwigAttribute
 {
@@ -254,7 +264,9 @@ struct SwigAttribute
 	luau_CFunction getter;
 	luau_CFunction setter;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(SwigAttribute) == 0x18);
+#endif
 
 struct SwigTypeDesc
 {
@@ -304,7 +316,9 @@ struct SwigTypeDesc
 		return nullptr;
 	}
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(SwigTypeDesc) == 0x40);
+#endif
 
 struct SwigTypeField
 {
@@ -312,7 +326,9 @@ struct SwigTypeField
 	/* 0x08 */ const char* type_name; // e.g. "LotusHudStatusTypes::FlashMarker *"
 	PAD(0x10, 0x18) SwigTypeDesc* type_desc;
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(SwigTypeField) == 0x20);
+#endif
 
 inline std::unordered_map<uint32_t, SwigTypeDesc*> swig_types;
 #if PRIVATE
@@ -325,7 +341,9 @@ struct SwigEnum
 	/* 0x10 */ int32_t value;
 	PAD(0x14, 0x38);
 };
+#if SOUP_BITS == 64
 static_assert(sizeof(SwigEnum) == 0x38);
+#endif
 
 inline std::vector<SwigEnum*> swig_enums1;
 
