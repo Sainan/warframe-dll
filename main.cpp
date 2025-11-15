@@ -4815,10 +4815,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					{
 						req.path.erase(0, 16);
 					}
-					if (req.path.size() > 1
-						&& (req.path[1] == '0'
-							|| req.path[1] == '7'
-							|| req.path[1] == '8'
+					if (req.path.size() > 2
+						&& ((req.path[1] == '0' && req.path[2] == '/')
+							|| (req.path[1] == '0' && req.path[2] == '_')
+							|| (req.path[1] == '7' && req.path[2] == '/') // Dx11 (pre-U40)
+							|| (req.path[1] == '8' && req.path[2] == '/') // Dx12 (pre-U40)
+							|| (req.path[1] == '9' && req.path[2] == '/') // Dx11 (post-U40)
+							|| (req.path[1] == 'A' && req.path[2] == '/') // Dx12 (post-U40)
 							)
 						)
 					{
