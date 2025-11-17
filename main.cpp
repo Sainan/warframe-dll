@@ -219,7 +219,7 @@ static void save_config()
 }
 
 
-static std::string get_core_string_utf8(std::string key)
+static std::string get_core_string(std::string key)
 {
 	if (auto e = g_core_dict.find(key); e != g_core_dict.end())
 	{
@@ -232,11 +232,6 @@ static std::string get_core_string_utf8(std::string key)
 	}
 #endif
 	return key;
-}
-
-static std::wstring get_core_string(std::string key)
-{
-	return soup::unicode::utf8_to_utf16(get_core_string_utf8(key));
 }
 
 
@@ -805,7 +800,7 @@ struct owfTunablesTask : public soup::Task
 			if (!ok)
 			{
 				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
-				auto msg = get_core_string_utf8(ObfusString("tunafail").str());
+				auto msg = get_core_string(ObfusString("tunafail").str());
 				soup::string::replaceAll(msg, ObfusString("|HOST|").str(), hrt.hr.getHost());
 				fire_and_forget_messagebox(std::move(msg), MB_OK | MB_ICONWARNING);
 			}
@@ -865,13 +860,13 @@ static void on_got_server_host()
 #endif
 
 	{
-		auto msg = get_core_string_utf8(ObfusString("gotsh").str());
+		auto msg = get_core_string(ObfusString("gotsh").str());
 		soup::string::replaceAll(msg, ObfusString("|HOST|").str(), server_host);
-		std::wcout << soup::unicode::utf8_to_utf16(msg) << std::endl;
+		std::cout << msg << std::endl;
 	}
 	if (autologin && !did_auto_login)
 	{
-		std::wcout << get_core_string(ObfusString("alpend")) << std::endl;
+		std::cout << get_core_string(ObfusString("alpend")) << std::endl;
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
@@ -2197,15 +2192,15 @@ static void log_optional_scan_failure(bool important)
 {
 	if (important)
 	{
-		std::wcout << get_core_string(ObfusString("sigfailimp").str()) << std::endl;
+		std::cout << get_core_string(ObfusString("sigfailimp").str()) << std::endl;
 	}
 	else
 	{
-		std::wcout << get_core_string(ObfusString("sigfailopt").str()) << std::endl;
+		std::cout << get_core_string(ObfusString("sigfailopt").str()) << std::endl;
 	}
 }
 
-static void report_critical_failure(std::wstring msg)
+static void report_critical_failure(std::string msg)
 {
 	int ndlls = 0;
 	if (std::filesystem::is_regular_file(ObfusString("wtsapi32.dll").str())) ++ndlls;
@@ -2217,8 +2212,9 @@ static void report_critical_failure(std::wstring msg)
 		msg.append(get_core_string(ObfusString("appmdll").str()));
 	}
 
-	auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
-	MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
+	const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
+	const auto title_utf16 = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
+	MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 }
 
 static Server serv;
@@ -3066,14 +3062,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 //#if !PRIVATE
 		if (game_version == GV(65, 53, 5))
 		{
-			auto msg = get_core_string(ObfusString("toonew").str());
+			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 //#endif
 
-		std::wcout << get_core_string(ObfusString("freenote").str()) << std::endl;
+		std::cout << get_core_string(ObfusString("freenote").str()) << std::endl;
 
 		owfScript::init();
 
@@ -3662,7 +3658,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
 			}
 		}
 
@@ -3698,7 +3694,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
 			}
 		}
 #endif
@@ -3738,7 +3734,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
 			}
 		}
 
@@ -3802,7 +3798,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
 			}
 		}
 
@@ -3822,7 +3818,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailnrs").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailnrs").str()) << std::endl;
 			}
 		}
 
@@ -4144,7 +4140,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
 			}
 		}
 
@@ -4171,7 +4167,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
 			}
 		}
 
@@ -4190,7 +4186,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
 			}
 		}
 
@@ -4409,7 +4405,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
 			}
 		}
 #endif
@@ -4462,7 +4458,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
 			}
 		}
 #endif
@@ -4608,7 +4604,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				std::wcout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
+				std::cout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
 			}
 		}
 
