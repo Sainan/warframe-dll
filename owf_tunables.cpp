@@ -77,6 +77,10 @@ bool owfClientTunables::load(const char* data, size_t size)
 			{
 				ints.emplace(joaat::hash(e.first->reinterpretAsStr().value), e.second->reinterpretAsInt().value);
 			}
+			else if (e.second->isStr())
+			{
+				strings.emplace(joaat::hash(e.first->reinterpretAsStr().value), e.second->reinterpretAsStr().value);
+			}
 			else if (e.second->isArr())
 			{
 				std::vector<uint32_t> arr;
@@ -120,6 +124,10 @@ bool owfClientTunables::loadMsgpack(const char* data, size_t size)
 			{
 				ints.emplace(e.first->reinterpretAsInt().value, e.second->reinterpretAsInt().value);
 			}
+			else if (e.second->isStr())
+			{
+				strings.emplace(e.first->reinterpretAsInt().value, e.second->reinterpretAsStr().value);
+			}
 			else if (e.second->isArr())
 			{
 				std::vector<uint32_t> arr;
@@ -137,13 +145,13 @@ bool owfClientTunables::loadMsgpack(const char* data, size_t size)
 	return true;
 }
 
-uint32_t owfClientTunables::getInt(uint32_t hash) const noexcept
+uint32_t owfClientTunables::getInt(uint32_t hash, uint32_t fallback) const noexcept
 {
 	if (auto e = ints.find(hash); e != ints.end())
 	{
 		return e->second;
 	}
-	return 0;
+	return fallback;
 }
 
 bool owfClientTunables::isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept

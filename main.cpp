@@ -77,6 +77,7 @@ using namespace soup;
 #include "owf_hotkeys.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
+#include "owf_nrsauth.hpp"
 #include "owf_overlay.hpp"
 #include "owf_repo.hpp"
 #include "owf_scripting.hpp"
@@ -376,6 +377,13 @@ static bool can_use_server_host()
 	return true;
 }
 
+static void on_logged_out()
+{
+	auth_query.clear();
+	owfOverlay::setPrelogin(true);
+	owfNrsAuth::clear();
+}
+
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login, bool strip_tls)
 {
 #if REDIRECT_REQUESTS
@@ -488,8 +496,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	}
 	else if (uri.path == ObfusString("/api/logout.php").str())
 	{
-		owfOverlay::setPrelogin(true);
-		auth_query.clear();
+		on_logged_out();
 	}
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
 	if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
@@ -532,12 +539,28 @@ static void process_login_response(const char* data, size_t size)
 	{
 		const auto pjId = jr->reinterpretAsObj().find(ObfusString("id").str());
 		const auto pjNonce = jr->reinterpretAsObj().find(ObfusString("Nonce").str());
+		const auto pjNRS = jr->reinterpretAsObj().find(ObfusString("NRS").str());
 		if (pjId && pjNonce && pjId->isStr() && pjNonce->isInt())
 		{
 			auth_query = ObfusString("accountId=").str() + pjId->reinterpretAsStr().value + ObfusString("&nonce=").str() + std::to_string(pjNonce->reinterpretAsInt().value);
 #if LOGGING
 			std::cout << "Constructed auth_query from login response: " << auth_query << std::endl;
 #endif
+			if (pjNRS && pjNRS->isArr() && pjNRS->reinterpretAsArr().size() == 1 && pjNRS->reinterpretAsArr().at(0).isStr())
+			{
+				std::string nrs_address = pjNRS->reinterpretAsArr().at(0).asStr();
+				bool use_nrsauth;
+				{
+					std::lock_guard lock(g_client_tunables_mtx);
+					use_nrsauth = g_client_tunables.isStringInArray(joaat::compileTimeHash("nrsauth_ips"), joaat::hash(nrs_address));
+				}
+				if (use_nrsauth)
+				{
+					owfNrsAuth::accountId = pjId->reinterpretAsStr().value;
+					owfNrsAuth::address = nrs_address;
+					owfNrsAuth::transmit();
+				}
+			}
 		}
 	}
 }
@@ -903,9 +926,7 @@ static void do_logout()
 		HttpRequest hr(server_host + ":" + std::to_string(https_port), ObfusString("/api/logout.php?").str() + auth_query);
 		hr.use_tls = true;
 		SOUP_UNUSED(hr.execute(&Socket::certchain_validator_none));
-		auth_query.clear();
-
-		owfOverlay::setPrelogin(true);
+		on_logged_out();
 	}
 }
 
@@ -5351,6 +5372,29 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						std::cout << ObfusString(" The game will fail to start.").str();
 					}
 					std::cout << std::endl;
+				}
+			});
+			thrd.detach();
+		}
+
+		{
+			Thread thrd([](Capture&&)
+			{
+				while (true)
+				{
+					if (owfNrsAuth::shouldTransmit())
+					{
+						const auto next_transmission_time = owfNrsAuth::getNextTransmissionTime();
+						if (next_transmission_time > time::unixSeconds())
+						{
+							Sleep((next_transmission_time - time::unixSeconds()) * 1000);
+						}
+						owfNrsAuth::transmit();
+					}
+					else
+					{
+						Sleep(1000);
+					}
 				}
 			});
 			thrd.detach();

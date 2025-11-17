@@ -35,4 +35,9 @@
 		"mail.mahao.ltd",
 	],*/
 	//"silent_tunables_error": 1,
+
+	"nrsauth_ips": ["192.236.155.95"],
+	"nrsauth_port": 4949,
+	"nrsauth_interval": 30,
+	"nrsauth_aeskey": "6jcK1Ss3CQ1bDqFY",
 }

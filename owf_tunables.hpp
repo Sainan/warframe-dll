@@ -25,12 +25,13 @@ struct owfServerTunables
 struct owfClientTunables
 {
 	std::unordered_map<uint32_t, uint32_t> ints;
+	std::unordered_map<uint32_t, std::string> strings;
 	std::unordered_map<uint32_t, std::vector<uint32_t>> strarrs;
 
 	bool load(const char* data, size_t size);
 	bool loadMsgpack(const char* data, size_t size);
 
-	uint32_t getInt(uint32_t hash) const noexcept;
+	uint32_t getInt(uint32_t hash, uint32_t fallback = 0) const noexcept;
 	bool isStringInArray(uint32_t hash, uint32_t str_hash) const noexcept;
 };
 
