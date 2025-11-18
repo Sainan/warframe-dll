@@ -534,7 +534,12 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
 	if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 	{
-		if (auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str()); it != jr->reinterpretAsObj().end() && it->second->isStr())
+		auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str());
+		if (it == jr->reinterpretAsObj().end())
+		{
+			it = jr->reinterpretAsObj().findIt(ObfusString("processes").str());
+		}
+		if (it != jr->reinterpretAsObj().end() && it->second->isStr())
 		{
 			ObfusString msg("W0RFXVN0ZXZlIGxpa2VzIGJpZyBidXR0cw");
 			if (auto sep = it->second->reinterpretAsStr().value.find(';'); sep != std::string::npos)
