@@ -728,7 +728,7 @@ static int Curl_ossl_verifyhost_detour(void* a1, void* a2)
 }
 
 
-static DetourHook verify_worldstate_integrity_hook;
+static CompactDetourHook verify_worldstate_integrity_hook;
 static bool exe_signed = true;
 
 static bool verify_worldstate_integrity_detour(void* outStr, void* inStr)
@@ -3536,6 +3536,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			verify_worldstate_integrity_hook.detour = reinterpret_cast<void*>(&verify_worldstate_integrity_detour);
 			verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
+			verify_worldstate_integrity_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+			std::cout << "verify_worldstate_integrity_hook.code_cave = " << verify_worldstate_integrity_hook.code_cave<< std::endl;
+#endif
 			verify_worldstate_integrity_hook.create();
 			verify_worldstate_integrity_hook.enable();
 		}
