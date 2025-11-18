@@ -40,6 +40,7 @@
 #include <Module.hpp>
 #include <Mutex.hpp>
 #include <ObfusString.hpp>
+#include <os.hpp>
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
@@ -4840,7 +4841,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				// Make sure the EXE version we read earlier is actually to be trusted.
 				// Can't do this in DllMain, so doing it here/now.
-				if (game_version >= GV(35, 5, 0))
+				if (game_version >= GV(35, 5, 0)
+					&& !os::isWine() // Crashes :(
+					)
 				{
 					ObfusString Warframe_x64_exe("Warframe.x64.exe");
 					auto wstr_Warframe_x64_exe = unicode::utf8_to_utf16(Warframe_x64_exe.str());
