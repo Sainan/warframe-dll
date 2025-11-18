@@ -111,6 +111,7 @@
 		<li><code>write_patched_metadata_reads_to_console</code> — If true, writes patched metadata reads to the console. May degrade performance.</li>
 		<li><code>write_patched_metadata_reads_to_ee_log</code> — If true, writes patched metadata reads to EE.log. May degrade performance.</li>
 		<li><code>client_http_port</code> — Defines the port of the Bootstrapper's web interface (documented below). Should be kept 6155 unless you have a really good reason for being a snowflake.</li>
+		<li><code>disable_overlay</code> — Can be used to disable the overlay, e.g. used to show "OpenWF @ &lt;server&gt;" before login. Should be kept false on Windows, but Linux users may wish to disable it due to poor emulation under Wine.</li>
 	</ul>
 	<h2>HTTP Interface</h2>
 	<p>While the game is running, you can visit <a href="http://localhost:6155/" target="_blank">http://localhost:6155/</a> to modify some of the above options, access additional features like teleportation, and use scripts.</p>

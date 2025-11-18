@@ -41,6 +41,7 @@ inline bool write_all_metadata_reads_to_ee_log;
 inline bool write_patched_metadata_reads_to_console;
 inline bool write_patched_metadata_reads_to_ee_log;
 inline uint16_t client_http_port;
+inline bool disable_overlay;
 
 
 // Effective arguments (not in Client Config.json)

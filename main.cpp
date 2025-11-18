@@ -219,6 +219,7 @@ static void save_config()
 	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
 	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
 	config.add(ObfusString("client_http_port"), client_http_port);
+	config.add(ObfusString("disable_overlay"), disable_overlay);
 
 	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
 }
@@ -1312,7 +1313,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #if LOGGING
 		std::cout << " = " << regionmgr;
 #endif
-		if (!owfOverlay::isInited())
+		if (!owfOverlay::isInited() && !disable_overlay)
 		{
 			owfOverlay::init();
 		}
@@ -3048,6 +3049,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				client_http_port = 6155;
+			}
+
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_overlay")); it != config->reinterpretAsObj().end() && it->second->isBool())
+			{
+				disable_overlay = it->second->reinterpretAsBool().value;
+			}
+			else
+			{
+				disable_overlay = false;
 			}
 		}
 		save_config();
