@@ -1008,23 +1008,13 @@ static std::string process_args_str(const char* str)
 			arguments_to_inject.append(fallback_graphicsDriver);
 			arguments_to_inject.push_back(' ');
 		}
-		if (!got_windowMode)
+		if (!got_windowMode && fallback_windowMode >= 0)
 		{
-			if (game_version >= GV(40, 0, 0))
+			const int max = (game_version >= GV(40, 0, 0)) ? 2 : 1;
+			if (fallback_windowMode <= max)
 			{
-				// U40 uses this to override video settings, so only provide the argument if the user configured it.
-				if (fallback_windowMode >= 0 && fallback_windowMode <= 2)
-				{
-					arguments_to_inject.append(ObfusString("-windowMode:").str());
-					arguments_to_inject.append(std::to_string(fallback_windowMode));
-					arguments_to_inject.push_back(' ');
-				}
-			}
-			else
-			{
-				// For older versions, always provide this argument to opt out of fullscreen for really old versions that default to it.
-				arguments_to_inject.append(ObfusString("-fullscreen:").str());
-				arguments_to_inject.push_back(fallback_windowMode == 1 ? '1' : '0');
+				arguments_to_inject.append(game_version >= GV(40, 0, 0) ? ObfusString("-windowMode:").str() : ObfusString("-fullscreen:").str());
+				arguments_to_inject.append(std::to_string(fallback_windowMode));
 				arguments_to_inject.push_back(' ');
 			}
 		}
