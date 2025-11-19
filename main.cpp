@@ -4612,8 +4612,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 		{
-			SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
-			auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
+			// "IRC out: "
+			void* irc_send_raw;
+			if (game_version >= GV(40, 0, 0))
+			{
+				SIG_INST("40 55 57 41 56 41 57 48 8D 6C 24 C1 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 17 80 79 69 00");
+				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
+			else
+			{
+				SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
+				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
+			}
 #if LOGGING
 			std::cout << "irc_send_raw = " << irc_send_raw << std::endl;
 #endif
