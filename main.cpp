@@ -4612,25 +4612,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 #endif
 
-		if (game_version >= GV(9, 0, 0)) // Pattern works in U8 but truncates the USER message for it because it sends the nonce directly
+		if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/irc_send_raw.json"), game_version); !sig_inst.bytes.empty())
 		{
-			// "IRC out: "
-			void* irc_send_raw;
-			if (game_version >= GV(40, 0, 0))
-			{
-				SIG_INST("40 55 57 41 56 41 57 48 8D 6C 24 C1 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 17 80 79 69 00");
-				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(19, 0, 0))
-			{
-				SIG_INST("40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05");
-				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else
-			{
-				SIG_INST("4C 8B DC 55 56 41 54 49 8D 6B ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 80 79 ? 00 48 8B F2"); // 2013.05.23.16.06
-				irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
+			auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "irc_send_raw = " << irc_send_raw << std::endl;
 #endif
