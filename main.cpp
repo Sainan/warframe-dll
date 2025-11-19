@@ -3702,7 +3702,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Needed for versions prior to echoes of duviri. Doesn't seem to cause any issues.
 		if (game_version < GV(33, 6, 0))
 		{
-			SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01 75"); // 2013.05.23.16.06, 2013.06.07.23.44, 2013.07.04.20.17, 2014.05.23.12.12, 2017.03.06.15.49, 2021.04.13.19.58, 2023.04.25.23.40
+			SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01"); // 2013.05.23.16.06, 2014.10.24.08.24, 2017.03.06.15.49, 2023.04.25.23.40
 			const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 			std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
