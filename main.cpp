@@ -2841,13 +2841,20 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				fallback_graphicsDriver = ObfusString("dx11").str();
 			}
 
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_windowMode")); it != config->reinterpretAsObj().end() && it->second->isInt())
+			if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_windowMode")); it != config->reinterpretAsObj().end())
 			{
-				fallback_windowMode = it->second->reinterpretAsInt().value;
+				if (it->second->isInt())
+				{
+					fallback_windowMode = it->second->reinterpretAsInt().value;
+				}
+				else
+				{
+					fallback_windowMode = -1;
+				}
 			}
 			else
 			{
-				fallback_windowMode = -1;
+				fallback_windowMode = 0;
 			}
 
 #if !CONFIG_LOADED_ONLY_ONCE
