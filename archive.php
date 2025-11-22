@@ -24,7 +24,7 @@ $bin_str = wrap_archive(file_get_contents("archive_all.tmp"));
 unlink("archive_all.tmp");
 
 file_put_contents("owf_archive_data.inc", "static const char compressed_archive_data[] = { '\\x".join("', '\\x", array_map("dechex", array_map("ord", str_split($bin_str))))."' };");
-touch("owf_repo.cpp");
+touch("owf_archive_data.cpp");
 
 if (file_exists("archive_changed.tmp"))
 {

@@ -9,8 +9,6 @@
 #include <Pattern.hpp>
 #include <string.hpp>
 
-#include "owf_archive_data.inc"
-
 using namespace soup;
 
 void owfRepo::loadArchive(const char* data, size_t size)
@@ -42,11 +40,6 @@ void owfRepo::loadArchive(const char* data, size_t size)
 		}
 		r.skip(len);
 	}
-}
-
-void owfRepo::loadBuiltinArchive()
-{
-	return loadArchive(compressed_archive_data, sizeof(compressed_archive_data));
 }
 
 bool owfRepo::readHotfixHeader(const char* data, size_t size, uint32_t version_hash, uint64_t& timestamp)
