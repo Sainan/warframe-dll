@@ -213,7 +213,6 @@ static void save_config()
 		config.add(ObfusString("auto_start_scripts"), std::move(arr));
 	}
 	config.add(ObfusString("alternative_loading"), alternative_loading);
-	config.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 	config.add(ObfusString("save_all_metadata"), save_all_metadata);
 	config.add(ObfusString("write_all_metadata_reads_to_console"), write_all_metadata_reads_to_console);
 	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
@@ -1696,45 +1695,10 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 
 
 #if LABEL_REPLACEMENTS
-static void load_label_replacements()
-{
-	const auto path = ObfusString("OpenWF/Label Replacements.cat.txt").str();
-
-	if (!std::filesystem::exists(path))
-	{
-		string::toFile(path, ObfusString("/Menu/ProjectName: Warframe [OpenWF]").str());
-	}
-
-	std::lock_guard lock(label_replacements_mtx);
-	label_replacements.clear();
-	FileReader fr(path);
-	if (auto root = soup::cat::parse(fr))
-	{
-		for (const auto& e : root->children)
-		{
-			const auto hash = lower_hash(e->name.data(), e->name.size());
-			const auto ps = fossilise_string(e->value.data(), e->value.size());
-			label_replacements.emplace(hash, ps);
-		}
-	}
-}
-
 static CompactDetourHook check_string_substitutions_hook;
 static void check_string_substitutions_detour(GameString* str, void* substitutions, GameString* loctag, bool dont_log)
 {
-	if (dont_resolve_labels)
-	{
-		std::swap(*str, *loctag);
-		return;
-	}
-	{
-		const auto hash = lower_hash(loctag->getData(), loctag->getSize());
-		std::lock_guard lock(label_replacements_mtx);
-		if (auto e = label_replacements.find(hash); e != label_replacements.end())
-		{
-			str->setUnownedData(e->second->data, e->second->size);
-		}
-	}
+	do_label_replacements(str, loctag);
 	return reinterpret_cast<decltype(&check_string_substitutions_detour)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
 }
 #endif
@@ -2430,7 +2394,6 @@ static void populate_full_status(JsonObject& obj)
 	obj.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
 	obj.add(ObfusString("alternative_loading"), alternative_loading);
 	obj.add(ObfusString("ee_log_in_console"), ee_log_in_console);
-	obj.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 
 	obj.add(ObfusString("fov_override"), fov_override);
 
@@ -2590,18 +2553,6 @@ bool owf_command(const std::string& in, JsonObject& out)
 		else
 		{
 			out.add(ObfusString("ee_log_in_console"), ee_log_in_console);
-		}
-		return true;
-
-	case soup::joaat::compileTimeHash("dont_resolve_labels"):
-		if (args.size() > 1)
-		{
-			dont_resolve_labels = (args[1].size() == 4);
-			owf_broadcast_value(ObfusString("dont_resolve_labels"), dont_resolve_labels);
-		}
-		else
-		{
-			out.add(ObfusString("dont_resolve_labels"), dont_resolve_labels);
 		}
 		return true;
 
@@ -3041,15 +2992,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			else
 			{
 				alternative_loading = false;
-			}
-
-			if (auto it = config->reinterpretAsObj().findIt(ObfusString("dont_resolve_labels")); it != config->reinterpretAsObj().end() && it->second->isBool())
-			{
-				dont_resolve_labels = it->second->reinterpretAsBool().value;
-			}
-			else
-			{
-				dont_resolve_labels = false;
 			}
 
 			if (auto it = config->reinterpretAsObj().findIt(ObfusString("save_all_metadata")); it != config->reinterpretAsObj().end() && it->second->isBool())

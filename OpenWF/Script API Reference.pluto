@@ -626,8 +626,6 @@ function owf_logout()
 function make_screenshot_bmp(x, y, width, height)
 
 function owf_reload_label_replacements()
-function owf_replace_label(tag, str)
-function owf_restore_label(tag)
 
 function owf_save_config()
 function get_high_damage_numbers_patch()
@@ -642,8 +640,6 @@ function get_alternative_loading()
 function set_alternative_loading(b)
 function get_ee_log_in_console()
 function set_ee_log_in_console(b)
-function get_dont_resolve_labels()
-function set_dont_resolve_labels(b)
 function get_fov_override()
 function set_fov_override(f)
 

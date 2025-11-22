@@ -16,6 +16,8 @@ using namespace soup;
 
 void load_hotkeys()
 {
+	// Due to the way load_hotkeys is called, g_repo_mtx does not need to be locked.
+	// Furthermore, g_repo_mtx cannot be locked during lua_pcall as it would make owf_repo_find fail because g_repo_mtx is not recursive.
 	auto L = luaL_newstate();
 	owfScript::openLibs(L);
 	size_t size;

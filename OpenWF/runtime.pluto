@@ -3388,8 +3388,6 @@ get_alternative_loading = || -> owf_command("alternative_loading").alternative_l
 set_alternative_loading = |b| -> do owf_command("alternative_loading?"..b) end
 get_ee_log_in_console = || -> owf_command("ee_log_in_console").ee_log_in_console
 set_ee_log_in_console = |b| -> do owf_command("ee_log_in_console?"..b) end
-get_dont_resolve_labels = || -> owf_command("dont_resolve_labels").dont_resolve_labels
-set_dont_resolve_labels = |b| -> do owf_command("dont_resolve_labels?"..b) end
 
 set_fov_override = |f| -> do owf_command("fov_override?"..(f * 10000)) end
 

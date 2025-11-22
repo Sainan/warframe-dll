@@ -9,7 +9,6 @@ local options = {
 	{ dict.simulacrum_whitelisted, get_simulacrum_whitelisted, set_simulacrum_whitelisted },
 	{ dict.alternative_loading, get_alternative_loading, set_alternative_loading },
 	{ dict.ee_log_in_console, get_ee_log_in_console, set_ee_log_in_console },
-	{ dict.dont_resolve_labels, get_dont_resolve_labels, set_dont_resolve_labels },
 	{ dict.fov_override, get_fov_override, |s| -> set_fov_override(tonumber(s) or 0) },
 }
 

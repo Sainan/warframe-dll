@@ -1,0 +1,3 @@
+if not io.exists("OpenWF/Label Replacements.pluto") then
+	io.contents("OpenWF/Label Replacements.pluto", owf_repo_find("OpenWF/Label Replacements.pluto"))
+end

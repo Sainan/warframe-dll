@@ -1,0 +1,16 @@
+$define DONT_RESOLVE_LABELS = false
+
+$if not DONT_RESOLVE_LABELS then
+	if not io.exists("OpenWF/Label Replacements.cat.txt") then
+		io.contents("OpenWF/Label Replacements.cat.txt", "/Menu/ProjectName: Warframe [OpenWF]")
+	end
+	replacements = require"cat".decode(io.contents("OpenWF/Label Replacements.cat.txt"), "flat")
+$end
+
+return function(key, _value)
+	$if DONT_RESOLVE_LABELS then
+		return key
+	$else
+		return replacements[key]
+	$end
+end
