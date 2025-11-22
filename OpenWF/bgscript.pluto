@@ -214,7 +214,6 @@ end
 local requested_versions = false
 local current_version = ""
 local version_is_latest = nil
-local current_hotfix = ""
 local hotfix_available = ""
 local hotfix_available_sha256 = ""
 local downloading_hotfix = false
@@ -223,7 +222,7 @@ local function get_version_broadcast()
 	return {
 		current = current_version,
 		latest = version_is_latest,
-		hotfix = current_hotfix,
+		hotfix = "hotfix "..OWF_CLIENT_HOTFIX,
 		hotfix_available = hotfix_available,
 	}
 end
@@ -259,9 +258,6 @@ local function check_for_updates()
 				hotfix_available_sha256 = dll.latest_hotfix_sha256
 				if dll.latest_hotfix_sha256 ~= hotfix_sha256 then
 					hotfix_available = dll.latest_hotfix
-				end
-				if hotfix := dll.hotfixes:find(|x| -> x.sha256 == hotfix_sha256) then
-					current_hotfix = hotfix.name
 				end
 			end
 		end
@@ -330,16 +326,14 @@ owf_register_command("request_bgscript_broadcasts", function()
 	return r
 end)
 owf_register_command("download_latest_hotfix", function()
-	if not downloading_hotfix then
+	if not downloading_hotfix and hotfix_available ~= "" then
 		downloading_hotfix = true
 		owf_create_thread(function()
 			if bin := http.request($"https://openwf.io/supplementals/client%20drop-in/{current_version}/{hotfix_available}/Hotfix.owf") then
 				if crypto.sha256(bin) == hotfix_available_sha256 then
 					io.contents("OpenWF/Hotfix.owf", bin)
 					http.request("http://localhost:"..OWF_CLIENT_HTTP_PORT.."/apply_hotfix")
-					current_hotfix = hotfix_available
 					hotfix_available = ""
-					hotfix_available_sha256 = ""
 					owf_broadcast_message[[{"reload":1}]]
 				else
 					print("Downloaded hotfix but checksum mismatches. Discarding it.")
