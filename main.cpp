@@ -2444,8 +2444,11 @@ bool owf_command(const std::string& in, JsonObject& out)
 #endif
 
 #if METADATA_PATCHES
-	case joaat::compileTimeHash("reload_metadata_patches"): // Unused and undocumented for now because most types are never gonna be reloaded by the game.
-		load_metadata_patches();
+	case joaat::compileTimeHash("reload_metadata_patches"):
+		if (object_type_serialise_propery_text_hook.target)
+		{
+			load_metadata_patches();
+		}
 		return true;
 #endif
 
@@ -4849,7 +4852,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 
 #if METADATA_PATCHES
-		load_metadata_patches();
+		if (object_type_serialise_propery_text_hook.target)
+		{
+			load_metadata_patches();
+		}
 #endif
 
 		if (!auto_start_scripts.empty())
