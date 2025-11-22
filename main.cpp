@@ -5271,12 +5271,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 						}
 						break;
 
-#if LABEL_REPLACEMENTS
-					case soup::joaat::compileTimeHash("/check_label_replacements"):
-						ServerWebService::sendText(s, {});
-						break;
-#endif
-
 					case soup::joaat::compileTimeHash("/memory"):
 						{
 							JsonObject obj;
