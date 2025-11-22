@@ -1,7 +1,7 @@
 -- Modifications to sample scripts will be lost the next time you start the game.
 local { CHECKBOX, INPUTBOX } = require "Lotus.Interface.LotusUtilities"
 
-local dict = get_lang_dict()
+local dict = get_webui_dict()
 local options = {
 	{ dict.high_damage_numbers_patch, get_high_damage_numbers_patch, set_high_damage_numbers_patch },
 	{ dict.skip_mission_start_timer, get_skip_mission_start_timer, set_skip_mission_start_timer },

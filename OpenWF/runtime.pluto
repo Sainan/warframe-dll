@@ -1,4 +1,4 @@
-local { http, json, scheduler, url, vector3 } = require "*"
+local { cat, http, json, scheduler, url, vector3 } = require "*"
 
 Vector = vector3
 Vector3 = vector3 -- compatibility
@@ -3168,6 +3168,22 @@ Lotus_Game.TINT_COLOR0 = Symbol("TintColor0")
 Lotus_Game.TINT_COLOR1 = Symbol("TintColor1")
 Lotus_Game.TINT_COLOR2 = Symbol("TintColor2")
 Lotus_Game.TINT_COLOR3 = Symbol("TintColor3")
+
+function get_core_dict(lang = get_lang_code())
+	local data = owf_repo_find("OpenWF/translations/core/"..lang..".cat.txt")
+	if not data then
+		data = owf_repo_find("OpenWF/translations/core/en.cat.txt")
+	end
+	return cat.decode(data, "flat")
+end
+
+function get_webui_dict(lang = get_lang_code())
+	local data = owf_repo_find("OpenWF/translations/webui/"..lang..".cat.txt")
+	if not data then
+		data = owf_repo_find("OpenWF/translations/webui/en.cat.txt")
+	end
+	return cat.decode(data, "flat")
+end
 
 -- Compatibility
 OWF_EVT_BLOCKED_CHAT_MESSAGE = OWF_EVT_SUBMIT_CHAT_MESSAGE
