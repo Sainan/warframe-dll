@@ -2436,7 +2436,10 @@ bool owf_command(const std::string& in, JsonObject& out)
 
 #if LABEL_REPLACEMENTS
 	case joaat::compileTimeHash("reload_label_replacements"):
-		load_label_replacements();
+		if (check_string_substitutions_hook.isCreated())
+		{
+			load_label_replacements();
+		}
 		return true;
 #endif
 
@@ -4839,7 +4842,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		load_hotkeys();
 
 #if LABEL_REPLACEMENTS
-		load_label_replacements();
+		if (check_string_substitutions_hook.isCreated())
+		{
+			load_label_replacements();
+		}
 #endif
 
 #if METADATA_PATCHES
