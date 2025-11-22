@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.11.15"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.12.0"
 
 #define REDIRECT_REQUESTS true
 #define SERVER_IPS_ONLY true
