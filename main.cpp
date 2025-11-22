@@ -546,7 +546,7 @@ static void process_login_response(const char* data, size_t size)
 #if LOGGING
 			std::cout << "Constructed auth_query from login response: " << auth_query << std::endl;
 #endif
-			if (pjNRS && pjNRS->isArr() && pjNRS->reinterpretAsArr().size() == 1 && pjNRS->reinterpretAsArr().at(0).isStr())
+			if (pjNRS && pjNRS->isArr() && pjNRS->reinterpretAsArr().size() == 1 && pjNRS->reinterpretAsArr().at(0).isStr() && !disable_nrs_connection)
 			{
 				std::string nrs_address = pjNRS->reinterpretAsArr().at(0).asStr();
 				bool use_nrsauth;
