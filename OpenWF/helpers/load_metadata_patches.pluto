@@ -110,12 +110,20 @@ function load_metadata_patches(str, filename)
 	end
 end
 
-if io.exists("OpenWF/Metadata Patches/") then
-	for io.listdir("OpenWF/Metadata Patches/") as path do
-		if path:sub(-4) == ".txt" then
-			if str := io.contents(path) then
-				load_metadata_patches(str, io.relative(path))
-			end
+if io.exists("OpenWF/Metadata Patches.txt") then
+	if not io.exists("OpenWF/Metadata Patches/Untitled.txt") then
+		io.mkdir("OpenWF/Metadata Patches")
+		io.rename("OpenWF/Metadata Patches.txt", "OpenWF/Metadata Patches/Untitled.txt")
+	end
+elseif not io.exists("OpenWF/Metadata Patches") then
+	io.mkdir("OpenWF/Metadata Patches")
+	io.contents("OpenWF/Metadata Patches/Untitled.txt", owf_repo_find("OpenWF/Metadata Patches.txt"))
+end
+
+for io.listdir("OpenWF/Metadata Patches/") as path do
+	if path:sub(-4) == ".txt" then
+		if str := io.contents(path) then
+			load_metadata_patches(str, io.relative(path))
 		end
 	end
 end

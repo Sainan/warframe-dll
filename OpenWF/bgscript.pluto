@@ -53,16 +53,6 @@ end
 local { crypto, http, json, socket } = require "*"
 load(owf_repo_find("OpenWF/lib/websocket.pluto"))()
 
-if io.exists("OpenWF/Metadata Patches.txt") then
-	if not io.exists("OpenWF/Metadata Patches/Untitled.txt") then
-		io.mkdir("OpenWF/Metadata Patches")
-		io.rename("OpenWF/Metadata Patches.txt", "OpenWF/Metadata Patches/Untitled.txt")
-	end
-elseif not io.exists("OpenWF/Metadata Patches") then
-	io.mkdir("OpenWF/Metadata Patches")
-	io.contents("OpenWF/Metadata Patches/Untitled.txt", owf_repo_find("OpenWF/Metadata Patches.txt"))
-end
-
 if owf_script_get_instance_id() == 0 -- Heuristic to avoid managing content again after applying hotfix
 	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
 then
