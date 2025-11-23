@@ -840,7 +840,11 @@ static void on_got_server_host()
 			|| g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
 			)
 		{
+	#if PRIVATE
+			std::cout << "This remote connection would not be allowed in a public build" << std::endl;
+	#else
 			server_host = ObfusString("127.0.0.1").str();
+	#endif
 		}
 	}
 #else
