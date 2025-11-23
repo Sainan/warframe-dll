@@ -3061,7 +3061,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 			else
 			{
-				disable_overlay = false;
+				disable_overlay = os::isWine();
 			}
 		}
 		save_config();
