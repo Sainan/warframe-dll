@@ -16,7 +16,7 @@ function wrap_archive($uncompressed)
 {
 	$bin_str = pack_u64_dyn_bp(time());
 	$bin_str .= pack_u64_dyn_bp(strlen($uncompressed));
-	$bin_str .= gzcompress($uncompressed, 9);
+	$bin_str .= gzdeflate($uncompressed, 9);
 	return $bin_str;
 }
 
