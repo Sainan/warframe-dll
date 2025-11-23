@@ -192,13 +192,13 @@ void load_config()
 		pause_always_stops_time = false;
 	}
 
-	if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_nrs_connection")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_firewall_prompt")); it != config->reinterpretAsObj().end() && it->second->isBool())
 	{
-		disable_nrs_connection = it->second->reinterpretAsBool().value;
+		disable_firewall_prompt = it->second->reinterpretAsBool().value;
 	}
 	else
 	{
-		disable_nrs_connection = true;
+		disable_firewall_prompt = true;
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -378,7 +378,7 @@ void save_config()
 	config.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 	config.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
-	config.add(ObfusString("disable_nrs_connection"), disable_nrs_connection);
+	config.add(ObfusString("disable_firewall_prompt"), disable_firewall_prompt);
 
 	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);

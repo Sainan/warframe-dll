@@ -25,7 +25,7 @@ inline bool high_damage_numbers_patch;
 inline bool simulacrum_blacklisted;
 inline bool simulacrum_whitelisted;
 inline bool pause_always_stops_time;
-inline bool disable_nrs_connection;
+inline bool disable_firewall_prompt;
 
 // Features
 inline bool ee_log_in_console;

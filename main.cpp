@@ -3456,23 +3456,22 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		if (disable_firewall_prompt)
 		{
-			auto nrs_jnz = Module(nullptr).range.scan(g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/nrs_jnz.json"), game_version));
+			SIG_INST("66 69 72 65 77 61 6C 6C 00"); // "firewall"
+			auto pStrFirewall = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-			std::cout << "nrs_jnz = " << nrs_jnz.as<void*>() << std::endl;
+			std::cout << "pStrFirewall = " << pStrFirewall.as<void*>() << std::endl;
 #endif
-			if (nrs_jnz)
+			if (pStrFirewall)
 			{
-				if (disable_nrs_connection)
-				{
-					memGuard::setAllowedAccess(nrs_jnz.as<void*>(), 2, memGuard::ACC_RWX);
-					nrs_jnz.as<uint8_t*>()[0] = 0x90;
-					nrs_jnz.as<uint8_t*>()[1] = 0xE9;
-				}
+				memGuard::setAllowedAccess(pStrFirewall.as<void*>(), 8, memGuard::ACC_RWX);
+				ObfusString str("nominal");
+				strcpy(pStrFirewall.as<char*>(), str.c_str());
 			}
 			else
 			{
-				std::cout << get_core_string(ObfusString("sigfailnrs").str()) << std::endl;
+				log_optional_scan_failure(false);
 			}
 		}
 
