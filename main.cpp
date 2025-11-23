@@ -26,11 +26,9 @@
 #include <mutex>
 
 #include <CallsiteHook.hpp>
-#include <cat.hpp>
 #include <CompactDetourHook.hpp>
 #include <DetachedScheduler.hpp>
 #include <DetourHook.hpp>
-#include <FileReader.hpp>
 #include <filesystem.hpp>
 #include <HttpRequest.hpp>
 #include <HttpRequestTask.hpp>
