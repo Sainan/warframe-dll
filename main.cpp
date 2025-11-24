@@ -739,22 +739,6 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
-struct FireAndForgetMessageBoxData
-{
-	std::string msg;
-	UINT type;
-};
-
-static void fire_and_forget_messagebox(std::string msg, UINT type)
-{
-	soup::Thread t([](Capture&& _cap)
-	{
-		auto& cap = _cap.get<FireAndForgetMessageBoxData>();
-		MessageBoxA(0, cap.msg.c_str(), BOOTSTRAPPER_TITLE, cap.type);
-	}, FireAndForgetMessageBoxData{ std::move(msg), type });
-	t.detach();
-}
-
 bool set_server_tunables(const char* data, size_t size)
 {
 	std::lock_guard lock(g_server_tunables_mtx);
@@ -806,16 +790,9 @@ struct owfTunablesTask : public soup::Task
 
 			if (!ok)
 			{
-				std::lock_guard lock(g_client_tunables_mtx);
-				ok = g_client_tunables.getInt(joaat::hash("silent_tunables_error"));
-			}
-
-			if (!ok)
-			{
-				// Would print this to console but there's no guarantee it's still open at this point or will stay open for long enough.
 				auto msg = get_core_string(ObfusString("tunafail").str());
 				soup::string::replaceAll(msg, ObfusString("|HOST|").str(), hrt.hr.getHost());
-				fire_and_forget_messagebox(std::move(msg), MB_OK | MB_ICONWARNING);
+				std::cout << std::move(msg) << std::endl;
 			}
 
 			owfOverlay::redraw();
