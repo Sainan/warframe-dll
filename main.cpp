@@ -568,6 +568,16 @@ static void* game_http_request_detour(void* a1, T* request, void* a3)
 
 	if (is_login)
 	{
+		for (size_t i = 0; i != request->body.getSize(); ++i)
+		{
+			if (request->body.getData()[i] == '\t')
+			{
+				set_server_tunables(request->body.getData() + (i + 1), request->body.getSize() - (i + 1));
+				request->body.getData()[i] = '\0';
+				request->body.shrink(i);
+				break;
+			}
+		}
 		process_login_response(request->body.getData(), request->body.getSize());
 	}
 
@@ -745,11 +755,16 @@ static void fire_and_forget_messagebox(std::string msg, UINT type)
 	t.detach();
 }
 
-void memoise_server_tunables()
+bool set_server_tunables(const char* data, size_t size)
 {
+	std::lock_guard lock(g_server_tunables_mtx);
+	bool ok = g_server_tunables.load(data, size);
+
 	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
 	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
 	prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
+
+	return ok;
 }
 
 #if ASK_SERVER_FOR_TUNABLES
@@ -785,14 +800,8 @@ struct owfTunablesTask : public soup::Task
 
 				if (hrt.result->status_code == 200)
 				{
-					std::lock_guard lock(g_server_tunables_mtx);
-					ok = g_server_tunables.load(hrt.result->body.data(), hrt.result->body.size());
+					ok = set_server_tunables(hrt.result->body.data(), hrt.result->body.size());
 				}
-			}
-
-			{
-				std::lock_guard lock(g_server_tunables_mtx);
-				memoise_server_tunables();
 			}
 
 			if (!ok)

@@ -42,6 +42,19 @@ union GameString
 		}
 	}
 
+	void shrink(size_t len)
+	{
+		if (isLong())
+		{
+			lng.metadata = 0xFF'FFFFFFF'0000000ull | (len & 0xFFFFFFF);
+		}
+		else
+		{
+			shrt.data[len] = 0;
+			shrt.inv_len = sizeof(shrt.data) - len;
+		}
+	}
+
 	/*void setShortData(const char* data, size_t len) noexcept
 	{
 		if (len > sizeof(shrt.data))
@@ -97,6 +110,19 @@ union LegacyGameString
 		}
 	}
 
+	void shrink(size_t len)
+	{
+		if (isLong())
+		{
+			lng.len = len;
+		}
+		else
+		{
+			shrt.data[len] = 0;
+			shrt.inv_len = sizeof(shrt.data) - len;
+		}
+	}
+
 	/*void setShortData(const char* data, size_t len) noexcept
 	{
 		if (len > sizeof(shrt.data))
@@ -131,6 +157,11 @@ struct LegacyGameStringU18
 		this->ptr = (char*)data;
 		this->len = len;
 		this->ownership = -1;
+	}
+
+	void shrink(size_t len)
+	{
+		this->len = len;
 	}
 
 	/*void setShortData(const char* data, size_t len) noexcept

@@ -138,6 +138,10 @@
 		<li>inventory.php & missionInventoryUpdate.php requests have the extra query parameter <code>xpBasedLevelCapDisabled</code> to indicate that the client has been patched to accept any PlayerLevel and doesn't need XPInfo to match.</li>
 		<li>The IRC <code>USER</code> message is adjusted to contain <code>nonce=...</code> in the 'realname' field.</li>
 	</ul>
+	<p>And the other way around:</p>
+	<ul>
+		<li>login.php responses can contain 2 JSON objects separated by a tab (<code>"\t"</code>) in which case the first one is the login response and the second one is tunables.</li>
+	</ul>
 	<h2>Label Replacements</h2>
 	<p>Label Replacements are loaded by instantiating the <code>OpenWF/Label Replacements.pluto</code> script. You can modify this script but by default it loads replacements from <code>OpenWF/Label Replacements.cat.txt</code>. As implied by the extension, it uses the <a href="https://github.com/calamity-inc/Soup/blob/senpai/docs/user/cat.md" target="_blank">CaT</a> format. Note that nested nodes are ignored.</p>
 	<h2>Metadata Patches</h2>

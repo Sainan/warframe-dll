@@ -1589,13 +1589,7 @@ owfScript::owfScript()
 	{
 		size_t size;
 		const char* data = luaL_checklstring(L, 1, &size);
-		bool ok;
-		{
-			std::lock_guard lock(g_server_tunables_mtx);
-			ok = g_server_tunables.load(data, size);
-			memoise_server_tunables();
-		}
-		lua_pushboolean(L, ok);
+		lua_pushboolean(L, set_server_tunables(data, size));
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "owf_tunables_load");
