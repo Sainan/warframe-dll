@@ -22,6 +22,7 @@ using namespace soup;
 static HWND s_game_hwnd = 0;
 static Window w;
 static bool s_prelogin = true;
+static bool s_unreachable = false;
 static bool s_wine = false;
 static bool s_topmost = false;
 static int s_x = -1;
@@ -106,22 +107,30 @@ void owfOverlay::init()
 						rt.drawText(88 + 1, 18 + 1, at, RasterFont::simple8(), Rgb::BLACK, 1);
 						rt.drawText(88, 18, at, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
 
-						std::string banned;
+						std::string subtext;
+						if (s_unreachable)
+						{
+							subtext = ObfusString("This server may be offline.").str();
+						}
+						else
 						{
 							std::lock_guard lock(g_server_tunables_mtx);
 							for (const auto& hash : g_server_tunables.bools)
 							{
 								if (auto name = owfServerTunables::getProhibitionName(hash); !name.empty())
 								{
-									soup::string::listAppend(banned, std::move(name));
+									soup::string::listAppend(subtext, std::move(name));
 								}
 							}
+							if (!subtext.empty())
+							{
+								subtext.insert(0, ObfusString("This server prohibits: ").str());
+							}
 						}
-						if (!banned.empty())
+						if (!subtext.empty())
 						{
-							banned.insert(0, ObfusString("This server prohibits: ").str());
-							rt.drawText(10 + 1, 33 + 1, banned, RasterFont::simple8(), Rgb::BLACK, 1);
-							rt.drawText(10, 33, banned, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
+							rt.drawText(10 + 1, 33 + 1, subtext, RasterFont::simple8(), Rgb::BLACK, 1);
+							rt.drawText(10, 33, subtext, RasterFont::simple8(), Rgb{ 90, 253, 123 }, 1);
 						}
 					}
 
@@ -199,9 +208,22 @@ void owfOverlay::init()
 	}
 }
 
-void owfOverlay::setPrelogin(bool prelogin)
+void owfOverlay::onTunablesRequestFinished(bool ok)
 {
-	s_prelogin = prelogin;
+	s_unreachable = !ok;
+	w.redraw();
+}
+
+void owfOverlay::onLoggedIn()
+{
+	s_prelogin = false;
+	w.redraw();
+}
+
+void owfOverlay::onLoggedOut()
+{
+	s_prelogin = true;
+	s_unreachable = false;
 	w.redraw();
 }
 

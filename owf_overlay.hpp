@@ -13,7 +13,9 @@ struct owfOverlay
 {
 	static bool isInited();
 	static void init();
-	static void setPrelogin(bool prelogin);
+	static void onTunablesRequestFinished(bool ok);
+	static void onLoggedIn();
+	static void onLoggedOut();
 	static void redraw();
 	static unsigned int getWidth();
 	static unsigned int getHeight();

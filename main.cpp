@@ -478,7 +478,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	}
 	else if (uri.path == ObfusString("/api/logout.php").str())
 	{
-		owfOverlay::setPrelogin(true);
+		owfOverlay::onLoggedOut();
 		auth_query.clear();
 	}
 #if true // PS can be relatively sensitive data but is often shared alongside server logs.
@@ -795,7 +795,7 @@ struct owfTunablesTask : public soup::Task
 				std::cout << std::move(msg) << std::endl;
 			}
 
-			owfOverlay::redraw();
+			owfOverlay::onTunablesRequestFinished(ok);
 
 			setWorkDone();
 		}
@@ -877,7 +877,7 @@ static void do_logout()
 		SOUP_UNUSED(hr.execute(&Socket::certchain_validator_none));
 		auth_query.clear();
 
-		owfOverlay::setPrelogin(true);
+		owfOverlay::onLoggedOut();
 	}
 }
 
@@ -1175,7 +1175,7 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 				switch (soup::joaat::hashRange(message, 10))
 				{
 				case soup::joaat::compileTimeHash("Logged in "):
-					owfOverlay::setPrelogin(false);
+					owfOverlay::onLoggedIn();
 					break;
 
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
