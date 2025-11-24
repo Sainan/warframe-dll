@@ -4,6 +4,7 @@
 
 //#include <iostream>
 
+#include <joaat.hpp>
 #include <ObfusString.hpp>
 #include <os.hpp>
 #include <RenderTarget.hpp>
@@ -125,6 +126,10 @@ void owfOverlay::init()
 							if (!subtext.empty())
 							{
 								subtext.insert(0, ObfusString("This server prohibits: ").str());
+							}
+							else if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("motd")); e != g_server_tunables.strings.end())
+							{
+								subtext = e->second;
 							}
 						}
 						if (!subtext.empty())
