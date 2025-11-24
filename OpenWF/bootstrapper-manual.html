@@ -122,13 +122,14 @@
 	<h2>Tunables</h2>
 	<p>When connecting to a server, the Bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
-		<li><code>token</code> — If given, this string will be provided as a query parameter in the login request to indicate acknowledgement of the tunables.</li>
-		<li><code>disable_websocket</code> — If true, the Bootstrapper will not attempt to establish a WebSocket connection to the server (documented below).</li>
 		<li><code>prohibit_skip_mission_start_timer</code> — If true, prohibits <code>skip_mission_start_timer</code>.</li>
 		<li><code>prohibit_fov_override</code> — If true, prohibits <code>fov_override</code>.</li>
 		<li><code>prohibit_freecam</code> — If true, prohibits <code>freecam</code>.</li>
 		<li><code>prohibit_teleport</code> — If true, prohibits <code>teleport</code>.</li>
 		<li><code>prohibit_scripts</code> — If true, prohibits the execution of user-defined scripts.</li>
+		<li><code>disable_websocket</code> — If true, the Bootstrapper will not attempt to establish a WebSocket connection to the server (documented below).</li>
+		<li><code>token</code> — If given, this string will be provided as a query parameter in the login request to indicate acknowledgement of the tunables.</li>
+		<li><code>irc</code> — If given, this string will be used as the IRC server address for pre-U17 versions.</li>
 	</ul>
 	<p>To aid in troubleshooting, the Bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
 	<h2>Traffic Deviations</h2>

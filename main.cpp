@@ -1111,21 +1111,47 @@ static void init_cache_fetching_detour(void* a1, bool a2, bool is_stripped, bool
 
 static DetourHook legacy_dns_lookup_hook;
 
+enum LookupAction
+{
+	LA_KEEP_AS_IS,
+	LA_USE_SERVER_HOST,
+	LA_USE_IRC_HOST,
+};
+
 static std::string process_legacy_dns_lookup(const char* data, size_t size)
 {
 #if LOGGING
 	std::cout << "legacy_dns_lookup: " << data;
 #endif
 
-	bool should_block;
+	LookupAction lookup_action;
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
-		should_block = g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(data, size));
+		if (g_client_tunables.isStringInArray(joaat::compileTimeHash("dns"), joaat::hashRange(data, size)))
+		{
+			lookup_action = LA_USE_SERVER_HOST;
+		}
+		else if (g_client_tunables.isStringInArray(joaat::compileTimeHash("dns_irc"), joaat::hashRange(data, size)))
+		{
+			lookup_action = LA_USE_IRC_HOST;
+		}
+		else
+		{
+			lookup_action = LA_KEEP_AS_IS;
+		}
 	}
 
-	if (should_block)
+	if (lookup_action != LA_KEEP_AS_IS)
 	{
 		std::string override = server_host;
+		if (lookup_action == LA_USE_IRC_HOST)
+		{
+			std::lock_guard lock(g_server_tunables_mtx);
+			if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("irc")); e != g_server_tunables.strings.end())
+			{
+				override = e->second;
+			}
+		}
 		if (const char* sep = strchr(data, ':'))
 		{
 			override.append(sep);
