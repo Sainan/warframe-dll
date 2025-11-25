@@ -2894,7 +2894,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
-	if (game_version >= MIN_GV_FOR_TLS)
+	if (game_version >= GV(18, 0, 0))
 	{
 		Pointer ssl_verify_internal_caller;
 		if (game_version >= GV(26, 1, 0))
