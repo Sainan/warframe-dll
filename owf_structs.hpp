@@ -2,7 +2,7 @@
 
 #include <structing.hpp>
 
-inline char build_label[16] = { 0 }; // e.g. "2024.12.14.10.37"
+inline char build_version[16] = { 0 }; // e.g. "2024.12.14.10.37"
 
 #define GV(major, minor, patch) (major * 1000) + (minor * 10) + patch
 inline uint16_t game_version;

@@ -229,7 +229,7 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushlstring(L, build_label, 16);
+		lua_pushlstring(L, build_version, 16);
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "owf_get_build_version");

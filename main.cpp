@@ -423,14 +423,14 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 			}
 		}
 #if PROVIDE_VERSION_INFO
-		if (build_label[0])
+		if (build_version[0])
 		{
 			if (!uri.query.empty())
 			{
 				uri.query.push_back('&');
 			}
 			uri.query.append(ObfusString("buildLabel=").str());
-			uri.query.append(build_label, 16);
+			uri.query.append(build_version, 16);
 			uri.query.push_back('/');
 			if (build_hash[0])
 			{
@@ -460,14 +460,14 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	else if (uri.path.find(ObfusString("/worldState.php").str()) != std::string::npos)
 	{
 #if PROVIDE_VERSION_INFO
-		if (build_label[0])
+		if (build_version[0])
 		{
 			if (!uri.query.empty())
 			{
 				uri.query.push_back('&');
 			}
 			uri.query.append(ObfusString("buildLabel=").str());
-			uri.query.append(build_label, 16);
+			uri.query.append(build_version, 16);
 			uri.query.push_back('/');
 			if (build_hash[0])
 			{
@@ -2653,13 +2653,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			LPVOID value_data;
 			UINT value_size;
 			og_VerQueryValueA(data, "\\StringFileInfo\\040904B0\\ProductVersion", &value_data, &value_size);
-			memcpy(build_label, value_data, 16);
+			memcpy(build_version, value_data, 16);
 
 			soup::free(data);
 		}
 
 #if LOGGING
-		std::cout << "build_label = " << std::string(build_label, 16) << std::endl;
+		std::cout << "build_version = " << std::string(build_version, 16) << std::endl;
 #endif
 
 		std::error_code ec{};
@@ -2701,23 +2701,23 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}*/
 
 		{
-			auto build_label_int = static_cast<uint64_t>(build_label[ 0] - '0') * 100000000000ull +
-				static_cast<uint64_t>(build_label[ 1] - '0') * 10000000000ull +
-				static_cast<uint64_t>(build_label[ 2] - '0') * 1000000000ull +
-				static_cast<uint64_t>(build_label[ 3] - '0') * 100000000ull +
-				static_cast<uint64_t>(build_label[ 5] - '0') * 10000000ull +
-				static_cast<uint64_t>(build_label[ 6] - '0') * 1000000ull +
-				static_cast<uint64_t>(build_label[ 8] - '0') * 100000ull +
-				static_cast<uint64_t>(build_label[ 9] - '0') * 10000ull +
-				static_cast<uint64_t>(build_label[11] - '0') * 1000ull +
-				static_cast<uint64_t>(build_label[12] - '0') * 100ull +
-				static_cast<uint64_t>(build_label[14] - '0') * 10ull +
-				static_cast<uint64_t>(build_label[15] - '0');
+			auto build_version_int = static_cast<uint64_t>(build_version[ 0] - '0') * 100000000000ull +
+				static_cast<uint64_t>(build_version[ 1] - '0') * 10000000000ull +
+				static_cast<uint64_t>(build_version[ 2] - '0') * 1000000000ull +
+				static_cast<uint64_t>(build_version[ 3] - '0') * 100000000ull +
+				static_cast<uint64_t>(build_version[ 5] - '0') * 10000000ull +
+				static_cast<uint64_t>(build_version[ 6] - '0') * 1000000ull +
+				static_cast<uint64_t>(build_version[ 8] - '0') * 100000ull +
+				static_cast<uint64_t>(build_version[ 9] - '0') * 10000ull +
+				static_cast<uint64_t>(build_version[11] - '0') * 1000ull +
+				static_cast<uint64_t>(build_version[12] - '0') * 100ull +
+				static_cast<uint64_t>(build_version[14] - '0') * 10ull +
+				static_cast<uint64_t>(build_version[15] - '0');
 
-			game_version = static_cast<uint16_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_label_int));
+			game_version = static_cast<uint16_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
 
 #if LOGGING
-			std::cout << "build_label_int = " << build_label_int << std::endl;
+			std::cout << "build_version_int = " << build_version_int << std::endl;
 			std::cout << "game_version = " << game_version << std::endl;
 #endif
 		}
@@ -4891,7 +4891,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					case soup::joaat::compileTimeHash("/game_version"):
 						{
 							JsonObject obj;
-							obj.add(ObfusString("build_label"), std::string(build_label, 16));
+							obj.add(ObfusString("build_version"), std::string(build_version, 16));
 							obj.add(ObfusString("build_hash"), build_hash[0] ? std::string(build_hash, 22) : std::string());
 							ServerWebService::sendText(s, obj.encodePretty());
 						}
