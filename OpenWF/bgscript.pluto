@@ -212,7 +212,7 @@ local function get_version_broadcast()
 	return {
 		current = current_version,
 		latest = version_is_latest,
-		hotfix = "hotfix "..OWF_CLIENT_HOTFIX,
+		hotfix = OWF_CLIENT_HOTFIX ~= 0 ? "hotfix "..OWF_CLIENT_HOTFIX : "",
 		hotfix_available = hotfix_available,
 	}
 end
