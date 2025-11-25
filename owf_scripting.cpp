@@ -658,137 +658,143 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_push_float");
 
-	if (luau_pushstring)
+	
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_pushstring)
 		{
-			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
-			{
-				luaL_error(L, ObfusString("insufficient space"));
-			}
-			const char* str = luaL_checkstring(L, 1);
-			luau_pushstring(luau_L, str);
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_push_string");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		const char* str = luaL_checkstring(L, 1);
+		luau_pushstring(luau_L, str);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_push_string");
 
-	if (luau_pushpointer)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_pushpointer)
 		{
-			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
-			{
-				luaL_error(L, ObfusString("insufficient space"));
-			}
-			luau_pushpointer(luau_L, reinterpret_cast<void*>(luaL_checkinteger(L, 1)));
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_push_pointer");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		luau_pushpointer(luau_L, reinterpret_cast<void*>(luaL_checkinteger(L, 1)));
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_push_pointer");
 
-	if (luau_pushobject)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_pushobject)
 		{
-			SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
-			{
-				luaL_error(L, ObfusString("insufficient space"));
-			}
-			auto obj = reinterpret_cast<Object*>(luaL_checkinteger(L, 1));
-			luau_pushobject(luau_L, obj);
-			/*luau_obj_buf[3] = &obj->self_pointer;
-			luau_L->outtop->value.as_uintptr = reinterpret_cast<uintptr_t>(&luau_obj_buf[0]);
-			luau_L->outtop->type = LUAU_USERDATA;
-			luau_L->outtop++;*/
-			/*if (***(void****)(luau_L->outtop[-1].value.as_uintptr + 0x18) != obj)
-			{
-				ObfusString err("invalid object");
-				luaL_error(L, err.c_str());
-			}*/
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_push_object");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		SOUP_IF_UNLIKELY (luau_L->outtop == luau_L->stack_last)
+		{
+			luaL_error(L, ObfusString("insufficient space"));
+		}
+		auto obj = reinterpret_cast<Object*>(luaL_checkinteger(L, 1));
+		luau_pushobject(luau_L, obj);
+		/*luau_obj_buf[3] = &obj->self_pointer;
+		luau_L->outtop->value.as_uintptr = reinterpret_cast<uintptr_t>(&luau_obj_buf[0]);
+		luau_L->outtop->type = LUAU_USERDATA;
+		luau_L->outtop++;*/
+		/*if (***(void****)(luau_L->outtop[-1].value.as_uintptr + 0x18) != obj)
+		{
+			ObfusString err("invalid object");
+			luaL_error(L, err.c_str());
+		}*/
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_push_object");
 
-	if (luau_pushcclosurek)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_pushcclosurek)
 		{
-			const auto cid = luaL_checkinteger(L, 1);
-			SOUP_IF_LIKELY (luau_push_lightuserdata(luau_L, reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<owfScript*>(L->l_G->user_data)->instance_id))))
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		const auto cid = luaL_checkinteger(L, 1);
+		SOUP_IF_LIKELY (luau_push_lightuserdata(luau_L, reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<owfScript*>(L->l_G->user_data)->instance_id))))
+		{
+			SOUP_IF_LIKELY (luau_push_lightuserdata(luau_L, reinterpret_cast<void*>(static_cast<uintptr_t>(cid))))
 			{
-				SOUP_IF_LIKELY (luau_push_lightuserdata(luau_L, reinterpret_cast<void*>(static_cast<uintptr_t>(cid))))
+				luau_pushcclosurek(luau_L, [](luau_State* L) -> int
 				{
-					luau_pushcclosurek(luau_L, [](luau_State* L) -> int
+					int npushed = 0;
+					if (const auto scr = get_script_by_instance_id(L->ci->func->value.gc->cl.c.upvals[0].value.as_uintptr))
 					{
-						int npushed = 0;
-						if (const auto scr = get_script_by_instance_id(L->ci->func->value.gc->cl.c.upvals[0].value.as_uintptr))
+						const auto cid = L->ci->func->value.gc->cl.c.upvals[1].value.as_uintptr;
+						//std::cout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
+						/*L->global_state_error_longjump_data() = nullptr;
+						L->global_state_panic_func() = [](luau_State* L, int)
 						{
-							const auto cid = L->ci->func->value.gc->cl.c.upvals[1].value.as_uintptr;
-							//std::cout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
-							/*L->global_state_error_longjump_data() = nullptr;
-							L->global_state_panic_func() = [](luau_State* L, int)
-							{
-								std::cout << "LuaU is panicking" << std::endl;
-								luau_error_msg = (--L->outtop)->getString();
-								std::cout << luau_error_msg << std::endl;
-								throw 0;
-							};*/
-							scr->callback_context = true;
-							if (luau_L)
-							{
-								const auto og_L = luau_L;
-								luau_L = L;
-								ObfusString str("owf_internal_callback");
-								lua_getglobal(scr->main, str.c_str());
-								lua_pushinteger(scr->main, cid);
-								lua_pushinteger(scr->main, luau_gettop(L));
-								lua_call(scr->main, 2, 1);
-								npushed = lua_tonumber(scr->main, -1);
-								luau_L = og_L;
-							}
-							else
-							{
-								luau_L = L;
-								lua_pushinteger(scr->coro, cid);
-								lua_pushinteger(scr->coro, luau_gettop(L));
-								const int nresults = scr->tick(2);
-								//std::cout << "Runtime yielded " << nresults << " value(s)" << std::endl;
-								if (nresults == 1)
-								{
-									npushed = lua_tonumber(scr->coro, -1);
-								}
-								luau_L = nullptr;
-							}
-							scr->callback_context = false;
-							//std::cout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
+							std::cout << "LuaU is panicking" << std::endl;
+							luau_error_msg = (--L->outtop)->getString();
+							std::cout << luau_error_msg << std::endl;
+							throw 0;
+						};*/
+						scr->callback_context = true;
+						if (luau_L)
+						{
+							const auto og_L = luau_L;
+							luau_L = L;
+							ObfusString str("owf_internal_callback");
+							lua_getglobal(scr->main, str.c_str());
+							lua_pushinteger(scr->main, cid);
+							lua_pushinteger(scr->main, luau_gettop(L));
+							lua_call(scr->main, 2, 1);
+							npushed = lua_tonumber(scr->main, -1);
+							luau_L = og_L;
 						}
 						else
 						{
-							//std::cout << "Callback invoked for a dead script" << std::endl;
+							luau_L = L;
+							lua_pushinteger(scr->coro, cid);
+							lua_pushinteger(scr->coro, luau_gettop(L));
+							const int nresults = scr->tick(2);
+							//std::cout << "Runtime yielded " << nresults << " value(s)" << std::endl;
+							if (nresults == 1)
+							{
+								npushed = lua_tonumber(scr->coro, -1);
+							}
+							luau_L = nullptr;
 						}
-						return npushed;
-					}, nullptr, 2, nullptr);
-					return 0;
-					//luau_L->outtop -= 1;
-				}
-				luau_L->outtop -= 1;
+						scr->callback_context = false;
+						//std::cout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
+					}
+					else
+					{
+						//std::cout << "Callback invoked for a dead script" << std::endl;
+					}
+					return npushed;
+				}, nullptr, 2, nullptr);
+				return 0;
+				//luau_L->outtop -= 1;
 			}
-			luaL_error(L, ObfusString("insufficient space"));
-		});
-		OWF_SET_GLOBAL(L, "ivkr_push_callback2");
-	}
+			luau_L->outtop -= 1;
+		}
+		luaL_error(L, ObfusString("insufficient space"));
+	});
+	OWF_SET_GLOBAL(L, "ivkr_push_callback2");
 
-	if (luau_next)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_next)
 		{
-			lua_pushboolean(L, luau_next(luau_L, (int)luaL_checkinteger(L, 1)));
-			return 1;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_next");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		lua_pushboolean(L, luau_next(luau_L, (int)luaL_checkinteger(L, 1)));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_next");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
@@ -1067,49 +1073,52 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_isuserdata");
 
-	if (luau_gettable)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_gettable)
 		{
-			try
-			{
-				lua_pushinteger(L, luau_gettable(luau_L, luaL_checkinteger(L, 1)));
-			}
-			catch (const int&)
-			{
-				luaL_error(L, luau_error_msg.c_str());
-			}
-			return 1;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_gettable");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		try
+		{
+			lua_pushinteger(L, luau_gettable(luau_L, luaL_checkinteger(L, 1)));
+		}
+		catch (const int&)
+		{
+			luaL_error(L, luau_error_msg.c_str());
+		}
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_gettable");
 
-	if (luau_createtable)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_createtable)
 		{
-			luau_createtable(luau_L, 0, 0);
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_newtable");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		luau_createtable(luau_L, 0, 0);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_newtable");
 
-	if (luau_settable)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luau_settable)
 		{
-			try
-			{
-				luau_settable(luau_L, luaL_checkinteger(L, 1));
-			}
-			catch (const int&)
-			{
-				luaL_error(L, luau_error_msg.c_str());
-			}
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_settable");
-	}
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
+		try
+		{
+			luau_settable(luau_L, luaL_checkinteger(L, 1));
+		}
+		catch (const int&)
+		{
+			luaL_error(L, luau_error_msg.c_str());
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_settable");
 
 #if PRIVATE
 	lua_pushcfunction(L, [](lua_State* L) -> int
@@ -1529,35 +1538,37 @@ owfScript::owfScript()
 	});
 	OWF_SET_GLOBAL(L, "ivkr_push_chat_redux");
 
-	if (luauD_call)
+	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
+		SOUP_IF_UNLIKELY (!luauD_call)
 		{
-			const auto nargs = luaL_checkinteger(L, 1);
-			const auto nresults = luaL_checkinteger(L, 2);
+			luaL_error(L, ObfusString("Function unavailable"));
+		}
 
-			const auto call_top = luau_L->outtop - (nargs + 1);
+		const auto nargs = luaL_checkinteger(L, 1);
+		const auto nresults = luaL_checkinteger(L, 2);
 
-			luau_error_msg.clear();
-			__try
+		const auto call_top = luau_L->outtop - (nargs + 1);
+
+		luau_error_msg.clear();
+		__try
+		{
+			luauD_call(luau_L, call_top, nresults);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			if (luau_error_msg.empty())
 			{
-				luauD_call(luau_L, call_top, nresults);
+				luau_error_msg = ObfusString("low-level exception").str();
 			}
-			__except (EXCEPTION_EXECUTE_HANDLER)
-			{
-				if (luau_error_msg.empty())
-				{
-					luau_error_msg = ObfusString("low-level exception").str();
-				}
-			}
-			SOUP_IF_UNLIKELY (!luau_error_msg.empty())
-			{
-				luaL_error(L, luau_error_msg.c_str());
-			}
-			return 0;
-		});
-		OWF_SET_GLOBAL(L, "ivkr_call2");
-	}
+		}
+		SOUP_IF_UNLIKELY (!luau_error_msg.empty())
+		{
+			luaL_error(L, luau_error_msg.c_str());
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "ivkr_call2");
 
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_SUBMIT_CHAT_MESSAGE);
 	OWF_EXPOSE_INT_CONSTANT(L, OWF_EVT_OUTGOING_CHAT_MESSAGE);
