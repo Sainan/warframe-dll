@@ -138,6 +138,8 @@ if code_version in all_tags then
 	if "modules/owf-translations" in changelist then
 		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..code_version, "r")
 		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/owf-translations/" .. x)
+	else
+		trans_changelist = {}
 	end
 	cachelib_changelist = "modules/warframe-cache-tools" in changelist ? nil : {}
 end
