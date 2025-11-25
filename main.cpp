@@ -732,6 +732,8 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 	return ok;
 }
 
+#define MIN_GV_FOR_TLS GV(19, 0, 0)
+
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
 {
@@ -739,11 +741,11 @@ struct owfTunablesTask : public soup::Task
 
 	owfTunablesTask()
 		: hrt(HttpRequest(
-			server_host + ":" + std::to_string(game_version >= GV(35, 5, 0) ? https_port : http_port),
+			server_host + ":" + std::to_string(game_version >= MIN_GV_FOR_TLS ? https_port : http_port),
 			ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE "&buildVersion=").str() + std::string(build_version, 16)
 		), &Socket::certchain_validator_none)
 	{
-		hrt.hr.use_tls = (game_version >= GV(35, 5, 0));
+		hrt.hr.use_tls = (game_version >= MIN_GV_FOR_TLS);
 	}
 
 	void onTick() final
@@ -2751,7 +2753,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else if (game_version >= GV(19, 0, 0))
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameString, true>);
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameString>);
 		}
 		else
 		{
@@ -2892,7 +2894,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
-	if (game_version >= GV(35, 5, 0)) // Just stripping TLS for older versions
+	if (game_version >= MIN_GV_FOR_TLS)
 	{
 		Pointer ssl_verify_internal_caller;
 		if (game_version >= GV(26, 1, 0))
@@ -2919,7 +2921,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ssl_verify_internal_hook.enable();
 	}
 
-	if (game_version >= GV(35, 5, 0)) // Just stripping TLS for older versions
+	if (game_version >= MIN_GV_FOR_TLS)
 	{
 		void* Curl_ossl_verifyhost;
 		if (game_version >= GV(37, 0, 0))
