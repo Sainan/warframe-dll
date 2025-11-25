@@ -362,6 +362,9 @@ local wscoro = coroutine.create(function()
 						if data.tunables then
 							owf_tunables_load(json.encode(data.tunables))
 						end
+						if data.tunables_delta then
+							owf_tunables_load(json.encode(data.tunables_delta), true)
+						end
 					end
 					--print("Got nil from wsRecv")
 				else

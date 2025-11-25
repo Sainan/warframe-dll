@@ -8,9 +8,12 @@
 
 using namespace soup;
 
-bool owfServerTunables::load(const char* data, size_t size)
+bool owfServerTunables::load(const char* data, size_t size, bool delta)
 {
-	bools.clear();
+	if (!delta)
+	{
+		bools.clear();
+	}
 
 	auto jr = json::decode(data, size);
 	if (!jr || !jr->isObj())

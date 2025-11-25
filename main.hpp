@@ -12,7 +12,7 @@
 
 extern const char* g_bootstrapper_title;
 
-extern bool set_server_tunables(const char* data, size_t size);
+extern bool set_server_tunables(const char* data, size_t size, bool delta = false);
 extern bool owf_command(const std::string& in, soup::JsonObject& out);
 extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
 

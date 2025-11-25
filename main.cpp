@@ -739,10 +739,10 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
-bool set_server_tunables(const char* data, size_t size)
+bool set_server_tunables(const char* data, size_t size, bool delta)
 {
 	std::lock_guard lock(g_server_tunables_mtx);
-	bool ok = g_server_tunables.load(data, size);
+	bool ok = g_server_tunables.load(data, size, delta);
 
 	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
 	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));

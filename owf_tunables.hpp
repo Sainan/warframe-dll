@@ -12,7 +12,7 @@ struct owfServerTunables
 	std::vector<uint32_t> bools;
 	std::unordered_map<uint32_t, std::string> strings;
 
-	bool load(const char* data, size_t size);
+	bool load(const char* data, size_t size, bool delta = false);
 
 	bool getBool(uint32_t hash) const noexcept
 	{
