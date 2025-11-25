@@ -3203,55 +3203,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 #if DISABLE_WSINTCHK
 		// This hook allows WorldSeed to be absent or just any value.
-		// 16.5 seemingly does not validate the WorldSeed.
-		if (game_version >= GV(17, 0, 0))
+		if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/verify_worldstate_integrity.json"), game_version); !sig_inst.bytes.empty())
 		{
-			void* verify_worldstate_integrity;
-			if (game_version >= GV(40, 0, 0))
-			{
-				SIG_INST("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B F9 84 D2");
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(35, 5, 0))
-			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 F0 48 8B D9");
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(23, 0, 0))
-			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC ? 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2023.07.26.16.38 (33.6.0), 2024.02.16.17.13 (35.1.0), 2018.06.14.23.21 (23.0.0)
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(22, 15, 0))
-			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 37 48 8B D9 84 D2"); // 2018.05.17.16.28 (22.20.0), 2018.04.20.02.04 (22.18.0), 2018.03.15.19.39 (22.16.0), 2018.03.07.14.18 (22.15.0)
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(21, 0, 0))
-			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 55 48 8D 6C 24 A9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 47 48 8B D9 84 D2 0F 84"); // 2018.02.22.14.34 (22.13.4), 2017.06.29.02.13 (21.0.0)
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(19, 0, 0))
-			{
-				SIG_INST("48 89 5C 24 18 48 89 6C 24 20 56 57 41 56 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 65 48 8B 04 25"); // 2017.03.06.15.49 (19.13.0)
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(18, 7, 1))
-			{
-				SIG_INST("48 89 5C 24 18 56 57 41 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.09.30.12.04, 2016.03.31.15.16
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else if (game_version >= GV(18, 5, 0))
-			{
-				SIG_INST("48 89 5C 24 18 56 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2016.03.04.10.06
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
-			else
-			{
-				SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 60 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 50 8B 05"); // 2015.12.05.18.07
-				verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
-			}
+			auto verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 			std::cout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
