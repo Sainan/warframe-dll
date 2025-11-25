@@ -542,6 +542,9 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 
 	if (is_login)
 	{
+#if LOGGING
+		//std::cout << "login response: " << std::string(request_body.getData(), request_body.getSize()) << std::endl;
+#endif
 		for (size_t i = 0; i != request_body.getSize(); ++i)
 		{
 			if (request_body.getData()[i] == '\t')
