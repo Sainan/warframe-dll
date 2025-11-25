@@ -308,46 +308,7 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 
 
 static CompactDetourHook game_http_request_hook;
-
-struct GameHttpRequest
-{
-	/* 0x00 */ GameString url;
-	char pad[0x28];
-	/* 0x38 */ GameString body;
-};
-#if SOUP_BITS == 64
-static_assert(offsetof(GameHttpRequest, body) == 0x38);
-#endif
-
-struct LegacyGameHttpRequest
-{
-	/* 0x00 */ LegacyGameString url;
-	char pad[0x20];
-	/* 0x40 */ LegacyGameString body;
-};
-#if SOUP_BITS == 64
-static_assert(offsetof(LegacyGameHttpRequest, body) == 0x40); // 2016.12.16.14.33
-#endif
-
-struct GameHttpRequestU18
-{
-	/* 0x00 */ LegacyGameStringU18 url;
-	char pad[0x30];
-	/* 0x48 */ LegacyGameStringU18 body;
-};
-#if SOUP_BITS == 64
-static_assert(offsetof(GameHttpRequestU18, body) == 0x48);
-#endif
-
-struct GameHttpRequestU8
-{
-	/* 0x00 */ LegacyGameStringU18 url;
-	char pad[0x18];
-	/* 0x30 */ LegacyGameStringU18 body;
-};
-#if SOUP_BITS == 64
-static_assert(offsetof(GameHttpRequestU8, body) == 0x30);
-#endif
+static unsigned int GameHttpRequest_body_offset;
 
 static bool can_use_server_host()
 {
@@ -542,53 +503,56 @@ static void process_login_response(const char* data, size_t size)
 	}
 }
 
-template <typename T, bool strip_tls = false>
-static void* game_http_request_detour(void* a1, T* request, void* a3)
+template <typename Str, bool strip_tls = false>
+static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 {
+	Str& request_url = *reinterpret_cast<Str*>(request + 0x00);
+	Str& request_body = *reinterpret_cast<Str*>(request + GameHttpRequest_body_offset);
+
 #if LOGGING
-	std::cout << "game_http_request for " << (const char*)request->url.getData() << std::endl;
-	/*if (request->body.getSize() != 0)
+	std::cout << "game_http_request for " << (const char*)request_url.getData() << std::endl;
+	/*if (request_body.getSize() != 0)
 	{
-		std::cout << request->body.getData() << std::endl;
+		std::cout << request_body.getData() << std::endl;
 	}*/
 #endif
 
-	Uri uri((const char*)request->url.getData());
-	const char* body_data = request->body.getData();
-	size_t body_size = request->body.getSize();
+	Uri uri((const char*)request_url.getData());
+	const char* body_data = request_body.getData();
+	size_t body_size = request_body.getSize();
 	std::string body_buf;
 	bool is_login = false;
 	process_game_http_request(uri, body_data, body_size, body_buf, is_login, strip_tls);
 	std::string url_buf = uri.toString();
-	request->url.setUnownedData(url_buf.data(), url_buf.size());
-	if (body_data != request->body.getData())
+	request_url.setUnownedData(url_buf.data(), url_buf.size());
+	if (body_data != request_body.getData())
 	{
-		request->body.setUnownedData(body_data, body_size);
+		request_body.setUnownedData(body_data, body_size);
 	}
 
-	const auto ret = reinterpret_cast<decltype(&game_http_request_detour<T>)>(game_http_request_hook.original)(a1, request, a3);
+	const auto ret = reinterpret_cast<decltype(&game_http_request_detour<Str>)>(game_http_request_hook.original)(a1, request, a3);
 
 #if LOGGING
 	// This now contains the response
-	/*if (request->body.getSize() != 0)
+	/*if (request_body.getSize() != 0)
 	{
-		std::cout << request->body.getData() << std::endl;
+		std::cout << request_body.getData() << std::endl;
 	}*/
 #endif
 
 	if (is_login)
 	{
-		for (size_t i = 0; i != request->body.getSize(); ++i)
+		for (size_t i = 0; i != request_body.getSize(); ++i)
 		{
-			if (request->body.getData()[i] == '\t')
+			if (request_body.getData()[i] == '\t')
 			{
-				set_server_tunables(request->body.getData() + (i + 1), request->body.getSize() - (i + 1));
-				request->body.getData()[i] = '\0';
-				request->body.shrink(i);
+				set_server_tunables(request_body.getData() + (i + 1), request_body.getSize() - (i + 1));
+				request_body.getData()[i] = '\0';
+				request_body.shrink(i);
 				break;
 			}
 		}
-		process_login_response(request->body.getData(), request->body.getSize());
+		process_login_response(request_body.getData(), request_body.getSize());
 	}
 
 	return ret;	
@@ -2777,21 +2741,18 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 		}
 		auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
+		GameHttpRequest_body_offset = g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/GameHttpRequest_body_offset.json"), game_version);
 		if (game_version >= GV(35, 5, 0))
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequest>);
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameString>);
 		}
 		else if (game_version >= GV(19, 0, 0))
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameHttpRequest, true>);
-		}
-		else if (game_version >= GV(12, 0, 0))
-		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU18, true>);
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameString, true>);
 		}
 		else
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameHttpRequestU8, true>);
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameStringU18, true>);
 		}
 		game_http_request_hook.target = game_http_request;
 		game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
