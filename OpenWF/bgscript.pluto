@@ -106,12 +106,10 @@ then
 		return bin, hash
 	end
 
-	local manifest_typeid = compareversions(owf_get_build_version(), "2025.10.14.16.10") >= 0 ? "E" : "D"
-
 	io.mkdirs("OpenWF/Content/0")
 	if compressed, decompressed_size := owf_cache_find("H.Misc", "/H.Cache.bin") then
 		if compressed:byte(1) == 0x80 then
-			io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
+			io.contents("OpenWF/Content/0/H.Cache.bin!D_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
 		end
 	end
 
@@ -129,13 +127,13 @@ then
 		do
 			local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
 			if compressed:byte(1) == 0x80 then
-				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_H(compressed, decompressed_size))
+				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!D_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_H(compressed, decompressed_size))
 			end
 		end
 
-		local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H)
+		local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!D_---------------------w.bak")).H)
 		local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
-		if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..og_cache_manifest_hash) then
+		if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!D_"..og_cache_manifest_hash) then
 			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
 
 			local paths = {}
@@ -177,12 +175,12 @@ then
 				local bin, hash = shcc_pack_H_mod(main_manifest:pack())
 				meta_manifest:setHash("/B.Cache.Windows.bin", hash)
 				hash = b64m_encode(hash)
-				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..hash, bin)
-				io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
+				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!D_"..hash, bin)
+				io.contents("OpenWF/Content/0/H.Cache.bin!D_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
 
 				for io.listdir("OpenWF/Content/0") as path do
 					local file = path:sub(18)
-					if #file == 44 and file:sub(1, 22) == "B.Cache.Windows.bin!"..manifest_typeid.."_"
+					if #file == 44 and file:sub(1, 22) == "B.Cache.Windows.bin!D_"
 						and file:sub(23) ~= hash and file:sub(23) ~= og_cache_manifest_hash
 					then
 						os.remove(path)
@@ -199,7 +197,7 @@ then
 	owf_cache_close()
 
 	if not any_mods and not io.exists("OpenWF/Content/0/UNMANAGED") then
-		io.copy("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak", "OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w")
+		io.copy("OpenWF/Content/0/H.Cache.bin!D_---------------------w.bak", "OpenWF/Content/0/H.Cache.bin!D_---------------------w")
 	end
 end
 

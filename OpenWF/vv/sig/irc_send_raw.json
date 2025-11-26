@@ -1,6 +1,5 @@
 {
 	// "IRC out:"
-	"40.00.0": "40 55 57 41 56 41 57 48 8D 6C 24 C1 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 17 80 79 69 00",
 	"19.00.0": "40 55 53 56 41 57 48 8D 6C 24 C1 48 81 EC A8 00 00 00 48 8B 05",
 	"09.00.0": "4C 8B DC 55 56 41 54 49 8D 6B ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 80 79 ? 00 48 8B F2", // 2013.05.23.16.06
 	//^ Pattern works in U8 but truncates the USER message for it because it sends the nonce directly
