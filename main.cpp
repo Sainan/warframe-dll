@@ -1952,36 +1952,30 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 
 static DetourHook irc_send_raw_hook;
 
-template <typename Str>
-static void irc_send_raw_detour(void* a1, Str* str, bool bLogIt)
+static std::string process_irc_send(const char* data, size_t size)
 {
-#if VERBOSE_IRC
-	bLogIt = true;
-#endif
 #if LOGGING
-	std::cout << "irc_send_raw: " << std::string(str->getData(), str->getSize()) << std::endl;
+	std::cout << "irc_send_raw: " << std::string(data, size) << std::endl;
 #endif
 #if REDIRECT_REQUESTS
-	if (str->getSize() > 36 && soup::joaat::hashRange(str->getData(), 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
+	if (size > 36 && soup::joaat::hashRange(data, 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
 	{
-		std::string buf(str->getData(), str->getSize() - 40); // Copy everything except the 'realname' part
+		std::string replacement(data, size - 40); // Copy everything except the 'realname' part
 		auto arr = string::explode(auth_query, '&');
 		if (arr.size() > 1)
 		{
-			buf.append(arr[1]);
+			replacement.append(arr[1]);
 		}
-		Str tmp;
-		tmp.setUnownedData(buf.data(), buf.size());
-		return reinterpret_cast<decltype(&irc_send_raw_detour<Str>)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
+		return replacement;
 	}
 #endif
-	if (str->getSize() > 10 && soup::joaat::hashRange(str->getData(), 8) == soup::joaat::compileTimeHash("PRIVMSG "))
+	if (size > 10 && soup::joaat::hashRange(data, 8) == soup::joaat::compileTimeHash("PRIVMSG "))
 	{
-		std::string_view sv(str->getData(), str->getSize());
+		std::string_view sv(data, size);
 		const auto sep = sv.find(ObfusString(" :").str());
 		if (sep != std::string::npos)
 		{
-			std::string_view message(str->getData() + sep + 2, str->getSize() - (sep + 2));
+			std::string_view message(data + sep + 2, size - (sep + 2));
 			//std::cout << "channel_name = " << sv.substr(8, sep - 8) << std::endl;
 			//std::cout << "message = " << message << std::endl;
 			{
@@ -1990,11 +1984,26 @@ static void irc_send_raw_detour(void* a1, Str* str, bool bLogIt)
 				{
 					if (scr->isSubscribedToOutgoingMessage(message))
 					{
-						scr->events.emplace_back(OWF_EVT_OUTGOING_CHAT_MESSAGE, std::string(str->getData() + 8, str->getSize() - 8));
+						scr->events.emplace_back(OWF_EVT_OUTGOING_CHAT_MESSAGE, std::string(data + 8, size - 8));
 					}
 				}
 			}
 		}
+	}
+	return {};
+}
+
+template <typename Str>
+static void irc_send_raw_detour(void* a1, Str* str, bool bLogIt)
+{
+#if VERBOSE_IRC
+	bLogIt = true;
+#endif
+	if (auto replacement = process_irc_send(str->getData(), str->getSize()); !replacement.empty())
+	{
+		Str tmp;
+		tmp.setUnownedData(replacement.data(), replacement.size());
+		return reinterpret_cast<decltype(&irc_send_raw_detour<Str>)>(irc_send_raw_hook.original)(a1, &tmp, bLogIt);
 	}
 	return reinterpret_cast<decltype(&irc_send_raw_detour<Str>)>(irc_send_raw_hook.original)(a1, str, bLogIt);
 }
