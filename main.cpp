@@ -3793,19 +3793,9 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if LABEL_REPLACEMENTS
-	if (game_version >= GV(33, 0, 0)) // Seems to match something unexpected in 2021.09.08.19.27 (~30.5)
+	if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/check_string_substitutions.json"), game_version); !sig_inst.bytes.empty())
 	{
-		void* check_string_substitutions;
-		if (game_version >= GV(40, 0, 0))
-		{
-			SIG_INST("4C 8B DC 55 41 57 49 8D 6B A9 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 17 48 83 7A 08 00");
-			check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
-		else
-		{
-			SIG_INST("4C 8B DC 57 41 ? 48 83 EC 78 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48");
-			check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
+		auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		std::cout << "check_string_substitutions = " << check_string_substitutions << std::endl;
 #endif
