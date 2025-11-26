@@ -1691,10 +1691,20 @@ static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 
 #if LABEL_REPLACEMENTS
 static CompactDetourHook check_string_substitutions_hook;
-static void check_string_substitutions_detour(GameString* str, void* substitutions, GameString* loctag, bool dont_log)
+
+template <typename Str>
+static void check_string_substitutions_detour(Str* str, void* substitutions, Str* loctag, bool dont_log)
 {
-	do_label_replacements(str, loctag);
-	return reinterpret_cast<decltype(&check_string_substitutions_detour)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
+	size_t size = 0;
+	if (const char* data = do_label_replacements(str->getData(), str->getSize(), loctag->getData(), loctag->getSize(), size))
+	{
+		str->setUnownedData(data, size);
+	}
+	else if (size == -1)
+	{
+		std::swap(*str, *loctag);
+	}
+	return reinterpret_cast<decltype(&check_string_substitutions_detour<Str>)>(check_string_substitutions_hook.original)(str, substitutions, loctag, dont_log);
 }
 #endif
 
@@ -3801,7 +3811,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 		if (check_string_substitutions)
 		{
-			check_string_substitutions_hook.detour = reinterpret_cast<void*>(&check_string_substitutions_detour);
+			if (game_version >= GV(35, 5, 0))
+			{
+				check_string_substitutions_hook.detour = reinterpret_cast<void*>(&check_string_substitutions_detour<GameString>);
+			}
+			else
+			{
+				check_string_substitutions_hook.detour = reinterpret_cast<void*>(&check_string_substitutions_detour<LegacyGameString>);
+			}
 			check_string_substitutions_hook.target = check_string_substitutions;
 			check_string_substitutions_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING

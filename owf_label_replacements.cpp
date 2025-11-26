@@ -56,38 +56,38 @@ void load_label_replacements()
 	}
 }
 
-void do_label_replacements(GameString* str, GameString* loctag)
+const char* do_label_replacements(const char* str_data, size_t str_size, const char* loctag_data, size_t loctag_size, size_t& out_size)
 {
+	const char* ret = nullptr;
 	std::lock_guard lock(label_replacements_mtx);
 	if (L)
 	{
 		// Stack now: func
 		lua_pushvalue(L, -1);
 		// Stack now: func, func
-		lua_pushlstring(L, loctag->getData(), loctag->getSize());
+		lua_pushlstring(L, loctag_data, loctag_size);
 		// Stack now: func, func, loctag
-		lua_pushlstring(L, str->getData(), str->getSize());
+		lua_pushlstring(L, str_data, str_size);
 		// Stack now: func, func, loctag, str
 		lua_pcall(L, 2, 1, 0);
 		// Stack now: func, res
 		if (lua_type(L, -1) == LUA_TSTRING)
 		{
-			size_t len;
-			const char* data = lua_tolstring(L, -1, &len);
-			if (len != str->getSize() || memcmp(data, str->getData(), len) != 0)
+			const char* data = lua_tolstring(L, -1, &out_size);
+			if (out_size != str_size || memcmp(data, str_data, out_size) != 0)
 			{
-				if (len == loctag->getSize() && memcmp(data, loctag->getData(), len) == 0)
+				if (out_size == loctag_size && memcmp(data, loctag_data, out_size) == 0)
 				{
-					std::swap(*str, *loctag);
+					out_size = -1; // Swap mark
 				}
 				else
 				{
-					const auto ps = fossilise_string(data, len);
-					str->setUnownedData(ps->data, len);
+					ret = fossilise_string(data, out_size)->data;
 				}
 			}
 		}
 		lua_pop(L, 1);
 		// Stack now: func
 	}
+	return ret;
 }

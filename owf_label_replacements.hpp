@@ -8,8 +8,6 @@
 #include <fnv.hpp>
 #include <Mutex.hpp>
 
-#include "owf_structs.hpp"
-
 struct PermanentString
 {
 	size_t size;
@@ -38,4 +36,4 @@ inline PermanentString* fossilise_string(const char* data, size_t size)
 inline soup::Mutex label_replacements_mtx;
 
 extern void load_label_replacements();
-extern void do_label_replacements(GameString* str, GameString* loctag);
+extern const char* do_label_replacements(const char* str_data, size_t str_size, const char* loctag_data, size_t loctag_size, size_t& out_size);
