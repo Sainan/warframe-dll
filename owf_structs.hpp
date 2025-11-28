@@ -360,7 +360,7 @@ struct StringPoolBucket
 	char* data;
 	size_t unk;
 };
-inline StringPoolBucket** string_pool;
+inline StringPoolBucket** string_pool = nullptr;
 inline const char* resolve_string_handle(uint32_t handle)
 {
 	return &(*string_pool)[handle & 0xffff].data[handle >> 16];

@@ -44,6 +44,7 @@
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
+#include <Promise.hpp>
 #include <Regex.hpp>
 #include <ReplacementHook.hpp>
 #include <Server.hpp>
@@ -1816,109 +1817,122 @@ static void load_metadata_patches()
 }
 
 static CallsiteHook object_type_serialise_propery_text_hook;
+static soup::Promise<void> string_pool_promise;
+
 static void object_type_serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
 {
 	ObjectType* objectType;
 	__asm mov objectType, r11;
 
-	const char* path = resolve_string_handle(objectType->getPathHandle());
-	const char* name = resolve_string_handle(objectType->name_handle);
-
-	uint32_t hash = 0;
-	hash = joaat::partialStr(path, hash);
-	hash = joaat::partialStr(name, hash);
-	joaat::finalise(hash);
-
-	bool should_write_to_console = write_all_metadata_reads_to_console;
-	bool should_write_to_ee_log = write_all_metadata_reads_to_ee_log;
-
-	std::lock_guard lock(metadata_patches_mtx);
-	if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
+	SOUP_IF_UNLIKELY (string_pool_promise.isPending())
 	{
-		auto& patch = e->second;
-		auto& buf = patch.final_data;
-		buf.clear();
-		buf.reserve(patch.prefix.size() + str->getSize());
-		buf.append(patch.prefix);
-		if (patch.replacements.empty() && patch.substitutions.empty() && patch.query_assignments.empty())
+#if PRIVATE
+		std::cout << "Metadata Patches: string_pool is not ready yet !!!" << std::endl;
+#endif
+		string_pool_promise.awaitFulfilment();
+	}
+
+	SOUP_IF_LIKELY (string_pool)
+	{
+		const char* path = resolve_string_handle(objectType->getPathHandle());
+		const char* name = resolve_string_handle(objectType->name_handle);
+
+		uint32_t hash = 0;
+		hash = joaat::partialStr(path, hash);
+		hash = joaat::partialStr(name, hash);
+		joaat::finalise(hash);
+
+		bool should_write_to_console = write_all_metadata_reads_to_console;
+		bool should_write_to_ee_log = write_all_metadata_reads_to_ee_log;
+
+		std::lock_guard lock(metadata_patches_mtx);
+		if (auto e = metadata_patches.find(hash); e != metadata_patches.end())
 		{
-			buf.append(str->getData(), str->getSize());
-		}
-		else
-		{
-			std::string text(str->getData(), str->getSize());
-			for (const auto& replacement : patch.replacements)
+			auto& patch = e->second;
+			auto& buf = patch.final_data;
+			buf.clear();
+			buf.reserve(patch.prefix.size() + str->getSize());
+			buf.append(patch.prefix);
+			if (patch.replacements.empty() && patch.substitutions.empty() && patch.query_assignments.empty())
 			{
-				string::replaceAll(text, replacement.first, replacement.second);
+				buf.append(str->getData(), str->getSize());
 			}
-			for (const auto& substitution : patch.substitutions)
+			else
 			{
-				text = substitution.first.substituteAll(text, substitution.second);
-			}
-			if (!patch.query_assignments.empty())
-			{
-				try
+				std::string text(str->getData(), str->getSize());
+				for (const auto& replacement : patch.replacements)
 				{
-					EeNotationParser par;
-					auto jr = par.parse(text);
-					for (const auto& qa : patch.query_assignments)
+					string::replaceAll(text, replacement.first, replacement.second);
+				}
+				for (const auto& substitution : patch.substitutions)
+				{
+					text = substitution.first.substituteAll(text, substitution.second);
+				}
+				if (!patch.query_assignments.empty())
+				{
+					try
 					{
-						if (auto n = jr->query(qa.first.c_str()))
+						EeNotationParser par;
+						auto jr = par.parse(text);
+						for (const auto& qa : patch.query_assignments)
 						{
-							if (n->isStr())
+							if (auto n = jr->query(qa.first.c_str()))
 							{
-								n->reinterpretAsStr().value = qa.second;
-							}
-							else if (n->isInt())
-							{
-								n->reinterpretAsInt().value = std::stod(qa.second);
-							}
-							else
-							{
-								n->asFloat().value = soup::string::toIntOpt<int64_t>(qa.second).value();
+								if (n->isStr())
+								{
+									n->reinterpretAsStr().value = qa.second;
+								}
+								else if (n->isInt())
+								{
+									n->reinterpretAsInt().value = std::stod(qa.second);
+								}
+								else
+								{
+									n->asFloat().value = soup::string::toIntOpt<int64_t>(qa.second).value();
+								}
 							}
 						}
+						text = EeNotationParser::unparse(*jr);
 					}
-					text = EeNotationParser::unparse(*jr);
+					catch (const std::exception& e)
+					{
+						std::cout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
+					}
 				}
-				catch (const std::exception& e)
-				{
-					std::cout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
-				}
+				buf.append(text);
 			}
-			buf.append(text);
-		}
-		str->setUnownedData(buf.data(), buf.size());
+			str->setUnownedData(buf.data(), buf.size());
 
-		if (!patch.is_implicit)
+			if (!patch.is_implicit)
+			{
+				should_write_to_console = write_patched_metadata_reads_to_console;
+				should_write_to_ee_log = write_patched_metadata_reads_to_ee_log;
+			}
+			patch.applied = true;
+		}
+		else if (save_all_metadata)
 		{
-			should_write_to_console = write_patched_metadata_reads_to_console;
-			should_write_to_ee_log = write_patched_metadata_reads_to_ee_log;
+			metadata_patches.emplace(hash, MetadataPatch{
+				.final_data = std::string(str->getData(), str->getSize()),
+				.is_implicit = true,
+				.applied = true,
+			});
 		}
-		patch.applied = true;
-	}
-	else if (save_all_metadata)
-	{
-		metadata_patches.emplace(hash, MetadataPatch{
-			.final_data = std::string(str->getData(), str->getSize()),
-			.is_implicit = true,
-			.applied = true,
-		});
-	}
 
-	if (should_write_to_console)
-	{
-		ObfusString prefix("Reading metadata for ");
-		std::cout.write(prefix.data(), prefix.size());
-		std::cout << path << name << "\n";
-	}
-	if (should_write_to_ee_log)
-	{
-		ObfusString prefix("[OpenWF] Reading metadata for ");
-		write_to_ee_log(prefix.data(), prefix.size());
-		write_to_ee_log(path);
-		write_to_ee_log(name);
-		write_to_ee_log("\n", 1);
+		if (should_write_to_console)
+		{
+			ObfusString prefix("Reading metadata for ");
+			std::cout.write(prefix.data(), prefix.size());
+			std::cout << path << name << "\n";
+		}
+		if (should_write_to_ee_log)
+		{
+			ObfusString prefix("[OpenWF] Reading metadata for ");
+			write_to_ee_log(prefix.data(), prefix.size());
+			write_to_ee_log(path);
+			write_to_ee_log(name);
+			write_to_ee_log("\n", 1);
+		}
 	}
 
 	return reinterpret_cast<decltype(&object_type_serialise_propery_text_detour)>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
@@ -3859,7 +3873,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		std::cout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
-		if (object_type_serialise_propery_text_call && string_pool)
+		if (object_type_serialise_propery_text_call)
 		{
 			uint8_t detour_bytes[] = {
 				0x49, 0x89, 0xF3, // mov r11, rsi
@@ -4233,6 +4247,41 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 static void do_pointer_scans()
 {
+	{
+		Pointer string_pool_insn;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 48 8B FA 45 0F B7 C1 4D 03 C0 49 C1 E9 10");
+			string_pool_insn = Module(nullptr).range.scan(sig_inst);
+		}
+		else
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
+			string_pool_insn = Module(nullptr).range.scan(sig_inst);
+		}
+#if LOGGING
+		std::cout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
+#endif
+		if (string_pool_insn)
+		{
+			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
+		}
+		else
+		{
+#if METADATA_PATCHES
+			if (object_type_serialise_propery_text_hook.target)
+			{
+				std::cout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
+			}
+#else
+			log_optional_scan_failure(false);
+#endif
+		}
+	}
+#if METADATA_PATCHES
+	string_pool_promise.fulfil();
+#endif
+
 	if (game_version >= GV(38, 5, 0))
 	{
 		//SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B FA 48 8B D9 E8 ? ? ? ? 80 7B 0F FF 75 1D");
@@ -4481,33 +4530,6 @@ static void do_pointer_scans()
 			std::cout << "No results for swig enums" << std::endl;
 #endif
 			log_optional_scan_failure(false);
-		}
-	}
-
-	{
-		Pointer string_pool_insn;
-		if (game_version >= GV(40, 0, 0))
-		{
-			SIG_INST("48 8B 05 ? ? ? ? 48 8B FA 45 0F B7 C1 4D 03 C0 49 C1 E9 10");
-			string_pool_insn = Module(nullptr).range.scan(sig_inst);
-		}
-		else
-		{
-			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
-			string_pool_insn = Module(nullptr).range.scan(sig_inst);
-		}
-#if LOGGING
-		std::cout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
-#endif
-		if (string_pool_insn)
-		{
-			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
-		}
-		else
-		{
-#if !METADATA_PATCHES
-			log_optional_scan_failure(false);
-#endif
 		}
 	}
 }
