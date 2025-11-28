@@ -928,10 +928,10 @@ static std::string process_args_str(const char* str)
 		}
 		if (!got_windowMode && fallback_windowMode >= 0)
 		{
-			const int max = 1;
+			const int max = (game_version >= GV(40, 0, 0)) ? 2 : 1;
 			if (fallback_windowMode <= max)
 			{
-				arguments_to_inject.append(ObfusString("-fullscreen:").str());
+				arguments_to_inject.append(game_version >= GV(40, 0, 0) ? ObfusString("-windowMode:").str() : ObfusString("-fullscreen:").str());
 				arguments_to_inject.append(std::to_string(fallback_windowMode));
 				arguments_to_inject.push_back(' ');
 			}
@@ -1285,7 +1285,7 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 {
 	switch (hash)
 	{
-	case joaat::compileTimeHash("gRegion"):
+	case wf_fnv_2("gRegion"):
 		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? static_cast<RegionMgr*>(L->outtop[-1].getObject()) : nullptr;
 #if LOGGING
 		std::cout << " (gRegion) = " << regionmgr;
@@ -1298,35 +1298,35 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 		}
 		break;
 
-	case joaat::compileTimeHash("gFlashMgr"):
+	case wf_fnv_2("gFlashMgr"):
 		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " (gFlashMgr) = " << flashmgr;
 #endif
 		break;
 
-	case joaat::compileTimeHash("gGameData"):
+	case wf_fnv_2("gGameData"):
 		gamedata = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " (gGameData) = " << gamedata;
 #endif
 		break;
 
-	case joaat::compileTimeHash("gPlayerProfileMgr"):
+	case wf_fnv_2("gPlayerProfileMgr"):
 		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " (gPlayerProfileMgr) = " << profilemgr;
 #endif
 		break;
 
-	case joaat::compileTimeHash("gClient"):
+	case wf_fnv_2("gClient"):
 		gClient = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		std::cout << " (gClient) = " << gClient;
 #endif
 		break;
 
-	case joaat::compileTimeHash("gMatchingService"):
+	case wf_fnv_2("gMatchingService"):
 		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
 		std::cout << " (gMatchingService) = " << matchingservice;
@@ -1358,7 +1358,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #if LOGGING
 	std::cout << "lua_set_global: " << name;
 #endif
-	handle_set_global(L, joaat::hash(name));
+	handle_set_global(L, wf_fnv_2(name));
 	return reinterpret_cast<decltype(&lua_set_global_detour)>(lua_set_global_hook.original)(L, name);
 }
 
@@ -3086,7 +3086,12 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if !MINIMAL_HOOKS
 	{
 		Pointer parse_arguments_callsite;
-		if (game_version >= GV(19, 0, 0))
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 E8 49 89 43 E8 49 8D 43 E8 49 89 43 F0 E8");
+			parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
+		}
+		else if (game_version >= GV(19, 0, 0))
 		{
 			SIG_INST("48 8D 0D ? ? ? ? 49 8D 43 ? 49 89 43 ? 49 8D 43 ? 49 89 43 ? E8"); // 2019.05.22.23.12 (has 2 matches in U40)
 			parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
@@ -3314,6 +3319,56 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 
+	if (game_version >= GV(40, 0, 0))
+	{
+		SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84");
+		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
+#endif
+		if (get_total_damage_hook.target && dmg_number_patch_addr)
+		{
+			uint8_t detour_bytes[] = {
+				// prepare call
+				/*  0 */ 0x44, 0x89, 0xF1, // mov ecx, r14d
+				/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+
+				/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
+
+				// compact numbers on
+				/* 15 */ 0x41, 0xFF, 0xD2, // call r10
+				/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+				/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+				/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
+
+				// compact numbers off
+				/* 34 */ 0x41, 0xFF, 0xD2, // call r10
+				/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+				/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+				/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
+			};
+			static_assert(sizeof(detour_bytes) == 50 + 3);
+			*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
+			*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
+			*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
+
+			void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
+			memcpy(detour, detour_bytes, sizeof(detour_bytes));
+
+			uint8_t trampoline[] = {
+				0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+				0x41, 0xff, 0xe2, // jmp r10
+			};
+			*(void**)(trampoline + 2) = detour;
+			memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
+			memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
+		}
+		else
+		{
+			std::cout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.") << std::endl;
+		}
+	}
+	else
 	{
 		SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
 		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
@@ -3412,6 +3467,12 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	if (game_version >= GV(33, 0, 0))
 	{
 		Pointer lua_FlashMgr_GetConfigBool_hash;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("37 F5 EB FC 00 00 00 00 ? ? ? ? ? ? ? ? F7 91 02 E1 00 00 00 00");
+			lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
+		}
+		else
 		{
 			SIG_INST("FC 94 94 BF 00 00 00 00 ? ? ? ? ? ? ? ? C0 99 E8 D0 00 00 00 00");
 			lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
@@ -3434,6 +3495,32 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if !MINIMAL_HOOKS
+	if (game_version >= GV(40, 0, 0))
+	{
+		SIG_INST("BA 4C 1E E4 A0 E8");
+		auto lua_set_global_by_hash_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		std::cout << "lua_set_global_by_hash_callsite = " << lua_set_global_by_hash_callsite.as<void*>() << std::endl;
+#endif
+		if (lua_set_global_by_hash_callsite)
+		{
+			auto lua_set_global_by_hash = lua_set_global_by_hash_callsite.add(6).rip().as<void*>();
+
+			lua_set_global_by_hash_hook.detour = reinterpret_cast<void*>(&lua_set_global_by_hash_detour);
+			lua_set_global_by_hash_hook.target = lua_set_global_by_hash;
+			lua_set_global_by_hash_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+			std::cout << "lua_set_global_by_hash_hook.code_cave = " << lua_set_global_by_hash_hook.code_cave<< std::endl;
+#endif
+			lua_set_global_by_hash_hook.create();
+			lua_set_global_by_hash_hook.enable();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+
 	if (game_version >= GV(37, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
@@ -3476,11 +3563,41 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
+	if (game_version >= GV(40, 0, 0))
+	{
+#if !MINIMAL_HOOKS
+		SIG_INST("49 8D 43 D8 49 89 43 F0 E8 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C4 58 E9");
+		auto register_enum_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		std::cout << "register_enum_callsite = " << register_enum_callsite.as<void*>() << std::endl;
+#endif
+		if (register_enum_callsite)
+		{
+			auto register_enum = register_enum_callsite.add(9).rip().as<void*>();
+
+			register_enum_hook.detour = reinterpret_cast<void*>(&register_enum_detour);
+			register_enum_hook.target = register_enum;
+			register_enum_hook.create();
+			register_enum_hook.enable();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+#endif
+	}
+
 #if !MINIMAL_HOOKS
 	if (!forced_profile_dir.empty() || PRIVATE)
 	{
 		// "Using profile dir "
 		Pointer get_profile_dir;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("40 55 53 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8D 99 ? ? ? ? 48 8B F1");
+			get_profile_dir = Module(nullptr).range.scan(sig_inst);
+		}
+		else
 		{
 			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 ? ? ? ? 48 8D 99");
 			get_profile_dir = Module(nullptr).range.scan(sig_inst);
@@ -4195,12 +4312,37 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 #endif
+
+	if (game_version >= GV(40, 0, 0))
+	{
+		SIG_INST("40 55 56 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 70 01 00 00");
+		auto anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		std::cout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
+#endif
+		if (anticheat_sideloading_check)
+		{
+			anticheat_sideloading_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
+			anticheat_sideloading_check_hook.target = anticheat_sideloading_check;
+			anticheat_sideloading_check_hook.enable();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
 }
 
 static void do_pointer_scans()
 {
 	{
 		Pointer string_pool_insn;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 48 8B FA 45 0F B7 C1 4D 03 C0 49 C1 E9 10");
+			string_pool_insn = Module(nullptr).range.scan(sig_inst);
+		}
+		else
 		{
 			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
 			string_pool_insn = Module(nullptr).range.scan(sig_inst);
@@ -4282,6 +4424,12 @@ static void do_pointer_scans()
 
 	if (game_version >= GV(37, 0, 0))
 	{
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 17 48 8B 41 08 89 50 0C");
+			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
+		}
+		else
 		{
 			SIG_INST("48 89 6C 24 18 56 48 83 EC 20 48 8B EA 48 8B F1 48 85 D2");
 			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
@@ -4415,6 +4563,12 @@ static void do_pointer_scans()
 	{
 		Pointer res[20];
 		int nres;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 8D 05 ? ? ? ? 4C 89 3D ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
+			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+		}
+		else
 		{
 			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
@@ -4452,7 +4606,7 @@ static void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(37, 0, 0) && game_version < GV(40, 0, 0))
 	{
 		SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
 		Pointer res[10];
@@ -4798,6 +4952,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 							|| (req.path[1] == '0' && req.path[2] == '_')
 							|| (req.path[1] == '7' && req.path[2] == '/') // Dx11 (pre-U40)
 							|| (req.path[1] == '8' && req.path[2] == '/') // Dx12 (pre-U40)
+							|| (req.path[1] == '9' && req.path[2] == '/') // Dx11 (post-U40)
+							|| (req.path[1] == 'A' && req.path[2] == '/') // Dx12 (post-U40)
 							)
 						)
 					{
