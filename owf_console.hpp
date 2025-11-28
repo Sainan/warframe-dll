@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 #include <ObfusString.hpp>
 
-#include "main.hpp"
+#include "main.hpp" // owf_broadcast_message
 
 struct owfConsole
 {
