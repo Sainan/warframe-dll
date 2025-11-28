@@ -4525,13 +4525,13 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		if (auto proc = soup::Process::current(); proc->name != EXE_NAME)
 		{
 			MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than " EXE_NAME ".", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-			return FALSE;
+			return exit(1), FALSE;
 		}
 
 		if (!std::filesystem::exists(EXE_NAME))
 		{
 			MessageBoxA(0, "Launched with incorrect working directory; it must be the folder where " EXE_NAME " is.", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-			return FALSE;
+			return exit(1), FALSE;
 		}
 
 		owfConsole::setTitle(BOOTSTRAPPER_TITLE);
@@ -4694,7 +4694,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
-			return FALSE;
+			return exit(1), FALSE;
 		}
 //#endif
 
