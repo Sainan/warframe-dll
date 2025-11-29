@@ -271,6 +271,13 @@ void owfScript::openLibs(lua_State* L)
 	lua_pushboolean(L, true);
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
 #endif
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		pluto_pushstring(L, lang_code);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "get_lang_code");
 }
 
 owfScript* get_script_by_instance_id(size_t instance_id)
@@ -339,13 +346,6 @@ owfScript::owfScript()
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "unblock_yield");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		pluto_pushstring(L, lang_code);
-		return 1;
-	});
-	OWF_SET_GLOBAL(L, "get_lang_code");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
