@@ -463,7 +463,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 		if (it != jr->reinterpretAsObj().end() && it->second->isStr())
 		{
 			ObfusString msg("W0RFXVN0ZXZlIGxpa2VzIGJpZyBidXR0cw");
-			if (auto sep = it->second->reinterpretAsStr().value.find(';'); sep != std::string::npos)
+			if (auto sep = it->second->reinterpretAsStr().value.find(';'); sep != std::string::npos && it->second->reinterpretAsStr().value.c_str()[0] == '0') // If PS indicates an anti-cheat detection it will look like "0x1;..." so keep the prefix.
 			{
 				it->second->reinterpretAsStr().value.erase(sep + 1);
 				it->second->reinterpretAsStr().value.append(msg.str());
