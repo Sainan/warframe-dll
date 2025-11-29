@@ -217,16 +217,6 @@ void owfScript::openLibs(lua_State* L)
 	});
 	OWF_SET_GLOBAL(L, "owf_repo_find");
 
-	if (string_pool)
-	{
-		lua_pushcfunction(L, [](lua_State* L) -> int
-		{
-			lua_pushstring(L, resolve_string_handle(luaL_checkinteger(L, 1)));
-			return 1;
-		});
-		OWF_SET_GLOBAL(L, "resolve_string_handle");
-	}
-
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		lua_pushlstring(L, build_version, 16);
