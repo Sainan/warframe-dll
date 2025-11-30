@@ -4139,6 +4139,49 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 #endif
+
+#if !MINIMAL_HOOKS
+	// Disable the back-off logic for content requests, which might lead to a cascade of failures from only a single piece of content being 404.
+	// This is especially important to keep update patches and stripped assets independent of each other.
+	if (game_version >= GV(40, 0, 0))
+	{
+		SIG_INST("B2 05 4A 8D 0C 38"); // "increasing delay to"
+		auto content_retry_insn = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		std::cout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
+#endif
+		if (content_retry_insn)
+		{
+			memGuard::setAllowedAccess(content_retry_insn.add(2).as<void*>(), 4, memGuard::ACC_RWX);
+			// lea rcx, [rax+r15] -> mov rcx, r15; nop
+			content_retry_insn.add(2).as<uint8_t*>()[0] = 0x4C;
+			content_retry_insn.add(2).as<uint8_t*>()[1] = 0x89;
+			content_retry_insn.add(2).as<uint8_t*>()[2] = 0xF9;
+			content_retry_insn.add(2).as<uint8_t*>()[3] = 0x90;
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+	else
+	{
+		SIG_INST("48 03 D0 48 8B 47 08 48 89 10");
+		auto content_retry_insn = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		std::cout << "content_retry_insn = " << content_retry_insn << std::endl;
+#endif
+		if (content_retry_insn)
+		{
+			memGuard::setAllowedAccess(content_retry_insn, 3, memGuard::ACC_RWX);
+			memset(content_retry_insn, 0x90, 3);
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+#endif
 }
 
 static void do_pointer_scans()
