@@ -3464,6 +3464,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if !MINIMAL_HOOKS
+	if (!forced_profile_dir.empty() || PRIVATE)
 	{
 		// "Using profile dir "
 		Pointer get_profile_dir;
