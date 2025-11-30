@@ -3955,6 +3955,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if !MINIMAL_HOOKS
+	if (!logout_on_request_failure || PRIVATE)
 	{
 		ObfusString str("WebSubscribeToFailure");
 		auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
