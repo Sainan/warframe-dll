@@ -8,6 +8,7 @@
 #include <joaat.hpp>
 #include <JsonObject.hpp>
 #include <Key.hpp> // char_to_virtual_key
+#include <memGuard.hpp>
 #include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
@@ -56,7 +57,7 @@ static void lua_pushpointer(lua_State* L, void* ptr)
 	}
 }
 
-template <typename T>
+template <typename T = void*, SOUP_RESTRICT(std::is_pointer_v<T>)>
 static T lua_checkpointer(lua_State* L, int i)
 {
 	auto ptr = reinterpret_cast<T>(luaL_checkinteger(L, 1));
@@ -2183,6 +2184,15 @@ void owfScript::openBgscriptLibs()
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "owf_tunables_load");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		const auto addr = lua_checkpointer(L, 1);
+		const auto size = luaL_checkinteger(L, 2);
+		memGuard::setAllowedAccess(addr, size, memGuard::ACC_RWX);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "mem_set_rwx");
 }
 
 bool owfScript::loadFile(std::string&& path)
