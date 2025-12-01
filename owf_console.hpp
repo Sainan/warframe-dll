@@ -4,7 +4,7 @@
 
 #include <ObfusString.hpp>
 
-#include "main.hpp" // owf_broadcast_message
+#include "owf_web.hpp" // owf_broadcast_message
 
 struct owfConsole
 {

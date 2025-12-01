@@ -1,28 +1,22 @@
 #pragma once
 
-#include <atomic>
 #include <string>
 
 #include <fwd.hpp>
-#include <SharedPtr.hpp>
-#include <Socket.hpp>
-#include <Task.hpp>
-
-#include "owf_web.hpp"
 
 #define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.12.2"
 
+// Cache tunables for faster access
+inline bool prohibit_skip_mission_start_timer = false;
+inline bool prohibit_freecam = false;
+inline bool prohibit_scripts = false;
+
 extern bool set_server_tunables(const char* data, size_t size, bool delta = false);
 extern bool owf_command(const std::string& in, soup::JsonObject& out);
-extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
-
-struct owfScriptRouteTask final : public soup::Task
-{
-	soup::SharedPtr<soup::Worker> s;
-	const size_t script_instance_id;
-	std::atomic<CustomRouteResponse*> response = nullptr;
-
-	owfScriptRouteTask(soup::Socket& _s, size_t script_instance_id);
-
-	void onTick() final;
-};
+extern void start_bgscript();
+extern void restart_bgscript();
+extern void do_logout();
+extern void on_got_server_host();
+extern void populate_full_status(soup::JsonObject& obj);
+extern void populate_autostart_scripts(soup::JsonObject& obj);
+extern void broadcast_running_scripts_locked();

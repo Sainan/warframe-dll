@@ -29,7 +29,6 @@
 #include <CompactDetourHook.hpp>
 #include <DetachedScheduler.hpp>
 #include <DetourHook.hpp>
-#include <filesystem.hpp>
 #include <HttpRequest.hpp>
 #include <HttpRequestTask.hpp>
 #include <joaat.hpp>
@@ -44,8 +43,6 @@
 #include <Process.hpp>
 #include <Regex.hpp>
 #include <ReplacementHook.hpp>
-#include <Server.hpp>
-#include <ServerWebService.hpp>
 #include <sha256.hpp>
 #include <Socket.hpp>
 #include <string.hpp>
@@ -54,7 +51,6 @@
 #include <unicode.hpp>
 #include <Uri.hpp>
 #include <urlenc.hpp>
-#include <WebSocketMessage.hpp>
 
 #include <windows.h>
 #include <wintrust.h>
@@ -162,12 +158,6 @@ extern "C" __declspec(dllexport) DWORD VerLanguageNameA(DWORD wLang, LPSTR szLan
 extern "C" __declspec(dllexport) DWORD VerLanguageNameW(DWORD wLang, LPWSTR szLang, DWORD cchLang) { return og_VerLanguageNameW(wLang, szLang, cchLang); }
 extern "C" __declspec(dllexport) BOOL VerQueryValueA(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen); }
 extern "C" __declspec(dllexport) BOOL VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen); }
-
-
-// Cache tunables for faster access
-static bool prohibit_skip_mission_start_timer = false;
-static bool prohibit_freecam = false;
-static bool prohibit_scripts = false;
 
 
 static std::string get_core_string(std::string key)
@@ -787,7 +777,7 @@ struct owfTunablesTask : public soup::Task
 
 static DetachedScheduler task_runner;
 
-static void on_got_server_host()
+void on_got_server_host()
 {
 #if SERVER_IPS_ONLY
 	IpAddr server_ip;
@@ -850,7 +840,7 @@ static void on_got_server_host()
 #endif
 }
 
-static void do_logout()
+void do_logout()
 {
 	if (!auth_query.empty())
 	{
@@ -1363,22 +1353,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 }
 
 
-static JsonArray get_available_scripts()
-{
-	JsonArray arr;
-	for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/Scripts").str()))
-	{
-		if (std::filesystem::is_regular_file(file))
-		{
-			auto name = string::fixType(file.path().u8string()).substr(15);
-			soup::string::replaceAll(name, '\\', '/');
-			arr.children.emplace_back(soup::make_unique<JsonString>(std::move(name)));
-		}
-	}
-	return arr;
-}
-
-static void populate_autostart_scripts(JsonObject& obj)
+void populate_autostart_scripts(JsonObject& obj)
 {
 	auto arr = soup::make_unique<JsonArray>();
 	for (const auto& name : auto_start_scripts)
@@ -1404,35 +1379,11 @@ static void populate_running_scripts(JsonObject& obj)
 	return populate_running_scripts_locked(obj);
 }
 
-static void broadcast_running_scripts_locked()
+void broadcast_running_scripts_locked()
 {
 	JsonObject obj;
 	populate_running_scripts_locked(obj);
 	owf_broadcast_message(obj.encode());
-}
-
-static void start_script_from_file(std::string&& path)
-{
-	auto scr = new owfScript();
-	bool ok = scr->loadFile(std::move(path));
-	std::lock_guard lock(running_scripts_mtx);
-	if (ok)
-	{
-		running_scripts.emplace_back(scr);
-	}
-	broadcast_running_scripts_locked();
-}
-
-static void start_script_from_string(const std::string& code)
-{
-	auto scr = new owfScript();
-	bool ok = scr->loadString(code, code);
-	std::lock_guard lock(running_scripts_mtx);
-	if (ok)
-	{
-		running_scripts.emplace_back(scr);
-	}
-	broadcast_running_scripts_locked();
 }
 
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
@@ -2332,95 +2283,7 @@ static void report_critical_failure(std::string msg)
 	MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 }
 
-static Server serv;
-
-struct owfWebsocketTag
-{
-	static inline uint32_t last_id = 0;
-
-	uint32_t id;
-};
-
-struct owfContentTask : public Task
-{
-	SharedPtr<Worker> s;
-	HttpRequestTask hrt;
-
-	owfContentTask(Socket& _s, HttpRequest&& hr)
-		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr), &Socket::certchain_validator_none)
-	{
-		ServerWebService::setKeepAlive(_s, true);
-	}
-
-	void onTick()
-	{
-		if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
-		{
-#if LOGGING
-			std::cout << "owfContentTask: client socket is gone, aborting" << std::endl;
-#endif
-			setWorkDone();
-		}
-		else if (hrt.tickUntilDone())
-		{
-			if (hrt.result.has_value() && hrt.result->status_code == 200)
-			{
-#if LOGGING
-				std::cout << "owfContentTask: 200" << std::endl;
-#endif
-				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), std::move(*hrt.result));
-			}
-			else
-			{
-#if LOGGING
-				std::cout << "owfContentTask: 404" << std::endl;
-#endif
-				if (!owfOverlay::isInited())
-				{
-					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
-					{
-						if (hrt.hr.path.substr(19, 2) == ObfusString("xx").str())
-						{
-							auto msg = ObfusString("The Windows_xx cache is missing or outdated.").str();
-							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());*/
-							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-						}
-						else
-						{
-							auto msg = ObfusString("The language that the game was supposed to launch with (").str();
-							msg.append(hrt.hr.path.substr(19, 2));
-							msg.append(ObfusString(") is missing or outdated.").str());
-							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-							msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-							msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
-							msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
-							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-						}
-						exit(1);
-					}
-					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
-					{
-						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (dx").str();
-						msg.append(hrt.hr.path.substr(13, 2));
-						msg.append(ObfusString(") is missing or outdated.").str());
-						/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-						msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-						msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
-						msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
-						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-
-						exit(1);
-					}
-				}
-				ServerWebService::send404(*static_cast<Socket*>(s.get()));
-			}
-			setWorkDone();
-		}
-	}
-};
-
-static void start_bgscript()
+void start_bgscript()
 {
 	std::string code;
 #if PRIVATE
@@ -2440,7 +2303,7 @@ static void start_bgscript()
 	bgscript->tick();
 }
 
-static void restart_bgscript()
+void restart_bgscript()
 {
 	if (bgscript)
 	{
@@ -2461,7 +2324,7 @@ static void populate_full_script_log(JsonObject& obj)
 	obj.add(ObfusString("script_log_len"), static_cast<int64_t>(script_log.size()));
 }
 
-static void populate_full_status(JsonObject& obj)
+void populate_full_status(JsonObject& obj)
 {
 	obj.add(ObfusString("server_host"), server_host);
 
@@ -4333,7 +4196,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 }
 
-static void do_pointer_scans()
+static SOUP_FORCEINLINE void do_pointer_scans()
 {
 	{
 		Pointer string_pool_insn;
@@ -4836,6 +4699,40 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if PRIVATE
 				std::cout << "Pointer scans done in " << (time::millis() - t) << " ms" << std::endl;
 #endif
+
+#if SOUP_BITS == 64
+				// Make sure the EXE version we read earlier is actually to be trusted.
+				// Can't do this in DllMain, so doing it here/now.
+				if (game_version >= GV(39, 0, 0)
+					&& !os::isWine() // Crashes :(
+					)
+				{
+					ObfusString Warframe_x64_exe("Warframe.x64.exe");
+					auto wstr_Warframe_x64_exe = unicode::utf8_to_utf16(Warframe_x64_exe.str());
+
+					WINTRUST_FILE_INFO fileInfo = {};
+					fileInfo.cbStruct = sizeof(fileInfo);
+					fileInfo.pcwszFilePath = wstr_Warframe_x64_exe.c_str();
+
+					WINTRUST_DATA trustData = {};
+					trustData.cbStruct = sizeof(trustData);
+					trustData.dwUIChoice = WTD_UI_NONE;
+					trustData.fdwRevocationChecks = WTD_REVOKE_NONE;
+					trustData.dwUnionChoice = WTD_CHOICE_FILE;
+					trustData.pFile = &fileInfo;
+					trustData.dwStateAction = 0;
+					trustData.dwProvFlags = WTD_SAFER_FLAG;
+
+					GUID policyGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+					ObfusString str_wintrust("wintrust");
+					ObfusString str_WinVerifyTrust("WinVerifyTrust");
+					auto hWintrust = LoadLibraryA(str_wintrust.c_str());
+					auto WinVerifyTrust_fp = reinterpret_cast<decltype(&WinVerifyTrust)>(GetProcAddress(hWintrust, str_WinVerifyTrust.c_str()));
+					exe_signed = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) == ERROR_SUCCESS);
+					FreeLibrary(hWintrust);
+				}
+#endif
 			});
 			thrd.detach();
 		}
@@ -4901,655 +4798,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		{
-			Thread thrd([](Capture&&)
-			{
-#if SOUP_BITS == 64
-				// Make sure the EXE version we read earlier is actually to be trusted.
-				// Can't do this in DllMain, so doing it here/now.
-				if (game_version >= GV(39, 0, 0)
-					&& !os::isWine() // Crashes :(
-					)
-				{
-					ObfusString Warframe_x64_exe("Warframe.x64.exe");
-					auto wstr_Warframe_x64_exe = unicode::utf8_to_utf16(Warframe_x64_exe.str());
-
-					WINTRUST_FILE_INFO fileInfo = {};
-					fileInfo.cbStruct = sizeof(fileInfo);
-					fileInfo.pcwszFilePath = wstr_Warframe_x64_exe.c_str();
-
-					WINTRUST_DATA trustData = {};
-					trustData.cbStruct = sizeof(trustData);
-					trustData.dwUIChoice = WTD_UI_NONE;
-					trustData.fdwRevocationChecks = WTD_REVOKE_NONE;
-					trustData.dwUnionChoice = WTD_CHOICE_FILE;
-					trustData.pFile = &fileInfo;
-					trustData.dwStateAction = 0;
-					trustData.dwProvFlags = WTD_SAFER_FLAG;
-
-					GUID policyGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
-
-					ObfusString str_wintrust("wintrust");
-					ObfusString str_WinVerifyTrust("WinVerifyTrust");
-					auto hWintrust = LoadLibraryA(str_wintrust.c_str());
-					auto WinVerifyTrust_fp = reinterpret_cast<decltype(&WinVerifyTrust)>(GetProcAddress(hWintrust, str_WinVerifyTrust.c_str()));
-					exe_signed = (WinVerifyTrust_fp(NULL, &policyGUID, &trustData) == ERROR_SUCCESS);
-					FreeLibrary(hWintrust);
-				}
-#endif
-
-				ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
-				{
-#if LOGGING
-					std::cout << "Request to builtin HTTP server: " << req.path << std::endl;
-#endif
-					if (joaat::hash(req.path.substr(0, 8)) == joaat::compileTimeHash("/origin/"))
-					{
-						req.path.erase(0, 16);
-					}
-					if (req.path.size() > 2
-						&& ((req.path[1] == '0' && req.path[2] == '/')
-							|| (req.path[1] == '0' && req.path[2] == '_')
-							|| (req.path[1] == '7' && req.path[2] == '/') // Dx11 (pre-U40)
-							|| (req.path[1] == '8' && req.path[2] == '/') // Dx12 (pre-U40)
-							|| (req.path[1] == '9' && req.path[2] == '/') // Dx11 (post-U40)
-							|| (req.path[1] == 'A' && req.path[2] == '/') // Dx12 (post-U40)
-							)
-						)
-					{
-						// Try to locate file locally
-						{
-							std::string local_path = ObfusString("OpenWF/content");
-							if (auto cache_req_path = ObfusString("/0/H.Cache.bin!D_---------------------w").str();
-								req.path.find(cache_req_path) != std::string::npos
-								)
-							{
-								// Example request: /origin/075B4E6D/0/H.Cache.bin!D_---------------------w
-								local_path += cache_req_path;
-							}
-							else
-							{
-								local_path += req.path;
-							}
-							if (auto data = string::fromFile(local_path); !data.empty())
-							{
-								ServerWebService::sendText(s, std::move(data));
-								return;
-							}
-						}
-
-						// Continue in task to ask SNS
-						HttpRequest hr(server_host + ":" + std::to_string(http_port), req.path);
-						hr.use_tls = false;
-						hr.path_is_encoded = true;
-						Scheduler::get()->add<owfContentTask>(s, std::move(hr));
-
-						return;
-					}
-					auto arr = string::explode(req.path, '?');
-					const auto route_hash = soup::joaat::hash(urlenc::decode(arr[0]));
-					switch (route_hash)
-					{
-					case soup::joaat::compileTimeHash("/"):
-						if (arr.size() > 1 && soup::joaat::hash(arr[1].substr(0, 5)) == soup::joaat::compileTimeHash("lang="))
-						{
-							webui_lang_code = arr[1].substr(5);
-						}
-						else
-						{
-							webui_lang_code = lang_code;
-						}
-#if PRIVATE
-						if (std::string html = string::fromFile("OpenWF/index.html"); !html.empty())
-						{
-							ServerWebService::sendHtml(s, html);
-						}
-						else
-#endif
-						{
-							size_t size;
-							const char* data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/index.html"), size);
-							ServerWebService::sendHtml(s, data, size);
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/dict.js"):
-						{
-							JsonObject obj;
-							auto dict = g_repo.getWebuiDict(webui_lang_code);
-							for (const auto& e : dict)
-							{
-								obj.add(std::move(e.first), std::move(e.second));
-							}
-							ServerWebService::sendData(s, ObfusString("text/javascript;charset=utf-8"), ObfusString("dict=").str() + obj.encode());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/ping"):
-						ServerWebService::sendText(s, ObfusString("pong"));
-						break;
-
-					case soup::joaat::compileTimeHash("/save_all_metadata"):
-						if (arr.size() > 1)
-						{
-							save_all_metadata = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(save_all_metadata));
-						break;
-
-					case soup::joaat::compileTimeHash("/write_all_metadata_reads_to_console"):
-						if (arr.size() > 1)
-						{
-							write_all_metadata_reads_to_console = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(write_all_metadata_reads_to_console));
-						break;
-
-					case soup::joaat::compileTimeHash("/write_all_metadata_reads_to_ee_log"):
-						if (arr.size() > 1)
-						{
-							write_all_metadata_reads_to_ee_log = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(write_all_metadata_reads_to_ee_log));
-						break;
-
-					case soup::joaat::compileTimeHash("/write_patched_metadata_reads_to_console"):
-						if (arr.size() > 1)
-						{
-							write_patched_metadata_reads_to_console = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(write_patched_metadata_reads_to_console));
-						break;
-
-					case soup::joaat::compileTimeHash("/write_patched_metadata_reads_to_ee_log"):
-						if (arr.size() > 1)
-						{
-							write_patched_metadata_reads_to_ee_log = (arr[1].size() == 4);
-						}
-						ServerWebService::sendText(s, std::to_string(write_patched_metadata_reads_to_ee_log));
-						break;
-
-					case soup::joaat::compileTimeHash("/pause_always_stops_time"):
-						ServerWebService::sendText(s, std::to_string(pause_always_stops_time));
-						break;
-
-					case soup::joaat::compileTimeHash("/server_host"):
-						if (arr.size() > 1
-							&& server_host != arr[1]
-							)
-						{
-							do_logout();
-							server_host = arr[1];
-							on_got_server_host();
-						}
-						ServerWebService::sendText(s, server_host);
-						break;
-
-					/*case soup::joaat::compileTimeHash("/freecam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = true;
-								local_player->getAvatar()->followed_by_camera() = false;
-							}
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/lockcam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera() = false;
-							}
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/gamecam"):
-						if (regionmgr && !prohibit_freecam)
-						{
-							if (auto local_player = regionmgr->GetLocalPlayer())
-							{
-								local_player->controlling_camera = false;
-								local_player->getAvatar()->followed_by_camera() = true;
-							}
-						}
-						ServerWebService::sendText(s, {});
-						break;*/
-
-					case soup::joaat::compileTimeHash("/status"):
-						{
-							JsonObject obj;
-							populate_full_status(obj);
-							ServerWebService::sendText(s, obj.encodePretty());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/toggle_console"):
-						if (owfConsole::active)
-						{
-							owfConsole::deactivate();
-						}
-						else
-						{
-							owfConsole::activate();
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/scripts"):
-						ServerWebService::sendText(s, get_available_scripts().encodePretty());
-						break;
-
-					case soup::joaat::compileTimeHash("/start_script"):
-						if (!prohibit_scripts)
-						{
-							start_script_from_file(urlenc::decode(arr.at(1)));
-							ServerWebService::sendText(s, {});
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/start_script_inline"):
-						if (!prohibit_scripts)
-						{
-							start_script_from_string(urlenc::decode(arr.at(1)));
-							ServerWebService::sendText(s, {});
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/stop_bgscript"): // Undocumented
-						if (bgscript)
-						{
-							bgscript->stop_requested = true;
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/start_bgscript"): // Undocumented
-						if (!bgscript)
-						{
-							start_bgscript();
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/restart_bgscript"): // Undocumented
-						restart_bgscript();
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/autostart_scripts"):
-						{
-							JsonArray arr;
-							for (const auto& name : auto_start_scripts)
-							{
-								arr.children.emplace_back(soup::make_unique<JsonString>(name));
-							}
-							ServerWebService::sendText(s, arr.encodePretty());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/add_autostart_script"):
-						if (auto name = urlenc::decode(arr.at(1)); std::find(auto_start_scripts.begin(), auto_start_scripts.end(), name) == auto_start_scripts.end())
-						{
-							auto_start_scripts.emplace_back(std::move(name));
-							save_config();
-						}
-						{
-							JsonObject obj;
-							populate_autostart_scripts(obj);
-							owf_broadcast_message(obj.encode());
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/remove_autostart_script"):
-						if (auto it = std::find(auto_start_scripts.begin(), auto_start_scripts.end(), urlenc::decode(arr.at(1))); it != auto_start_scripts.end())
-						{
-							auto_start_scripts.erase(it);
-							save_config();
-						}
-						{
-							JsonObject obj;
-							populate_autostart_scripts(obj);
-							owf_broadcast_message(obj.encode());
-						}
-						ServerWebService::sendText(s, {});
-						break;
-
-					case soup::joaat::compileTimeHash("/apply_hotfix"):
-						{
-							if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
-							{
-								uint64_t timestamp;
-								if (!owfRepo::readHotfixHeader(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE), timestamp))
-								{
-									ServerWebService::sendText(s, ObfusString("Failed to apply hotfix as it was made for a different DLL version").str());
-									break;
-								}
-								if (timestamp == g_repo.timestamp)
-								{
-									ServerWebService::sendText(s, ObfusString("No changes").str());
-									break;
-								}
-								{
-									std::lock_guard lock(g_repo_mtx);
-									if (g_repo.hotfix) // Replacing one hotfix with another?
-									{
-										g_repo.loadBuiltinArchive();
-									}
-									g_repo.loadHotfix(hotfix.data(), hotfix.size());
-								}
-								ServerWebService::sendText(s, ObfusString("Hotfix applied").str());
-							}
-							else
-							{
-								const auto prev_timestamp = g_repo.timestamp;
-								{
-									std::lock_guard lock(g_repo_mtx);
-									g_repo.loadBuiltinArchive();
-								}
-								if (g_repo.timestamp == prev_timestamp)
-								{
-									ServerWebService::sendText(s, ObfusString("No changes").str());
-									break;
-								}
-								ServerWebService::sendText(s, ObfusString("Reverting to pre-hotfix state").str());
-							}
-
-							{
-								size_t size;
-								auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
-								std::lock_guard lock(g_client_tunables_mtx);
-								g_client_tunables.loadMsgpack(data, size);
-							}
-
-							restart_bgscript();
-
-							load_hotkeys();
-
-							{
-								size_t size = 0;
-								auto data = g_repo.find(joaat::compileTimeHash("OpenWF/helpers/post_apply_hotfix.pluto"), size);
-								if (size)
-								{
-									start_script_from_string(std::string(data, size));
-								}
-							}
-
-							ServerWebService::sendText(s, {});
-						}
-						break;
-
-#if PRIVATE
-					case soup::joaat::compileTimeHash("/reload_tunables"): // Undocumented
-						{
-							size_t size;
-							if (auto data = (const char*)filesystem::createFileMapping("OpenWF/tunables.json", size))
-							{
-								{
-									std::lock_guard lock(g_client_tunables_mtx);
-									g_client_tunables.load(data, size);
-								}
-								filesystem::destroyFileMapping(data, size);
-							}
-							else
-							{
-								size_t size;
-								data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
-								std::lock_guard lock(g_client_tunables_mtx);
-								g_client_tunables.loadMsgpack(data, size);
-							}
-							ServerWebService::sendText(s, {});
-						}
-						break;
-#endif
-
-					case soup::joaat::compileTimeHash("/version"):
-						ServerWebService::sendText(s, ObfusString(BOOTSTRAPPER_TITLE).str());
-						break;
-
-					case soup::joaat::compileTimeHash("/game_version"):
-						{
-							JsonObject obj;
-							obj.add(ObfusString("build_version"), std::string(build_version, 16));
-							obj.add(ObfusString("build_hash"), build_hash[0] ? std::string(build_hash, 22) : std::string());
-							ServerWebService::sendText(s, obj.encodePretty());
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/memory"):
-						{
-							JsonObject obj;
-							//obj.add(ObfusString("leaked"), static_cast<int64_t>(leaked_memory.load()));
-//#if LABEL_REPLACEMENTS
-							obj.add(ObfusString("fossilised"), static_cast<int64_t>(fossilised_memory.load()));
-//#endif
-							ServerWebService::sendText(s, obj.encodePretty());
-						}
-						break;
-
-#if METADATA_PATCHES && SOUP_BITS == 64
-					case soup::joaat::compileTimeHash("/get_effective_metadata"):
-						{
-							std::lock_guard lock(metadata_patches_mtx);
-							if (auto e = metadata_patches.find(joaat::hash(urlenc::decode(arr.at(1)))); e != metadata_patches.end())
-							{
-								if (e->second.applied)
-								{
-									ServerWebService::sendText(s, e->second.final_data);
-								}
-								else
-								{
-									ServerWebService::sendText(s, ObfusString("patch not applied (yet)").str());
-								}
-							}
-							else
-							{
-								ServerWebService::sendText(s, ObfusString("no such patch").str());
-							}
-						}
-						break;
-
-					case soup::joaat::compileTimeHash("/get_effective_metadata_as_json"):
-						{
-							std::lock_guard lock(metadata_patches_mtx);
-							if (auto e = metadata_patches.find(joaat::hash(urlenc::decode(arr.at(1)))); e != metadata_patches.end())
-							{
-								if (e->second.applied)
-								{
-									EeNotationParser par;
-									auto json = par.parse(e->second.final_data);
-									ServerWebService::sendText(s, json->encodePretty());
-								}
-								else
-								{
-									ServerWebService::sendText(s, ObfusString("patch not applied (yet)").str());
-								}
-							}
-							else
-							{
-								ServerWebService::sendText(s, ObfusString("no such patch").str());
-							}
-						}
-						break;
-#endif
-
-					default:
-						{
-							// Try commands
-							if (!req.path.empty())
-							{
-								if (JsonObject out; owf_command(urlenc::decode(req.path.begin() + 1, req.path.end()), out))
-								{
-									ServerWebService::sendText(s, out.encodePretty());
-									break;
-								}
-							}
-
-							// Try script routes
-							bool handled = false;
-							std::lock_guard lock(running_scripts_mtx);
-							for (auto& scr : running_scripts)
-							{
-								if (auto route = scr->findStaticCustomRoute(route_hash))
-								{
-									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									scr->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
-									handled = true;
-									break;
-								}
-								if (auto route = scr->handlesRouteDynamically(route_hash))
-								{
-									auto spTask = Scheduler::get()->add<owfScriptRouteTask>(s, scr->instance_id);
-									scr->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_REQUEST, reinterpret_cast<uint64_t>(spTask.toDumb()), req.path);
-									handled = true;
-									break;
-								}
-							}
-							if (!handled && bgscript)
-							{
-								if (auto route = bgscript->findStaticCustomRoute(route_hash))
-								{
-									ServerWebService::sendData(s, route->mime.c_str(), route->content);
-									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_SERVED, req.path);
-									handled = true;
-								}
-								if (auto route = bgscript->handlesRouteDynamically(route_hash))
-								{
-									auto spTask = Scheduler::get()->add<owfScriptRouteTask>(s, bgscript->instance_id);
-									bgscript->events.emplace_back(OWF_EVT_CUSTOM_ROUTE_REQUEST, reinterpret_cast<uint64_t>(spTask.toDumb()), req.path);
-									handled = true;
-								}
-							}
-
-							if (!handled)
-							{
-								ServerWebService::send404(s);
-							}
-						}
-						break;
-					}
-				});
-				srv.on_websocket_connection_established = [](Socket& s, const HttpRequest&, ServerWebService&)
-				{
-					s.custom_data.addStructToMap(owfWebsocketTag, owfWebsocketTag{ ++owfWebsocketTag::last_id });
-
-					JsonObject obj;
-					populate_full_status(obj);
-					ServerWebService::wsSendText(s, obj.encode());
-				};
-				srv.on_websocket_message = [](WebSocketMessage& msg, Socket& s, ServerWebService&)
-				{
-					if (JsonObject out; owf_command(msg.data, out) && !out.empty())
-					{
-						ServerWebService::wsSendText(s, out.encode());
-						return;
-					}
-
-					std::lock_guard lock(running_scripts_mtx);
-					for (auto& scr : running_scripts)
-					{
-						if (scr->handlesWebsocketMessage(msg.data))
-						{
-							scr->events.emplace_back(OWF_EVT_WEBSOCKET_MESSAGE, s.custom_data.getStructFromMapConst(owfWebsocketTag).id, std::move(msg.data));
-							return;
-						}
-					}
-					if (bgscript)
-					{
-						if (auto route = bgscript->handlesWebsocketMessage(msg.data))
-						{
-							bgscript->events.emplace_back(OWF_EVT_WEBSOCKET_MESSAGE, s.custom_data.getStructFromMapConst(owfWebsocketTag).id, std::move(msg.data));
-							return;
-						}
-					}
-				};
-				if (serv.bind(client_http_port, &srv))
-				{
-					serv.run();
-				}
-				else
-				{
-					std::cout << ObfusString("Failed to bind TCP/").str();
-					std::cout << client_http_port;
-					std::cout << '.';
-					if (game_version >= GV(33, 6, 0))
-					{
-						std::cout << ObfusString(" The game will fail to start.").str();
-					}
-					std::cout << std::endl;
-				}
-			});
-			thrd.detach();
-		}
+		start_builtin_http_server();
 	}
 	return TRUE;
-}
-
-struct owfBroadcastMessageTask final : public Task
-{
-	const std::string msg;
-	const uint32_t recipient;
-
-	owfBroadcastMessageTask(std::string&& msg, uint32_t recipient)
-		: msg(std::move(msg)), recipient(recipient)
-	{
-	}
-
-	void onTick() final
-	{
-		for (const auto& w : Scheduler::get()->workers)
-		{
-			if (w->type == soup::WORKER_TYPE_SOCKET
-				&& static_cast<Socket*>(w.get())->custom_data.isStructInMap(owfWebsocketTag)
-				&& (recipient == 0 || recipient == static_cast<Socket*>(w.get())->custom_data.getStructFromMapConst(owfWebsocketTag).id)
-				)
-			{
-				ServerWebService::wsSendText(*static_cast<Socket*>(w.get()), msg);
-			}
-		}
-		setWorkDone();
-	}
-};
-
-void owf_broadcast_message(std::string&& msg, uint32_t recipient /*= 0*/)
-{
-	unicode::utf8_sanitise(msg);
-	serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
-}
-
-owfScriptRouteTask::owfScriptRouteTask(soup::Socket& _s, size_t script_instance_id)
-	: s(Scheduler::get()->getShared(_s)), script_instance_id(script_instance_id)
-{
-	ServerWebService::setKeepAlive(_s, true);
-}
-
-void owfScriptRouteTask::onTick() /*final*/
-{
-	if (auto response = this->response.load())
-	{
-		ServerWebService::sendData(*static_cast<Socket*>(s.get()), response->mime.c_str(), std::move(response->content));
-		delete response;
-		return setWorkDone();
-	}
-	if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
-	{
-#if LOGGING
-		std::cout << "owfScriptRouteTask: client socket is gone" << std::endl;
-#endif
-		return setWorkDone();
-	}
-	if (get_script_by_instance_id(script_instance_id) == nullptr)
-	{
-#if LOGGING
-		std::cout << "owfScriptRouteTask: script instance is gone" << std::endl;
-#endif
-		ServerWebService::sendContent(*static_cast<Socket*>(s.get()), "500 Internal Server Error", ObfusString("Sorry, this request was supposed to be handled by a script, but that script is no longer running now.").str());
-		return setWorkDone();
-	}
 }

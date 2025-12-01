@@ -6,6 +6,8 @@
 #include <crc32c.hpp>
 #include <filesystem.hpp>
 #include <joaat.hpp>
+#include <JsonArray.hpp>
+#include <JsonString.hpp>
 #include <JsonObject.hpp>
 #include <Key.hpp> // char_to_virtual_key
 #include <memGuard.hpp>
@@ -2282,4 +2284,43 @@ lua_Integer owfScript::getHotfixVersion() const
 	const auto res = lua_tointeger(main, -1);
 	lua_pop(main, 1);
 	return res;
+}
+
+void start_script_from_file(std::string&& path)
+{
+	auto scr = new owfScript();
+	bool ok = scr->loadFile(std::move(path));
+	std::lock_guard lock(running_scripts_mtx);
+	if (ok)
+	{
+		running_scripts.emplace_back(scr);
+	}
+	broadcast_running_scripts_locked();
+}
+
+void start_script_from_string(const std::string& code)
+{
+	auto scr = new owfScript();
+	bool ok = scr->loadString(code, code);
+	std::lock_guard lock(running_scripts_mtx);
+	if (ok)
+	{
+		running_scripts.emplace_back(scr);
+	}
+	broadcast_running_scripts_locked();
+}
+
+JsonArray get_available_scripts()
+{
+	JsonArray arr;
+	for (auto& file : std::filesystem::recursive_directory_iterator(ObfusString("OpenWF/Scripts").str()))
+	{
+		if (std::filesystem::is_regular_file(file))
+		{
+			auto name = string::fixType(file.path().u8string()).substr(15);
+			soup::string::replaceAll(name, '\\', '/');
+			arr.children.emplace_back(soup::make_unique<JsonString>(std::move(name)));
+		}
+	}
+	return arr;
 }

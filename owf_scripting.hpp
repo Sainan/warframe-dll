@@ -173,3 +173,6 @@ inline owfScript* get_script_by_name(const std::string& name)
 }
 
 extern owfScript* get_script_by_instance_id(size_t instance_id);
+extern void start_script_from_file(std::string&& path);
+extern void start_script_from_string(const std::string& code);
+extern soup::JsonArray get_available_scripts();
