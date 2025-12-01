@@ -6,7 +6,18 @@ function joaat(string $str): int
 	return hexdec(hash("joaat", $str));
 }
 
-$target_version = substr(trim(explode("\n", file_get_contents("main.cpp"))[0]), 28, -1);
+function get_bootstrapper_title(): string
+{
+	foreach (explode("\n", file_get_contents("main.hpp")) as $line)
+	{
+		if (str_starts_with($line, "#define BOOTSTRAPPER_TITLE"))
+		{
+			return substr($line, 28, -2);
+		}
+	}
+}
+
+$target_version = get_bootstrapper_title();
 
 chdir("tools");
 passthru("pluto archive.pluto");

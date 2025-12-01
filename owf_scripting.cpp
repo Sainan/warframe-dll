@@ -260,7 +260,7 @@ void owfScript::openLibs(lua_State* L)
 	});
 	OWF_SET_GLOBAL(L, "owf_get_auth_query");
 
-	lua_pushstring(L, g_bootstrapper_title);
+	lua_pushstring(L, BOOTSTRAPPER_TITLE);
 	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE"); // undocumented
 
 	pluto_pushstring(L, dll_path_utf8);

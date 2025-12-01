@@ -1,4 +1,4 @@
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.12.1"
+#include "main.hpp"
 
 #define REDIRECT_REQUESTS true
 #define SERVER_IPS_ONLY true
@@ -21,8 +21,6 @@
 
 // Writes all IRC traffic to EE.log
 #define VERBOSE_IRC false
-
-#include "main.hpp"
 
 #include <iostream>
 #include <mutex>
@@ -82,8 +80,6 @@ using namespace soup;
 #include "owf_scripting.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
-
-const char* g_bootstrapper_title = BOOTSTRAPPER_TITLE;
 
 #if !SERVER_IPS_ONLY
 static uint32_t server_remote_ip_hash = 0;

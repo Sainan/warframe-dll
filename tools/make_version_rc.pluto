@@ -1,4 +1,12 @@
-local code_version = io.contents("main.cpp"):split("\n")[1]:sub(29 + #"OpenWF Bootstrapper v", -3)
+local function get_bootstrapper_title()
+    for line in io.lines("main.hpp") do
+        if line:startswith("#define BOOTSTRAPPER_TITLE") then
+            return line:sub(29, -2)
+        end
+    end
+end
+
+local code_version = get_bootstrapper_title():sub(1 + #"OpenWF Bootstrapper v")
 
 io.contents("version.rc", [[#include <winres.h>
 
