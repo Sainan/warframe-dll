@@ -2423,6 +2423,7 @@ static void start_bgscript()
 
 	std::lock_guard lock(running_scripts_mtx);
 	bgscript = new owfScript();
+	bgscript->openBgscriptLibs();
 	bgscript->loadString(ObfusString("OpenWF Background Script"), std::move(code));
 	bgscript->tick();
 }

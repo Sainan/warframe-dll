@@ -82,6 +82,8 @@ struct owfScript
 	owfScript();
 	~owfScript();
 
+	void openBgscriptLibs();
+
 	bool loadFile(std::string&& path);
 	bool loadString(const std::string& name, const std::string& code);
 

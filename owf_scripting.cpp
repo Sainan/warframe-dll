@@ -1649,16 +1649,6 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		size_t size;
-		const char* data = luaL_checklstring(L, 1, &size);
-		bool delta = lua_toboolean(L, 2);
-		lua_pushboolean(L, set_server_tunables(data, size, delta));
-		return 1;
-	});
-	OWF_SET_GLOBAL(L, "owf_tunables_load");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
 		std::lock_guard lock(g_server_tunables_mtx);
 		lua_pushboolean(L, g_server_tunables.getBool(soup::joaat::hash(luaL_checkstring(L, 1))));
 		return 1;
@@ -2178,6 +2168,21 @@ owfScript::~owfScript()
 		}
 		events.pop_front();
 	}
+}
+
+void owfScript::openBgscriptLibs()
+{
+	const auto L = this->main;
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t size;
+		const char* data = luaL_checklstring(L, 1, &size);
+		bool delta = lua_toboolean(L, 2);
+		lua_pushboolean(L, set_server_tunables(data, size, delta));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_tunables_load");
 }
 
 bool owfScript::loadFile(std::string&& path)
