@@ -871,11 +871,7 @@ static std::string process_args_str(const char* str)
 		bool got_cluster = false;
 		for (const auto& arg : string::explode<std::string>(str, ' '))
 		{
-			if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
-			{
-				server_host = arg.substr(15);
-			}
-			else if (arg.size() > 10 && arg.substr(0, 10) == ObfusString("-language:").str())
+			if (arg.size() > 10 && arg.substr(0, 10) == ObfusString("-language:").str())
 			{
 				got_language = true;
 			}
@@ -895,8 +891,25 @@ static std::string process_args_str(const char* str)
 			{
 				got_cluster = true;
 			}
+			else if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+			{
+				server_host = arg.substr(15);
+			}
+			else if (arg.size() > 13 && arg.substr(0, 13) == ObfusString("-owfHttpPort:").str())
+			{
+				string::toIntOpt<uint16_t>(arg.substr(13)).consume(http_port);
+			}
+			else if (arg.size() > 14 && arg.substr(0, 14) == ObfusString("-owfHttpsPort:").str())
+			{
+				string::toIntOpt<uint16_t>(arg.substr(14)).consume(https_port);
+			}
+			else if (arg.size() > 19 && arg.substr(0, 19) == ObfusString("-owfClientHttpPort:").str())
+			{
+				string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
+			}
 		}
 		on_got_server_host();
+		start_builtin_http_server();
 
 		if (!got_language && !fallback_language.empty())
 		{
@@ -2999,6 +3012,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		else
 		{
 			on_got_server_host();
+			start_builtin_http_server();
 			log_optional_scan_failure(false);
 		}
 	}
@@ -4797,8 +4811,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				start_script_from_file(base_path.str() + path);
 			}
 		}
-
-		start_builtin_http_server();
 	}
 	return TRUE;
 }
