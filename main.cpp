@@ -1620,11 +1620,26 @@ static int lua_OpenWebBrowser_detour(luau_State* L)
 	std::cout << "lua_OpenWebBrowser: " << L->intop[0].getString() << std::endl;
 #endif
 	ObfusString sub("warframe.com");
-	if (strstr(L->intop[0].getString(), sub.c_str()) == nullptr)
+	if (strstr(L->intop[0].getString(), sub.c_str()) != nullptr)
 	{
-		return lua_OpenWebBrowser_og(L);
+		// Purchases have a sku; other usages instead have redirect, e.g.:
+		// ...&redirect=/patch-notes/...
+		// ...&redirect=/updates/...
+		ObfusString sub2("&redirect=");
+		if (const auto redirect = strstr(L->intop[0].getString(), sub2.c_str()))
+		{
+			const auto path = redirect + sub2.size();
+			if (luau_pushstring)
+			{
+				std::string new_url = ObfusString("https://www.warframe.com").str() + path;
+				L->outtop = &L->intop[0];
+				luau_pushstring(L, new_url.c_str());
+				return lua_OpenWebBrowser_og(L);
+			}
+		}
+		return 0;
 	}
-	return 0;
+	return lua_OpenWebBrowser_og(L);
 }
 
 
