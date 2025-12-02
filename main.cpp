@@ -854,6 +854,8 @@ void do_logout()
 }
 
 
+#define INSTANTLY_START_BUILTIN_HTTP_SERVER (game_version < GV(38, 5, 0))
+
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
 static uint64_t* device_id_ptr = nullptr;
@@ -905,11 +907,17 @@ static std::string process_args_str(const char* str)
 			}
 			else if (arg.size() > 19 && arg.substr(0, 19) == ObfusString("-owfClientHttpPort:").str())
 			{
-				string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
+				if (!INSTANTLY_START_BUILTIN_HTTP_SERVER)
+				{
+					string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
+				}
 			}
 		}
 		on_got_server_host();
-		start_builtin_http_server();
+		if (!INSTANTLY_START_BUILTIN_HTTP_SERVER)
+		{
+			start_builtin_http_server();
+		}
 
 		if (!got_language && !fallback_language.empty())
 		{
@@ -4810,6 +4818,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				start_script_from_file(base_path.str() + path);
 			}
+		}
+
+		if (INSTANTLY_START_BUILTIN_HTTP_SERVER)
+		{
+			start_builtin_http_server();
 		}
 	}
 	return TRUE;
