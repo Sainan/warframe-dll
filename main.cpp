@@ -1632,6 +1632,7 @@ static int lua_OpenWebBrowser_detour(luau_State* L)
 			if (luau_pushstring)
 			{
 				std::string new_url = ObfusString("https://www.warframe.com").str() + path;
+				string::replaceAll(new_url, ObfusString("/updates/").str(), ObfusString("/patch-notes/").str()); // The old /updates/ links now 404 instead of just redirecting...
 				L->outtop = &L->intop[0];
 				luau_pushstring(L, new_url.c_str());
 				return lua_OpenWebBrowser_og(L);
