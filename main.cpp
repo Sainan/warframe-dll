@@ -3006,14 +3006,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
 			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
-		else if (game_version >= GV(29, 0, 0))
+		else if (game_version >= GV(29, 3, 1))
 		{
-			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31");
+			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31"); // 2020.11.04.18.58
 			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 		else if (game_version >= GV(26, 1, 0))
 		{
-			SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.03.24.20.24, 2019.12.13.00.31, 2019.11.22.21.24
+			SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.08.25.18.35, 2020.03.24.20.24, 2019.12.13.00.31, 2019.11.22.21.24
 			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 		else
