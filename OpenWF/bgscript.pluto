@@ -106,7 +106,7 @@ then
 		return bin, hash
 	end
 
-	local manifest_typeid = compareversions(owf_get_build_version(), "2025.10.14.16.10") >= 0 ? "E" : "D"
+	local manifest_typeid = compareversions(owf_get_build_version(), "2025.09.25.17.01") >= 0 ? "E" : "D"
 
 	io.mkdirs("OpenWF/Content/0")
 	if compressed, decompressed_size := owf_cache_find("H.Misc", "/H.Cache.bin") then
