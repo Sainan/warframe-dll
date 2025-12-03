@@ -4212,7 +4212,10 @@ static void do_pointer_scans()
 		{
 			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
 #if METADATA_PATCHES
-			set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_ok);
+			if (object_type_serialise_propery_text_hook.target)
+			{
+				set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_ok);
+			}
 #endif
 		}
 		else
