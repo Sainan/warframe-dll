@@ -10,7 +10,7 @@
 
 #include "owf_web.hpp"
 
-#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.12.1"
+#define BOOTSTRAPPER_TITLE "OpenWF Bootstrapper v0.12.2"
 
 extern bool set_server_tunables(const char* data, size_t size, bool delta = false);
 extern bool owf_command(const std::string& in, soup::JsonObject& out);
