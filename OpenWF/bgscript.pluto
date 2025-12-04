@@ -286,7 +286,7 @@ owf_register_command("gamecam", function()
 		end
 	end
 end)
-owf_register_command("teleport", function(_, pos)
+owf_register_command("teleport", function(pos)
 	if ivkr_available and not owf_tunables_has("prohibit_teleport") then
 		local arr = pos:split(",")
 		if #arr == 3 then
