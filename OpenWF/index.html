@@ -32,7 +32,7 @@
 	<hr>
 	<p><label for="camtype"></label> <select id="camtype"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select></p>
 	<p><label for="pos"></label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
-	<p><button id="tp_submit"></button> <select id="tp-target"><option value="custom"></option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></p>
+	<form onsubmit="doTeleport();return false"><button type="submit" id="tp_submit"></button> <select id="tp-target"><option value="custom"></option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></form>
 	<hr>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
@@ -344,7 +344,7 @@
 
 		document.getElementById("tp-target").onchange = onMarkersChange;
 
-		document.getElementById("tp_submit").onclick = function() {
+		function doTeleport() {
 			let pos = document.getElementById("tp-target").value;
 			if (pos == "custom") {
 				pos = document.getElementById("tp-pos").value
