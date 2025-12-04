@@ -2731,7 +2731,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameStringU18, true>);
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameStringU18, true>); static_assert(MIN_GV_FOR_TLS == GV(19, 0, 0), "MIN_GV_FOR_TLS is not congruent with strip_tls");
 		}
 		game_http_request_hook.target = game_http_request;
 		game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
