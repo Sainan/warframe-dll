@@ -1,3 +1,7 @@
+-- The scripting API uses Pluto, a fork of Lua.
+-- - Homepage: https://pluto-lang.org/
+-- - Syntax Highlighting: https://pluto-lang.org/docs/Editor%20Integration
+
 -- Classes
 
 Vector = require "pluto:vector3"
