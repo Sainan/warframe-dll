@@ -269,13 +269,18 @@ void owfScript::openLibs(lua_State* L)
 	});
 	OWF_SET_GLOBAL(L, "owf_get_auth_query");
 
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		lua_pushinteger(L, client_http_port);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_get_client_http_port");
+
 	lua_pushstring(L, BOOTSTRAPPER_TITLE);
 	OWF_SET_GLOBAL(L, "OWF_CLIENT_TITLE"); // undocumented
 
 	pluto_pushstring(L, dll_path_utf8);
 	OWF_SET_GLOBAL(L, "OWF_CLIENT_DLL_PATH"); // undocumented
-
-	OWF_SET_GLOBAL_INT(L, "OWF_CLIENT_HTTP_PORT", client_http_port); // undocumented
 
 #if PRIVATE
 	lua_pushboolean(L, true);
