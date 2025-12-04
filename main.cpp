@@ -854,10 +854,9 @@ void do_logout()
 }
 
 
-#define INSTANTLY_START_BUILTIN_HTTP_SERVER (game_version < GV(38, 5, 0))
-
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
+static bool instantly_start_builtin_http_server = false;
 static uint64_t* device_id_ptr = nullptr;
 
 static std::string process_args_str(const char* str)
@@ -907,14 +906,14 @@ static std::string process_args_str(const char* str)
 			}
 			else if (arg.size() > 19 && arg.substr(0, 19) == ObfusString("-owfClientHttpPort:").str())
 			{
-				if (!INSTANTLY_START_BUILTIN_HTTP_SERVER)
+				if (!instantly_start_builtin_http_server)
 				{
 					string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
 				}
 			}
 		}
 		on_got_server_host();
-		if (!INSTANTLY_START_BUILTIN_HTTP_SERVER)
+		if (!instantly_start_builtin_http_server)
 		{
 			start_builtin_http_server();
 		}
@@ -4820,7 +4819,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		if (INSTANTLY_START_BUILTIN_HTTP_SERVER)
+		instantly_start_builtin_http_server = g_repo.getVersionedInt(joaat::compileTimeHash("OpenWF/vv/instantly_start_builtin_http_server.json"), game_version);
+#if LOGGING
+		std::cout << "instantly_start_builtin_http_server = " << instantly_start_builtin_http_server << std::endl;
+#endif
+		if (instantly_start_builtin_http_server)
 		{
 			start_builtin_http_server();
 		}
