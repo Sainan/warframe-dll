@@ -3874,16 +3874,20 @@ return function(f)
 				if evt.type == OWF_EVT_CUSTOM_ROUTE_REQUEST then
 					local path, arg = url.decode(evt.path):split("?", 2):unpack()
 					if cb := script_commands[path:sub(2)] then
-						owf_dynamic_custom_route_response(evt.inst, "text/plain", format_command_response(path:sub(2), cb(arg)))
+						sched:add(function()
+							owf_dynamic_custom_route_response(evt.inst, "text/plain", format_command_response(path:sub(2), cb(arg)))
+						end)
 						continue
 					end
 				elseif evt.type == OWF_EVT_WEBSOCKET_MESSAGE then
 					local cmd, arg = evt.text:split("?", 2):unpack()
 					if cb := script_commands[cmd] then
-						local r = format_command_response(cmd, cb(arg))
-						if #r > 2 then
-							owf_broadcast_message(r, evt.sender)
-						end
+						sched:add(function()
+							local r = format_command_response(cmd, cb(arg))
+							if #r > 2 then
+								owf_broadcast_message(r, evt.sender)
+							end
+						end)
 						continue
 					end
 				elseif evt.type == OWF_EVT_SUBMIT_CHAT_MESSAGE then
@@ -3912,7 +3916,9 @@ return function(f)
 				elseif evt.type == OWF_EVT_SCRIPT_MESSAGE then
 					local data = json.decode(evt.data)
 					if cb := script_commands[data.channel] then
-						owf_script_send_reply(evt.inst, format_command_response(data.channel, cb(data.text)))
+						sched:add(function()
+							owf_script_send_reply(evt.inst, format_command_response(data.channel, cb(data.text)))
+						end)
 						continue
 					end
 					evt.channel = data.channel
