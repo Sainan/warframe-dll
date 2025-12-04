@@ -3811,7 +3811,11 @@ local function format_command_response(cmd, r)
 	if type(r) ~= "table" then
 		r = { [cmd] = r }
 	end
-	return json.encode(r)
+	local s = json.encode(r)
+	if s == "[]" then
+		return "{}"
+	end
+	return s
 end
 
 return function(f)
