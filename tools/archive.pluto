@@ -61,7 +61,11 @@ local function pack_file(path, archive_path)
 				k = crypto.joaat(k)
 				packed.__order:insert(k)
 				if type(v) == "table" then
-					packed[k] = v:mapped(crypto.joaat)
+					if v["$vn"] then
+						packed[k] = vv_v2n(v["$vn"])
+					else
+						packed[k] = v:mapped(crypto.joaat)
+					end
 				else
 					packed[k] = v
 				end
