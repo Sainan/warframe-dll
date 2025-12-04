@@ -7,7 +7,7 @@
 #define PROVIDE_VERSION_INFO true
 #define METADATA_PATCHES true
 #define DISABLE_WSINTCHK true
-#define MINIMAL_HOOKS false
+#define MINIMAL_HOOKS false // does not disable hooks with their own macros (metadata patches, label replacements)
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
