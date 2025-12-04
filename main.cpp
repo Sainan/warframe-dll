@@ -4819,7 +4819,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		instantly_start_builtin_http_server = g_repo.getVersionedInt(joaat::compileTimeHash("OpenWF/vv/instantly_start_builtin_http_server.json"), game_version);
+		instantly_start_builtin_http_server = g_repo.getVersionedInt(joaat::compileTimeHash("OpenWF/vv/instantly_start_builtin_http_server.json"), game_version) || MINIMAL_HOOKS;
 #if LOGGING
 		std::cout << "instantly_start_builtin_http_server = " << instantly_start_builtin_http_server << std::endl;
 #endif
