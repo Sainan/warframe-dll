@@ -912,6 +912,13 @@ class BaseAvatar extends Entity
 		ivkr_push_bool(b)
 		ivkr_call(ivkr_find_method("BaseAvatar", "SetPostureModifier"), 3)
 	end
+
+	function PlayAnimation(resource)
+		self:pushToIvkr()
+		resource:pushToIvkr()
+		ivkr_push_bool(false)
+		ivkr_pop(ivkr_call(ivkr_find_method("BaseAvatar", "PlayAnimation"), 3))
+	end
 end
 
 class Avatar extends BaseAvatar

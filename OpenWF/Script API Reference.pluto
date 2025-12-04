@@ -131,6 +131,8 @@ class BaseAvatar extends Entity
 	function EnableRagdollRecovery(b1, b2)
 	function DamageDD(damageData)
 	function GetRagdoll()
+	function SetPostureModifier(i, b)
+	function PlayAnimation(resource)
 
 class Avatar extends BaseAvatar
 	function ControlCamera(b)
