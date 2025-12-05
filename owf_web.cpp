@@ -16,11 +16,14 @@
 #include <urlenc.hpp>
 #include <WebSocketMessage.hpp>
 
+#include "modules/ee-notation-parser/EeNotationParser.hpp"
+
 #include "main.hpp"
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_hotkeys.hpp"
 #include "owf_label_replacements.hpp"
+#include "owf_metadata_patches.hpp"
 #include "owf_overlay.hpp"
 #include "owf_repo.hpp"
 #include "owf_scripting.hpp"

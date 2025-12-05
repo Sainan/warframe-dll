@@ -5,7 +5,6 @@
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
-#define METADATA_PATCHES true
 #define DISABLE_WSINTCHK true
 #define MINIMAL_HOOKS false // does not disable hooks with their own macros (metadata patches, label replacements)
 
@@ -41,7 +40,6 @@
 #include <Pattern.hpp>
 #include <pattern_macros.hpp>
 #include <Process.hpp>
-#include <Regex.hpp>
 #include <ReplacementHook.hpp>
 #include <sha256.hpp>
 #include <Socket.hpp>
@@ -64,18 +62,19 @@
 
 #include "modules/ee-notation-parser/EeNotationParser.hpp"
 
-using namespace soup;
-
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_hotkeys.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
+#include "owf_metadata_patches.hpp"
 #include "owf_overlay.hpp"
 #include "owf_repo.hpp"
 #include "owf_scripting.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
+
+using namespace soup;
 
 #if !SERVER_IPS_ONLY
 static uint32_t server_remote_ip_hash = 0;
@@ -1707,19 +1706,6 @@ static void check_string_substitutions_detour(void* a1, Str* str, void* substitu
 
 
 #if METADATA_PATCHES && SOUP_BITS == 64
-struct MetadataPatch
-{
-	std::string prefix;
-	std::vector<std::pair<std::string, std::string>> replacements;
-	std::vector<std::pair<soup::Regex, std::string>> substitutions;
-	std::vector<std::pair<std::string, std::string>> query_assignments;
-
-	std::string final_data;
-	bool is_implicit = false;
-	bool applied = false;
-};
-static Mutex metadata_patches_mtx;
-static std::unordered_map<uint32_t, MetadataPatch> metadata_patches;
 static MetadataPatch* current_patch = nullptr;
 static void load_metadata_patches()
 {
