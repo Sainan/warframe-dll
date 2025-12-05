@@ -3491,7 +3491,11 @@ ivkr_typename = function(idx)
 end
 
 function ivkr_push_t()
-	ivkr_push_string("_T")
+	if compareversions(owf_get_build_version(), "2025.10.14.16.10") >= 0 then
+		ivkr_push_int_as_bool(ivkr_hash("_T"))
+	else
+		ivkr_push_string("_T")
+	end
 	ivkr_gettable(-10002)
 end
 
