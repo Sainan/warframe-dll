@@ -157,6 +157,7 @@
 		<li>Lines starting with <code>r|</code> create replacements, e.g. <code>r|A|Z</code> replaces all instances of <code>A</code> with <code>Z</code> in affected metadata.</li>
 		<li>Lines starting with <code>s|</code> create regex substitutions, e.g. <code>s|(?m)^(.+)=1$|$1=0</code> would replace a value of 1 on any line with a 0, using the 'm' flag here so ^ and $ also match on line boundaries. See <a href="https://github.com/calamity-inc/Soup/blob/senpai/docs/user/regex.md" target="_blank">here</a> for more information about the Regex engine.</li>
 		<li>Lines starting with <code>q|</code> create query assignments, e.g. <code>q|Upgrades.0.Value|123</code> sets the Value field of the first item in the Upgrades array to 123.</li>
+		<li>Lines starting with <code>$</code> are used to set flags. Currently there is only <code>$clear</code> which can be used to replace the entire metadata.</li>
 	</ul>
 	<p>If multiple patches affect the same absolute path, they are combined.</p>
 	<h2>Content Management</h2>

@@ -16,6 +16,7 @@ struct MetadataPatch
 	std::vector<std::pair<std::string, std::string>> query_assignments;
 
 	std::string final_data;
+	bool discard_original = false;
 	bool is_implicit = false;
 	bool applied = false;
 };

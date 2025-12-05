@@ -1729,6 +1729,7 @@ static void load_metadata_patches()
 			current_patch = &metadata_patches.emplace(hash, MetadataPatch{}).first->second;
 		}
 		current_patch->prefix.append(pluto_checkstring(L, 2));
+		current_patch->discard_original = (current_patch->discard_original || lua_toboolean(L, 3));
 		metadata_patches_in_use = true;
 		return 0;
 	});
@@ -1807,11 +1808,18 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 		buf.append(patch.prefix);
 		if (patch.replacements.empty() && patch.substitutions.empty() && patch.query_assignments.empty())
 		{
-			buf.append(str->getData(), str->getSize());
+			if (!patch.discard_original)
+			{
+				buf.append(str->getData(), str->getSize());
+			}
 		}
 		else
 		{
-			std::string text(str->getData(), str->getSize());
+			std::string text;
+			if (!patch.discard_original)
+			{
+				text = std::string(str->getData(), str->getSize());
+			}
 			for (const auto& replacement : patch.replacements)
 			{
 				string::replaceAll(text, replacement.first, replacement.second);

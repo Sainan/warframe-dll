@@ -76,6 +76,14 @@ function parse_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 				print_to_console("[Metadata Patches] - What: "..line)
 			end
+		elseif line:startswith("$") then
+			if "clear" in line then
+				patch.discard_original = true
+			else
+				print_to_console("[Metadata Patches] Ignoring unknown command")
+				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+				print_to_console("[Metadata Patches] - What: "..line)
+			end
 		elseif #line ~= 0 and line[1] ~= "#" then
 			patch.prefix = patch.prefix .. line .. "\n"
 		end
@@ -94,7 +102,7 @@ function load_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Note: > and & are used to start new patches and therefore need to be followed by valid paths to patch.")
 				continue
 			end
-			new_patch(key, patch.prefix)
+			new_patch(key, patch.prefix, patch.discard_original)
 			for k, v in patch.replacements do
 				add_replacement(k, v)
 			end
