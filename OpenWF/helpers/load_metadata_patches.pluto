@@ -9,7 +9,7 @@ function parse_metadata_patches(str, filename)
 		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {}, query_assignments = {} }
 	end
 	for linenum, line in str:split("\n") do
-		if line[1] == "/" then
+		if line:startswith("/") then
 			if ampersand then
 				ampersand = false
 			else
@@ -33,7 +33,7 @@ function parse_metadata_patches(str, filename)
 		end
 		line = line:strip()
 		ampersand = false
-		if line[1] == "&" then
+		if line:startswith("&") then
 			ampersand = true
 			line = line:sub(2):strip()
 			if line[-1] == "&" then
@@ -42,7 +42,7 @@ function parse_metadata_patches(str, filename)
 			for line:split("&") as key do
 				patch.keys:insert(key:strip())
 			end
-		elseif line[1] == ">" then
+		elseif line:startswith(">") then
 			delimit_patch()
 			line = line:sub(2):strip()
 			if line[-1] == "&" then
@@ -52,7 +52,7 @@ function parse_metadata_patches(str, filename)
 			for line:split("&") as key do
 				patch.keys:insert(key:strip())
 			end
-		elseif line:sub(1, 2) == "r|" then
+		elseif line:startswith("r|") then
 			if sep := line:find("|", 3) then
 				patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 			else
@@ -60,7 +60,7 @@ function parse_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 				print_to_console("[Metadata Patches] - What: "..line)
 			end
-		elseif line:sub(1, 2) == "s|" then
+		elseif line:startswith("s|") then
 			if sep := line:find("|", 3) then
 				patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 			else
@@ -68,7 +68,7 @@ function parse_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 				print_to_console("[Metadata Patches] - What: "..line)
 			end
-		elseif line:sub(1, 2) == "q|" then
+		elseif line:startswith("q|") then
 			if sep := line:find("|", 3) then
 				patch.query_assignments[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
 			else
