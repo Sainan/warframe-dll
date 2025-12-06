@@ -54,7 +54,7 @@ bool owfRepo::readHotfixHeader(const char* data, size_t size, uint32_t version_h
 	return false;
 }
 
-void owfRepo::loadHotfix(const char* data, size_t size)
+void owfRepo::loadHotfixNoVerify(const char* data, size_t size)
 {
 	data += 4;
 	size -= 4;

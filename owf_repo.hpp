@@ -13,7 +13,7 @@ public:
 	void loadArchive(const char* data, size_t size);
 	void loadBuiltinArchive();
 	static bool readHotfixHeader(const char* data, size_t size, uint32_t version_hash, uint64_t& timestamp);
-	void loadHotfix(const char* data, size_t size);
+	void loadHotfixNoVerify(const char* data, size_t size);
 	bool loadHotfix(const char* data, size_t size, uint32_t version_hash);
 
 	const char* find(uint32_t key, size_t& out_len) const;
