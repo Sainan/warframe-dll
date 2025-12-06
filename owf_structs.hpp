@@ -4,8 +4,8 @@
 
 inline char build_version[16] = { 0 }; // e.g. "2024.12.14.10.37"
 
-#define GV(major, minor, patch) (major * 1000) + (minor * 10) + patch
-inline uint16_t game_version;
+#define GV(major, minor, patch) (major * 10000) + (minor * 100) + patch
+inline uint32_t game_version;
 
 inline char build_hash[22] = { 0 };
 

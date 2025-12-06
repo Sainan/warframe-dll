@@ -34,6 +34,18 @@ local function pack_pattern(ida_str)
 	return bin
 end
 
+local function gv2n(ver)
+	local [major, minor, patch] = ver:split("."):map(tonumber)
+	minor ??= 0
+	patch ??= 0
+
+	assert(major < 100)
+	assert(minor < 100)
+	assert(patch < 100)
+
+	return (major * 10000) + (minor * 100) + patch
+end
+
 io.chdir("..")
 
 -- Do a translation update so all target dicts have all source strings
@@ -61,8 +73,8 @@ local function pack_file(path, archive_path)
 				k = crypto.joaat(k)
 				packed.__order:insert(k)
 				if type(v) == "table" then
-					if v["$vn"] then
-						packed[k] = vv_v2n(v["$vn"])
+					if v["$gv"] then
+						packed[k] = gv2n(v["$gv"])
 					else
 						packed[k] = v:mapped(crypto.joaat)
 					end
@@ -76,9 +88,16 @@ local function pack_file(path, archive_path)
 			if path:sub(1, 14) == "OpenWF/vv/sig/" then
 				local arr = {}
 				for cont.__order as ver do
-					arr:insert({ vv_v2n(ver), cont[ver] })
+					arr:insert({ gv2n(ver), cont[ver] })
 				end
 				cont = vv_enc(pack_pattern, arr)
+			elseif path == "OpenWF/vv/game_versions.json" then
+				local arr = {}
+				for cont.__order as ver do
+					local val = cont[ver]
+					arr:insert({ vv_v2n(ver), gv2n(val) })
+				end
+				cont = vv_enc_int(arr)
 			else
 				local arr = {}
 				for cont.__order as ver do
@@ -86,9 +105,9 @@ local function pack_file(path, archive_path)
 					if val:sub(1, 2) == "0x" then
 						val = tonumber(val:sub(3), 16)
 					else
-						val = vv_v2n(val)
+						val = tonumber(val)
 					end
-					arr:insert({ vv_v2n(ver), val })
+					arr:insert({ gv2n(ver), val })
 				end
 				cont = vv_enc_int(arr)
 			end

@@ -4673,7 +4673,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				static_cast<uint64_t>(build_version[14] - '0') * 10ull +
 				static_cast<uint64_t>(build_version[15] - '0');
 
-			game_version = static_cast<uint16_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
+			game_version = static_cast<uint32_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
 
 #if LOGGING
 			std::cout << "build_version_int = " << build_version_int << std::endl;
