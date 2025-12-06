@@ -4817,7 +4817,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 		std::cout << "instantly_start_builtin_http_server = " << instantly_start_builtin_http_server << std::endl;
 #endif
-		if (instantly_start_builtin_http_server)
+		if (instantly_start_builtin_http_server && parse_arguments_hook.isCreated())
 		{
 			start_builtin_http_server();
 		}
