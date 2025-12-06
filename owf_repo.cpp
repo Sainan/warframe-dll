@@ -9,6 +9,8 @@
 #include <Pattern.hpp>
 #include <string.hpp>
 
+#include "main.hpp" // BOOTSTRAPPER_TITLE
+
 using namespace soup;
 
 void owfRepo::loadArchive(const char* data, size_t size)
@@ -42,11 +44,11 @@ void owfRepo::loadArchive(const char* data, size_t size)
 	}
 }
 
-bool owfRepo::readHotfixHeader(const char* data, size_t size, uint32_t version_hash, uint64_t& timestamp)
+bool owfRepo::readHotfixHeader(const char* data, size_t size, uint64_t& timestamp)
 {
 	MemoryRefReader r(data, size);
 	uint32_t target_version_hash;
-	if (r.u32_le(target_version_hash) && target_version_hash == version_hash)
+	if (r.u32_le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
 	{
 		r.u64_dyn_bp(timestamp);
 		return true;
@@ -61,11 +63,11 @@ void owfRepo::loadHotfixNoVerify(const char* data, size_t size)
 	return loadArchive(data, size);
 }
 
-bool owfRepo::loadHotfix(const char* data, size_t size, uint32_t version_hash)
+bool owfRepo::loadHotfix(const char* data, size_t size)
 {
 	MemoryRefReader r(data, size);
 	uint32_t target_version_hash;
-	if (r.u32_le(target_version_hash) && target_version_hash == version_hash)
+	if (r.u32_le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
 	{
 		const auto off = r.getPosition();
 		this->loadArchive(data + off, size - off);

@@ -12,9 +12,9 @@ class owfRepo
 public:
 	void loadArchive(const char* data, size_t size);
 	void loadBuiltinArchive();
-	static bool readHotfixHeader(const char* data, size_t size, uint32_t version_hash, uint64_t& timestamp);
+	static bool readHotfixHeader(const char* data, size_t size, uint64_t& timestamp);
 	void loadHotfixNoVerify(const char* data, size_t size);
-	bool loadHotfix(const char* data, size_t size, uint32_t version_hash);
+	bool loadHotfix(const char* data, size_t size);
 
 	const char* find(uint32_t key, size_t& out_len) const;
 	uint64_t getVersionedInt(uint32_t path, uint64_t ver) const;

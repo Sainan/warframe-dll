@@ -410,7 +410,7 @@ void start_builtin_http_server()
 					if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 					{
 						uint64_t timestamp;
-						if (!owfRepo::readHotfixHeader(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE), timestamp))
+						if (!owfRepo::readHotfixHeader(hotfix.data(), hotfix.size(), timestamp))
 						{
 							ServerWebService::sendText(s, ObfusString("Failed to apply hotfix as it was made for a different DLL version").str());
 							break;

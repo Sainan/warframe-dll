@@ -4645,7 +4645,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		g_repo.loadBuiltinArchive();
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 		{
-			if (g_repo.loadHotfix(hotfix.data(), hotfix.size(), soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE)))
+			if (g_repo.loadHotfix(hotfix.data(), hotfix.size()))
 			{
 				std::cout << ObfusString("Hotfix applied") << std::endl;
 			}
