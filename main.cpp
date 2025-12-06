@@ -26,7 +26,6 @@
 
 #include <CallsiteHook.hpp>
 #include <CompactDetourHook.hpp>
-#include <DetachedScheduler.hpp>
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
 #include <HttpRequestTask.hpp>
@@ -775,8 +774,6 @@ struct owfTunablesTask : public soup::Task
 };
 #endif
 
-static DetachedScheduler task_runner;
-
 void on_got_server_host()
 {
 #if SERVER_IPS_ONLY
@@ -836,7 +833,7 @@ void on_got_server_host()
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
-	task_runner.add<owfTunablesTask>();
+	g_serv.add<owfTunablesTask>();
 #endif
 }
 

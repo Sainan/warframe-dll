@@ -2,13 +2,13 @@
 
 #include <iostream>
 
+#include <DummyTask.hpp>
 #include <filesystem.hpp>
 #include <HttpRequestTask.hpp>
 #include <JsonArray.hpp>
 #include <JsonString.hpp>
 #include <JsonObject.hpp>
 #include <ObfusString.hpp>
-#include <Server.hpp>
 #include <ServerWebService.hpp>
 #include <Socket.hpp>
 #include <Thread.hpp>
@@ -31,8 +31,6 @@
 #include "owf_tunables.hpp"
 
 using namespace soup;
-
-static Server serv;
 
 struct owfWebsocketTag
 {
@@ -655,11 +653,7 @@ void start_builtin_http_server()
 				}
 			}
 		};
-		if (serv.bind(client_http_port, &srv))
-		{
-			serv.run();
-		}
-		else
+		SOUP_IF_UNLIKELY (!g_serv.bind(client_http_port, &srv))
 		{
 			std::cout << ObfusString("Failed to bind TCP/").str();
 			std::cout << client_http_port;
@@ -669,7 +663,10 @@ void start_builtin_http_server()
 				std::cout << ObfusString(" The game will fail to start.").str();
 			}
 			std::cout << std::endl;
+			g_serv.add<DummyTask>();
 		}
+		g_serv.run();
+		SOUP_ASSERT_UNREACHABLE;
 	});
 	thrd.detach();
 }
@@ -703,7 +700,7 @@ struct owfBroadcastMessageTask final : public Task
 void owf_broadcast_message(std::string&& msg, uint32_t recipient /*= 0*/)
 {
 	unicode::utf8_sanitise(msg);
-	serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
+	g_serv.add<owfBroadcastMessageTask>(std::move(msg), recipient);
 }
 
 owfScriptRouteTask::owfScriptRouteTask(soup::Socket& _s, size_t script_instance_id)

@@ -3,9 +3,12 @@
 #include <atomic>
 #include <string>
 
+#include <Server.hpp>
 #include <SharedPtr.hpp>
 #include <Socket.hpp>
 #include <Task.hpp>
+
+inline soup::Server g_serv;
 
 extern void start_builtin_http_server();
 extern void owf_broadcast_message(std::string&& msg, uint32_t recipient = 0);
