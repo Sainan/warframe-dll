@@ -51,6 +51,7 @@
 #include <urlenc.hpp>
 
 #include <windows.h>
+#include <shellapi.h> // CommandLineToArgvW
 #include <wintrust.h>
 #include <softpub.h>
 //#include <wininet.h>
@@ -855,7 +856,6 @@ void do_logout()
 
 static DetourHook parse_arguments_hook;
 static bool processed_args = false;
-static bool instantly_start_builtin_http_server = false;
 static uint64_t* device_id_ptr = nullptr;
 
 static std::string process_args_str(const char* str)
@@ -891,30 +891,6 @@ static std::string process_args_str(const char* str)
 			{
 				got_cluster = true;
 			}
-			else if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
-			{
-				server_host = arg.substr(15);
-			}
-			else if (arg.size() > 13 && arg.substr(0, 13) == ObfusString("-owfHttpPort:").str())
-			{
-				string::toIntOpt<uint16_t>(arg.substr(13)).consume(http_port);
-			}
-			else if (arg.size() > 14 && arg.substr(0, 14) == ObfusString("-owfHttpsPort:").str())
-			{
-				string::toIntOpt<uint16_t>(arg.substr(14)).consume(https_port);
-			}
-			else if (arg.size() > 19 && arg.substr(0, 19) == ObfusString("-owfClientHttpPort:").str())
-			{
-				if (!instantly_start_builtin_http_server)
-				{
-					string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
-				}
-			}
-		}
-		on_got_server_host();
-		if (!instantly_start_builtin_http_server)
-		{
-			start_builtin_http_server();
 		}
 
 		if (!got_language && !fallback_language.empty())
@@ -3012,8 +2988,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			on_got_server_host();
-			start_builtin_http_server();
 			log_optional_scan_failure(false);
 		}
 	}
@@ -4640,6 +4614,37 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		load_config();
 		save_config();
 
+		{
+			std::vector<std::string> args{};
+			{
+				int argc;
+				wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+				for (int i = 0; i != argc; ++i)
+				{
+					args.emplace_back(unicode::utf16_to_utf8<std::wstring>(argv[i]));
+				}
+			}
+			for (const auto& arg : args)
+			{
+				if (arg.size() > 15 && arg.substr(0, 15) == ObfusString("-owfServerHost:").str())
+				{
+					server_host = arg.substr(15);
+				}
+				else if (arg.size() > 13 && arg.substr(0, 13) == ObfusString("-owfHttpPort:").str())
+				{
+					string::toIntOpt<uint16_t>(arg.substr(13)).consume(http_port);
+				}
+				else if (arg.size() > 14 && arg.substr(0, 14) == ObfusString("-owfHttpsPort:").str())
+				{
+					string::toIntOpt<uint16_t>(arg.substr(14)).consume(https_port);
+				}
+				else if (arg.size() > 19 && arg.substr(0, 19) == ObfusString("-owfClientHttpPort:").str())
+				{
+					string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
+				}
+			}
+		}
+
 		g_repo.loadBuiltinArchive();
 		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
 		{
@@ -4654,10 +4659,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		g_core_dict = g_repo.getCoreDict(fallback_language);
-		/*for (auto& e : g_repo.getCoreDict(fallback_language))
-		{
-			g_core_dict.emplace(soup::joaat::hash(e.first), std::move(e.second));
-		}*/
 
 		{
 			auto build_version_int = static_cast<uint64_t>(build_version[ 0] - '0') * 100000000000ull +
@@ -4758,6 +4759,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			g_client_tunables.loadMsgpack(data, size);
 		}
 
+		on_got_server_host();
+
+		start_builtin_http_server();
+
 		{
 #if PRIVATE
 			auto t = time::millis();
@@ -4811,15 +4816,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			{
 				start_script_from_file(base_path.str() + path);
 			}
-		}
-
-		instantly_start_builtin_http_server = g_repo.getVersionedInt(joaat::compileTimeHash("OpenWF/vv/instantly_start_builtin_http_server.json"), game_version) || MINIMAL_HOOKS;
-#if LOGGING
-		std::cout << "instantly_start_builtin_http_server = " << instantly_start_builtin_http_server << std::endl;
-#endif
-		if (instantly_start_builtin_http_server && parse_arguments_hook.isCreated())
-		{
-			start_builtin_http_server();
 		}
 	}
 	return TRUE;
