@@ -143,19 +143,7 @@ void start_builtin_http_server()
 			{
 				// Try to locate file locally
 				{
-					std::string local_path = ObfusString("OpenWF/content");
-					if (auto cache_req_path = ObfusString("/0/H.Cache.bin!D_---------------------w").str();
-						req.path.find(cache_req_path) != std::string::npos
-						)
-					{
-						// Example request: /origin/075B4E6D/0/H.Cache.bin!D_---------------------w
-						local_path += cache_req_path;
-					}
-					else
-					{
-						local_path += req.path;
-					}
-					if (auto data = string::fromFile(local_path); !data.empty())
+					if (auto data = string::fromFile(ObfusString("OpenWF/content").str() + req.path); !data.empty())
 					{
 						ServerWebService::sendText(s, std::move(data));
 						return;
