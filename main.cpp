@@ -4647,7 +4647,9 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		{
 			if (g_repo.loadHotfix(hotfix.data(), hotfix.size()))
 			{
+#if PRIVATE
 				std::cout << ObfusString("Hotfix applied") << std::endl;
+#endif
 			}
 			else
 			{
