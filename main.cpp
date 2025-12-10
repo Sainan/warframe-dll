@@ -4817,7 +4817,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if VERIFY_EXE_SIG && SOUP_BITS == 64
 				// Make sure the EXE version we read earlier is actually to be trusted.
 				// Can't do this in DllMain, so doing it here/now.
-				if (game_version >= GV(39, 0, 0)
+				if (game_version >= GV(39, 0, 0) && game_version < GV(41, 0, 0)
 					&& !os::isWine() // Crashes :(
 					)
 				{
