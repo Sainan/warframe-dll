@@ -2232,6 +2232,7 @@ static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
 
 
 static ReplacementHook anticheat_sideloading_check_hook;
+static ReplacementHook anticheat_timer_check_hook;
 
 static void do_nothing()
 {
@@ -4244,6 +4245,28 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			anticheat_sideloading_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
 			anticheat_sideloading_check_hook.target = anticheat_sideloading_check;
 			anticheat_sideloading_check_hook.enable();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+
+	// In U40, just disabling the sideloading check is enough because the timer will never be initialised, but as of U41, the timer is initialised regardless. ("EnableNonClientDpiScaling")
+	if (game_version >= GV(41, 0, 0))
+	{
+		SIG_INST("48 8B CE 0F B6 D8 E8 ? ? ? ? 48 8B 7C 24 40");
+		auto anticheat_timer_check_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		std::cout << "anticheat_timer_check_callsite = " << anticheat_timer_check_callsite.as<void*>() << std::endl;
+#endif
+		if (anticheat_timer_check_callsite)
+		{
+			auto anticheat_timer_check = anticheat_timer_check_callsite.add(7).rip().as<void*>();
+
+			anticheat_timer_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
+			anticheat_timer_check_hook.target = anticheat_timer_check;
+			anticheat_timer_check_hook.enable();
 		}
 		else
 		{
