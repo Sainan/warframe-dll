@@ -1273,9 +1273,15 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 
 static void handle_set_global(luau_State* L, uint32_t hash)
 {
-	switch (hash)
+	ObfusString str_gRegion("gRegion");
+	ObfusString str_gFlashMgr("gFlashMgr");
+	ObfusString str_gGameData("gGameData");
+	ObfusString str_gPlayerProfileMgr("gPlayerProfileMgr");
+	ObfusString str_gClient("gClient");
+	ObfusString str_gMatchingService("gMatchingService");
+
+	if (hash == wf_hash(str_gRegion.c_str()))
 	{
-	case wf_fnv_2("gRegion"):
 		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? static_cast<RegionMgr*>(L->outtop[-1].getObject()) : nullptr;
 #if LOGGING
 		conout << " (gRegion) = " << regionmgr;
@@ -1286,42 +1292,41 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 		{
 			owfOverlay::init();
 		}
-		break;
-
-	case wf_fnv_2("gFlashMgr"):
+	}
+	else if (hash == wf_hash(str_gFlashMgr.c_str()))
+	{
 		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		conout << " (gFlashMgr) = " << flashmgr;
 #endif
-		break;
-
-	case wf_fnv_2("gGameData"):
+	}
+	else if (hash == wf_hash(str_gGameData.c_str()))
+	{
 		gamedata = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		conout << " (gGameData) = " << gamedata;
 #endif
-		break;
-
-	case wf_fnv_2("gPlayerProfileMgr"):
+	}
+	else if (hash == wf_hash(str_gPlayerProfileMgr.c_str()))
+	{
 		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		conout << " (gPlayerProfileMgr) = " << profilemgr;
 #endif
-		break;
-
-	case wf_fnv_2("gClient"):
+	}
+	else if (hash == wf_hash(str_gClient.c_str()))
+	{
 		gClient = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
 		conout << " (gClient) = " << gClient;
 #endif
-		break;
-
-	case wf_fnv_2("gMatchingService"):
+	}
+	else if (hash == wf_hash(str_gMatchingService.c_str()))
+	{
 		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
 		conout << " (gMatchingService) = " << matchingservice;
 #endif
-		break;
 	}
 #if LOGGING
 	conout << std::endl;
@@ -1348,7 +1353,7 @@ static void lua_set_global_detour(luau_State* L, const char* name)
 #if LOGGING
 	conout << "lua_set_global: " << name;
 #endif
-	handle_set_global(L, wf_fnv_2(name));
+	handle_set_global(L, wf_hash(name));
 	return reinterpret_cast<decltype(&lua_set_global_detour)>(lua_set_global_hook.original)(L, name);
 }
 
