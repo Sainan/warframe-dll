@@ -2534,6 +2534,75 @@ static soup::Pattern hash_to_pattern(uint32_t hash)
 	return Pattern(data, sizeof(data));
 }
 
+static soup::Pattern hash_to_pattern(uint32_t hash1, uint32_t hash2)
+{
+	char data[63];
+	data[0] = soup::string::charset_hex[(hash1 >> 4) & 0xf];
+	data[1] = soup::string::charset_hex[(hash1 >> 0) & 0xf];
+	data[2] = ' ';
+	data[3] = soup::string::charset_hex[(hash1 >> 12) & 0xf];
+	data[4] = soup::string::charset_hex[(hash1 >> 8) & 0xf];
+	data[5] = ' ';
+	data[6] = soup::string::charset_hex[(hash1 >> 20) & 0xf];
+	data[7] = soup::string::charset_hex[(hash1 >> 16) & 0xf];
+	data[8] = ' ';
+	data[9] = soup::string::charset_hex[(hash1 >> 28) & 0xf];
+	data[10] = soup::string::charset_hex[(hash1 >> 24) & 0xf];
+	data[11] = ' ';
+	data[12] = '0';
+	data[13] = '0';
+	data[14] = ' ';
+	data[15] = '0';
+	data[16] = '0';
+	data[17] = ' ';
+	data[18] = '0';
+	data[19] = '0';
+	data[20] = ' ';
+	data[21] = '0';
+	data[22] = '0';
+	data[23] = ' ';
+	data[24] = '?';
+	data[25] = ' ';
+	data[26] = '?';
+	data[27] = ' ';
+	data[28] = '?';
+	data[29] = ' ';
+	data[30] = '?';
+	data[31] = ' ';
+	data[32] = '?';
+	data[33] = ' ';
+	data[34] = '?';
+	data[35] = ' ';
+	data[36] = '?';
+	data[37] = ' ';
+	data[38] = '?';
+	data[39] = ' ';
+	data[40] = soup::string::charset_hex[(hash2 >> 4) & 0xf];
+	data[41] = soup::string::charset_hex[(hash2 >> 0) & 0xf];
+	data[42] = ' ';
+	data[43] = soup::string::charset_hex[(hash2 >> 12) & 0xf];
+	data[44] = soup::string::charset_hex[(hash2 >> 8) & 0xf];
+	data[45] = ' ';
+	data[46] = soup::string::charset_hex[(hash2 >> 20) & 0xf];
+	data[47] = soup::string::charset_hex[(hash2 >> 16) & 0xf];
+	data[48] = ' ';
+	data[49] = soup::string::charset_hex[(hash2 >> 28) & 0xf];
+	data[50] = soup::string::charset_hex[(hash2 >> 24) & 0xf];
+	data[51] = ' ';
+	data[52] = '0';
+	data[53] = '0';
+	data[54] = ' ';
+	data[55] = '0';
+	data[56] = '0';
+	data[57] = ' ';
+	data[58] = '0';
+	data[59] = '0';
+	data[60] = ' ';
+	data[61] = '0';
+	data[62] = '0';
+	return Pattern(data, sizeof(data));
+}
+
 static SOUP_FORCEINLINE void create_all_hooks()
 {
 	// 2018.02.22.14.34 (M:8004325165498360760)
@@ -3315,17 +3384,9 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if !MINIMAL_HOOKS
 	if (game_version >= GV(33, 0, 0))
 	{
-		Pointer lua_FlashMgr_GetConfigBool_hash;
-		if (game_version >= GV(40, 0, 0))
-		{
-			SIG_INST("37 F5 EB FC 00 00 00 00 ? ? ? ? ? ? ? ? F7 91 02 E1 00 00 00 00");
-			lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
-		}
-		else
-		{
-			SIG_INST("FC 94 94 BF 00 00 00 00 ? ? ? ? ? ? ? ? C0 99 E8 D0 00 00 00 00");
-			lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(sig_inst);
-		}
+		ObfusString str_GetConfigBool("GetConfigBool");
+		ObfusString str_SetConfigBool("SetConfigBool");
+		auto lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str_GetConfigBool.c_str()), wf_hash(str_SetConfigBool.c_str())));
 #if LOGGING
 		std::cout << "lua_FlashMgr_GetConfigBool_hash = " << lua_FlashMgr_GetConfigBool_hash.as<void*>() << std::endl;
 #endif
