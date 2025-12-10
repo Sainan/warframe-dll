@@ -3383,14 +3383,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if !MINIMAL_HOOKS
 	if (game_version >= GV(40, 0, 0))
 	{
-		SIG_INST("BA 4C 1E E4 A0 E8");
+		SIG_INST("49 8B 4E 20 BA ? ? ? ? E8 ? ? ? ? 49 8B 4E 20 E8");
 		auto lua_set_global_by_hash_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 		conout << "lua_set_global_by_hash_callsite = " << lua_set_global_by_hash_callsite.as<void*>() << std::endl;
 #endif
 		if (lua_set_global_by_hash_callsite)
 		{
-			auto lua_set_global_by_hash = lua_set_global_by_hash_callsite.add(6).rip().as<void*>();
+			auto lua_set_global_by_hash = lua_set_global_by_hash_callsite.add(10).rip().as<void*>();
 
 			lua_set_global_by_hash_hook.detour = reinterpret_cast<void*>(&lua_set_global_by_hash_detour);
 			lua_set_global_by_hash_hook.target = lua_set_global_by_hash;
