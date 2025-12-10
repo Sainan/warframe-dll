@@ -46,6 +46,24 @@ static uint32_t wf_fnv_1(const char* str) noexcept
 	return hash;
 }
 
+static uint32_t rol(const uint32_t value, const size_t bits) noexcept
+{
+	return (value << bits) | (value >> (32 - bits));
+}
+
+template <uint32_t C>
+static uint32_t wf_fnv_2(const char* str) noexcept
+{
+	uint32_t hash = C;
+	for (; *str; ++str)
+	{
+		hash ^= (uint8_t)*str;
+		hash *= 16777619u;
+	}
+	hash = ~hash;
+	return rol(hash, 17);
+}
+
 static void lua_pushpointer(lua_State* L, void* ptr)
 {
 	if (ptr != nullptr)
@@ -72,9 +90,13 @@ static T lua_checkpointer(lua_State* L, int i)
 
 void owfScript::init()
 {
-	if (game_version >= GV(40, 0, 0))
+	if (game_version >= GV(41, 0, 0))
 	{
-		wf_hash = wf_fnv_2;
+		wf_hash = wf_fnv_2<0xFF7D0F37>;
+	}
+	else if (game_version >= GV(40, 0, 0))
+	{
+		wf_hash = wf_fnv_2<0xAD77979C>;
 	}
 	else
 	{

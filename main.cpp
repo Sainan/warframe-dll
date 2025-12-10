@@ -2851,8 +2851,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 #if PRIVATE || MINIMAL_HOOKS
 	{
+		// "Hostname %s was found in DNS cache"
 		void* Curl_resolv;
-		if (game_version >= GV(37, 0, 0))
+		if (game_version >= GV(41, 0, 0))
+		{
+			SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 0F 48 8B 45 7F 48 8B F9");
+			Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
+		}
+		else if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 E1 48 81 EC A0 00 00 00 48 8B 05");
 			Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -2881,8 +2887,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version >= GV(18, 0, 0))
 	{
+		// "ssl_client"
 		Pointer ssl_verify_internal_caller;
-		if (game_version >= GV(26, 1, 0))
+		if (game_version >= GV(41, 0, 0))
+		{
+			SIG_INST("49 8B D5 48 8B CB E8 ? ? ? ? 85 C0 7F");
+			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
+		}
+		else if (game_version >= GV(26, 1, 0))
 		{
 			SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F");
 			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
@@ -2908,8 +2920,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version >= MIN_GV_FOR_TLS)
 	{
+		// "unexpected ssl peer type: %d"
 		void* Curl_ossl_verifyhost;
-		if (game_version >= GV(37, 0, 0))
+		if (game_version >= GV(41, 0, 0))
+		{
+			SIG_INST("40 53 55 56 57 41 54 41 55 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 60 49 8B 18 4C 8B F9");
+			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+		}
+		else if (game_version >= GV(37, 0, 0))
 		{
 			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
 			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4229,8 +4247,17 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version >= GV(40, 0, 0))
 	{
-		SIG_INST("40 55 56 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 70 01 00 00");
-		auto anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
+		void* anticheat_sideloading_check;
+		if (game_version >= GV(41, 0, 0))
+		{
+			SIG_INST("40 55 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 80 01 00 00 48 8B 81");
+			anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
+		}
+		else
+		{
+			SIG_INST("40 55 56 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 70 01 00 00");
+			anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
+		}
 #if LOGGING
 		conout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
 #endif
