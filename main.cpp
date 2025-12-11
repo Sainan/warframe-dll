@@ -4251,8 +4251,8 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 
-	// In U40, just disabling the sideloading check is enough because the timer will never be initialised, but as of U41, the timer is initialised regardless. ("EnableNonClientDpiScaling")
-	if (game_version >= GV(41, 0, 0))
+	// In case the timer was initialised, we'll also want to disable the timer check. U41 initialises it in some setup function. ("EnableNonClientDpiScaling")
+	if (game_version >= GV(40, 0, 0))
 	{
 		SIG_INST("48 8B CE 0F B6 D8 E8 ? ? ? ? 48 8B 7C 24 40");
 		auto anticheat_timer_check_callsite = Module(nullptr).range.scan(sig_inst);
