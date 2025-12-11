@@ -2,6 +2,7 @@
 
 #define REDIRECT_REQUESTS true
 #define SERVER_IPS_ONLY true
+#define VERIFY_EXE_SIG false
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
@@ -51,8 +52,10 @@
 
 #include <windows.h>
 #include <shellapi.h> // CommandLineToArgvW
+#if VERIFY_EXE_SIG
 #include <wintrust.h>
 #include <softpub.h>
+#endif
 //#include <wininet.h>
 //#pragma comment(lib, "wininet")
 #include <Lmcons.h> // UNLEN
@@ -682,12 +685,18 @@ static int Curl_ossl_verifyhost_detour(void* a1, void* a2)
 
 
 static CompactDetourHook verify_worldstate_integrity_hook;
+#if VERIFY_EXE_SIG
 static bool exe_signed = true;
+#endif
 
 static bool verify_worldstate_integrity_detour(void* outStr, void* inStr)
 {
 	reinterpret_cast<decltype(&verify_worldstate_integrity_detour)>(verify_worldstate_integrity_hook.original)(outStr, inStr);
-	return exe_signed; // we want true here
+#if VERIFY_EXE_SIG
+	return exe_signed;
+#else
+	return true;
+#endif
 }
 
 
@@ -4776,7 +4785,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				std::cout << "Pointer scans done in " << (time::millis() - t) << " ms" << std::endl;
 #endif
 
-#if SOUP_BITS == 64
+#if VERIFY_EXE_SIG && SOUP_BITS == 64
 				// Make sure the EXE version we read earlier is actually to be trusted.
 				// Can't do this in DllMain, so doing it here/now.
 				if (game_version >= GV(39, 0, 0)
