@@ -2904,44 +2904,21 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version >= MIN_GV_FOR_TLS)
 	{
-		// "unexpected ssl peer type: %d"
-		void* Curl_ossl_verifyhost;
-		if (game_version >= GV(41, 0, 0))
+		if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/Curl_ossl_verifyhost.json"), game_version); !sig_inst.bytes.empty())
 		{
-			SIG_INST("40 53 55 56 57 41 54 41 55 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 60 49 8B 18 4C 8B F9");
-			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+			auto Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
+	#if LOGGING
+			conout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
+	#endif
+			if (!Curl_ossl_verifyhost)
+			{
+				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
+			}
+			Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
+			Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
+			//Curl_ossl_verifyhost_hook.create();
+			Curl_ossl_verifyhost_hook.enable();
 		}
-		else if (game_version >= GV(37, 0, 0))
-		{
-			SIG_INST("40 53 55 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 49 8B 10");
-			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
-		else if (game_version >= GV(29, 3, 0))
-		{
-			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 31"); // 2020.11.04.18.58
-			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
-		else if (game_version >= GV(26, 1, 0))
-		{
-			SIG_INST("48 89 5C 24 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 4C 8B 39"); // 2020.08.25.18.35, 2020.03.24.20.24, 2019.12.13.00.31, 2019.11.22.21.24
-			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
-		else
-		{
-			SIG_INST("40 53 55 56 41 54 41 55 41 56 41 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 70 4C 8B 39"); // 2019.10.31.22.42, 2019.09.09.12.43
-			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
-		}
-#if LOGGING
-		conout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
-#endif
-		if (!Curl_ossl_verifyhost)
-		{
-			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
-		}
-		Curl_ossl_verifyhost_hook.detour = reinterpret_cast<void*>(&Curl_ossl_verifyhost_detour);
-		Curl_ossl_verifyhost_hook.target = Curl_ossl_verifyhost;
-		//Curl_ossl_verifyhost_hook.create();
-		Curl_ossl_verifyhost_hook.enable();
 	}
 
 #if DISABLE_WSINTCHK
