@@ -2885,25 +2885,9 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
-	if (game_version >= GV(18, 0, 0))
+	if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/ssl_verify_internal_caller.json"), game_version); !sig_inst.bytes.empty())
 	{
-		// "ssl_client"
-		Pointer ssl_verify_internal_caller;
-		if (game_version >= GV(41, 0, 0))
-		{
-			SIG_INST("49 8B D5 48 8B CB E8 ? ? ? ? 85 C0 7F");
-			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
-		}
-		else if (game_version >= GV(26, 1, 0))
-		{
-			SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F");
-			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
-		}
-		else
-		{
-			SIG_INST("49 8B D4 48 8B ? E8 ? ? ? ? 85 C0 7F ? 8B 8E"); // 2019.10.31.22.42
-			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
-		}
+		auto ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 		conout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
 #endif
