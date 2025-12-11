@@ -4773,15 +4773,17 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			std::cout << "game_version = " << game_version << std::endl;
 #endif
 		}
-//#if !PRIVATE
 		if (game_version == GV(65, 53, 5))
 		{
+#if PRIVATE
+			std::cout << "Version is too new, but trying anyway." << std::endl;
+#else
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 			return exit(1), FALSE;
+#endif
 		}
-//#endif
 
 		std::cout << get_core_string(ObfusString("freenote").str()) << std::endl;
 
