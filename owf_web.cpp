@@ -307,6 +307,10 @@ void start_builtin_http_server()
 				else
 				{
 					owfConsole::activate();
+					if (!ee_log_in_console || game_version >= GV(23, 10, 0))
+					{
+						owfConsole::setExclusiveOutput();
+					}
 				}
 				ServerWebService::sendText(s, {});
 				break;

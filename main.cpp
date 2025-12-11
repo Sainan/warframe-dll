@@ -2490,7 +2490,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 	case soup::joaat::compileTimeHash("ee_log_in_console"):
 		if (args.size() > 1)
 		{
-			ee_log_in_console = (args[1].size() == 4);
+			ee_log_in_console = (args[1].size() == 4); // Will not take effect in versions where this is not driven by the write_to_log_file hook.
 			owf_broadcast_value(ObfusString("ee_log_in_console"), ee_log_in_console);
 		}
 		else
@@ -4702,6 +4702,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		load_config();
 		save_config();
+
+		if (!ee_log_in_console || game_version >= GV(23, 10, 0))
+		{
+			owfConsole::setExclusiveOutput();
+		}
 
 		{
 			std::vector<std::string> args{};

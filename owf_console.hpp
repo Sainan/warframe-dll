@@ -37,12 +37,6 @@ struct owfConsole
 
 			owfConsole::handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-			// Overwrite STD_OUTPUT_HANDLE so our console doesn't receive unwanted messages.
-			{
-				HANDLE h = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-				SetStdHandle(STD_OUTPUT_HANDLE, h);
-			}
-
 			owf_broadcast_message(soup::ObfusString(R"({"console":true})").str());
 		}
 	}
@@ -53,7 +47,7 @@ struct owfConsole
 		{
 			active = false;
 
-			SetStdHandle(STD_OUTPUT_HANDLE, handle);
+			setSharedOutput();
 			handle = INVALID_HANDLE_VALUE;
 
 			const auto conWnd = GetConsoleWindow();
@@ -62,6 +56,17 @@ struct owfConsole
 
 			owf_broadcast_message(soup::ObfusString(R"({"console":false})").str());
 		}
+	}
+
+	static void setExclusiveOutput()
+	{
+		HANDLE h = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+		SetStdHandle(STD_OUTPUT_HANDLE, h);
+	}
+
+	static void setSharedOutput()
+	{
+		SetStdHandle(STD_OUTPUT_HANDLE, handle);
 	}
 };
 
