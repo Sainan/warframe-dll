@@ -2,8 +2,6 @@
 
 #include <windows.h>
 
-//#include <iostream>
-
 #include <joaat.hpp>
 #include <ObfusString.hpp>
 #include <os.hpp>
@@ -53,7 +51,7 @@ void owfOverlay::init()
 				s_game_hwnd = hwnd;
 				/*char buf[100];
 				GetWindowText(hwnd, buf, 100);
-				std::cout << buf << std::endl;*/
+				conout << buf << std::endl;*/
 				return FALSE;
 			}
 		}
@@ -81,7 +79,7 @@ void owfOverlay::init()
 			}
 #endif
 
-			//std::cout << "Creating our window..." << std::endl;
+			//conout << "Creating our window..." << std::endl;
 			const auto [width, height] = Window(s_game_hwnd).getSize();
 			w = Window::create(ObfusString("OpenWF Overlay"), width, height);
 			s_wine = os::isWine();

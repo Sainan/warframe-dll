@@ -1,7 +1,5 @@
 #include "owf_hotkeys.hpp"
 
-#include <iostream>
-
 #include <joaat.hpp>
 #include <json.hpp>
 #include <Key.hpp>
@@ -9,6 +7,7 @@
 
 #include <lauxlib.h>
 
+#include "owf_console.hpp"
 #include "owf_repo.hpp"
 #include "owf_scripting.hpp"
 
@@ -66,7 +65,7 @@ void load_hotkeys()
 	}
 	catch (std::exception& e)
 	{
-		std::cout << ObfusString("Failed to load Hotkeys.json: ").str() << e.what() << std::endl;
+		conout << ObfusString("Failed to load Hotkeys.json: ").str() << e.what() << std::endl;
 	}
 	hotkeys_mtx.lock();
 	hotkeys = std::move(hks);

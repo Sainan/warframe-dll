@@ -1,7 +1,5 @@
 #include "owf_web.hpp"
 
-#include <iostream>
-
 #include <DummyTask.hpp>
 #include <filesystem.hpp>
 #include <HttpRequestTask.hpp>
@@ -55,7 +53,7 @@ struct owfContentTask : public Task
 		if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
 		{
 #if LOGGING
-			std::cout << "owfContentTask: client socket is gone, aborting" << std::endl;
+			conout << "owfContentTask: client socket is gone, aborting" << std::endl;
 #endif
 			setWorkDone();
 		}
@@ -64,14 +62,14 @@ struct owfContentTask : public Task
 			if (hrt.result.has_value() && hrt.result->status_code == 200)
 			{
 #if LOGGING
-				std::cout << "owfContentTask: 200" << std::endl;
+				conout << "owfContentTask: 200" << std::endl;
 #endif
 				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), std::move(*hrt.result));
 			}
 			else
 			{
 #if LOGGING
-				std::cout << "owfContentTask: 404" << std::endl;
+				conout << "owfContentTask: 404" << std::endl;
 #endif
 				if (!owfOverlay::isInited())
 				{
@@ -125,7 +123,7 @@ void start_builtin_http_server()
 		ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 		{
 #if LOGGING
-			std::cout << "Request to builtin HTTP server: " << req.path << std::endl;
+			conout << "Request to builtin HTTP server: " << req.path << std::endl;
 #endif
 			if (joaat::hash(req.path.substr(0, 8)) == joaat::compileTimeHash("/origin/"))
 			{
@@ -643,14 +641,14 @@ void start_builtin_http_server()
 		};
 		SOUP_IF_UNLIKELY (!g_serv.bind(client_http_port, &srv))
 		{
-			std::cout << ObfusString("Failed to bind TCP/").str();
-			std::cout << client_http_port;
-			std::cout << '.';
+			conout << ObfusString("Failed to bind TCP/").str();
+			conout << client_http_port;
+			conout << '.';
 			if (game_version >= GV(33, 6, 0))
 			{
-				std::cout << ObfusString(" The game will fail to start.").str();
+				conout << ObfusString(" The game will fail to start.").str();
 			}
-			std::cout << std::endl;
+			conout << std::endl;
 			g_serv.add<DummyTask>();
 		}
 		g_serv.run();
@@ -708,14 +706,14 @@ void owfScriptRouteTask::onTick() /*final*/
 	if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
 	{
 #if LOGGING
-		std::cout << "owfScriptRouteTask: client socket is gone" << std::endl;
+		conout << "owfScriptRouteTask: client socket is gone" << std::endl;
 #endif
 		return setWorkDone();
 	}
 	if (get_script_by_instance_id(script_instance_id) == nullptr)
 	{
 #if LOGGING
-		std::cout << "owfScriptRouteTask: script instance is gone" << std::endl;
+		conout << "owfScriptRouteTask: script instance is gone" << std::endl;
 #endif
 		ServerWebService::sendContent(*static_cast<Socket*>(s.get()), "500 Internal Server Error", ObfusString("Sorry, this request was supposed to be handled by a script, but that script is no longer running now.").str());
 		return setWorkDone();

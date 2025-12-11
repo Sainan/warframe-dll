@@ -22,7 +22,6 @@
 // Writes all IRC traffic to EE.log
 #define VERBOSE_IRC false
 
-#include <iostream>
 #include <mutex>
 
 #include <CallsiteHook.hpp>
@@ -189,7 +188,7 @@ static DetourHook parse_url_hook;
 static bool parse_url_detour(const char* in, ParsedUrl* out)
 {
 #if LOGGING
-	std::cout << "parse_url " << in << std::endl;
+	conout << "parse_url " << in << std::endl;
 #endif
 	//in = "https://" SERVER "/origin/CAFEBABE"; // SpaceNinjaServer expects this kind of path prefix
 	if (reinterpret_cast<decltype(&parse_url_detour)>(parse_url_hook.original)(in, out))
@@ -210,7 +209,7 @@ static DetourHook legacy_parse_url_hook;
 
 static bool legacy_parse_url_detour(LegacyParsedUrl* out, LegacyGameString* in)
 {
-	std::cout << "legacy_parse_url: " << in->getData() << std::endl;
+	conout << "legacy_parse_url: " << in->getData() << std::endl;
 
 	LegacyGameString buf;
 	strcpy(buf.data, "http://localhost");
@@ -219,7 +218,7 @@ static bool legacy_parse_url_detour(LegacyParsedUrl* out, LegacyGameString* in)
 	auto ret = reinterpret_cast<decltype(&legacy_parse_url_detour)>(legacy_parse_url_hook.original)(out, in);
 	if (out->hostname)
 	{
-		//std::cout << "hostname = " << unicode::utf16_to_utf8(std::wstring(out->hostname)) << std::endl;
+		//conout << "hostname = " << unicode::utf16_to_utf8(std::wstring(out->hostname)) << std::endl;
 	}
 	return ret;
 }*/
@@ -250,7 +249,7 @@ static bool resolve_addr_detour(sockaddr* sa, void* a2, void* a3)
 	if (sa->sa_family == AF_INET)
 	{
 #if LOGGING
-		std::cout << "resolve_addr called with IPv4, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in*>(sa)->sin_port)) << std::endl;
+		conout << "resolve_addr called with IPv4, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in*>(sa)->sin_port)) << std::endl;
 #endif
 		reinterpret_cast<sockaddr_in*>(sa)->sin_addr.s_addr = SOUP_IPV4_NWE(127, 0, 0, 1);
 		return reinterpret_cast<decltype(&resolve_addr_detour)>(resolve_addr_hook.original)(sa, a2, a3);
@@ -258,13 +257,13 @@ static bool resolve_addr_detour(sockaddr* sa, void* a2, void* a3)
 	else if (sa->sa_family == AF_INET6)
 	{
 #if LOGGING
-		std::cout << "resolve_addr called with IPv6, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in6*>(sa)->sin6_port)) << std::endl;
+		conout << "resolve_addr called with IPv6, port " << Endianness::toNative(network_u16_t(reinterpret_cast<sockaddr_in6*>(sa)->sin6_port)) << std::endl;
 #endif
 	}
 	else
 	{
 #if LOGGING
-		std::cout << "resolve_addr called with unknown address family" << std::endl;
+		conout << "resolve_addr called with unknown address family" << std::endl;
 #endif
 	}
 	return false;
@@ -276,14 +275,14 @@ static DetourHook winhttp_connect_hook;
 static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
 {
 #if LOGGING
-	std::cout << "winhttp_connect for " << host_1 << ", port " << port << std::endl;
+	conout << "winhttp_connect for " << host_1 << ", port " << port << std::endl;
 	if (host_2 && *host_2)
 	{
-		std::cout << "host_2 = " << host_2 << std::endl;
+		conout << "host_2 = " << host_2 << std::endl;
 	}
 	if (host_3 && *host_3)
 	{
-		std::cout << "host_3 = " << host_3 << std::endl;
+		conout << "host_3 = " << host_3 << std::endl;
 	}
 #endif
 
@@ -485,7 +484,7 @@ static void process_login_response(const char* data, size_t size)
 		{
 			auth_query = ObfusString("accountId=").str() + pjId->reinterpretAsStr().value + ObfusString("&nonce=").str() + std::to_string(pjNonce->reinterpretAsInt().value);
 #if LOGGING
-			std::cout << "Constructed auth_query from login response: " << auth_query << std::endl;
+			conout << "Constructed auth_query from login response: " << auth_query << std::endl;
 #endif
 		}
 	}
@@ -498,10 +497,10 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 	Str& request_body = *reinterpret_cast<Str*>(request + GameHttpRequest_body_offset);
 
 #if LOGGING
-	std::cout << "game_http_request for " << (const char*)request_url.getData() << std::endl;
+	conout << "game_http_request for " << (const char*)request_url.getData() << std::endl;
 	/*if (request_body.getSize() != 0)
 	{
-		std::cout << request_body.getData() << std::endl;
+		conout << request_body.getData() << std::endl;
 	}*/
 #endif
 
@@ -524,14 +523,14 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 	// This now contains the response
 	/*if (request_body.getSize() != 0)
 	{
-		std::cout << request_body.getData() << std::endl;
+		conout << request_body.getData() << std::endl;
 	}*/
 #endif
 
 	if (is_login)
 	{
 #if LOGGING
-		//std::cout << "login response: " << std::string(request_body.getData(), request_body.getSize()) << std::endl;
+		//conout << "login response: " << std::string(request_body.getData(), request_body.getSize()) << std::endl;
 #endif
 		for (size_t i = 0; i != request_body.getSize(); ++i)
 		{
@@ -557,7 +556,7 @@ static std::string dec_buf;
 
 static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 {
-	//std::cout << "encstr_append: " << (void*)a1 << ", " << std::string(a1->data, a1->size) << std::endl;
+	//conout << "encstr_append: " << (void*)a1 << ", " << std::string(a1->data, a1->size) << std::endl;
 	if (last_enc_str != a1)
 	{
 		last_enc_str = a1;
@@ -575,7 +574,7 @@ static string_resize_t string_resize;
 
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
-	//std::cout << "encstr_discharge: " << (void*)a1->app << std::endl;
+	//conout << "encstr_discharge: " << (void*)a1->app << std::endl;
 #if REDIRECT_REQUESTS
 	if (string_resize)
 	{
@@ -607,10 +606,10 @@ static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 // called multiple times if flags=6
 static void queue_http_request_internal_detour(void* a1, GameString* url, GameString* body, const char* encoding, void* callback_data, int flags)
 {
-	std::cout << "queue_http_request_internal: url=" << url->getData() << ", encoding=" << (encoding ? encoding : "NULL") << std::endl;
+	conout << "queue_http_request_internal: url=" << url->getData() << ", encoding=" << (encoding ? encoding : "NULL") << std::endl;
 	if (encoding)
 	{
-		std::cout << "Decrypted body: " << dec_buf << std::endl;
+		conout << "Decrypted body: " << dec_buf << std::endl;
 	}
 	reinterpret_cast<decltype(&queue_http_request_internal_detour)>(queue_http_request_internal_hook.original)(a1, url, body, encoding, callback_data, flags);
 	dec_buf.clear();
@@ -623,7 +622,7 @@ static DetourHook Curl_resolv_hook;
 static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool allowDOH, void* a5)
 {
 #if LOGGING
-	std::cout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
+	conout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
 	ObfusString localhost("127.0.0.1");
@@ -646,7 +645,7 @@ static ReplacementHook ssl_verify_internal_hook;
 
 static int64_t ssl_verify_internal_detour(void* a1, void* a2)
 {
-	//std::cout << "ssl_verify_internal called" << std::endl;
+	//conout << "ssl_verify_internal called" << std::endl;
 	return 1; // "Verify success"
 }
 
@@ -668,17 +667,17 @@ static int verify_dll_integrity()
 		st.finalise();
 		st.getDigest(actual_dll_sha256);
 	}
-	//std::cout << "expected_dll_sha256 = " << string::bin2hex((const char*)expected_dll_sha256, sizeof(expected_dll_sha256)) << std::endl;
-	//std::cout << "actual_dll_sha256 = " << string::bin2hex((const char*)actual_dll_sha256, sizeof(actual_dll_sha256)) << std::endl;
+	//conout << "expected_dll_sha256 = " << string::bin2hex((const char*)expected_dll_sha256, sizeof(expected_dll_sha256)) << std::endl;
+	//conout << "actual_dll_sha256 = " << string::bin2hex((const char*)actual_dll_sha256, sizeof(actual_dll_sha256)) << std::endl;
 	return memcmp(actual_dll_sha256, (const void*)expected_dll_sha256, 0x20);
 #endif
 }
 
 static int Curl_ossl_verifyhost_detour(void* a1, void* a2)
 {
-	//std::cout << "Curl_ossl_verifyhost_detour called" << std::endl;
+	//conout << "Curl_ossl_verifyhost_detour called" << std::endl;
 	/*auto ret = reinterpret_cast<decltype(&Curl_ossl_verifyhost_detour)>(Curl_ossl_verifyhost_hook.original)(a1, a2);
-	std::cout << "Curl_ossl_verifyhost returned " << ret << std::endl;*/
+	conout << "Curl_ossl_verifyhost returned " << ret << std::endl;*/
 	static auto res = verify_dll_integrity();
 	return res; // we want 0 here
 }
@@ -705,7 +704,7 @@ static bool verify_worldstate_integrity_detour(void* outStr, void* inStr)
 static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, size_t* a5, void* a6, void* a7, void* a8)
 {
 	//auto ret = reinterpret_cast<decltype(&int_rsa_verify_detour)>(int_rsa_verify_hook.original)(a1, a2, a3, a4, a5, a6, a7, a8);
-	//std::cout << "int_rsa_verify returns " << ret << std::endl;
+	//conout << "int_rsa_verify returns " << ret << std::endl;
 	if (a5)
 	{
 		*a5 = 1; // For > 0 return from pkey_rsa_verifyrecover
@@ -755,9 +754,9 @@ struct owfTunablesTask : public soup::Task
 					server_host = hrt.sock->peer.ip.toString();
 					server_remote_ip_hash = hrt.sock->peer.ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
 #if false
-					std::cout << "server_host = " << server_host << std::endl;
-					std::cout << "server_remote_ip_hash = " << server_remote_ip_hash << std::endl;
-					std::cout << "can_use_server_host = " << can_use_server_host() << std::endl;
+					conout << "server_host = " << server_host << std::endl;
+					conout << "server_remote_ip_hash = " << server_remote_ip_hash << std::endl;
+					conout << "can_use_server_host = " << can_use_server_host() << std::endl;
 #endif
 				}
 #endif
@@ -772,7 +771,7 @@ struct owfTunablesTask : public soup::Task
 			{
 				auto msg = get_core_string(ObfusString("tunafail").str());
 				soup::string::replaceAll(msg, ObfusString("|HOST|").str(), hrt.hr.getHost());
-				std::cout << std::move(msg) << std::endl;
+				conout << std::move(msg) << std::endl;
 			}
 
 			owfOverlay::onTunablesRequestFinished(ok);
@@ -805,7 +804,7 @@ void on_got_server_host()
 			)
 		{
 	#if PRIVATE
-			std::cout << "This remote connection would not be allowed in a public build" << std::endl;
+			conout << "This remote connection would not be allowed in a public build" << std::endl;
 	#else
 			server_host = ObfusString("127.0.0.1").str();
 	#endif
@@ -834,11 +833,11 @@ void on_got_server_host()
 	{
 		auto msg = get_core_string(ObfusString("gotsh").str());
 		soup::string::replaceAll(msg, ObfusString("|HOST|").str(), server_host);
-		std::cout << msg << std::endl;
+		conout << msg << std::endl;
 	}
 	if (autologin && !did_auto_login)
 	{
-		std::cout << get_core_string(ObfusString("alpend")) << std::endl;
+		conout << get_core_string(ObfusString("alpend")) << std::endl;
 	}
 
 #if ASK_SERVER_FOR_TUNABLES
@@ -949,7 +948,7 @@ static std::string process_args_str(const char* str)
 		// It needs to be done here because DllMain runs before static initialisers.
 		if (device_id_ptr)
 		{
-			//std::cout << "The device id is a crispy obfuscated 0 aka. " << *device_id_ptr << std::endl;
+			//conout << "The device id is a crispy obfuscated 0 aka. " << *device_id_ptr << std::endl;
 
 			wchar_t name[MAX_COMPUTERNAME_LENGTH > UNLEN ? MAX_COMPUTERNAME_LENGTH + 1 : UNLEN + 1];
 
@@ -968,9 +967,9 @@ static std::string process_args_str(const char* str)
 #if LOGGING
 	if (!arguments_to_inject.empty())
 	{
-		std::cout << "parse_arguments (injected): " << arguments_to_inject << std::endl;
+		conout << "parse_arguments (injected): " << arguments_to_inject << std::endl;
 	}
-	std::cout << "parse_arguments: " << str << std::endl;
+	conout << "parse_arguments: " << str << std::endl;
 #endif
 	return arguments_to_inject;
 }
@@ -993,7 +992,7 @@ static void parse_arguments_detour(uintptr_t arguments, Str* str, void* a3)
 
 static __int64 SquadSetCountdownTimer_detour(void* a1, float seconds)
 {
-	//std::cout << "SquadSetCountdownTimer(" << seconds << ")" << std::endl;
+	//conout << "SquadSetCountdownTimer(" << seconds << ")" << std::endl;
 	if (skip_mission_start_timer && !prohibit_skip_mission_start_timer && seconds == 5.9f)
 	{
 		seconds = 0.0f;
@@ -1024,10 +1023,10 @@ static float get_dmg_to_display(int dmg_int)
 
 	float dmg_number = (dmg_int < 0 ? last_dmg : static_cast<float>(dmg_int));
 #if LOGGING
-	//std::cout << "get_dmg_to_display: " << dmg_int << " -> " << dmg_number << std::endl;
+	//conout << "get_dmg_to_display: " << dmg_int << " -> " << dmg_number << std::endl;
 	if ((dmg_number - last_dmg) > 1.0f)
 	{
-		std::cout << "DAMAGE INCONGRUENCE: Converting " << dmg_int << " to " << dmg_number << ", last damage was " << last_dmg << std::endl;
+		conout << "DAMAGE INCONGRUENCE: Converting " << dmg_int << " to " << dmg_number << ", last damage was " << last_dmg << std::endl;
 	}
 #endif
 	return dmg_number;
@@ -1039,7 +1038,7 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 {
 	float ret = reinterpret_cast<decltype(&get_total_damage_detour)>(get_total_damage_hook.original)(a1, a2, a3, a4, a5, a6);
 #if LOGGING
-	//std::cout << "get_total_damage: " << ret << std::endl;
+	//conout << "get_total_damage: " << ret << std::endl;
 #endif
 	if (ret != 0.0f)
 	{
@@ -1071,7 +1070,7 @@ enum LookupAction
 static std::string process_legacy_dns_lookup(const char* data, size_t size)
 {
 #if LOGGING
-	std::cout << "legacy_dns_lookup: " << data;
+	conout << "legacy_dns_lookup: " << data;
 #endif
 
 	LookupAction lookup_action;
@@ -1107,12 +1106,12 @@ static std::string process_legacy_dns_lookup(const char* data, size_t size)
 			override.append(sep);
 		}
 #if LOGGING
-	std::cout << " -> " << override << std::endl;
+	conout << " -> " << override << std::endl;
 #endif
 		return override;
 	}
 #if LOGGING
-	std::cout << std::endl;
+	conout << std::endl;
 #endif
 	return {};
 }
@@ -1193,7 +1192,7 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 					{
 						const auto name = std::string(message + 49, size - 100);
 #if LOGGING
-						std::cout << "OWF callback called: " << name << std::endl;
+						conout << "OWF callback called: " << name << std::endl;
 #endif
 						std::lock_guard lock(running_scripts_mtx);
 						for (auto& scr : running_scripts)
@@ -1214,7 +1213,7 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 	}
 	if (ee_log_in_console)
 	{
-		std::cout << std::string(data, _size);
+		conout << std::string(data, _size);
 	}
 	reinterpret_cast<decltype(&write_to_log_file_detour)>(write_to_log_file_hook.original)(a1, data, _size);
 }
@@ -1245,7 +1244,7 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 			if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
 			{
 #if LOGGING
-				std::cout << "Reporting Client.AutoLogin as true" << std::endl;
+				conout << "Reporting Client.AutoLogin as true" << std::endl;
 #endif
 				L->outtop[-1].value.as_bool = true;
 				L->outtop[-1].type = LUAU_BOOL;
@@ -1259,7 +1258,7 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 			if (strcmp(L->intop[1].getString(), str.c_str()) == 0)
 			{
 #if LOGGING
-				std::cout << "Reporting Server.FastLoad as true" << std::endl;
+				conout << "Reporting Server.FastLoad as true" << std::endl;
 #endif
 				L->outtop[-1].value.as_bool = true;
 				L->outtop[-1].type = LUAU_BOOL;
@@ -1279,9 +1278,9 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 	case wf_fnv_2("gRegion"):
 		regionmgr = L->outtop[-1].type == LUAU_USERDATA ? static_cast<RegionMgr*>(L->outtop[-1].getObject()) : nullptr;
 #if LOGGING
-		std::cout << " (gRegion) = " << regionmgr;
-		//std::cout << " " << resolve_string_handle(regionmgr->type->getPathHandle());
-		//std::cout << " " << resolve_string_handle(regionmgr->type->name_handle);
+		conout << " (gRegion) = " << regionmgr;
+		//conout << " " << resolve_string_handle(regionmgr->type->getPathHandle());
+		//conout << " " << resolve_string_handle(regionmgr->type->name_handle);
 #endif
 		if (!owfOverlay::isInited() && !disable_overlay)
 		{
@@ -1292,40 +1291,40 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 	case wf_fnv_2("gFlashMgr"):
 		flashmgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
-		std::cout << " (gFlashMgr) = " << flashmgr;
+		conout << " (gFlashMgr) = " << flashmgr;
 #endif
 		break;
 
 	case wf_fnv_2("gGameData"):
 		gamedata = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
-		std::cout << " (gGameData) = " << gamedata;
+		conout << " (gGameData) = " << gamedata;
 #endif
 		break;
 
 	case wf_fnv_2("gPlayerProfileMgr"):
 		profilemgr = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
-		std::cout << " (gPlayerProfileMgr) = " << profilemgr;
+		conout << " (gPlayerProfileMgr) = " << profilemgr;
 #endif
 		break;
 
 	case wf_fnv_2("gClient"):
 		gClient = L->outtop[-1].type == LUAU_USERDATA ? L->outtop[-1].getObject() : nullptr;
 #if LOGGING
-		std::cout << " (gClient) = " << gClient;
+		conout << " (gClient) = " << gClient;
 #endif
 		break;
 
 	case wf_fnv_2("gMatchingService"):
 		matchingservice = L->outtop[-1].type == LUAU_USERDATA ? *(void**)(L->outtop[-1].value.as_uintptr + 0x18) : nullptr;
 #if LOGGING
-		std::cout << " (gMatchingService) = " << matchingservice;
+		conout << " (gMatchingService) = " << matchingservice;
 #endif
 		break;
 	}
 #if LOGGING
-	std::cout << std::endl;
+	conout << std::endl;
 #endif
 }
 
@@ -1335,7 +1334,7 @@ static CompactDetourHook lua_set_global_by_hash_hook;
 static void lua_set_global_by_hash_detour(luau_State* L, uint32_t hash)
 {
 #if LOGGING
-	std::cout << "lua_set_global_by_hash: " << hash;
+	conout << "lua_set_global_by_hash: " << hash;
 #endif
 	handle_set_global(L, hash);
 	return reinterpret_cast<decltype(&lua_set_global_by_hash_detour)>(lua_set_global_by_hash_hook.original)(L, hash);
@@ -1347,7 +1346,7 @@ static DetourHook lua_set_global_hook;
 static void lua_set_global_detour(luau_State* L, const char* name)
 {
 #if LOGGING
-	std::cout << "lua_set_global: " << name;
+	conout << "lua_set_global: " << name;
 #endif
 	handle_set_global(L, wf_fnv_2(name));
 	return reinterpret_cast<decltype(&lua_set_global_detour)>(lua_set_global_hook.original)(L, name);
@@ -1408,11 +1407,11 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		L->global_state_panic_func() = [](luau_State* L, int)
 		{
 #if LOGGING
-			std::cout << "LuaU is panicking" << std::endl;
+			conout << "LuaU is panicking" << std::endl;
 #endif
 			luau_error_msg = (--L->outtop)->getString();
 #if LOGGING
-			std::cout << luau_error_msg << std::endl;
+			conout << luau_error_msg << std::endl;
 #endif
 			throw 0;
 		};
@@ -1423,11 +1422,11 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		*raise_script_error_fp = [](const char** err) -> bool
 		{
 #if LOGGING
-			std::cout << "raise_script_error called" << std::endl;
+			conout << "raise_script_error called" << std::endl;
 #endif
 			luau_error_msg = *err;
 #if LOGGING
-			std::cout << luau_error_msg << std::endl;
+			conout << luau_error_msg << std::endl;
 #endif
 			throw 0;
 		};
@@ -1515,7 +1514,7 @@ static DetourHook register_enum_hook;
 
 static void register_enum_detour(void* a1, GameRange<const char*>& names, GameRange<int32_t>& values)
 {
-	//std::cout << "register_enum" << std::endl;
+	//conout << "register_enum" << std::endl;
 
 	auto& vec = swig_enums2.emplace_back();
 	vec.reserve(names.end - names.begin);
@@ -1524,7 +1523,7 @@ static void register_enum_detour(void* a1, GameRange<const char*>& names, GameRa
 	int32_t* value = values.begin;
 	for (; name != names.end; ++name, ++value)
 	{
-		//std::cout << "\t" << *name << ", " << *value << std::endl;
+		//conout << "\t" << *name << ", " << *value << std::endl;
 		vec.emplace_back(SwigEnumSelfAllocated{ *name, *value });
 	}
 
@@ -1548,7 +1547,7 @@ static CompactDetourHook lua_AvatarEntry_excludedFromSimulacrum_get_hook;
 static int lua_AvatarEntry_excludedFromSimulacrum_get_detour(luau_State* L)
 {
 	reinterpret_cast<luau_CFunction>(lua_AvatarEntry_excludedFromSimulacrum_get_hook.original)(L);
-	//std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get: " << L->outtop[-1].value.as_bool << std::endl;
+	//conout << "lua_AvatarEntry_excludedFromSimulacrum_get: " << L->outtop[-1].value.as_bool << std::endl;
 	L->outtop[-1].value.as_bool = L->outtop[-1].value.as_bool ? !simulacrum_blacklisted : !simulacrum_whitelisted;
 	return 1;
 }
@@ -1569,7 +1568,7 @@ static luau_CFunction lua_OpenWebBrowser_og;
 static int lua_OpenWebBrowser_detour(luau_State* L)
 {
 #if LOGGING
-	std::cout << "lua_OpenWebBrowser: " << L->intop[0].getString() << std::endl;
+	conout << "lua_OpenWebBrowser: " << L->intop[0].getString() << std::endl;
 #endif
 	ObfusString sub("warframe.com");
 	if (strstr(L->intop[0].getString(), sub.c_str()) != nullptr)
@@ -1601,7 +1600,7 @@ static luau_CFunction lua_FlashInstance_GetStringVariable_og;
 static int lua_FlashInstance_GetStringVariable_detour(luau_State* L)
 {
 	auto ret = lua_FlashInstance_GetStringVariable_og(L);
-	//std::cout << "lua_FlashInstance_GetStringVariable: " << L->intop[1].getString() << " -> " << L->outtop[-1].getString() << std::endl;
+	//conout << "lua_FlashInstance_GetStringVariable: " << L->intop[1].getString() << " -> " << L->outtop[-1].getString() << std::endl;
 	if (soup::joaat::hash(L->intop[1].getString()) == soup::joaat::compileTimeHash("Window.SendMessageBar.MessageBox"))
 	{
 		bool block = false;
@@ -1838,7 +1837,7 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 				}
 				catch (const std::exception& e)
 				{
-					std::cout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
+					conout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
 				}
 			}
 			buf.append(text);
@@ -1864,8 +1863,8 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 	if (should_write_to_console)
 	{
 		ObfusString prefix("Reading metadata for ");
-		std::cout.write(prefix.data(), prefix.size());
-		std::cout << path << name << "\n";
+		conout.write(prefix.data(), prefix.size());
+		conout << path << name << "\n";
 	}
 	if (should_write_to_ee_log)
 	{
@@ -1897,7 +1896,7 @@ static void object_type_serialise_propery_text_detour_pending(void* a1, GameStri
 	__asm mov objectType, r11;
 
 #if PRIVATE
-	std::cout << "Metadata Patches: string_pool is not ready yet !!!" << std::endl;
+	conout << "Metadata Patches: string_pool is not ready yet !!!" << std::endl;
 #endif
 	while (get_object_type_serialise_propery_text_detour() == &object_type_serialise_propery_text_detour_pending)
 	{
@@ -1941,7 +1940,7 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 		const char* func_name = resolve_string_handle(inst->func_name_handle);
 
 #if LOGGING
-		//std::cout << "ScriptMgr_startInstance: " << path << name << ", " << func_name << "\n";
+		//conout << "ScriptMgr_startInstance: " << path << name << ", " << func_name << "\n";
 #endif
 
 		uint32_t hash = 0;
@@ -1982,7 +1981,7 @@ static DetourHook irc_send_raw_hook;
 static std::string process_irc_send(const char* data, size_t size)
 {
 #if LOGGING
-	std::cout << "irc_send_raw: " << std::string(data, size) << std::endl;
+	conout << "irc_send_raw: " << std::string(data, size) << std::endl;
 #endif
 #if REDIRECT_REQUESTS
 	if (size > 36 && soup::joaat::hashRange(data, 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
@@ -2003,8 +2002,8 @@ static std::string process_irc_send(const char* data, size_t size)
 		if (sep != std::string::npos)
 		{
 			std::string_view message(data + sep + 2, size - (sep + 2));
-			//std::cout << "channel_name = " << sv.substr(8, sep - 8) << std::endl;
-			//std::cout << "message = " << message << std::endl;
+			//conout << "channel_name = " << sv.substr(8, sep - 8) << std::endl;
+			//conout << "message = " << message << std::endl;
 			{
 				std::lock_guard lock(running_scripts_mtx);
 				for (auto& scr : running_scripts)
@@ -2047,35 +2046,35 @@ static luau_CFunction lua_HashCrc32_og;
 static int lua_SetSeed_detour(luau_State* L)
 {
 	lua_SetSeed_og(L);
-	std::cout << "lua_SetSeed: lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	conout << "lua_SetSeed: lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
 	return 0;
 }
 
 static int lua_ChurnSeed_detour(luau_State* L)
 {
 	lua_ChurnSeed_og(L);
-	std::cout << "lua_ChurnSeed: " << L->intop[1].value.as_float << " iterations; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	conout << "lua_ChurnSeed: " << L->intop[1].value.as_float << " iterations; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
 	return 0;
 }
 
 static int lua_SRandom_detour(luau_State* L)
 {
 	lua_SRandom_og(L);
-	std::cout << "lua_SRandom(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	conout << "lua_SRandom(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
 	return 1;
 }
 
 static int lua_SRandomInt_detour(luau_State* L)
 {
 	lua_SRandomInt_og(L);
-	std::cout << "lua_SRandomInt(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
+	conout << "lua_SRandomInt(" << L->intop[0].value.as_float << ", " << L->intop[1].value.as_float << "): generated " << L->outtop[-1].value.as_float << "; lua_seed is now " << (lua_seed ? std::to_string(*lua_seed) : "[unknown]") << std::endl;
 	return 1;
 }
 
 static int lua_HashCrc32_detour(luau_State* L)
 {
 	lua_HashCrc32_og(L);
-	std::cout << "lua_HashCrc32(" << L->intop[0].getString() << "): returned " << L->outtop[-1].value.as_float << std::endl;
+	conout << "lua_HashCrc32(" << L->intop[0].getString() << "): returned " << L->outtop[-1].value.as_float << std::endl;
 	return 1;
 }
 #endif
@@ -2087,7 +2086,7 @@ static DetourHook crc32c_impl_hook;
 static uint32_t crc32c_impl_detour(uint32_t initial, const char* data, size_t size)
 {
 	auto res = reinterpret_cast<decltype(&crc32c_impl_detour)>(crc32c_impl_hook.original)(initial, data, size);
-	std::cout << "CRC32C: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	conout << "CRC32C: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	return res;
 }
 #endif
@@ -2098,7 +2097,7 @@ static DetourHook MD5_append_hook;
 
 static void MD5_append_detour(void* state, const char* data, size_t size)
 {
-	std::cout << "MD5_append: state = " << state << ", data = " << string::bin2hex(std::string(data, size)) << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	conout << "MD5_append: state = " << state << ", data = " << string::bin2hex(std::string(data, size)) << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	return reinterpret_cast<decltype(&MD5_append_detour)>(MD5_append_hook.original)(state, data, size);
 }
 #endif
@@ -2109,8 +2108,8 @@ static DetourHook serialise_propery_text_hook;
 
 static void serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
 {
-	std::cout << "serialise_propery_text: a3 = " << a3 << ", a4 = " << a4 << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
-	std::cout.write(str->getData(), str->getSize());
+	conout << "serialise_propery_text: a3 = " << a3 << ", a4 = " << a4 << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	conout.write(str->getData(), str->getSize());
 	return reinterpret_cast<decltype(&serialise_propery_text_detour)>(serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
@@ -2137,11 +2136,11 @@ static DetourHook init_oodle_network_state_hook;
 
 static __int64 init_oodle_network_state_detour(GameOodleNetworkState* st)
 {
-	std::cout << "compacted state size: " << st->compacted_state.size << " (allocated " << st->compacted_state.capacity << ")" << std::endl;
+	conout << "compacted state size: " << st->compacted_state.size << " (allocated " << st->compacted_state.capacity << ")" << std::endl;
 	string::toFile("net_compacted_state.bin", st->compacted_state.data, st->compacted_state.size);
 	const auto ret = reinterpret_cast<decltype(&init_oodle_network_state_detour)>(init_oodle_network_state_hook.original)(st);
-	std::cout << "htbits: " << st->htbits << std::endl;
-	std::cout << "window size: " << st->window.size << " (allocated " << st->window.capacity << ")" << std::endl;
+	conout << "htbits: " << st->htbits << std::endl;
+	conout << "window size: " << st->window.size << " (allocated " << st->window.capacity << ")" << std::endl;
 	string::toFile("net_window.bin", st->window.data, st->window.size);
 	return ret;
 }
@@ -2150,7 +2149,7 @@ static DetourHook compress_packet_oodle_net_hook;
 
 static bool compress_packet_oodle_net_detour(GameBuffer* uncompressed, GameBuffer* compressed, GameOodleNetworkState* st)
 {
-	std::cout << "compress_packet_oodle_net: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
+	conout << "compress_packet_oodle_net: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
 	return reinterpret_cast<decltype(&compress_packet_oodle_net_detour)>(compress_packet_oodle_net_hook.original)(uncompressed, compressed, st);
 }
 
@@ -2158,7 +2157,7 @@ static DetourHook compress_packet_oodle_lz_hook;
 
 static bool compress_packet_oodle_lz_detour(GameBuffer* uncompressed, GameBuffer* compressed, int a3)
 {
-	std::cout << "compress_packet_oodle_lz: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
+	conout << "compress_packet_oodle_lz: " << std::string(uncompressed->data, uncompressed->size) << std::endl;
 	return reinterpret_cast<decltype(&compress_packet_oodle_lz_detour)>(compress_packet_oodle_lz_hook.original)(uncompressed, compressed, a3);
 }
 
@@ -2166,7 +2165,7 @@ static DetourHook oodle_compress_hook;
 
 static bool oodle_compress_detour(char* out, size_t* out_size, const char* data, size_t size, int a5)
 {
-	std::cout << "oodle_compress: " << std::string(data, size) << std::endl;
+	conout << "oodle_compress: " << std::string(data, size) << std::endl;
 	return reinterpret_cast<decltype(&oodle_compress_detour)>(oodle_compress_hook.original)(out, out_size, data, size, a5);
 }
 #endif
@@ -2177,7 +2176,7 @@ static DetourHook SendConnectionlessData_hook;
 
 static __int64 SendConnectionlessData_detour(void* a1, GameBuffer* data, void* a3, char a4, char a5)
 {
-	std::cout << "SendConnectionlessData: " << string::bin2hex(data->data, data->size) << std::endl;
+	conout << "SendConnectionlessData: " << string::bin2hex(data->data, data->size) << std::endl;
 	return reinterpret_cast<decltype(&SendConnectionlessData_detour)>(SendConnectionlessData_hook.original)(a1, data, a3, a4, a5);
 }
 #endif
@@ -2188,9 +2187,9 @@ static DetourHook lzf_compress_hook;
 
 static unsigned int lzf_compress_detour(const char* uncompressed, unsigned int uncompressed_size, char* compressed, unsigned int compressed_size)
 {
-	std::cout << "lzf_compress input: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
+	conout << "lzf_compress input: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
 	compressed_size = reinterpret_cast<decltype(&lzf_compress_detour)>(lzf_compress_hook.original)(uncompressed, uncompressed_size, compressed, compressed_size);
-	std::cout << "lzf_compress output: " << string::bin2hex(compressed, compressed_size) << std::endl;
+	conout << "lzf_compress output: " << string::bin2hex(compressed, compressed_size) << std::endl;
 	return compressed_size;
 }
 
@@ -2198,9 +2197,9 @@ static DetourHook lzf_decompress_hook;
 
 static unsigned int lzf_decompress_detour(const char* compressed, unsigned int compressed_size, char* uncompressed, unsigned int uncompressed_size)
 {
-	std::cout << "lzf_decompress input: " << string::bin2hex(compressed, compressed_size) << std::endl;
+	conout << "lzf_decompress input: " << string::bin2hex(compressed, compressed_size) << std::endl;
 	uncompressed_size = reinterpret_cast<decltype(&lzf_decompress_detour)>(lzf_decompress_hook.original)(compressed, compressed_size, uncompressed, uncompressed_size);
-	std::cout << "lzf_decompress output: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
+	conout << "lzf_decompress output: " << string::bin2hex(uncompressed, uncompressed_size) << std::endl;
 	return uncompressed_size;
 }
 #endif
@@ -2220,10 +2219,10 @@ static DetourHook UncompressPacket_hook;
 
 static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
 {
-	std::cout << "UncompressPacket input: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
+	conout << "UncompressPacket input: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
 	if (reinterpret_cast<decltype(&UncompressPacket_detour)>(UncompressPacket_hook.original)(data, buffer))
 	{
-		std::cout << "UncompressPacket output: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
+		conout << "UncompressPacket output: " << string::bin2hex(buffer->data, buffer->size) << std::endl;
 		return true;
 	}
 	return false;
@@ -2255,11 +2254,11 @@ static void log_optional_scan_failure(bool important)
 {
 	if (important)
 	{
-		std::cout << get_core_string(ObfusString("sigfailimp").str()) << std::endl;
+		conout << get_core_string(ObfusString("sigfailimp").str()) << std::endl;
 	}
 	else
 	{
-		std::cout << get_core_string(ObfusString("sigfailopt").str()) << std::endl;
+		conout << get_core_string(ObfusString("sigfailopt").str()) << std::endl;
 	}
 }
 
@@ -2620,7 +2619,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 00 FA FF FF 48 81 EC 00 07 00 00 48 8B 05 ? ? ? ? 48 33 C4");
 		auto legacy_parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "legacy_parse_url = " << legacy_parse_url << std::endl;
+		conout << "legacy_parse_url = " << legacy_parse_url << std::endl;
 #endif
 		if (legacy_parse_url)
 		{
@@ -2636,7 +2635,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("40 53 48 81 EC 60 02 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 50 02 00 00 4C 8B 49 08");
 		auto internet_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "internet_connect = " << internet_connect << std::endl;
+		conout << "internet_connect = " << internet_connect << std::endl;
 #endif
 		if (internet_connect)
 		{
@@ -2654,7 +2653,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 0F B7 01");
 		auto resolve_addr = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "resolve_addr = " << resolve_addr << std::endl;
+		conout << "resolve_addr = " << resolve_addr << std::endl;
 #endif
 		if (resolve_addr)
 		{
@@ -2669,7 +2668,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 18 55 56 57 48 8D AC 24 30 F6 FF FF 48 81 EC D0 0A 00 00");
 		auto parse_url = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "parse_url = " << parse_url << std::endl;
+		conout << "parse_url = " << parse_url << std::endl;
 #endif
 		parse_url_hook.detour = reinterpret_cast<void*>(&parse_url_detour);
 		parse_url_hook.target = parse_url;
@@ -2690,7 +2689,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			winhttp_connect = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 #if LOGGING
-		std::cout << "winhttp_connect = " << winhttp_connect << std::endl;
+		conout << "winhttp_connect = " << winhttp_connect << std::endl;
 #endif
 		if (winhttp_connect)
 		{
@@ -2758,7 +2757,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			offset = 8;
 		}
 #if LOGGING
-		std::cout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
+		conout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
 #endif
 		if (!game_http_request_caller)
 		{
@@ -2781,7 +2780,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		game_http_request_hook.target = game_http_request;
 		game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
 #if LOGGING
-		std::cout << "game_http_request_hook.code_cave = " << game_http_request_hook.code_cave << std::endl;
+		conout << "game_http_request_hook.code_cave = " << game_http_request_hook.code_cave << std::endl;
 #endif
 		game_http_request_hook.create();
 		game_http_request_hook.enable();
@@ -2793,7 +2792,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("74 11 44 38 2D ? ? ? ? 74 08");
 		auto WebGet_EncryptPost_cmp = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "WebGet_EncryptPost_cmp = " << WebGet_EncryptPost_cmp.as<void*>() << std::endl;
+		conout << "WebGet_EncryptPost_cmp = " << WebGet_EncryptPost_cmp.as<void*>() << std::endl;
 #endif
 		if (WebGet_EncryptPost_cmp)
 		{
@@ -2814,7 +2813,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			SIG_INST("40 53 57 41 54 48 83 EC 20 44 8B E2 48 8B F9 48 85 C9"); // 38.5.0, 38.5.2, 38.5.3
 			auto encstr_append = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "encstr_append = " << encstr_append << std::endl;
+			conout << "encstr_append = " << encstr_append << std::endl;
 #endif
 			if (encstr_append)
 			{
@@ -2829,7 +2828,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			SIG_INST("48 8B C4 48 89 50 10 53 55 41 56 48 83 EC 50 48 89 70 18"); // 38.5.3
 			auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
+			conout << "encstr_discharge = " << encstr_discharge << std::endl;
 #endif
 			if (encstr_discharge)
 			{
@@ -2845,7 +2844,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			SIG_INST("48 89 5C 24 18 55 56 57 41 56 41 57 48 83 EC 30 ? ? ? 4C 8B F2"); // 38.5.0, 38.5.2
 			auto encstr_discharge = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-			std::cout << "encstr_discharge = " << encstr_discharge << std::endl;
+			conout << "encstr_discharge = " << encstr_discharge << std::endl;
 #endif
 			if (encstr_discharge)
 			{
@@ -2868,7 +2867,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 30 01 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 20 01 00 00");
 		auto queue_http_request_internal = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "queue_http_request_internal = " << queue_http_request_internal << std::endl;
+		conout << "queue_http_request_internal = " << queue_http_request_internal << std::endl;
 #endif
 		if (queue_http_request_internal)
 		{
@@ -2897,7 +2896,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			Curl_resolv = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 #if LOGGING
-		std::cout << "Curl_resolv = " << Curl_resolv << std::endl;
+		conout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
 		if (Curl_resolv)
 		{
@@ -2927,7 +2926,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			ssl_verify_internal_caller = Module(nullptr).range.scan(sig_inst);
 		}
 #if LOGGING
-		std::cout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
+		conout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
 #endif
 		if (!ssl_verify_internal_caller)
 		{
@@ -2964,7 +2963,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			Curl_ossl_verifyhost = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 #if LOGGING
-		std::cout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
+		conout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
 #endif
 		if (!Curl_ossl_verifyhost)
 		{
@@ -2982,7 +2981,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	{
 		auto verify_worldstate_integrity = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
+		conout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
 		if (!verify_worldstate_integrity)
 		{
@@ -2992,7 +2991,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		verify_worldstate_integrity_hook.target = verify_worldstate_integrity;
 		verify_worldstate_integrity_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-		std::cout << "verify_worldstate_integrity_hook.code_cave = " << verify_worldstate_integrity_hook.code_cave<< std::endl;
+		conout << "verify_worldstate_integrity_hook.code_cave = " << verify_worldstate_integrity_hook.code_cave<< std::endl;
 #endif
 		verify_worldstate_integrity_hook.create();
 		verify_worldstate_integrity_hook.enable();
@@ -3004,7 +3003,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 10 48 89 6C 24 18 56 41 54 41 55 41 56 41 57 48 83 EC 40 48 8B AC 24 A8 00 00 00");
 		auto int_rsa_verify = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "int_rsa_verify = " << int_rsa_verify << std::endl;
+		conout << "int_rsa_verify = " << int_rsa_verify << std::endl;
 #endif
 		int_rsa_verify_hook.detour = reinterpret_cast<void*>(&int_rsa_verify_detour);
 		int_rsa_verify_hook.target = int_rsa_verify;
@@ -3032,7 +3031,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			parse_arguments_callsite = Module(nullptr).range.scan(sig_inst);
 		}
 #if LOGGING
-		std::cout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
+		conout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
 #endif
 		if (parse_arguments_callsite)
 		{
@@ -3074,7 +3073,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 03 0D ? ? ? ? 48 89 8F");
 		auto worldstate_update_interval_insn = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "worldstate_update_interval_insn = " << worldstate_update_interval_insn.as<void*>() << std::endl;
+		conout << "worldstate_update_interval_insn = " << worldstate_update_interval_insn.as<void*>() << std::endl;
 #endif
 		if (worldstate_update_interval_insn)
 		{
@@ -3090,7 +3089,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("88 44 24 20 E8 ? ? ? ? 83 7B 0C 01"); // 2013.05.23.16.06, 2014.10.24.08.24, 2017.03.06.15.49, 2023.04.25.23.40
 		const auto init_cache_fetching_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
+		conout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
 #endif
 		if (init_cache_fetching_callsite)
 		{
@@ -3131,7 +3130,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 #if LOGGING
-		std::cout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
+		conout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
 #endif
 		if (legacy_dns_lookup)
 		{
@@ -3149,7 +3148,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfaillegacy").str()) << std::endl;
 		}
 	}
 
@@ -3157,7 +3156,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 C1 C8 ? 48 89 05 ? ? ? ? 48 33 C1 48 89 05 ? ? ? ? C3"); // Alternatively: CC 48 B9 ? ? ? ? ? ? ? ? 48 8D 05
 		auto device_id_insn = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "device_id_insn = " << device_id_insn.as<void*>() << std::endl;
+		conout << "device_id_insn = " << device_id_insn.as<void*>() << std::endl;
 #endif
 		if (device_id_insn)
 		{
@@ -3175,7 +3174,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("73 43 B2 05");
 		auto xp_based_level_jnb = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "xp_based_level_jnb = " << xp_based_level_jnb.as<void*>() << std::endl;
+		conout << "xp_based_level_jnb = " << xp_based_level_jnb.as<void*>() << std::endl;
 #endif
 		if (xp_based_level_jnb)
 		{
@@ -3185,7 +3184,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
 		}
 	}
 #endif
@@ -3195,7 +3194,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 10 57 48 83 EC 50 0F 29 74 24 40 0F 57 C0 0F 28 F1");
 		auto SquadSetCountdownTimer = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
+		conout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
 #endif
 		if (SquadSetCountdownTimer)
 		{
@@ -3215,7 +3214,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("SquadSetCountdownTimer");
 		auto lua_SquadSetCountdownTimer_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_SquadSetCountdownTimer_hash = " << lua_SquadSetCountdownTimer_hash.as<void*>() << std::endl;
+		conout << "lua_SquadSetCountdownTimer_hash = " << lua_SquadSetCountdownTimer_hash.as<void*>() << std::endl;
 #endif
 		if (lua_SquadSetCountdownTimer_hash)
 		{
@@ -3226,7 +3225,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
 		}
 	}
 #endif
@@ -3236,7 +3235,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? FE FF FF 48 81 EC ? 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 98 68 FF FF FF 44 0F 29 A0 58 FF FF FF 44 0F 29 A8 48 FF FF FF 44 0F 29 B0 38 FF FF FF 44 0F 29 B8 28 FF FF FF");
 		auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-	std::cout << "get_total_damage = " << get_total_damage << std::endl;
+	conout << "get_total_damage = " << get_total_damage << std::endl;
 #endif
 		if (get_total_damage)
 		{
@@ -3252,7 +3251,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84");
 		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
+		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
 		if (get_total_damage_hook.target && dmg_number_patch_addr)
 		{
@@ -3293,7 +3292,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.") << std::endl;
+			conout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.").str() << std::endl;
 		}
 	}
 	else
@@ -3301,7 +3300,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
 		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
+		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
 		if (get_total_damage_hook.target && dmg_number_patch_addr)
 		{
@@ -3342,7 +3341,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
 		}
 	}
 #endif
@@ -3353,7 +3352,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("66 69 72 65 77 61 6C 6C 00"); // "firewall"
 		auto pStrFirewall = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "pStrFirewall = " << pStrFirewall.as<void*>() << std::endl;
+		conout << "pStrFirewall = " << pStrFirewall.as<void*>() << std::endl;
 #endif
 		if (pStrFirewall)
 		{
@@ -3375,7 +3374,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 8B 0D ? ? ? ? 48 85 C9 74 14 41 B8 20 00 00 00 48 8D 15 ? ? ? ? E8");
 		auto write_to_log_file_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "write_to_log_file_callsite = " << write_to_log_file_callsite.as<void*>() << std::endl;
+		conout << "write_to_log_file_callsite = " << write_to_log_file_callsite.as<void*>() << std::endl;
 #endif
 		if (write_to_log_file_callsite)
 		{
@@ -3398,7 +3397,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str_SetConfigBool("SetConfigBool");
 		auto lua_FlashMgr_GetConfigBool_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str_GetConfigBool.c_str()), wf_hash(str_SetConfigBool.c_str())));
 #if LOGGING
-		std::cout << "lua_FlashMgr_GetConfigBool_hash = " << lua_FlashMgr_GetConfigBool_hash.as<void*>() << std::endl;
+		conout << "lua_FlashMgr_GetConfigBool_hash = " << lua_FlashMgr_GetConfigBool_hash.as<void*>() << std::endl;
 #endif
 		if (lua_FlashMgr_GetConfigBool_hash)
 		{
@@ -3420,7 +3419,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("BA 4C 1E E4 A0 E8");
 		auto lua_set_global_by_hash_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "lua_set_global_by_hash_callsite = " << lua_set_global_by_hash_callsite.as<void*>() << std::endl;
+		conout << "lua_set_global_by_hash_callsite = " << lua_set_global_by_hash_callsite.as<void*>() << std::endl;
 #endif
 		if (lua_set_global_by_hash_callsite)
 		{
@@ -3430,7 +3429,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			lua_set_global_by_hash_hook.target = lua_set_global_by_hash;
 			lua_set_global_by_hash_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-			std::cout << "lua_set_global_by_hash_hook.code_cave = " << lua_set_global_by_hash_hook.code_cave<< std::endl;
+			conout << "lua_set_global_by_hash_hook.code_cave = " << lua_set_global_by_hash_hook.code_cave<< std::endl;
 #endif
 			lua_set_global_by_hash_hook.create();
 			lua_set_global_by_hash_hook.enable();
@@ -3446,7 +3445,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
 		auto lua_set_global = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "lua_set_global = " << lua_set_global << std::endl;
+		conout << "lua_set_global = " << lua_set_global << std::endl;
 #endif
 		if (lua_set_global)
 		{
@@ -3467,7 +3466,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("UpdateFlashMarkers");
 		auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
+		conout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
 #endif
 		if (lua_LotusHudStatus_UpdateFlashMarkers_hash)
 		{
@@ -3489,7 +3488,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("49 8D 43 D8 49 89 43 F0 E8 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C4 58 E9");
 		auto register_enum_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "register_enum_callsite = " << register_enum_callsite.as<void*>() << std::endl;
+		conout << "register_enum_callsite = " << register_enum_callsite.as<void*>() << std::endl;
 #endif
 		if (register_enum_callsite)
 		{
@@ -3523,7 +3522,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			get_profile_dir = Module(nullptr).range.scan(sig_inst);
 		}
 #if LOGGING
-		std::cout << "get_profile_dir = " << get_profile_dir.as<void*>() << std::endl;
+		conout << "get_profile_dir = " << get_profile_dir.as<void*>() << std::endl;
 #endif
 		if (get_profile_dir)
 		{
@@ -3536,12 +3535,12 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			}
 			get_profile_dir_offset = get_profile_dir.add(46).as<uint32_t&>();
 #if LOGGING
-			std::cout << "get_profile_dir_offset = " << get_profile_dir_offset << std::endl;
+			conout << "get_profile_dir_offset = " << get_profile_dir_offset << std::endl;
 #endif
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailfpd").str()) << std::endl;
 		}
 	}
 #endif
@@ -3551,26 +3550,26 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("excludedFromSimulacrum");
 		auto excludedFromSimulacrum_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "excludedFromSimulacrum_hash = " << excludedFromSimulacrum_hash.as<void*>() << std::endl;
+		conout << "excludedFromSimulacrum_hash = " << excludedFromSimulacrum_hash.as<void*>() << std::endl;
 #endif
 		if (excludedFromSimulacrum_hash)
 		{
 			auto lua_AvatarEntry_excludedFromSimulacrum_get = *excludedFromSimulacrum_hash.add(8).as<void**>();
 #if LOGGING
-			std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get = " << lua_AvatarEntry_excludedFromSimulacrum_get << std::endl;
+			conout << "lua_AvatarEntry_excludedFromSimulacrum_get = " << lua_AvatarEntry_excludedFromSimulacrum_get << std::endl;
 #endif
 			lua_AvatarEntry_excludedFromSimulacrum_get_hook.detour = reinterpret_cast<void*>(&lua_AvatarEntry_excludedFromSimulacrum_get_detour);
 			lua_AvatarEntry_excludedFromSimulacrum_get_hook.target = lua_AvatarEntry_excludedFromSimulacrum_get;
 			lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-			std::cout << "lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = " << lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave << std::endl;
+			conout << "lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave = " << lua_AvatarEntry_excludedFromSimulacrum_get_hook.code_cave << std::endl;
 #endif
 			lua_AvatarEntry_excludedFromSimulacrum_get_hook.create();
 			lua_AvatarEntry_excludedFromSimulacrum_get_hook.enable();
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailswb").str()) << std::endl;
 		}
 	}
 #endif
@@ -3580,7 +3579,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 48 8B D9 E8");
 		auto is_pause_allowed = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "is_pause_allowed = " << is_pause_allowed << std::endl;
+		conout << "is_pause_allowed = " << is_pause_allowed << std::endl;
 #endif
 		if (is_pause_allowed)
 		{
@@ -3591,7 +3590,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
 		}
 	}
 #endif
@@ -3602,7 +3601,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("GetStringVariable");
 		auto lua_FlashInstance_GetStringVariable_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
+		conout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
 #endif
 		if (lua_FlashInstance_GetStringVariable_hash)
 		{
@@ -3623,7 +3622,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("OpenWebBrowser");
 		auto lua_OpenWebBrowser_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_OpenWebBrowser_hash = " << lua_OpenWebBrowser_hash.as<void*>() << std::endl;
+		conout << "lua_OpenWebBrowser_hash = " << lua_OpenWebBrowser_hash.as<void*>() << std::endl;
 #endif
 		if (lua_OpenWebBrowser_hash)
 		{
@@ -3644,7 +3643,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 1D ? ? ? ? 85 C0 74 27 48 B9 2D 7F 95 4C 2D F4 51 58");
 		auto lua_seed_mov = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "lua_seed_mov = " << lua_seed_mov.as<void*>() << std::endl;
+		conout << "lua_seed_mov = " << lua_seed_mov.as<void*>() << std::endl;
 #endif
 		if (lua_seed_mov)
 		{
@@ -3660,7 +3659,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("SetSeed");
 		auto lua_SetSeed_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_SetSeed_hash = " << lua_SetSeed_hash.as<void*>() << std::endl;
+		conout << "lua_SetSeed_hash = " << lua_SetSeed_hash.as<void*>() << std::endl;
 #endif
 		if (lua_SetSeed_hash)
 		{
@@ -3679,7 +3678,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("ChurnSeed");
 		auto lua_ChurnSeed_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_ChurnSeed_hash = " << lua_ChurnSeed_hash.as<void*>() << std::endl;
+		conout << "lua_ChurnSeed_hash = " << lua_ChurnSeed_hash.as<void*>() << std::endl;
 #endif
 		if (lua_ChurnSeed_hash)
 		{
@@ -3698,7 +3697,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("SRandom");
 		auto lua_SRandom_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_SRandom_hash = " << lua_SRandom_hash.as<void*>() << std::endl;
+		conout << "lua_SRandom_hash = " << lua_SRandom_hash.as<void*>() << std::endl;
 #endif
 		if (lua_SRandom_hash)
 		{
@@ -3717,7 +3716,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("SRandomInt");
 		auto lua_SRandomInt_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_SRandomInt_hash = " << lua_SRandomInt_hash.as<void*>() << std::endl;
+		conout << "lua_SRandomInt_hash = " << lua_SRandomInt_hash.as<void*>() << std::endl;
 #endif
 		if (lua_SRandomInt_hash)
 		{
@@ -3736,7 +3735,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("HashCrc32");
 		auto lua_HashCrc32_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_HashCrc32_hash = " << lua_HashCrc32_hash.as<void*>() << std::endl;
+		conout << "lua_HashCrc32_hash = " << lua_HashCrc32_hash.as<void*>() << std::endl;
 #endif
 		if (lua_HashCrc32_hash)
 		{
@@ -3757,7 +3756,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 41 56 41 57 48 83 EC 20 83 3D");
 		auto crc32c_impl = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "crc32c_impl = " << crc32c_impl << std::endl;
+		conout << "crc32c_impl = " << crc32c_impl << std::endl;
 #endif
 		if (crc32c_impl)
 		{
@@ -3778,7 +3777,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("4D 85 C0 0F 84 ? 00 00 00 48 89 6C 24 10");
 		auto MD5_append = Module(nullptr).range.scan(sig_inst).add(9).as<void*>();
 #if LOGGING
-		std::cout << "MD5_append = " << MD5_append << std::endl;
+		conout << "MD5_append = " << MD5_append << std::endl;
 #endif
 		if (MD5_append != (void*)9)
 		{
@@ -3799,7 +3798,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	{
 		auto check_string_substitutions = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "check_string_substitutions = " << check_string_substitutions << std::endl;
+		conout << "check_string_substitutions = " << check_string_substitutions << std::endl;
 #endif
 		if (check_string_substitutions)
 		{
@@ -3818,14 +3817,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			check_string_substitutions_hook.target = check_string_substitutions;
 			check_string_substitutions_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-			std::cout << "check_string_substitutions_hook.code_cave = " << check_string_substitutions_hook.code_cave << std::endl;
+			conout << "check_string_substitutions_hook.code_cave = " << check_string_substitutions_hook.code_cave << std::endl;
 #endif
 			check_string_substitutions_hook.create();
 			check_string_substitutions_hook.enable();
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
 		}
 	}
 #endif
@@ -3835,7 +3834,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
 		auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
+		conout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
 		if (object_type_serialise_propery_text_call)
 		{
@@ -3853,14 +3852,14 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			object_type_serialise_propery_text_hook.target = object_type_serialise_propery_text_call.add(17).as<void*>();
 			object_type_serialise_propery_text_hook.code_cave = Module(nullptr).range.scan(CallsiteHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
-			std::cout << "object_type_serialise_propery_text_hook.code_cave = " << object_type_serialise_propery_text_hook.code_cave << std::endl;
+			conout << "object_type_serialise_propery_text_hook.code_cave = " << object_type_serialise_propery_text_hook.code_cave << std::endl;
 #endif
 			object_type_serialise_propery_text_hook.create();
 			object_type_serialise_propery_text_hook.enable();
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
 		}
 	}
 #endif
@@ -3870,7 +3869,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 8B C4 48 89 58 08 48 89 68 10 56 57 41 56 48 81 EC A0 00 00 00 0F 29 70 D8");
 		auto serialise_propery_text = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "serialise_propery_text = " << serialise_propery_text << std::endl;
+		conout << "serialise_propery_text = " << serialise_propery_text << std::endl;
 #endif
 		if (serialise_propery_text)
 		{
@@ -3892,7 +3891,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 20 55 56 57 48 83 EC 30 48 8B E9 48 8B FA 48 8D 0D"); // startInstanceInternal (2 arguments, bool return)
 		auto ScriptMgr_startInstance = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "ScriptMgr_startInstance = " << ScriptMgr_startInstance << std::endl;
+		conout << "ScriptMgr_startInstance = " << ScriptMgr_startInstance << std::endl;
 #endif
 		if (ScriptMgr_startInstance)
 		{
@@ -3913,7 +3912,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	{
 		auto irc_send_raw = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "irc_send_raw = " << irc_send_raw << std::endl;
+		conout << "irc_send_raw = " << irc_send_raw << std::endl;
 #endif
 		if (irc_send_raw)
 		{
@@ -3945,7 +3944,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("80 3D ? ? ? ? 00 74 ? 40 84 FF 74 ? B2 05");
 		auto irc_log_in_cond = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "irc_log_in_cond = " << irc_log_in_cond.as<void*>() << std::endl;
+		conout << "irc_log_in_cond = " << irc_log_in_cond.as<void*>() << std::endl;
 #endif
 		if (irc_log_in_cond)
 		{
@@ -3968,7 +3967,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("32 C0 48 8B 5C 24 40 48 8B 74 24 48 48 83 C4 30 5F C3 B2 05");
 		auto operator_mount_fail = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "operator_mount_fail = " << operator_mount_fail.as<void*>() << std::endl;
+		conout << "operator_mount_fail = " << operator_mount_fail.as<void*>() << std::endl;
 #endif
 		if (operator_mount_fail)
 		{
@@ -3989,7 +3988,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("FF 90 ? ? 00 00 84 C0 74 ? F3 0F 11 73");
 		auto RequestSlomo_cond = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "RequestSlomo_cond = " << RequestSlomo_cond.as<void*>() << std::endl;
+		conout << "RequestSlomo_cond = " << RequestSlomo_cond.as<void*>() << std::endl;
 #endif
 		if (RequestSlomo_cond)
 		{
@@ -4010,7 +4009,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ObfusString str("WebSubscribeToFailure");
 		auto lua_WebSubscribeToFailure_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
-		std::cout << "lua_WebSubscribeToFailure_hash = " << lua_WebSubscribeToFailure_hash.as<void*>() << std::endl;
+		conout << "lua_WebSubscribeToFailure_hash = " << lua_WebSubscribeToFailure_hash.as<void*>() << std::endl;
 #endif
 		if (lua_WebSubscribeToFailure_hash)
 		{
@@ -4025,7 +4024,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			std::cout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
+			conout << get_core_string(ObfusString("sigfaillorf").str()) << std::endl;
 		}
 	}
 #endif
@@ -4035,7 +4034,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B D9 E8 ? ? ? ? 44 8B 43 6C 49 3B C0");
 		auto init_oodle_network_state = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "init_oodle_network_state = " << init_oodle_network_state << std::endl;
+		conout << "init_oodle_network_state = " << init_oodle_network_state << std::endl;
 #endif
 		if (init_oodle_network_state)
 		{
@@ -4054,7 +4053,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 20 55 56 57 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 40 44 8B 71 08 48 8B D9");
 		auto compress_packet_oodle_net = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "compress_packet_oodle_net = " << compress_packet_oodle_net << std::endl;
+		conout << "compress_packet_oodle_net = " << compress_packet_oodle_net << std::endl;
 #endif
 		if (compress_packet_oodle_net)
 		{
@@ -4073,7 +4072,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("40 53 55 56 57 41 54 41 56 41 57 48 83 EC 50 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 48 44 8B 79 08 48 8B F9");
 		auto compress_packet_oodle_lz = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "compress_packet_oodle_lz = " << compress_packet_oodle_lz << std::endl;
+		conout << "compress_packet_oodle_lz = " << compress_packet_oodle_lz << std::endl;
 #endif
 		if (compress_packet_oodle_lz)
 		{
@@ -4092,7 +4091,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("40 53 55 57 41 56 41 57 48 81 EC E0 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 D0 00 00 00 48 63 9C 24 30 01 00 00 49 8B E9");
 		auto oodle_compress = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "oodle_compress = " << oodle_compress << std::endl;
+		conout << "oodle_compress = " << oodle_compress << std::endl;
 #endif
 		if (oodle_compress)
 		{
@@ -4113,7 +4112,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 B9");
 		auto SendConnectionlessData = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "SendConnectionlessData = " << SendConnectionlessData << std::endl;
+		conout << "SendConnectionlessData = " << SendConnectionlessData << std::endl;
 #endif
 		if (SendConnectionlessData)
 		{
@@ -4134,7 +4133,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 20 4C 89 44 24 18 57 41 54 41 55 41 56 41 57 B8 00 00 04 00 E8 ? ? ? ? 48 2B E0");
 		auto lzf_compress = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "lzf_compress = " << lzf_compress << std::endl;
+		conout << "lzf_compress = " << lzf_compress << std::endl;
 #endif
 		if (lzf_compress)
 		{
@@ -4153,7 +4152,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 89 5C 24 08 48 89 74 24 10 48 89 7C 24 18 44 8B DA 49 8B F8 4C 03 D9");
 		auto lzf_decompress = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "lzf_decompress = " << lzf_decompress << std::endl;
+		conout << "lzf_decompress = " << lzf_decompress << std::endl;
 #endif
 		if (lzf_decompress)
 		{
@@ -4174,7 +4173,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("40 55 56 57 41 54 41 56 48 8D 6C 24 C9 48 81 EC 90 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 1F 4C 8B 0A");
 		auto UncompressPacket = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "UncompressPacket = " << UncompressPacket << std::endl;
+		conout << "UncompressPacket = " << UncompressPacket << std::endl;
 #endif
 		if (UncompressPacket)
 		{
@@ -4198,7 +4197,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("B2 05 4A 8D 0C 38"); // "increasing delay to"
 		auto content_retry_insn = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
+		conout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
 #endif
 		if (content_retry_insn)
 		{
@@ -4219,7 +4218,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 03 D0 48 8B 47 08 48 89 10");
 		auto content_retry_insn = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "content_retry_insn = " << content_retry_insn << std::endl;
+		conout << "content_retry_insn = " << content_retry_insn << std::endl;
 #endif
 		if (content_retry_insn)
 		{
@@ -4238,7 +4237,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("40 55 56 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 70 01 00 00");
 		auto anticheat_sideloading_check = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
-		std::cout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
+		conout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
 #endif
 		if (anticheat_sideloading_check)
 		{
@@ -4258,7 +4257,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SIG_INST("48 8B CE 0F B6 D8 E8 ? ? ? ? 48 8B 7C 24 40");
 		auto anticheat_timer_check_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "anticheat_timer_check_callsite = " << anticheat_timer_check_callsite.as<void*>() << std::endl;
+		conout << "anticheat_timer_check_callsite = " << anticheat_timer_check_callsite.as<void*>() << std::endl;
 #endif
 		if (anticheat_timer_check_callsite)
 		{
@@ -4290,7 +4289,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			string_pool_insn = Module(nullptr).range.scan(sig_inst);
 		}
 #if LOGGING
-		std::cout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
+		conout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
 #endif
 		if (string_pool_insn)
 		{
@@ -4307,7 +4306,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if METADATA_PATCHES
 			if (object_type_serialise_propery_text_hook.target)
 			{
-				std::cout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
+				conout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
 				set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_nop);
 			}
 #else
@@ -4323,7 +4322,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 8D 4B 18 33 D2 E8 ? ? ? ? 33 D2 48 8D 4B 38 E8 ? ? ? ? 48 8B 4C 24 30");
 		auto string_resize_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
+		conout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
 #endif
 		if (string_resize_callsite)
 		{
@@ -4340,7 +4339,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
 		auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "raise_script_error_fp_mov = " << raise_script_error_fp_mov.as<void*>() << std::endl;
+		conout << "raise_script_error_fp_mov = " << raise_script_error_fp_mov.as<void*>() << std::endl;
 #endif
 		if (raise_script_error_fp_mov)
 		{
@@ -4356,7 +4355,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57 48 81 EC ? ? ? ? 48 8B FA 41 8B E8 48 8B F1 41 B9");
 		luau_newstate = Module(nullptr).range.scan(sig_inst).as<luau_newstate_t>();
 #if LOGGING
-		std::cout << "luau_newstate = " << (void*)luau_newstate << std::endl;
+		conout << "luau_newstate = " << (void*)luau_newstate << std::endl;
 #endif
 		if (!luau_newstate)
 		{
@@ -4377,7 +4376,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			luau_pushstring = Module(nullptr).range.scan(sig_inst).as<luau_pushstring_t>();
 		}
 #if LOGGING
-		std::cout << "luau_pushstring = " << (void*)luau_pushstring << std::endl;
+		conout << "luau_pushstring = " << (void*)luau_pushstring << std::endl;
 #endif
 		if (!luau_pushstring)
 		{
@@ -4390,7 +4389,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
 		luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
 #if LOGGING
-		std::cout << "luau_pushpointer = " << (void*)luau_pushpointer << std::endl;
+		conout << "luau_pushpointer = " << (void*)luau_pushpointer << std::endl;
 #endif
 		if (!luau_pushpointer)
 		{
@@ -4403,7 +4402,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
 		luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
 #if LOGGING
-		std::cout << "luau_pushobject = " << (void*)luau_pushobject << std::endl;
+		conout << "luau_pushobject = " << (void*)luau_pushobject << std::endl;
 #endif
 		if (!luau_pushobject)
 		{
@@ -4416,7 +4415,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B D9 49 63 F9 48 8B 49 18 49 8B F0");
 		luau_pushcclosurek = Module(nullptr).range.scan(sig_inst).as<luau_pushcclosurek_t>();
 #if LOGGING
-		std::cout << "luau_pushcclosurek = " << (void*)luau_pushcclosurek << std::endl;
+		conout << "luau_pushcclosurek = " << (void*)luau_pushcclosurek << std::endl;
 #endif
 		if (!luau_pushcclosurek)
 		{
@@ -4429,7 +4428,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("BA 01 00 00 00 41 B8 06 00 00 00 48 8B D9 E8 ? ? ? ? BA 02 00 00 00 48 8B CB E8 ? ? ? ? BA 01 00 00 00 48 8B CB E8");
 		auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
+		conout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
 #endif
 		if (lua_next_callsite)
 		{
@@ -4442,7 +4441,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 		auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		std::cout << "luau_gettable_callsite = " << luau_gettable_callsite.as<void*>() << std::endl;
+		conout << "luau_gettable_callsite = " << luau_gettable_callsite.as<void*>() << std::endl;
 #endif
 		if (luau_gettable_callsite)
 		{
@@ -4459,7 +4458,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
 		luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
 #if LOGGING
-		std::cout << "luau_createtable = " << (void*)luau_createtable << std::endl;
+		conout << "luau_createtable = " << (void*)luau_createtable << std::endl;
 #endif
 		if (!luau_createtable)
 		{
@@ -4472,7 +4471,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		SIG_INST("40 53 48 83 EC 20 4C 8B D1 85 D2 7E");
 		luau_settable = Module(nullptr).range.scan(sig_inst).as<luau_settable_t>();
 #if LOGGING
-		std::cout << "luau_settable = " << (void*)luau_settable << std::endl;
+		conout << "luau_settable = " << (void*)luau_settable << std::endl;
 #endif
 		if (!luau_settable)
 		{
@@ -4493,7 +4492,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
 		}
 #if LOGGING
-		std::cout << "luauD_call = " << (void*)luauD_call << std::endl;
+		conout << "luauD_call = " << (void*)luauD_call << std::endl;
 #endif
 		if (!luauD_call)
 		{
@@ -4520,17 +4519,17 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			auto type_arr = res[i].add(3).rip().as<SwigTypeField**>();
 			auto type_arr_end = res[i].add(29).rip().as<SwigTypeField**>();
 #if LOGGING
-			//std::cout << i << std::endl;
-			//std::cout << "type_arr = " << (void*)type_arr << std::endl;
-			//std::cout << "type_arr_end = " << (void*)type_arr_end << std::endl;
-			//std::cout << "type_arr_size = " << (type_arr_end - type_arr) << std::endl;
+			//conout << i << std::endl;
+			//conout << "type_arr = " << (void*)type_arr << std::endl;
+			//conout << "type_arr_end = " << (void*)type_arr_end << std::endl;
+			//conout << "type_arr_size = " << (type_arr_end - type_arr) << std::endl;
 #endif
 			for (auto entry = type_arr; entry != type_arr_end && *entry; ++entry)
 			{
 				if ((*entry)->type_desc)
 				{
 #if LOGGING
-					//std::cout << "\t- " << (*entry)->type_name << " " << (*entry)->field_name << std::endl;
+					//conout << "\t- " << (*entry)->type_name << " " << (*entry)->field_name << std::endl;
 #endif
 					swig_types.emplace(soup::joaat::hashRange((*entry)->type_name, strlen((*entry)->type_name) - 2), (*entry)->type_desc);
 #if PRIVATE
@@ -4542,7 +4541,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		if (nres == 0)
 		{
 #if LOGGING
-			std::cout << "No results for swig types" << std::endl;
+			conout << "No results for swig types" << std::endl;
 #endif
 			log_optional_scan_failure(false);
 		}
@@ -4561,7 +4560,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		if (nres == 0)
 		{
 #if LOGGING
-			std::cout << "No results for swig enums" << std::endl;
+			conout << "No results for swig enums" << std::endl;
 #endif
 			log_optional_scan_failure(false);
 		}
@@ -4594,7 +4593,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		owfConsole::activate();
 
 #if LOGGING
-		std::cout << "base address = " << soup::Process::current()->open()->range.base.as<void*>() << std::endl;
+		conout << "base address = " << soup::Process::current()->open()->range.base.as<void*>() << std::endl;
 #endif
 
 		{
@@ -4602,7 +4601,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			GetModuleFileNameW(hmod, lpFilename, MAX_PATH);
 			dll_path_utf8 = unicode::utf16_to_utf8<std::wstring>(lpFilename);
 #if LOGGING
-			std::cout << "dll_path_utf8 = " << dll_path_utf8 << std::endl;
+			conout << "dll_path_utf8 = " << dll_path_utf8 << std::endl;
 #endif
 		}
 
@@ -4611,7 +4610,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			path.append(LR"(\System32\dwmapi.dll)");
 			og_dwmapi = LoadLibraryW(path.c_str());
 #if LOGGING
-			std::cout << "og_dwmapi = " << (void*)og_dwmapi << std::endl;
+			conout << "og_dwmapi = " << (void*)og_dwmapi << std::endl;
 #endif
 			og_DwmGetCompositionTimingInfo = GetProcAddress(og_dwmapi, "DwmGetCompositionTimingInfo");
 		}
@@ -4621,7 +4620,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			path.append(LR"(\System32\wtsapi32.dll)");
 			og_wtsapi32 = LoadLibraryW(path.c_str());
 #if LOGGING
-			std::cout << "og_wtsapi32 = " << (void*)og_wtsapi32 << std::endl;
+			conout << "og_wtsapi32 = " << (void*)og_wtsapi32 << std::endl;
 #endif
 			og_WTSRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSRegisterSessionNotification");
 			og_WTSUnRegisterSessionNotification = GetProcAddress(og_wtsapi32, "WTSUnRegisterSessionNotification");
@@ -4634,7 +4633,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			path.append(LR"(\System32\version.dll)");
 			og_version = LoadLibraryW(path.c_str());
 #if LOGGING
-			std::cout << "og_version = " << (void*)og_version << std::endl;
+			conout << "og_version = " << (void*)og_version << std::endl;
 #endif
 			og_GetFileVersionInfoA = (GetFileVersionInfoA_t)GetProcAddress(og_version, "GetFileVersionInfoA");
 			//og_GetFileInformationByHandle = (GetFileInformationByHandle_t)GetProcAddress(og_version, "GetFileInformationByHandle");
@@ -4670,7 +4669,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			VerQueryValueA(data, "\\VarFileInfo\\Translation", (LPVOID*)&lpTranslate, &cbTranslate);
 			for (INT i=0; i < (cbTranslate/4); i++)
 			{
-				std::cout << "Lang " << lpTranslate[i].wLanguage << ", c.p. " << lpTranslate[i].wCodePage << std::endl;
+				conout << "Lang " << lpTranslate[i].wLanguage << ", c.p. " << lpTranslate[i].wCodePage << std::endl;
 			}*/
 
 			LPVOID value_data;
@@ -4682,7 +4681,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 #if LOGGING
-		std::cout << "build_version = " << std::string(build_version, 16) << std::endl;
+		conout << "build_version = " << std::string(build_version, 16) << std::endl;
 #endif
 
 		std::error_code ec{};
@@ -4741,12 +4740,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			if (g_repo.loadHotfix(hotfix.data(), hotfix.size()))
 			{
 #if PRIVATE
-				std::cout << ObfusString("Hotfix applied") << std::endl;
+				conout << ObfusString("Hotfix applied").str() << std::endl;
 #endif
 			}
 			else
 			{
-				std::cout << ObfusString("Ignoring hotfix because it was made for a different DLL version") << std::endl;
+				conout << ObfusString("Ignoring hotfix because it was made for a different DLL version").str() << std::endl;
 			}
 		}
 
@@ -4769,14 +4768,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			game_version = static_cast<uint32_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
 
 #if LOGGING
-			std::cout << "build_version_int = " << build_version_int << std::endl;
-			std::cout << "game_version = " << game_version << std::endl;
+			conout << "build_version_int = " << build_version_int << std::endl;
+			conout << "game_version = " << game_version << std::endl;
 #endif
 		}
 		if (game_version == GV(65, 53, 5))
 		{
 #if PRIVATE
-			std::cout << "Version is too new, but trying anyway." << std::endl;
+			conout << "Version is too new, but trying anyway." << std::endl;
 #else
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
@@ -4785,7 +4784,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 		}
 
-		std::cout << get_core_string(ObfusString("freenote").str()) << std::endl;
+		conout << get_core_string(ObfusString("freenote").str()) << std::endl;
 
 		owfScript::init();
 
@@ -4795,7 +4794,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			create_all_hooks();
 #if PRIVATE
-			std::cout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;
+			conout << "Scans & hooks done in " << (time::millis() - t) << " ms" << std::endl;
 #endif
 		}
 
@@ -4807,7 +4806,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 				do_pointer_scans();
 #if PRIVATE
-				std::cout << "Pointer scans done in " << (time::millis() - t) << " ms" << std::endl;
+				conout << "Pointer scans done in " << (time::millis() - t) << " ms" << std::endl;
 #endif
 
 #if VERIFY_EXE_SIG && SOUP_BITS == 64
@@ -4863,7 +4862,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			start_bgscript();
 #if PRIVATE
-			std::cout << "Started background script in " << (time::millis() - t) << " ms" << std::endl;
+			conout << "Started background script in " << (time::millis() - t) << " ms" << std::endl;
 #endif
 		}
 
@@ -4873,7 +4872,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			load_hotkeys();
 #if PRIVATE
-			std::cout << "Loaded hotkeys in " << (time::millis() - t) << " ms" << std::endl;
+			conout << "Loaded hotkeys in " << (time::millis() - t) << " ms" << std::endl;
 #endif
 		}
 
@@ -4885,7 +4884,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	#endif
 			load_label_replacements();
 	#if PRIVATE
-			std::cout << "Loaded label replacements in " << (time::millis() - t) << " ms" << std::endl;
+			conout << "Loaded label replacements in " << (time::millis() - t) << " ms" << std::endl;
 	#endif
 		}
 #endif
@@ -4898,7 +4897,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	#endif
 			load_metadata_patches();
 	#if PRIVATE
-			std::cout << "Loaded metadata patches in " << (time::millis() - t) << " ms" << std::endl;
+			conout << "Loaded metadata patches in " << (time::millis() - t) << " ms" << std::endl;
 	#endif
 		}
 #endif

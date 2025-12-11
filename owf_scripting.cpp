@@ -1,6 +1,5 @@
 #include "owf_scripting.hpp"
 
-#include <iostream>
 #include <mutex>
 
 #include <crc32c.hpp>
@@ -96,7 +95,7 @@ void owfScript::logNl(std::string msg)
 
 void owfScript::log(std::string msg)
 {
-	std::cout << msg;
+	conout << msg;
 
 	size_t script_log_olen;
 	size_t script_log_nlen;
@@ -172,14 +171,14 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		std::cout << concat_arguments(L);
+		conout << concat_arguments(L);
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "write_to_console");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		std::cout << concat_arguments(L) << '\n';
+		conout << concat_arguments(L) << '\n';
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "print_to_console");
@@ -730,13 +729,13 @@ owfScript::owfScript()
 					if (const auto scr = get_script_by_instance_id(L->ci->func->value.gc->cl.c.upvals[0].value.as_uintptr))
 					{
 						const auto cid = L->ci->func->value.gc->cl.c.upvals[1].value.as_uintptr;
-						//std::cout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
+						//conout << "Callback " << cid << " invoked with " << luau_gettop(L) << " arguments" << std::endl;
 						/*L->global_state_error_longjump_data() = nullptr;
 						L->global_state_panic_func() = [](luau_State* L, int)
 						{
-							std::cout << "LuaU is panicking" << std::endl;
+							conout << "LuaU is panicking" << std::endl;
 							luau_error_msg = (--L->outtop)->getString();
-							std::cout << luau_error_msg << std::endl;
+							conout << luau_error_msg << std::endl;
 							throw 0;
 						};*/
 						scr->callback_context = true;
@@ -758,7 +757,7 @@ owfScript::owfScript()
 							lua_pushinteger(scr->coro, cid);
 							lua_pushinteger(scr->coro, luau_gettop(L));
 							const int nresults = scr->tick(2);
-							//std::cout << "Runtime yielded " << nresults << " value(s)" << std::endl;
+							//conout << "Runtime yielded " << nresults << " value(s)" << std::endl;
 							if (nresults == 1)
 							{
 								npushed = lua_tonumber(scr->coro, -1);
@@ -766,11 +765,11 @@ owfScript::owfScript()
 							luau_L = nullptr;
 						}
 						scr->callback_context = false;
-						//std::cout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
+						//conout << "Runtime indicates it has pushed " << npushed << " value(s) to LuaU" << std::endl;
 					}
 					else
 					{
-						//std::cout << "Callback invoked for a dead script" << std::endl;
+						//conout << "Callback invoked for a dead script" << std::endl;
 					}
 					return npushed;
 				}, nullptr, 2, nullptr);

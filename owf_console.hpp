@@ -10,6 +10,7 @@ struct owfConsole
 {
 	inline static bool active = false;
 	inline static std::string title;
+	inline static HANDLE handle = INVALID_HANDLE_VALUE;
 
 	static void setTitle(std::string&& str)
 	{
@@ -25,30 +26,89 @@ struct owfConsole
 
 	static void activate()
 	{
-		active = true;
-
-		AllocConsole();
-		SetConsoleTitleA(title.c_str());
+		SOUP_IF_LIKELY (!active)
 		{
-			FILE* f;
-			freopen_s(&f, "CONIN$", "r", stdin);
-			freopen_s(&f, "CONOUT$", "w", stderr);
-			freopen_s(&f, "CONOUT$", "w", stdout);
-		}
-		SetConsoleCP(CP_UTF8);
-		SetConsoleOutputCP(CP_UTF8);
+			active = true;
 
-		owf_broadcast_message(soup::ObfusString(R"({"console":true})").str());
+			AllocConsole();
+			SetConsoleTitleA(title.c_str());
+			SetConsoleCP(CP_UTF8);
+			SetConsoleOutputCP(CP_UTF8);
+
+			owfConsole::handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+			// Overwrite STD_OUTPUT_HANDLE so our console doesn't receive unwanted messages.
+			{
+				HANDLE h = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+				SetStdHandle(STD_OUTPUT_HANDLE, h);
+			}
+
+			owf_broadcast_message(soup::ObfusString(R"({"console":true})").str());
+		}
 	}
 
 	static void deactivate()
 	{
-		active = false;
+		SOUP_IF_LIKELY (active)
+		{
+			active = false;
 
-		const auto conWnd = GetConsoleWindow();
-		FreeConsole();
-		PostMessage(conWnd, WM_CLOSE, 0, 0);
+			SetStdHandle(STD_OUTPUT_HANDLE, handle);
+			handle = INVALID_HANDLE_VALUE;
 
-		owf_broadcast_message(soup::ObfusString(R"({"console":false})").str());
+			const auto conWnd = GetConsoleWindow();
+			FreeConsole();
+			PostMessage(conWnd, WM_CLOSE, 0, 0);
+
+			owf_broadcast_message(soup::ObfusString(R"({"console":false})").str());
+		}
 	}
 };
+
+struct owfConOut
+{
+	void write(const char* data, size_t size)
+	{
+		WriteFile(owfConsole::handle, data, size, nullptr, nullptr);
+	}
+
+	owfConOut& operator << (const char* msg)
+	{
+		write(msg, strlen(msg));
+		return *this;
+	}
+
+	owfConOut& operator << (const std::string& msg)
+	{
+		write(msg.data(), msg.size());
+		return *this;
+	}
+
+	owfConOut& operator << (int16_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (uint16_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (int32_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (uint32_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (int64_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (uint64_t val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (float val) { return operator<<(std::to_string(val)); }
+	owfConOut& operator << (double val) { return operator<<(std::to_string(val)); }
+
+	template <typename T, SOUP_RESTRICT(std::is_pointer_v<T>)>
+	owfConOut& operator << (T val)
+	{
+		std::stringstream stream;
+		stream << val;
+		return operator<<(stream.str());
+	}
+
+	// Shim for std::endl, std::flush, etc.
+	owfConOut& operator<<(std::ostream&(*manip)(std::ostream&))
+	{
+		if (manip == static_cast<std::ostream& (*)(std::ostream&)>(std::endl))
+		{
+			write("\r\n", 2);
+		}
+		return *this;
+	}
+};
+inline owfConOut conout;
