@@ -1878,52 +1878,14 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 
 static CallsiteHook object_type_serialise_propery_text_hook;
 
-using object_type_serialise_propery_text_t = void(*)(void*, GameString*, int, char);
-
-static object_type_serialise_propery_text_t get_object_type_serialise_propery_text_detour()
-{
-	return *(object_type_serialise_propery_text_t*)((uint8_t*)object_type_serialise_propery_text_hook.detour + 5);
-}
-
-static void set_object_type_serialise_propery_text_detour(object_type_serialise_propery_text_t detour)
-{
-	*(object_type_serialise_propery_text_t*)((uint8_t*)object_type_serialise_propery_text_hook.detour + 5) = detour;
-}
-
-static void object_type_serialise_propery_text_detour_pending(void* a1, GameString* str, int a3, char a4)
-{
-	ObjectType* objectType;
-	__asm mov objectType, r11;
-
-#if PRIVATE
-	conout << "Metadata Patches: string_pool is not ready yet !!!" << std::endl;
-#endif
-	while (get_object_type_serialise_propery_text_detour() == &object_type_serialise_propery_text_detour_pending)
-	{
-		os::sleep(1);
-	}
-
-	if (string_pool != nullptr)
-	{
-		handle_metadata_read(objectType, str);
-	}
-
-	return reinterpret_cast<object_type_serialise_propery_text_t>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
-}
-
-static void object_type_serialise_propery_text_detour_ok(void* a1, GameString* str, int a3, char a4)
+static void object_type_serialise_propery_text_detour(void* a1, GameString* str, int a3, char a4)
 {
 	ObjectType* objectType;
 	__asm mov objectType, r11;
 
 	handle_metadata_read(objectType, str);
 
-	return reinterpret_cast<object_type_serialise_propery_text_t>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
-}
-
-static void object_type_serialise_propery_text_detour_nop(void* a1, GameString* str, int a3, char a4)
-{
-	return reinterpret_cast<object_type_serialise_propery_text_t>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
+	return reinterpret_cast<decltype(&object_type_serialise_propery_text_detour)>(object_type_serialise_propery_text_hook.original)(a1, str, a3, a4);
 }
 #endif
 
@@ -3832,6 +3794,31 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
+	{
+		Pointer string_pool_insn;
+		if (game_version >= GV(40, 0, 0))
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 48 8B FA 45 0F B7 C1 4D 03 C0 49 C1 E9 10");
+			string_pool_insn = Module(nullptr).range.scan(sig_inst);
+		}
+		else
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
+			string_pool_insn = Module(nullptr).range.scan(sig_inst);
+		}
+#if LOGGING
+		conout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
+#endif
+		if (string_pool_insn)
+		{
+			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+
 #if METADATA_PATCHES && SOUP_BITS == 64
 	{
 		SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
@@ -3839,19 +3826,19 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
-		if (object_type_serialise_propery_text_call)
+		if (object_type_serialise_propery_text_call && string_pool)
 		{
 			uint8_t detour_bytes[] = {
 				0x49, 0x89, 0xF3, // mov r11, rsi
 				/* 3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
 				0x41, 0xFF, 0xE2, // jmp r10
 			};
+			*(void**)(detour_bytes + 5) = reinterpret_cast<void*>(&object_type_serialise_propery_text_detour);
 
 			void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
 			memcpy(detour, detour_bytes, sizeof(detour_bytes));
 
 			object_type_serialise_propery_text_hook.detour = detour;
-			set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_pending);
 			object_type_serialise_propery_text_hook.target = object_type_serialise_propery_text_call.add(17).as<void*>();
 			object_type_serialise_propery_text_hook.code_cave = Module(nullptr).range.scan(CallsiteHook::getCodeCavePattern()).as<void*>();
 #if LOGGING
@@ -4279,45 +4266,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 static SOUP_FORCEINLINE void do_pointer_scans()
 {
-	{
-		Pointer string_pool_insn;
-		if (game_version >= GV(40, 0, 0))
-		{
-			SIG_INST("48 8B 05 ? ? ? ? 48 8B FA 45 0F B7 C1 4D 03 C0 49 C1 E9 10");
-			string_pool_insn = Module(nullptr).range.scan(sig_inst);
-		}
-		else
-		{
-			SIG_INST("48 8B 05 ? ? ? ? 0F B7 CA 48 03 C9 48 C1 EA 10 48 03 14 C8");
-			string_pool_insn = Module(nullptr).range.scan(sig_inst);
-		}
-#if LOGGING
-		conout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
-#endif
-		if (string_pool_insn)
-		{
-			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
-#if METADATA_PATCHES
-			if (object_type_serialise_propery_text_hook.target)
-			{
-				set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_ok);
-			}
-#endif
-		}
-		else
-		{
-#if METADATA_PATCHES
-			if (object_type_serialise_propery_text_hook.target)
-			{
-				conout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
-				set_object_type_serialise_propery_text_detour(&object_type_serialise_propery_text_detour_nop);
-			}
-#else
-			log_optional_scan_failure(false);
-#endif
-		}
-	}
-
 	if (game_version >= GV(38, 5, 0))
 	{
 		//SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B FA 48 8B D9 E8 ? ? ? ? 80 7B 0F FF 75 1D");
