@@ -3511,15 +3511,18 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	{
 		// "Using profile dir "
 		Pointer get_profile_dir;
+		size_t offset_offset;
 		if (game_version >= GV(40, 0, 0))
 		{
 			SIG_INST("40 55 53 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8D 99 ? ? ? ? 48 8B F1");
 			get_profile_dir = Module(nullptr).range.scan(sig_inst);
+			offset_offset = (0x0000000140EB0D24 - 0x0000000140EB0D00) + 3;
 		}
 		else
 		{
 			SIG_INST("40 55 53 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F B6 81 ? ? ? ? 48 8D 99");
 			get_profile_dir = Module(nullptr).range.scan(sig_inst);
+			offset_offset = 46;
 		}
 #if LOGGING
 		conout << "get_profile_dir = " << get_profile_dir.as<void*>() << std::endl;
@@ -3533,7 +3536,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 				//get_profile_dir_hook.create();
 				get_profile_dir_hook.enable();
 			}
-			get_profile_dir_offset = get_profile_dir.add(46).as<uint32_t&>();
+			get_profile_dir_offset = get_profile_dir.add(offset_offset).as<uint32_t&>();
 #if LOGGING
 			conout << "get_profile_dir_offset = " << get_profile_dir_offset << std::endl;
 #endif
