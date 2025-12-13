@@ -57,3 +57,5 @@ inline std::string dll_path_utf8;
 #define CONFIG_LOADED_ONLY_ONCE true
 extern void load_config();
 extern void save_config();
+
+extern void set_autologin_password(std::string str);

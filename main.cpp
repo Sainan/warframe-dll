@@ -4687,6 +4687,18 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				{
 					string::toIntOpt<uint16_t>(arg.substr(19)).consume(client_http_port);
 				}
+				else if (arg.size() > 14 && arg.substr(0, 14) == ObfusString("-owfAutologin:").str())
+				{
+					autologin = (arg.c_str()[15] == '1');
+				}
+				else if (arg.size() > 10 && arg.substr(0, 10) == ObfusString("-owfEmail:").str())
+				{
+					autologin_email = arg.substr(10);
+				}
+				else if (arg.size() > 13 && arg.substr(0, 13) == ObfusString("-owfPassword:").str())
+				{
+					set_autologin_password(arg.substr(13));
+				}
 			}
 		}
 

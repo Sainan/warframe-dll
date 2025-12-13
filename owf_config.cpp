@@ -224,16 +224,7 @@ void load_config()
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_password")); it != config->reinterpretAsObj().end() && it->second->isStr())
 	{
-		autologin_password = it->second->reinterpretAsStr().value;
-		if (!autologin_password.empty() && !is_valid_whirlpool_hex_digest(autologin_password))
-		{
-			whirlpool_ctx ctx;
-			unsigned char result[64];
-			rhash_whirlpool_init(&ctx);
-			rhash_whirlpool_update(&ctx, (const unsigned char*)autologin_password.data(), autologin_password.size());
-			rhash_whirlpool_final(&ctx, result);
-			autologin_password = string::bin2hexLower((const char*)result, 64);
-		}
+		set_autologin_password(it->second->reinterpretAsStr().value);
 	}
 	else
 	{
@@ -413,4 +404,18 @@ void save_config()
 	config.add(ObfusString("disable_overlay"), disable_overlay);
 
 	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
+}
+
+void set_autologin_password(std::string str)
+{
+	autologin_password = std::move(str);
+	if (!autologin_password.empty() && !is_valid_whirlpool_hex_digest(autologin_password))
+	{
+		whirlpool_ctx ctx;
+		unsigned char result[64];
+		rhash_whirlpool_init(&ctx);
+		rhash_whirlpool_update(&ctx, (const unsigned char*)autologin_password.data(), autologin_password.size());
+		rhash_whirlpool_final(&ctx, result);
+		autologin_password = string::bin2hexLower((const char*)result, 64);
+	}
 }
