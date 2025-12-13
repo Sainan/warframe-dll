@@ -1,4 +1,6 @@
 {
+	"early_access_required_for": { "$gv": "41.0.0" },
+	"early_access_days": 10,
 	"nhkif": [
 		"/EE/Types/Input/MenuInputFilter", // Chat
 		"/Lotus/Types/Input/LoadoutReduxInputFilter",

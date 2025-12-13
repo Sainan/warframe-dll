@@ -4511,6 +4511,13 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 	}
 }
 
+static bool have_early_access()
+{
+	return std::filesystem::exists(ObfusString("OpenWF/Early Access.bin").str())
+		&& time::unixSecondsSince(g_repo.timestamp) <= g_client_tunables.getInt(joaat::compileTimeHash("early_access_days")) * 86400
+		;
+}
+
 #if SOUP_BITS == 32
 #define EXE_NAME "Warframe.exe"
 #else
@@ -4710,6 +4717,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
+		{
+			size_t size;
+			auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+			g_client_tunables.loadMsgpack(data, size);
+		}
+
 		g_core_dict = g_repo.getCoreDict(fallback_language);
 
 		{
@@ -4733,10 +4746,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			conout << "game_version = " << game_version << std::endl;
 #endif
 		}
-		if (game_version == GV(65, 53, 5))
+		if (game_version == GV(65, 53, 5)
+			|| (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("early_access_required_for")) && !have_early_access())
+			)
 		{
 #if PRIVATE
-			conout << "Version is too new, but trying anyway." << std::endl;
+			if (MessageBoxA(0, "Public build would terminate here because the version is too new. Continue?", BOOTSTRAPPER_TITLE, MB_YESNO) != IDYES)
+			{
+				return exit(1), FALSE;
+			}
 #else
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
@@ -4805,12 +4823,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 #endif
 			});
 			thrd.detach();
-		}
-
-		{
-			size_t size;
-			auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
-			g_client_tunables.loadMsgpack(data, size);
 		}
 
 		on_got_server_host();
