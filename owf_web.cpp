@@ -122,9 +122,10 @@ void start_builtin_http_server()
 	{
 		ServerWebService srv([](soup::Socket& s, soup::HttpRequest&& req, soup::ServerWebService&)
 		{
-#if LOGGING
-			conout << "Request to builtin HTTP server: " << req.path << std::endl;
-#endif
+			if (client_http_logging)
+			{
+				conout << ObfusString("Request to builtin HTTP server: ").str() << req.path << std::endl;
+			}
 			if (joaat::hash(req.path.substr(0, 8)) == joaat::compileTimeHash("/origin/"))
 			{
 				req.path.erase(0, 16);

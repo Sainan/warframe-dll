@@ -337,6 +337,15 @@ void load_config()
 		write_patched_metadata_reads_to_ee_log = false;
 	}
 
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("client_http_logging")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		client_http_logging = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		client_http_logging = PRIVATE;
+	}
+
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("client_http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
 	{
 		static_assert(CONFIG_LOADED_ONLY_ONCE);
@@ -399,6 +408,7 @@ void save_config()
 	config.add(ObfusString("write_all_metadata_reads_to_ee_log"), write_all_metadata_reads_to_ee_log);
 	config.add(ObfusString("write_patched_metadata_reads_to_console"), write_patched_metadata_reads_to_console);
 	config.add(ObfusString("write_patched_metadata_reads_to_ee_log"), write_patched_metadata_reads_to_ee_log);
+	config.add(ObfusString("client_http_logging"), client_http_logging);
 	config.add(ObfusString("client_http_port"), client_http_port);
 	config.add(ObfusString("disable_overlay"), disable_overlay);
 

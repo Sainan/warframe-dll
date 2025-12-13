@@ -72,6 +72,7 @@ void owfOverlay::init()
 			if (!ee_log_in_console
 				&& !write_all_metadata_reads_to_console
 				&& !write_patched_metadata_reads_to_console
+				&& !client_http_logging
 				&& owfConsole::active
 				)
 			{
