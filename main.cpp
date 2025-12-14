@@ -4168,19 +4168,30 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	// This is especially important to keep update patches and stripped assets independent of each other.
 	if (game_version >= GV(40, 0, 0))
 	{
-		SIG_INST("B2 05 4A 8D 0C 38"); // "increasing delay to"
-		auto content_retry_insn = Module(nullptr).range.scan(sig_inst);
+		// "increasing delay to"
+		Pointer content_retry_insn;
+		if (game_version >= GV(41, 0, 2))
+		{
+			SIG_INST("4A 8D 0C 30 48 8B 46 08 48 89 08");
+			content_retry_insn = Module(nullptr).range.scan(sig_inst);
+		}
+		else
+		{
+			SIG_INST("4A 8D 0C 38 48 8B 47 08 48 89 08");
+			content_retry_insn = Module(nullptr).range.scan(sig_inst);
+		}
 #if LOGGING
 		conout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
 #endif
 		if (content_retry_insn)
 		{
-			memGuard::setAllowedAccess(content_retry_insn.add(2).as<void*>(), 4, memGuard::ACC_RWX);
-			// lea rcx, [rax+r15] -> mov rcx, r15; nop
-			content_retry_insn.add(2).as<uint8_t*>()[0] = 0x4C;
-			content_retry_insn.add(2).as<uint8_t*>()[1] = 0x89;
-			content_retry_insn.add(2).as<uint8_t*>()[2] = 0xF9;
-			content_retry_insn.add(2).as<uint8_t*>()[3] = 0x90;
+			memGuard::setAllowedAccess(content_retry_insn.as<void*>(), 4, memGuard::ACC_RWX);
+			// < 41.0.2: lea rcx, [rax+r15] -> xor rcx, rcx; nop; nop
+			// >=41.0.2: lea rcx, [rax+r14] -> xor rcx, rcx; nop; nop
+			content_retry_insn.as<uint8_t*>()[0] = 0x31;
+			content_retry_insn.as<uint8_t*>()[1] = 0xC9;
+			content_retry_insn.as<uint8_t*>()[2] = 0x90;
+			content_retry_insn.as<uint8_t*>()[3] = 0x90;
 		}
 		else
 		{
