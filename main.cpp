@@ -4747,7 +4747,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			conout << "game_version = " << game_version << std::endl;
 #endif
 		}
-		if (game_version == GV(65, 53, 5)
+		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew"))
 			|| (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("early_access_required_for")) && !have_early_access())
 			)
 		{
