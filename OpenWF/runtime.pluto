@@ -1444,9 +1444,9 @@ class GameRules extends Object
 
 	function getSlomoltiplier()
 		self:pushToIvkr()
-		--return mem_read_f32(ivkr_pop_object() + 0x54)
-		ivkr_call(ivkr_find_method("GameRules", 0xA3993EEA), 1)
-		return ivkr_pop_number()
+		return mem_read_f32(ivkr_pop_object() + 0x54)
+		--[[ivkr_call(ivkr_find_method("GameRules", 0xA3993EEA), 1)
+		return ivkr_pop_number()]]
 	end
 
 	function setSlomoltiplier(f)
