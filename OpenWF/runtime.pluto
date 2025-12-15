@@ -942,7 +942,7 @@ class LotusAvatar extends Avatar
 	function IsAvatarFriendly(other)
 		self:pushToIvkr()
 		other:pushToIvkr()
-		ivkr_call(ivkr_find_method("LotusAvatar", "IsAvatarFriendly"), 2)
+		ivkr_call(ivkr_find_method(compareversions(owf_get_build_version(), "2025.12.09.14.18") >= 0 ? "BaseAvatar" : "LotusAvatar", "IsAvatarFriendly"), 2)
 		return ivkr_pop_bool()
 	end
 
