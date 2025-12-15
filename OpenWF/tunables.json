@@ -31,8 +31,8 @@
 		"irc.playwarframe.com:6668", // U8
 		"irc.playwarframe.com:6669", // U8
 	],
-	//"remote_allowed_days": 20,
-	"invipbl": 1, // All the public instances I can find are in China, most likely none of them have good intentions: https://www.shodan.io/search?query=http.title%3A%22OpenWF+WebUI%22
+	"remote_allowed_days": 10,
+	"invipbl": 0, // If non-zero, disallows connections to public instances, such as these: https://www.shodan.io/search?query=http.title%3A%22OpenWF+WebUI%22
 	/*"ipbl": [
 		"116.62.185.186",
 		"106.58.32.47", // (mail.mahao.ltd, HTTPS on 444)
