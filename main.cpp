@@ -161,6 +161,17 @@ extern "C" __declspec(dllexport) BOOL VerQueryValueA(LPCVOID pBlock, LPCSTR lpSu
 extern "C" __declspec(dllexport) BOOL VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen); }
 
 
+static std::string get_bootstrapper_title()
+{
+	auto title = ObfusString(BOOTSTRAPPER_TITLE).str();
+	if (const auto hotfix = g_repo.hotfix)
+	{
+		title.append(ObfusString(" hotfix ").str());
+		title.append(std::to_string(hotfix));
+	}
+	return title;
+}
+
 static std::string get_core_string(std::string key)
 {
 	if (auto e = g_core_dict.find(key); e != g_core_dict.end())
@@ -468,7 +479,8 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 #else
 	if (uri.path == "/api/heartbeat.php")
 	{
-		MessageBoxA(0, "Anti-cheat has been triggered. The game will be put down.", BOOTSTRAPPER_TITLE, 0);
+		auto title = get_bootstrapper_title();
+		MessageBoxA(0, "Anti-cheat has been triggered. The game will be put down.", title.c_str(), 0);
 		exit(1);
 	}
 #endif
@@ -2211,7 +2223,8 @@ static bool check_ec(const std::error_code& ec)
 	if (ec)
 	{
 		ObfusString msg("Filesystem error. It's likely your anti-virus is interfering; please ensure the game folder is excluded from it.");
-		MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+		auto title = get_bootstrapper_title();
+		MessageBoxA(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 		return false;
 	}
 	return true;
@@ -2242,7 +2255,7 @@ static void report_critical_failure(std::string msg)
 	}
 
 	const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
-	const auto title_utf16 = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
+	const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
 	MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 }
 
@@ -4763,13 +4776,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			)
 		{
 #if PRIVATE
-			if (MessageBoxA(0, "Public build would terminate here because the version is too new. Continue?", BOOTSTRAPPER_TITLE, MB_YESNO) != IDYES)
+			auto title = get_bootstrapper_title();
+			if (MessageBoxA(0, "Public build would terminate here because the version is too new. Continue?", title.c_str(), MB_YESNO) != IDYES)
 			{
 				return exit(1), FALSE;
 			}
 #else
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
-			auto title = soup::unicode::utf8_to_utf16(BOOTSTRAPPER_TITLE);
+			auto title = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 			return exit(1), FALSE;
 #endif
