@@ -4,6 +4,7 @@
 #include <ObfusString.hpp>
 #include <os.hpp>
 
+#include "owf_structs.hpp" // game_version
 #include "whirlpool.hpp"
 
 using namespace soup;
@@ -103,7 +104,7 @@ void load_config()
 	}
 	else
 	{
-		fallback_windowMode = 0;
+		fallback_windowMode = (game_version >= GV(40, 0, 0)) ? -1 : 0;
 	}
 
 #if !CONFIG_LOADED_ONLY_ONCE
