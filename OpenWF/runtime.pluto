@@ -1444,9 +1444,9 @@ class GameRules extends Object
 
 	function getSlomoltiplier()
 		self:pushToIvkr()
-		return mem_read_f32(ivkr_pop_object() + 0x54)
-		--[[ivkr_call(ivkr_find_method("GameRules", 0xA3993EEA), 1)
-		return ivkr_pop_number()]]
+		--return mem_read_f32(ivkr_pop_object() + 0x54)
+		ivkr_call(ivkr_find_method("GameRules", "GetCurrentSlomoMultiplier"), 1)
+		return ivkr_pop_number()
 	end
 
 	function setSlomoltiplier(f)
@@ -2096,7 +2096,7 @@ class CameraControllerBase extends Object
 
 	function getFovMultiplier()
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("CameraControllerBase", 0x9A28D48E), 1)
+		ivkr_call(ivkr_find_method("CameraControllerBase", "GetOverrideFOVMultiplier"), 1)
 		return ivkr_pop_number()
 	end
 
@@ -2657,10 +2657,10 @@ end
 -- undocumented
 class RelayHub extends Object end
 class LotusHub extends RelayHub
-	function getNameFromAccount(oid)
+	function GetNameForAccount(oid)
 		self:pushToIvkr()
 		ivkr_push_string(oid)
-		ivkr_call(ivkr_find_method("LotusHub", 0x654FB7FB), 2)
+		ivkr_call(ivkr_find_method("LotusHub", "GetNameForAccount"), 2)
 		return ivkr_pop_string()
 	end
 end
@@ -3122,11 +3122,6 @@ gMatchingService = {
 		ivkr_call(ivkr_find_method("MatchingService", "SendRelayP2P"), 3)
 		return ivkr_pop_bool()
 	end,
-	function getHub()
-		ivkr_push_pointer(get_matchingservice())
-		ivkr_call(ivkr_find_method("MatchingService", 0x0441ACA2), 1)
-		return new LotusHub()
-	end
 }
 
 gEntityType = Type("/EE/Types/Engine/Entity")
