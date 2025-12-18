@@ -4555,8 +4555,15 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 	{
 		if (auto proc = soup::Process::current(); proc->name != EXE_NAME)
 		{
-			MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than " EXE_NAME ".", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
-			return exit(1), FALSE;
+			if (proc->name == "Launcher.exe")
+			{
+				std::filesystem::current_path("..");
+			}
+			else
+			{
+				MessageBoxA(0, "Please don't keep the Bootstrapper DLL (wtsapi32.dll, dwmapi.dll, or version.dll) in the same folder as any executable other than " EXE_NAME ".", BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+				return exit(1), FALSE;
+			}
 		}
 
 		if (!std::filesystem::exists(EXE_NAME))
