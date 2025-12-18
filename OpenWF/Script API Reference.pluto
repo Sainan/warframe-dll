@@ -293,6 +293,7 @@ class LotusMissionInfo
 	gameRules
 	enemySpec
 	extraEnemySpec
+	vipAgent
 	customAdvancedSpawners
 	missionReward
 	missionRewardExtra

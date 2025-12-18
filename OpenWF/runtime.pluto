@@ -1691,6 +1691,7 @@ class LotusMissionInfo extends owfUserdata
 			case "gameRules":
 			case "enemySpec":
 			case "extraEnemySpec":
+			case "vipAgent":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("LotusMissionInfo", name), 1)
 				if ivkr_type(-1) > 0 then 
