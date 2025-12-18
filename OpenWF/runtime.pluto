@@ -1660,6 +1660,15 @@ class RadialSector extends owfUserdata
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "challenges"), 1)
 				return ivkr_pop_array(LotusChallenge)
+
+			case "tileset":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialSector", "tileset"), 1)
+				if ivkr_type(-1) > 0 then 
+					return new ObjectType()
+				end
+				ivkr_pop(1)
+				return nil
 		end
 		error("Unknown field: "..name)
 	end

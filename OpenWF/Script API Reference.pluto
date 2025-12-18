@@ -281,6 +281,7 @@ class RadialSector
 	missionTag
 	mission
 	challenges
+	tileset
 
 class LotusMissionInfo
 	missionType
