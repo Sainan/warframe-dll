@@ -9,11 +9,11 @@
 
 class owfRepo
 {
-public:
+protected:
 	void loadArchive(const char* data, size_t size);
+public:
 	void loadBuiltinArchive();
 	static bool readHotfixHeader(const char* data, size_t size, uint64_t& timestamp);
-	void loadHotfixNoVerify(const char* data, size_t size);
 	bool loadHotfix(const char* data, size_t size);
 
 	const char* find(uint32_t key, size_t& out_len) const;
@@ -22,8 +22,8 @@ public:
 	std::unordered_map<std::string, std::string> getCoreDict(const std::string& lang) const;
 	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
 
+	uint8_t hotfix;
 	uint64_t timestamp;
-	uint64_t hotfix;
 protected:
 	std::unordered_map<uint32_t, std::string> data;
 };

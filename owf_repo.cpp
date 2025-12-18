@@ -26,7 +26,6 @@ void owfRepo::loadArchive(const char* data, size_t size)
 	}
 	std::string tar = deflate::decompress(data, size, decompressed_size).decompressed;
 	MemoryRefReader r(tar);
-	r.u64_dyn_bp(this->hotfix);
 	while (r.hasMore())
 	{
 		uint32_t key; r.u32_le(key);
@@ -50,17 +49,11 @@ bool owfRepo::readHotfixHeader(const char* data, size_t size, uint64_t& timestam
 	uint32_t target_version_hash;
 	if (r.u32_le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
 	{
+		r.skip(1);
 		r.u64_dyn_bp(timestamp);
 		return true;
 	}
 	return false;
-}
-
-void owfRepo::loadHotfixNoVerify(const char* data, size_t size)
-{
-	data += 4;
-	size -= 4;
-	return loadArchive(data, size);
 }
 
 bool owfRepo::loadHotfix(const char* data, size_t size)
@@ -69,6 +62,7 @@ bool owfRepo::loadHotfix(const char* data, size_t size)
 	uint32_t target_version_hash;
 	if (r.u32_le(target_version_hash) && target_version_hash == soup::joaat::compileTimeHash(BOOTSTRAPPER_TITLE))
 	{
+		r.u8(hotfix);
 		const auto off = r.getPosition();
 		this->loadArchive(data + off, size - off);
 		return true;

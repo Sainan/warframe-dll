@@ -417,7 +417,7 @@ void start_builtin_http_server()
 							{
 								g_repo.loadBuiltinArchive();
 							}
-							g_repo.loadHotfixNoVerify(hotfix.data(), hotfix.size());
+							g_repo.loadHotfix(hotfix.data(), hotfix.size());
 						}
 						ServerWebService::sendText(s, ObfusString("Hotfix applied").str());
 					}

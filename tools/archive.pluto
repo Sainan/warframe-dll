@@ -141,33 +141,14 @@ local function add_folder_to_archive(base, archive_base, changelist)
 	end
 end
 
-local function get_bootstrapper_title()
-	for line in io.lines("main.hpp") do
-		if line:startswith("#define BOOTSTRAPPER_TITLE") then
-			return line:sub(29, -2)
-		end
-	end
-end
-
-local code_version = get_bootstrapper_title():sub(1 + #"OpenWF Bootstrapper v")
-local all_tags
-do
-	local p <close> = io.popen("git tag --list", "r")
-	all_tags = p:read("a"):strip():split("\n")
-end
-local hotfix = 0
 local changelist, trans_changelist, cachelib_changelist
-if code_version in all_tags then
-	repeat
-		++hotfix
-	until not $"{code_version}-hotfix-{hotfix}" in all_tags
-	print $">>> Generating partial Hotfix.owf for hotfix {hotfix}"
+if base_tag := arg[1] then
 	do
-		local p <close> = io.popen("git diff --name-only "..code_version, "r")
+		local p <close> = io.popen("git diff --name-only "..base_tag, "r")
 		changelist = p:read("a"):strip():split("\n")
 	end
 	if "modules/owf-translations" in changelist then
-		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..code_version, "r")
+		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..base_tag, "r")
 		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/owf-translations/" .. x)
 	else
 		trans_changelist = {}
@@ -175,8 +156,8 @@ if code_version in all_tags then
 	cachelib_changelist = "modules/warframe-cache-tools" in changelist ? nil : {}
 end
 
-all_pack = pack_u64_dyn_bp(hotfix)
-changed_pack = all_pack
+all_pack = ""
+changed_pack = ""
 
 add_folder_to_archive("OpenWF/", "OpenWF/", changelist)
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/", changelist)
