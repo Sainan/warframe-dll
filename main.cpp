@@ -14,7 +14,7 @@
 #define VERBOSE_CRC32C false
 #define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
-#define VERBOSE_OODLE false
+#define VERBOSE_OODLE false // made for U39
 #define VERBOSE_SENDCNXLESS false
 #define VERBOSE_LZF false
 #define VERBOSE_UNCOMPRESSPKT false
