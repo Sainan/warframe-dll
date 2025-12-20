@@ -74,6 +74,7 @@
 #include "owf_scripting.hpp"
 #include "owf_structs.hpp"
 #include "owf_tunables.hpp"
+#include "owf_udp_proxy.hpp"
 
 using namespace soup;
 
@@ -730,6 +731,24 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
 	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
 	prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
+
+	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
+	{
+		const bool bind = owfUdpProxy::upstream_addr.ip.isZero();
+		SocketAddr newAddr;
+		if (newAddr.fromString(e->second) && !newAddr.ip.isZero() && newAddr != owfUdpProxy::upstream_addr)
+		{
+			owfUdpProxy::upstream.reset();
+			owfUdpProxy::upstream_addr = newAddr;
+			if (bind)
+			{
+				SOUP_IF_UNLIKELY (!owfUdpProxy::bind())
+				{
+					conout << ObfusString("Failed to bind UDP/6951.").str();
+				}
+			}
+		}
+	}
 
 	return ok;
 }
