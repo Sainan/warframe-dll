@@ -333,13 +333,13 @@ static bool can_use_server_host()
 	return true;
 }
 
-#define MIN_GV_FOR_TLS GV(25, 0, 0)
+static bool strip_tls;
 
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login)
 {
 #if REDIRECT_REQUESTS
 	uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
-	if (game_version < MIN_GV_FOR_TLS)
+	if (strip_tls)
 	{
 		uri.scheme = ObfusString("http").str();
 		uri.port = http_port;
@@ -762,11 +762,11 @@ struct owfTunablesTask : public soup::Task
 
 	owfTunablesTask()
 		: hrt(HttpRequest(
-			server_host + ":" + std::to_string(game_version >= MIN_GV_FOR_TLS ? https_port : http_port),
+			server_host + ":" + std::to_string(strip_tls ? http_port : https_port),
 			ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE "&buildVersion=").str() + std::string(build_version, 16)
 		), &Socket::certchain_validator_none)
 	{
-		hrt.hr.use_tls = (game_version >= MIN_GV_FOR_TLS);
+		hrt.hr.use_tls = !strip_tls;
 	}
 
 	void onTick() final
@@ -2934,7 +2934,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		ssl_verify_internal_hook.enable();
 	}
 
-	if (game_version >= MIN_GV_FOR_TLS)
+	if (!strip_tls)
 	{
 		if (auto sig_inst = g_repo.getVersionedPattern(soup::joaat::compileTimeHash("OpenWF/vv/sig/Curl_ossl_verifyhost.json"), game_version); !sig_inst.bytes.empty())
 		{
@@ -4797,6 +4797,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			conout << "game_version = " << game_version << std::endl;
 #endif
 		}
+		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew"))
 			|| (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("early_access_required_for")) && !have_early_access())
 			)
