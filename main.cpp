@@ -333,11 +333,13 @@ static bool can_use_server_host()
 	return true;
 }
 
-static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login, bool strip_tls)
+#define MIN_GV_FOR_TLS GV(25, 0, 0)
+
+static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login)
 {
 #if REDIRECT_REQUESTS
 	uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
-	if (strip_tls)
+	if (game_version < MIN_GV_FOR_TLS)
 	{
 		uri.scheme = ObfusString("http").str();
 		uri.port = http_port;
@@ -500,7 +502,7 @@ static void process_login_response(const char* data, size_t size)
 	}
 }
 
-template <typename Str, bool strip_tls = false>
+template <typename Str>
 static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 {
 	Str& request_url = *reinterpret_cast<Str*>(request + 0x00);
@@ -519,7 +521,7 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 	size_t body_size = request_body.getSize();
 	std::string body_buf;
 	bool is_login = false;
-	process_game_http_request(uri, body_data, body_size, body_buf, is_login, strip_tls);
+	process_game_http_request(uri, body_data, body_size, body_buf, is_login);
 	std::string url_buf = uri.toString();
 	request_url.setUnownedData(url_buf.data(), url_buf.size());
 	if (body_data != request_body.getData())
@@ -752,8 +754,6 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 
 	return ok;
 }
-
-#define MIN_GV_FOR_TLS GV(19, 0, 0)
 
 #if ASK_SERVER_FOR_TUNABLES
 struct owfTunablesTask : public soup::Task
@@ -2774,7 +2774,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else
 		{
-			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameStringU18, true>); static_assert(MIN_GV_FOR_TLS == GV(19, 0, 0), "MIN_GV_FOR_TLS is not congruent with strip_tls");
+			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<LegacyGameStringU18>);
 		}
 		game_http_request_hook.target = game_http_request;
 		game_http_request_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>(); // Needed for 2017.03.06.15.49
