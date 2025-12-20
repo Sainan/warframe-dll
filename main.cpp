@@ -1,7 +1,6 @@
 #include "main.hpp"
 
 #define REDIRECT_REQUESTS true
-#define SERVER_IPS_ONLY true
 #define VERIFY_EXE_SIG false
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
@@ -78,9 +77,7 @@
 
 using namespace soup;
 
-#if !SERVER_IPS_ONLY
 static uint32_t server_remote_ip_hash = 0;
-#endif
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static bool metadata_patches_in_use = false;
@@ -310,8 +307,9 @@ static unsigned int GameHttpRequest_body_offset;
 
 static bool can_use_server_host()
 {
-#if !SERVER_IPS_ONLY
-	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
+	if (g_client_tunables.getInt(joaat::compileTimeHash("allow_hostnames"))
+		&& server_remote_ip_hash // Connecting to a server outside of the localnet?
+		)
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
 		bool blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), server_remote_ip_hash);
@@ -331,7 +329,6 @@ static bool can_use_server_host()
 			return false; // To prevent downgrade attacks, disallow this remote connection.
 		}
 	}
-#endif
 	return true;
 }
 
@@ -760,8 +757,9 @@ struct owfTunablesTask : public soup::Task
 			bool ok = false;
 			if (hrt.result)
 			{
-#if !SERVER_IPS_ONLY
-				if (hrt.sock)
+				if (g_client_tunables.getInt(joaat::compileTimeHash("allow_hostnames"))
+					&& hrt.sock
+					)
 				{
 					server_host = hrt.sock->peer.ip.toString();
 					server_remote_ip_hash = hrt.sock->peer.ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
@@ -771,7 +769,6 @@ struct owfTunablesTask : public soup::Task
 					conout << "can_use_server_host = " << can_use_server_host() << std::endl;
 #endif
 				}
-#endif
 
 				if (hrt.result->status_code == 200)
 				{
@@ -796,51 +793,54 @@ struct owfTunablesTask : public soup::Task
 
 void on_got_server_host()
 {
-#if SERVER_IPS_ONLY
-	IpAddr server_ip;
-	if (!server_ip.fromString(server_host))
+	if (!g_client_tunables.getInt(joaat::compileTimeHash("allow_hostnames")))
 	{
-		server_ip = SOUP_IPV4_NWE(127, 0, 0, 1);
-	}
-	server_host = server_ip.toString();
-	if (!server_ip.isLocalnet()) // Connecting to a server outside of the localnet?
-	{
-		std::lock_guard lock(g_client_tunables_mtx);
-		bool blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), soup::joaat::hash(server_host));
-		if (g_client_tunables.getInt(joaat::compileTimeHash("invipbl")))
+		IpAddr server_ip;
+		if (!server_ip.fromString(server_host))
 		{
-			blacklisted = !blacklisted;
+			server_ip = SOUP_IPV4_NWE(127, 0, 0, 1);
 		}
-		if (blacklisted
-			|| g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
-			)
+		server_host = server_ip.toString();
+		if (!server_ip.isLocalnet()) // Connecting to a server outside of the localnet?
 		{
-	#if PRIVATE
-			conout << "This remote connection would not be allowed in a public build" << std::endl;
-	#else
-			server_host = ObfusString("127.0.0.1").str();
-	#endif
+			std::lock_guard lock(g_client_tunables_mtx);
+			bool blacklisted = g_client_tunables.isStringInArray(joaat::compileTimeHash("ipbl"), soup::joaat::hash(server_host));
+			if (g_client_tunables.getInt(joaat::compileTimeHash("invipbl")))
+			{
+				blacklisted = !blacklisted;
+			}
+			if (blacklisted
+				|| g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
+				)
+			{
+		#if PRIVATE
+				conout << "This remote connection would not be allowed in a public build" << std::endl;
+		#else
+				server_host = ObfusString("127.0.0.1").str();
+		#endif
+			}
 		}
-	}
-#else
-	string::lower(server_host);
-	if (server_host.find(ObfusString("warframe.com").str()) != std::string::npos)
-	{
-		server_host = ObfusString("127.0.0.1").str();
 	}
 	else
 	{
-		while (server_host.c_str()[server_host.size()] == '.')
-		{
-			server_host.pop_back();
-		}
-		std::lock_guard lock(g_client_tunables_mtx);
-		if (g_client_tunables.isStringInArray(joaat::compileTimeHash("hnbl"), joaat::hash(server_host)))
+		string::lower(server_host);
+		if (server_host.find(ObfusString("warframe.com").str()) != std::string::npos)
 		{
 			server_host = ObfusString("127.0.0.1").str();
 		}
+		else
+		{
+			while (server_host.c_str()[server_host.size()] == '.')
+			{
+				server_host.pop_back();
+			}
+			std::lock_guard lock(g_client_tunables_mtx);
+			if (g_client_tunables.isStringInArray(joaat::compileTimeHash("hnbl"), joaat::hash(server_host)))
+			{
+				server_host = ObfusString("127.0.0.1").str();
+			}
+		}
 	}
-#endif
 
 	{
 		auto msg = get_core_string(ObfusString("gotsh").str());

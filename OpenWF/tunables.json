@@ -41,4 +41,5 @@
 	/*"hnbl": [
 		"mail.mahao.ltd",
 	],*/
+	//"allow_hostnames": 1,
 }
