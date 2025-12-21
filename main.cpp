@@ -2763,7 +2763,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 		}
 		auto game_http_request = game_http_request_caller.add(offset).rip().as<void*>();
-		GameHttpRequest_body_offset = g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/GameHttpRequest_body_offset.json"), game_version);
+		GameHttpRequest_body_offset = g_repo.getVersionedU64(soup::joaat::compileTimeHash("OpenWF/vv/off/GameHttpRequest_body.json"), game_version);
 		if (game_version >= GV(35, 5, 0))
 		{
 			game_http_request_hook.detour = reinterpret_cast<void*>(&game_http_request_detour<GameString>);
@@ -4689,6 +4689,52 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		std::error_code ec{};
 		std::filesystem::create_directory(ObfusString("OpenWF").str(), ec);
 		SOUP_RETHROW_FALSE(check_ec(ec));
+
+		g_repo.loadBuiltinArchive();
+		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
+		{
+			if (g_repo.loadHotfix(hotfix.data(), hotfix.size()))
+			{
+#if PRIVATE
+				conout << ObfusString("Hotfix applied").str() << std::endl;
+#endif
+			}
+			else
+			{
+				conout << ObfusString("Ignoring hotfix because it was made for a different DLL version").str() << std::endl;
+			}
+		}
+
+		{
+			auto build_version_int = static_cast<uint64_t>(build_version[ 0] - '0') * 100000000000ull +
+				static_cast<uint64_t>(build_version[ 1] - '0') * 10000000000ull +
+				static_cast<uint64_t>(build_version[ 2] - '0') * 1000000000ull +
+				static_cast<uint64_t>(build_version[ 3] - '0') * 100000000ull +
+				static_cast<uint64_t>(build_version[ 5] - '0') * 10000000ull +
+				static_cast<uint64_t>(build_version[ 6] - '0') * 1000000ull +
+				static_cast<uint64_t>(build_version[ 8] - '0') * 100000ull +
+				static_cast<uint64_t>(build_version[ 9] - '0') * 10000ull +
+				static_cast<uint64_t>(build_version[11] - '0') * 1000ull +
+				static_cast<uint64_t>(build_version[12] - '0') * 100ull +
+				static_cast<uint64_t>(build_version[14] - '0') * 10ull +
+				static_cast<uint64_t>(build_version[15] - '0');
+
+			game_version = static_cast<uint32_t>(g_repo.getVersionedU64(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
+
+#if LOGGING
+			conout << "build_version_int = " << build_version_int << std::endl;
+			conout << "game_version = " << game_version << std::endl;
+#endif
+		}
+
+		// Load client tunables from repo
+		{
+			size_t size;
+			auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
+			g_client_tunables.loadMsgpack(data, size);
+		}
+
+		// Load config (depends on repo)
 		if (!std::filesystem::exists(ObfusString("OpenWF/Client Config.json").str()))
 		{
 			if (std::filesystem::exists(ObfusString("OpenWF/client_config.json").str()))
@@ -4704,12 +4750,6 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 		load_config();
 		save_config();
-
-		if (!ee_log_in_console || game_version >= GV(23, 10, 0))
-		{
-			owfConsole::setExclusiveOutput();
-		}
-
 		{
 			std::vector<std::string> args{};
 			{
@@ -4753,50 +4793,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			}
 		}
 
-		g_repo.loadBuiltinArchive();
-		if (auto hotfix = string::fromFile(ObfusString("OpenWF/Hotfix.owf").str()); !hotfix.empty())
-		{
-			if (g_repo.loadHotfix(hotfix.data(), hotfix.size()))
-			{
-#if PRIVATE
-				conout << ObfusString("Hotfix applied").str() << std::endl;
-#endif
-			}
-			else
-			{
-				conout << ObfusString("Ignoring hotfix because it was made for a different DLL version").str() << std::endl;
-			}
-		}
-
-		{
-			size_t size;
-			auto data = g_repo.find(joaat::compileTimeHash("OpenWF/tunables.json"), size);
-			g_client_tunables.loadMsgpack(data, size);
-		}
-
+		// Initialise core dict (depends on repo + config)
 		g_core_dict = g_repo.getCoreDict(fallback_language);
 
-		{
-			auto build_version_int = static_cast<uint64_t>(build_version[ 0] - '0') * 100000000000ull +
-				static_cast<uint64_t>(build_version[ 1] - '0') * 10000000000ull +
-				static_cast<uint64_t>(build_version[ 2] - '0') * 1000000000ull +
-				static_cast<uint64_t>(build_version[ 3] - '0') * 100000000ull +
-				static_cast<uint64_t>(build_version[ 5] - '0') * 10000000ull +
-				static_cast<uint64_t>(build_version[ 6] - '0') * 1000000ull +
-				static_cast<uint64_t>(build_version[ 8] - '0') * 100000ull +
-				static_cast<uint64_t>(build_version[ 9] - '0') * 10000ull +
-				static_cast<uint64_t>(build_version[11] - '0') * 1000ull +
-				static_cast<uint64_t>(build_version[12] - '0') * 100ull +
-				static_cast<uint64_t>(build_version[14] - '0') * 10ull +
-				static_cast<uint64_t>(build_version[15] - '0');
-
-			game_version = static_cast<uint32_t>(g_repo.getVersionedInt(soup::joaat::compileTimeHash("OpenWF/vv/game_versions.json"), build_version_int));
-
-#if LOGGING
-			conout << "build_version_int = " << build_version_int << std::endl;
-			conout << "game_version = " << game_version << std::endl;
-#endif
-		}
+		// Handle version config (depends on core dict)
 		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew"))
 			|| (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("early_access_required_for")) && !have_early_access())
@@ -4814,6 +4814,11 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 			return exit(1), FALSE;
 #endif
+		}
+
+		if (!ee_log_in_console || game_version >= GV(23, 10, 0))
+		{
+			owfConsole::setExclusiveOutput();
 		}
 
 		conout << get_core_string(ObfusString("freenote").str()) << std::endl;

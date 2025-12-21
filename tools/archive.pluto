@@ -97,19 +97,23 @@ local function pack_file(path, archive_path)
 					local val = cont[ver]
 					arr:insert({ vv_v2n(ver), gv2n(val) })
 				end
-				cont = vv_enc_int(arr)
+				cont = vv_enc(pack_u64_dyn_bp, arr)
 			else
 				local arr = {}
 				for cont.__order as ver do
 					local val = cont[ver]
-					if val:sub(1, 2) == "0x" then
+					if type(val) == "string" and val:sub(1, 2) == "0x" then
 						val = tonumber(val:sub(3), 16)
 					else
 						val = tonumber(val)
 					end
 					arr:insert({ gv2n(ver), val })
 				end
-				cont = vv_enc_int(arr)
+				if path:sub(1, 14) == "OpenWF/vv/off/" then
+					cont = vv_enc(pack_u64_dyn_bp, arr)
+				else
+					cont = vv_enc(pack_i64_dyn_bp, arr)
+				end
 			end
 		else
 			cont = json.encode(cont)
@@ -170,6 +174,7 @@ add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/", changelist)
 add_file_to_archive("modules/warframe-cache-tools/lib/cachelib.pluto", "OpenWF/lib/cachelib.pluto", cachelib_changelist)
 add_folder_to_archive("OpenWF/samples/", "OpenWF/samples/", changelist)
 add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/", changelist)
+add_folder_to_archive("OpenWF/vv/off/", "OpenWF/vv/off/", changelist)
 add_folder_to_archive("OpenWF/vv/sig/", "OpenWF/vv/sig/", changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)

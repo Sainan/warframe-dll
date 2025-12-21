@@ -80,7 +80,7 @@ const char* owfRepo::find(uint32_t key, size_t& out_len) const
 	return nullptr;
 }
 
-uint64_t owfRepo::getVersionedInt(uint32_t path, uint64_t version) const
+uint64_t owfRepo::getVersionedU64(uint32_t path, uint64_t version) const
 {
 	size_t size;
 	if (auto data = this->find(path, size))
@@ -88,6 +88,25 @@ uint64_t owfRepo::getVersionedInt(uint32_t path, uint64_t version) const
 		MemoryRefReader r(data, size);
 		uint64_t ver, val;
 		while (r.u64_dyn_bp(ver) && r.u64_dyn_bp(val))
+		{
+			if (version >= ver)
+			{
+				return val;
+			}
+		}
+	}
+	return 0;
+}
+
+int64_t owfRepo::getVersionedI64(uint32_t path, uint64_t version) const
+{
+	size_t size;
+	if (auto data = this->find(path, size))
+	{
+		MemoryRefReader r(data, size);
+		uint64_t ver;
+		int64_t val;
+		while (r.u64_dyn_bp(ver) && r.i64_dyn_bp(val))
 		{
 			if (version >= ver)
 			{

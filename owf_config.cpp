@@ -1,9 +1,11 @@
 #include "owf_config.hpp"
 
+#include <joaat.hpp>
 #include <json.hpp>
 #include <ObfusString.hpp>
 #include <os.hpp>
 
+#include "owf_repo.hpp"
 #include "owf_structs.hpp" // game_version
 #include "whirlpool.hpp"
 
@@ -104,7 +106,10 @@ void load_config()
 	}
 	else
 	{
-		fallback_windowMode = (game_version >= GV(40, 0, 0)) ? -1 : 0;
+#if !CONFIG_LOADED_ONLY_ONCE
+		std::lock_guard lock(g_repo_mtx);
+#endif
+		fallback_windowMode = static_cast<int>(g_repo.getVersionedI64(joaat::compileTimeHash("OpenWF/vv/default_windowMode.json"), game_version));
 	}
 
 #if !CONFIG_LOADED_ONLY_ONCE

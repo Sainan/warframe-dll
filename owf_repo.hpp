@@ -17,7 +17,8 @@ public:
 	bool loadHotfix(const char* data, size_t size);
 
 	const char* find(uint32_t key, size_t& out_len) const;
-	uint64_t getVersionedInt(uint32_t path, uint64_t ver) const;
+	uint64_t getVersionedU64(uint32_t path, uint64_t ver) const;
+	int64_t getVersionedI64(uint32_t path, uint64_t ver) const;
 	soup::Pattern getVersionedPattern(uint32_t path, uint64_t ver) const;
 	std::unordered_map<std::string, std::string> getCoreDict(const std::string& lang) const;
 	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
