@@ -144,11 +144,16 @@ end
 local changelist, trans_changelist, cachelib_changelist
 if base_tag := arg[1] then
 	do
-		local p <close> = io.popen("git diff --name-only "..base_tag, "r")
+		local p <close> = io.popen("git diff --name-only "..base_tag.." --", "r")
 		changelist = p:read("a"):strip():split("\n")
 	end
 	if "modules/owf-translations" in changelist then
-		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..base_tag, "r")
+		local prev_submodule_tip
+		do
+			local p <close> = io.popen("git ls-tree "..base_tag.." -- modules/owf-translations", "r")
+			prev_submodule_tip = p:read("a"):split(" ")[3]:split("\t")[1]
+		end
+		local p <close> = io.popen("cd modules/owf-translations && git diff --name-only "..prev_submodule_tip.." --", "r")
 		trans_changelist = p:read("a"):strip():split("\n"):map(|x| -> "modules/owf-translations/" .. x)
 	else
 		trans_changelist = {}
