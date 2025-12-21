@@ -137,7 +137,7 @@
 	<p>To aid in troubleshooting, the Bootstrapper assumes that a compatible server responds to this request with status code 200 and a valid JSON object, otherwise showing a warning popup.</p>
 	<h2>Traffic Deviations</h2>
 	<ul>
-		<li>login.php & worldState.php requests have the extra query parameter <code>buildLabel</code> to indicate the client's buildLabel.</li>
+		<li>login.php, worldState.php, hubInstances, & hub requests have the extra query parameter <code>buildLabel</code> to indicate the client's buildLabel.</li>
 		<li>login.php requests also have an extra <code>clientMod</code> parameter indicating the Bootstrapper's name and version. If Metadata Patches are in use, <code>metadataPatchesInUse=1</code> is added as well.</li>
 		<li>inventory.php & missionInventoryUpdate.php requests have the extra query parameter <code>xpBasedLevelCapDisabled</code> to indicate that the client has been patched to accept any PlayerLevel and doesn't need XPInfo to match.</li>
 		<li>The IRC <code>USER</code> message is adjusted to contain <code>nonce=...</code> in the 'realname' field.</li>

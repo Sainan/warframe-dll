@@ -426,7 +426,9 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	{
 		auth_query = uri.query;
 	}
-	else if (uri.path.find(ObfusString("/worldState.php").str()) != std::string::npos)
+	else if (uri.path.find(ObfusString("/worldState.php").str()) != std::string::npos
+		|| uri.path.find(ObfusString("/api/hub").str()) != std::string::npos
+		)
 	{
 #if PROVIDE_VERSION_INFO
 		if (build_version[0])
