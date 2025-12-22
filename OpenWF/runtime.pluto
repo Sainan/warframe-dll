@@ -1508,6 +1508,12 @@ class LotusBaseGameRules extends GameRulesImpl
 		ivkr_call(ivkr_find_method("LotusBaseGameRules", "GetMission"), 1)
 		return new LotusMissionInfo()
 	end
+
+	function IsPlayingHardGameModeMission()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("LotusBaseGameRules", "IsPlayingHardGameModeMission"), 1)
+		return ivkr_pop_bool()
+	end
 end
 
 class LotusGameRules extends LotusBaseGameRules

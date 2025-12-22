@@ -254,6 +254,7 @@ class LotusBaseGameRules extends GameRulesImpl
 	function AddActiveLevelAuraUpgrade(type)
 	function RemoveActiveLevelAuraUpgrade(type)
 	function GetMission()
+	function IsPlayingHardGameModeMission()
 
 class LotusGameRules extends LotusBaseGameRules
 	function OpenMissionContinueDialog()
