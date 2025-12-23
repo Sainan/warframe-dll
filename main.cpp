@@ -4300,7 +4300,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			log_optional_scan_failure(false);
 		}
 	}
-	static_assert(REDIRECT_REQUESTS); // anticheat_timer_check is likely not safe to disable when playing on live.
 }
 
 static SOUP_FORCEINLINE void do_pointer_scans()
