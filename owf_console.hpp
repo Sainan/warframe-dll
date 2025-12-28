@@ -37,6 +37,14 @@ struct owfConsole
 
 			owfConsole::handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
+			// Needed for Lua warnings to show in the console
+			{
+				FILE* f;
+				freopen_s(&f, "CONIN$", "r", stdin);
+				freopen_s(&f, "CONOUT$", "w", stderr);
+				freopen_s(&f, "CONOUT$", "w", stdout);
+			}
+
 			owf_broadcast_message(soup::ObfusString(R"({"console":true})").str());
 		}
 	}
