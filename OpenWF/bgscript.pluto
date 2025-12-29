@@ -346,7 +346,7 @@ local wscoro = coroutine.create(function()
 		if owf_get_auth_query() == "" or owf_tunables_has("disable_websocket") then
 			coroutine.yield()
 		else
-			try
+			xpcall(|| -> do
 				local sock = socket.connect(owf_get_server_host(), owf_get_http_port())
 				if sock?:wsUpgrade(owf_get_server_host(), "/custom/ws") then
 					--print("Connected to ws server")
@@ -372,9 +372,9 @@ local wscoro = coroutine.create(function()
 				else
 					--print("Ws connection failed")
 				end
-			catch _ do
+			end, |_| -> do
 				--print("Error", _)
-			end
+			end)
 		end
 	end
 end)
