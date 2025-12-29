@@ -3510,62 +3510,46 @@ function ivkr_push_t()
 	ivkr_gettable(-10002)
 end
 
-local function AddHudTracker(name, type)
-	ivkr_push_t()
+local t_functions = {
+	AddHudTracker = function(name, type)
+		ivkr_push_t()
+		ivkr_push_string("AddHudTracker")
+		ivkr_gettable(-2)
 
-	ivkr_push_string("AddHudTracker")
-	ivkr_gettable(-2)
+		ivkr_push_string(name)
+		ivkr_push_int(type)
+		ivkr_call2(2, 0)
+	end,
+	RemoveHudTracker = function(name)
+		ivkr_push_t()
+		ivkr_push_string("AddHudTracker")
+		ivkr_gettable(-2)
 
-	ivkr_push_string(name)
-	ivkr_push_int(type)
-	ivkr_call2(2, 0)
-end
+		ivkr_push_string(name)
+		ivkr_call2(1, 0)
+	end,
+	OpenScreen = function(name)
+		ivkr_push_t()
+		ivkr_push_string("OpenScreen")
+		ivkr_gettable(-2)
 
-local function RemoveHudTracker(name)
-	ivkr_push_t()
-
-	ivkr_push_string("AddHudTracker")
-	ivkr_gettable(-2)
-
-	ivkr_push_string(name)
-	ivkr_call2(1, 0)
-end
-
-local function OpenScreen(name)
-	ivkr_push_t()
-
-	ivkr_push_string("OpenScreen")
-	ivkr_gettable(-2)
-
-	ivkr_push_string(name)
-	ivkr_call2(1, 1)
-	local ret = new FlashInstance()
-	ivkr_pop(1)
-	return ret
-end
-
+		ivkr_push_string(name)
+		ivkr_call2(1, 1)
+		local ret = new FlashInstance()
+		ivkr_pop(1)
+		return ret
+	end,
+}
 _T = setmetatable({}, {
 	function __index(name)
-		if name == "AddHudTracker" then
-			ivkr_push_t()
-			ivkr_push_string("AddHudTracker")
-			local ok = ivkr_gettable(-2) > 0
-			ivkr_pop(2)
-			return ok ? AddHudTracker : nil
-		end
-		if name == "RemoveHudTracker" then
-			ivkr_push_t()
-			ivkr_push_string("RemoveHudTracker")
-			local ok = ivkr_gettable(-2) > 0
-			ivkr_pop(2)
-			return ok ? RemoveHudTracker : nil
-		end
-		if name == "OpenScreen" then
-			return OpenScreen
-		end
 		ivkr_push_t()
 		ivkr_push_string(name)
-		ivkr_gettable(-2)
+		if ivkr_gettable(-2) > 0 then
+			if func := t_functions[name] then
+				ivkr_pop(2)
+				return func
+			end
+		end
 		local value = ivkr_pop_any()
 		ivkr_pop(1)
 		return value
