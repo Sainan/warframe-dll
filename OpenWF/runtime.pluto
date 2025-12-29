@@ -3539,6 +3539,16 @@ local t_functions = {
 		ivkr_pop(1)
 		return ret
 	end,
+	ShowNotification = function(...args)
+		ivkr_push_t()
+		ivkr_push_string("ShowNotification")
+		ivkr_gettable(-2)
+
+		for args as arg do
+			ivkr_push_any(arg)
+		end
+		ivkr_call2(#args, 0)
+	end,
 }
 _T = setmetatable({}, {
 	function __index(name)

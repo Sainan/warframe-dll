@@ -792,6 +792,7 @@ PowerSuitCustomizationSlot = { Helmet, ArmLeft, LegLeft, CustomEmblem, EventEmbl
 _T.AddHudTracker -- function(name, type) or nil
 _T.RemoveHudTracker -- function(name) or nil
 _T.OpenScreen -- function(name)
+_T.ShowNotification -- function(text, optIcon, ...) or nil
 
 -- Preloaded modules
 
