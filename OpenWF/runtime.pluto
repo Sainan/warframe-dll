@@ -3519,14 +3519,18 @@ local t_functions = {
 		ivkr_push_string(name)
 		ivkr_push_int(type)
 		ivkr_call2(2, 0)
+
+		ivkr_pop(1)
 	end,
 	RemoveHudTracker = function(name)
 		ivkr_push_t()
-		ivkr_push_string("AddHudTracker")
+		ivkr_push_string("RemoveHudTracker")
 		ivkr_gettable(-2)
 
 		ivkr_push_string(name)
 		ivkr_call2(1, 0)
+
+		ivkr_pop(1)
 	end,
 	OpenScreen = function(name)
 		ivkr_push_t()
@@ -3548,6 +3552,8 @@ local t_functions = {
 			ivkr_push_any(arg)
 		end
 		ivkr_call2(#args, 0)
+
+		ivkr_pop(1)
 	end,
 }
 _T = setmetatable({}, {
