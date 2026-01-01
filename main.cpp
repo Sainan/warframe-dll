@@ -39,6 +39,7 @@
 #include <pattern_macros.hpp>
 #include <Process.hpp>
 #include <ReplacementHook.hpp>
+#include <ResolveIpAddrTask.hpp>
 #include <sha256.hpp>
 #include <Socket.hpp>
 #include <string.hpp>
@@ -727,6 +728,33 @@ static int64_t int_rsa_verify_detour(void* a1, void* a2, void* a3, void* a4, siz
 }*/
 
 
+struct owfResolveUdpProxyUpstreamAddressTask : public Task
+{
+	ResolveIpAddrTask resolve_task;
+	native_u16_t port;
+
+	owfResolveUdpProxyUpstreamAddressTask(std::string name, native_u16_t port)
+		: resolve_task(std::move(name)), port(port)
+	{
+	}
+
+	void onTick() final
+	{
+		if (resolve_task.tickUntilDone())
+		{
+			if (resolve_task.result.has_value())
+			{
+				SocketAddr newAddr(*resolve_task.result, port);
+#if LOGGING
+				//conout << "Resolved udp_proxy_upstream to " << newAddr.toString() << std::endl;
+#endif
+				owfUdpProxy::setUpstreamAddr(newAddr);
+			}
+			return setWorkDone();
+		}
+	}
+};
+
 bool set_server_tunables(const char* data, size_t size, bool delta)
 {
 	std::lock_guard lock(g_server_tunables_mtx);
@@ -738,17 +766,20 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 
 	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
 	{
-		const bool bind = owfUdpProxy::upstream_addr.ip.isZero();
-		SocketAddr newAddr;
-		if (newAddr.fromString(e->second) && !newAddr.ip.isZero() && newAddr != owfUdpProxy::upstream_addr)
+		if (SocketAddr newAddr; newAddr.fromString(e->second) && !newAddr.ip.isZero())
 		{
-			owfUdpProxy::upstream.reset();
-			owfUdpProxy::upstream_addr = newAddr;
-			if (bind)
+			owfUdpProxy::setUpstreamAddr(newAddr);
+		}
+		else
+		{
+#if LOGGING
+			conout << "Got some garbage for udp_proxy_upstream: " << e->second << std::endl;
+#endif
+			if (const size_t sep = e->second.find_last_of(':'); sep != std::string::npos)
 			{
-				SOUP_IF_UNLIKELY (!owfUdpProxy::bind())
+				if (const auto opt = string::toIntOpt<uint16_t>(e->second.substr(sep + 1), string::TI_FULL); opt.has_value())
 				{
-					conout << ObfusString("Failed to bind UDP/6951.").str();
+					g_serv.add<owfResolveUdpProxyUpstreamAddressTask>(e->second.substr(0, sep), native_u16_t(*opt));
 				}
 			}
 		}

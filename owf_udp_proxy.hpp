@@ -1,5 +1,6 @@
 #pragma once
 
+#include "owf_console.hpp"
 #include "owf_web.hpp"
 
 struct owfUdpProxy
@@ -8,6 +9,26 @@ struct owfUdpProxy
 	inline static soup::SocketAddr downstream_addr;
 	inline static soup::SharedPtr<soup::Socket> upstream;
 	inline static soup::SocketAddr upstream_addr;
+
+	static void setUpstreamAddr(const soup::SocketAddr& newAddr)
+	{
+		if (newAddr != owfUdpProxy::upstream_addr)
+		{
+#if LOGGING
+			conout << "owfUdpProxy: New upstream: " << newAddr.toString() << std::endl;
+#endif
+			const bool bind = owfUdpProxy::upstream_addr.ip.isZero();
+			owfUdpProxy::upstream.reset();
+			owfUdpProxy::upstream_addr = newAddr;
+			if (bind)
+			{
+				SOUP_IF_UNLIKELY (!owfUdpProxy::bind())
+				{
+					conout << soup::ObfusString("Failed to bind UDP/6951.").str();
+				}
+			}
+		}
+	}
 
 	static bool bind()
 	{
