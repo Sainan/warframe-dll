@@ -4,10 +4,10 @@
 #include <json.hpp>
 #include <ObfusString.hpp>
 #include <os.hpp>
+#include <whirlpool.hpp>
 
 #include "owf_repo.hpp"
 #include "owf_structs.hpp" // game_version
-#include "whirlpool.hpp"
 
 using namespace soup;
 
@@ -417,11 +417,11 @@ void set_autologin_password(std::string str)
 	autologin_password = std::move(str);
 	if (!autologin_password.empty() && !is_valid_whirlpool_hex_digest(autologin_password))
 	{
-		whirlpool_ctx ctx;
-		unsigned char result[64];
-		rhash_whirlpool_init(&ctx);
-		rhash_whirlpool_update(&ctx, (const unsigned char*)autologin_password.data(), autologin_password.size());
-		rhash_whirlpool_final(&ctx, result);
-		autologin_password = string::bin2hexLower((const char*)result, 64);
+		soup::whirlpool::State st;
+		uint8_t hash[soup::whirlpool::DIGEST_BYTES];
+		st.append(autologin_password.data(), autologin_password.size());
+		st.finalise();
+		st.getDigest(hash);
+		autologin_password = string::bin2hexLower((const char*)hash, soup::whirlpool::DIGEST_BYTES);
 	}
 }
