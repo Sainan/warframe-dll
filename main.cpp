@@ -4587,13 +4587,6 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 	}
 }
 
-static bool have_early_access()
-{
-	return std::filesystem::exists(ObfusString("OpenWF/Early Access.bin").str())
-		&& time::unixSecondsSince(g_repo.timestamp) <= g_client_tunables.getInt(joaat::compileTimeHash("early_access_days")) * 86400
-		;
-}
-
 #if SOUP_BITS == 32
 #define EXE_NAME "Warframe.exe"
 #else
@@ -4830,9 +4823,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		// Handle version config (depends on core dict)
 		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
-		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew"))
-			|| (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("early_access_required_for")) && !have_early_access())
-			)
+		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
 		{
 #if PRIVATE
 			auto title = get_bootstrapper_title();

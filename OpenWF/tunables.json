@@ -1,8 +1,6 @@
 {
 	"min_gv_for_tls": { "$gv": "25.0.0" },
 	"toonew": { "$gv": "41.0.2" },
-	"early_access_required_for": { "$gv": "41.0.0" },
-	"early_access_days": 14,
 	"nhkif": [
 		"/EE/Types/Input/MenuInputFilter", // Chat
 		"/Lotus/Types/Input/LoadoutReduxInputFilter",
