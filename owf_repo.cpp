@@ -173,3 +173,22 @@ std::unordered_map<std::string, std::string> owfRepo::getWebuiDict(const std::st
 	}
 	return {};
 }
+
+const char* /*[16]*/ owfRepo::getExpectedCodeVersionForManifestHash(const char manifest_hash[22]) const
+{
+	size_t size;
+	if (const char* data = this->find(soup::joaat::compileTimeHash("OpenWF/hash_to_code_version.json"), size))
+	{
+		while (size != 0)
+		{
+			if (memcmp(data, manifest_hash, 22) == 0)
+			{
+				data += 22; size -= 22;
+				return data;
+			}
+			data += 22; size -= 22;
+			data += 16; size -= 16;
+		}
+	}
+	return nullptr;
+}

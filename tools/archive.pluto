@@ -84,6 +84,17 @@ local function pack_file(path, archive_path)
 			end
 			cont = json.encode(packed, "msgpack")
 			--print(cont:split(""):map(|x| -> string.format("%02x ", x:byte())):concat())
+		elseif path == "OpenWF/hash_to_code_version.json" then
+			local packed = ""
+			for cont.__order as hash do
+				local code_version = cont[hash]
+				assert(#hash == 22)
+				assert(#code_version == 16)
+				-- Technically could be packed more efficiently in binary but that would require C++ to convert
+				packed ..= hash
+				packed ..= code_version
+			end
+			cont = packed
 		elseif path:sub(1, 10) == "OpenWF/vv/" then
 			if path:sub(1, 14) == "OpenWF/vv/sig/" then
 				local arr = {}

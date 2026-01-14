@@ -22,6 +22,7 @@ public:
 	soup::Pattern getVersionedPattern(uint32_t path, uint64_t ver) const;
 	std::unordered_map<std::string, std::string> getCoreDict(const std::string& lang) const;
 	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
+	const char* /*[16]*/ getExpectedCodeVersionForManifestHash(const char manifest_hash[22]) const;
 
 	uint8_t hotfix;
 	uint64_t timestamp;
