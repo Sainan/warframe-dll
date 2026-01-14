@@ -976,9 +976,25 @@ static std::string process_args_str(const char* str)
 		}
 		if (!got_graphicsDriver && !fallback_graphicsDriver.empty())
 		{
-			arguments_to_inject.append(ObfusString("-graphicsDriver:").str());
-			arguments_to_inject.append(fallback_graphicsDriver);
-			arguments_to_inject.push_back(' ');
+			if (game_version >= GV(28, 0, 0))
+			{
+				arguments_to_inject.append(ObfusString("-graphicsDriver:").str());
+				arguments_to_inject.append(fallback_graphicsDriver);
+				arguments_to_inject.push_back(' ');
+			}
+			else
+			{
+				arguments_to_inject.append(ObfusString("-dx11:").str());
+				arguments_to_inject.push_back(fallback_graphicsDriver == ObfusString("dx11").str() ? '1' : '0');
+				arguments_to_inject.push_back(' ');
+
+				if (game_version >= GV(9, 0, 0)) // U8 does not seem to recognise this argument, unsure when it was added.
+				{
+					arguments_to_inject.append(ObfusString("-dx10:").str());
+					arguments_to_inject.push_back(fallback_graphicsDriver == ObfusString("dx10").str() ? '1' : '0');
+					arguments_to_inject.push_back(' ');
+				}
+			}
 		}
 		if (!got_windowMode && fallback_windowMode >= 0)
 		{
