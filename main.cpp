@@ -1930,11 +1930,11 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 							}
 							else if (n->isInt())
 							{
-								n->reinterpretAsInt().value = std::stod(qa.second);
+								n->reinterpretAsInt().value = soup::string::toIntOpt<int64_t>(qa.second).value();
 							}
 							else
 							{
-								n->asFloat().value = soup::string::toIntOpt<int64_t>(qa.second).value();
+								n->asFloat().value = std::stod(qa.second);
 							}
 						}
 					}
