@@ -3,11 +3,6 @@ local { cat, http, json, scheduler, url, vector3 } = require "*"
 Vector = vector3
 Vector3 = vector3 -- compatibility
 
-print_to_console = function(...)
-	write_to_console(...)
-	write_to_console("\n")
-end
-
 function ivkr_push_vector(vec)
 	ivkr_push_float(vec.x)
 	ivkr_push_float(vec.y)

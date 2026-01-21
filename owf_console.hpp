@@ -97,6 +97,12 @@ struct owfConOut
 		return *this;
 	}
 
+	owfConOut& operator << (char val)
+	{
+		write(&val, 1);
+		return *this;
+	}
+
 	owfConOut& operator << (int16_t val) { return operator<<(std::to_string(val)); }
 	owfConOut& operator << (uint16_t val) { return operator<<(std::to_string(val)); }
 	owfConOut& operator << (int32_t val) { return operator<<(std::to_string(val)); }
