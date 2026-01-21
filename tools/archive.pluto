@@ -57,12 +57,12 @@ local function pack_file(path, archive_path)
 	end
 	io.write(path.." -> "..archive_path)
 	local cont = io.contents(path)
-	if path == "OpenWF/runtime.pluto" then
+	--[[if path == "OpenWF/runtime.pluto" then
 		io.write(" [compiled]")
 		assert(os.execute("tools\\plutoc "..path))
 		cont = io.contents("plutoc.out")
 		io.remove("plutoc.out")
-	elseif path:sub(-5) == ".json" and path ~= "OpenWF/Hotkeys.json" then
+	else]]if path:sub(-5) == ".json" and path ~= "OpenWF/Hotkeys.json" then
 		io.write(" [minified]")
 		cont = json.decode(cont, json.withorder | json.withnull)
 		if path == "OpenWF/tunables.json" then
