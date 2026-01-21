@@ -1,5 +1,5 @@
 local function malformed_line(filename, linenum, line)
-	print_to_console("[Metadata Patches] Ignoring malformed line")
+	print_to_console("[Metadata Patches] Ignoring malformed line/instruction")
 	print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 	print_to_console("[Metadata Patches] - What: "..line)
 end
@@ -13,6 +13,15 @@ function parse_metadata_patches(str, filename)
 			patches:insert(patch)
 		end
 		patch = { keys = {}, prefix = "", replacements = {}, substitutions = {}, query_assignments = {} }
+	end
+	local function is_in_patch_scope(linenum, line)
+		if #patch.keys == 0 then
+			print_to_console("[Metadata Patches] Ignoring line/instruction that was not preceeded by one or more paths/targets")
+			print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+			print_to_console("[Metadata Patches] - What: "..line)
+			return false
+		end
+		return true
 	end
 	for linenum, line in str:split("\n") do
 		if line:startswith("/") then
@@ -60,30 +69,40 @@ function parse_metadata_patches(str, filename)
 			end
 		elseif line:startswith("r|") then
 			if sep := line:find("|", 3) then
-				patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				if is_in_patch_scope(linenum, line) then
+					patch.replacements[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				end
 			else
 				malformed_line(filename, linenum, line)
 			end
 		elseif line:startswith("s|") then
 			if sep := line:find("|", 3) then
-				patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				if is_in_patch_scope(linenum, line) then
+					patch.substitutions[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				end
 			else
 				malformed_line(filename, linenum, line)
 			end
 		elseif line:startswith("q|") then
 			if sep := line:find("|", 3) then
-				patch.query_assignments[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				if is_in_patch_scope(linenum, line) then
+					patch.query_assignments[line:sub(3, sep - 1)] = line:sub(sep + 1):rstrip("|")
+				end
 			else
 				malformed_line(filename, linenum, line)
 			end
 		elseif line:startswith("$") then
 			if "clear" in line then
-				patch.discard_original = true
+				if is_in_patch_scope(linenum, line) then
+					patch.discard_original = true
+				end
 			else
 				malformed_line(filename, linenum, line)
 			end
 		elseif #line ~= 0 and line[1] ~= "#" then
-			patch.prefix = patch.prefix .. line .. "\n"
+			if is_in_patch_scope(linenum, line) then
+				patch.prefix = patch.prefix .. line .. "\n"
+			end
 		end
 	end
 	if #patch.keys ~= 0 then
