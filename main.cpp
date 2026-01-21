@@ -813,7 +813,7 @@ struct owfTunablesTask : public soup::Task
 					&& hrt.sock
 					)
 				{
-					server_host = hrt.sock->peer.ip.toString();
+					//server_host = hrt.sock->peer.ip.toString(); // This breaks demo.openwf.io
 					server_remote_ip_hash = hrt.sock->peer.ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
 #if false
 					conout << "server_host = " << server_host << std::endl;
