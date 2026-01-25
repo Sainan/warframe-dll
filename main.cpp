@@ -3626,7 +3626,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 #if !MINIMAL_HOOKS
 	{
-		SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 78 48 8B D9 E8");
+		SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 48 8B D9 E8 ? ? ? ? 48 8B C8"); // U37, U38, U41
 		auto is_pause_allowed = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		conout << "is_pause_allowed = " << is_pause_allowed << std::endl;
@@ -4039,8 +4039,21 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
 	{
 		// "an operator is trying to ride "
-		SIG_INST("32 C0 48 8B 5C 24 40 48 8B 74 24 48 48 83 C4 30 5F C3 B2 05");
-		auto operator_mount_fail = Module(nullptr).range.scan(sig_inst);
+		Pointer operator_mount_fail;
+		if (game_version >= GV(38, 0, 0))
+		{
+			SIG_INST("32 C0 48 8B 5C 24 40 48 8B 74 24 48 48 83 C4 30 5F C3 B2 05");
+			operator_mount_fail = Module(nullptr).range.scan(sig_inst);
+		}
+		else
+		{
+			SIG_INST("E8 ? ? ? ? 32 C0 48 8B 5C 24 40 48 8B 6C 24 48 48 8B 74 24 50 48 83 C4 30 5F C3"); // U37
+			operator_mount_fail = Module(nullptr).range.scan(sig_inst);
+			if (operator_mount_fail)
+			{
+				operator_mount_fail = operator_mount_fail.add(5);
+			}
+		}
 #if LOGGING
 		conout << "operator_mount_fail = " << operator_mount_fail.as<void*>() << std::endl;
 #endif
@@ -4481,14 +4494,18 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 
 	if (game_version >= GV(37, 0, 0))
 	{
-		SIG_INST("BA 01 00 00 00 41 B8 06 00 00 00 48 8B D9 E8 ? ? ? ? BA 02 00 00 00 48 8B CB E8 ? ? ? ? BA 01 00 00 00 48 8B CB E8");
+		SIG_INST("BA 01 00 00 00 48 8B CB E8 ? ? ? ? 85 C0 74 0B B8 02 00 00 00"); // U37, U38, U40, U41
 		auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 		conout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
 #endif
 		if (lua_next_callsite)
 		{
-			luau_next = lua_next_callsite.add(41).rip().as<luau_next_t>();
+			luau_next = lua_next_callsite.add(9).rip().as<luau_next_t>();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
 		}
 	}
 
@@ -4565,9 +4582,14 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			SIG_INST("48 8D 05 ? ? ? ? 4C 89 3D ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
 		}
-		else
+		else if (game_version >= GV(38, 0, 0))
 		{
 			SIG_INST("48 8D 05 ? ? ? ? 48 89 35 ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
+			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+		}
+		else
+		{
+			SIG_INST("48 8D 05 ? ? ? ? 48 89 2D ? ? ? ? 48 89 05 ? ? ? ? BF 01 00 00 00 48 8D 05 ? ? ? ? 48 89 05 ? ? ? ? EB");
 			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
 		}
 		for (int i = 0; i != nres; ++i)
@@ -4605,9 +4627,18 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 
 	if (game_version >= GV(37, 0, 0) && game_version < GV(40, 0, 0))
 	{
-		SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
-		Pointer res[10];
-		int nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+		Pointer res[7]; // In U37 there's an 8th match that's not an enum so we need to ignore that one.
+		int nres;
+		if (game_version >= GV(38, 0, 0))
+		{
+			SIG_INST("48 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
+			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+		}
+		else
+		{
+			SIG_INST("? 8B 05 ? ? ? ? 4C 8D ? ? ? ? ? 4D 8B");
+			nres = Module(nullptr).range.scanWithMultipleResults(sig_inst, res);
+		}
 		swig_enums1.reserve(nres);
 		for (int i = 0; i != nres; ++i)
 		{

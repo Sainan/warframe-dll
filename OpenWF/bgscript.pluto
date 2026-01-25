@@ -257,7 +257,7 @@ local function check_for_updates()
 	end)
 end
 
-local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.12.11.14.26") >= 0
+local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.09.30.16.56") >= 0
 
 local last_status_update = 0
 local last_status_string
@@ -267,24 +267,29 @@ local script_log_len = 0
 owf_register_command("freecam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
-			ply:setControllingCamera(true)
-			ply:GetAvatar():ControlCamera(false)
+			if not ply:IsFreeCameraActive() then
+				ply:ToggleFreeCamera()
+			end
+			ply:SetFreeCameraLocked(false)
 		end
 	end
 end)
 owf_register_command("lockcam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
-			ply:setControllingCamera(false)
-			ply:GetAvatar():ControlCamera(false)
+			if not ply:IsFreeCameraActive() then
+				ply:ToggleFreeCamera()
+			end
+			ply:SetFreeCameraLocked(true)
 		end
 	end
 end)
 owf_register_command("gamecam", function()
 	if ivkr_available and not owf_tunables_has("prohibit_freecam") then
 		if ply := gRegion:GetLocalPlayer() then
-			ply:setControllingCamera(false)
-			ply:GetAvatar():ControlCamera(true)
+			if ply:IsFreeCameraActive() then
+				ply:ToggleFreeCamera()
+			end
 		end
 	end
 end)
@@ -388,10 +393,10 @@ while pcall(yield) do
 		}
 		if ivkr_available then
 			if ply := gRegion:GetLocalPlayer() then
+				if ply:IsFreeCameraActive() then
+					status.camtype = ply:IsFreeCameraLockedActive() ? "lockcam" : "freecam"
+				end
 				if avatar := ply:GetAvatar() then
-					if not avatar:isFollowedByCamera() then
-						status.camtype = gRegion:GetLocalPlayer():isControllingCamera() ? "freecam" : "lockcam"
-					end
 					local pos = avatar:GetPosition()
 					status.pos = "%f,%f,%f":format(pos.x, pos.y, pos.z)
 				end

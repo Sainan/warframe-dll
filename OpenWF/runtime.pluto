@@ -359,17 +359,41 @@ end
 class HumanPlayer extends Player
 	__name = "HumanPlayer"
 
+	function IsFreeCameraActive()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("HumanPlayer", "IsFreeCameraActive"), 1)
+		return ivkr_pop_bool()
+	end
+
 	function ToggleFreeCamera()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("HumanPlayer", "ToggleFreeCamera"), 1)
 	end
 
+	function SetFreeCameraLocked(b)
+		self:pushToIvkr()
+		ivkr_push_bool(b)
+		ivkr_call(ivkr_find_method("HumanPlayer", "SetFreeCameraLocked"), 2)
+	end
+
+	function IsFreeCameraLockedActive()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("HumanPlayer", "IsFreeCameraLockedActive"), 1)
+		return ivkr_pop_bool()
+	end
+
 	function isControllingCamera()
+		warn("HumanPlayer:isControllingCamera is deprecated")
+		assert(compareversions(owf_get_build_version(), "2024.12.11.14.26") >= 0, "HumanPlayer:isControllingCamera does not work in this version")
+
 		self:pushToIvkr()
 		return player_get_controlling_camera(ivkr_pop_object())
 	end
 
 	function setControllingCamera(b)
+		warn("HumanPlayer:setControllingCamera is deprecated")
+		assert(compareversions(owf_get_build_version(), "2024.12.11.14.26") >= 0, "HumanPlayer:setControllingCamera does not work in this version")
+
 		self:pushToIvkr()
 		player_set_controlling_camera(ivkr_pop_object(), b)
 	end

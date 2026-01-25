@@ -45,9 +45,10 @@ class Player extends Object
 	function CameraControl()
 
 class HumanPlayer extends Player
+	function IsFreeCameraActive()
 	function ToggleFreeCamera()
-	function isControllingCamera()
-	function setControllingCamera(b)
+	function SetFreeCameraLocked(b)
+	function IsFreeCameraLockedActive()
 	function AssignAvatar(avatar, b1 = true, b2 = true)
 	function SendGiveItem(resource, amount)
 

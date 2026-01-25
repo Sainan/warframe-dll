@@ -7,7 +7,7 @@ local Y_STEP <const> = Vector(0, 0.01, 0)
 local t = os.millis()
 repeat
 	local delta = os.millis() - t
-	if gRegion:GetLocalPlayer():isControllingCamera() then
+	if gRegion:GetLocalPlayer():IsFreeCameraActive() then
 		if owf_is_key_down(VK_SPACE) then
 			gRegion:GetGameCamera():SetPosition(gRegion:GetGameCamera():GetPosition() + Y_STEP * delta)
 		end
