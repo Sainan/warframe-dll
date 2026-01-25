@@ -18,8 +18,11 @@
 		"nrs2.playwarframe.com:3960", // U8
 	],
 	"dns_irc": [
+		"irc.warframe.com:6695", // U15
 		"irc.warframe.com:6696", // U15
 		"irc.warframe.com:6697", // U15
+		"irc.warframe.com:6698", // U15
+		"irc.warframe.com:6699", // U15
 		"irc.warframe.com:6665", // U10 (2013.10.11.17.01)
 		"irc.warframe.com:6666", // U10 (2013.10.11.17.01)
 		"irc.warframe.com:6667", // 2013.11.12.14.03
