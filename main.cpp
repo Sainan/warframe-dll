@@ -1373,6 +1373,26 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 
 static bool did_console_to_overlay_transition = false;
 
+static void do_console_to_overlay_transition()
+{
+	if (!did_console_to_overlay_transition)
+	{
+		did_console_to_overlay_transition = true;
+		if (!disable_overlay)
+		{
+			owfOverlay::init();
+		}
+#if !LOGGING
+		else if (!owfConfig::isConsoleEnabled()
+			&& owfConsole::active
+			)
+		{
+			owfConsole::deactivate();
+		}
+#endif
+	}
+}
+
 static void handle_set_global(luau_State* L, uint32_t hash)
 {
 	ObfusString str_gRegion("gRegion");
@@ -1390,22 +1410,7 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 		//conout << " " << resolve_string_handle(regionmgr->type->getPathHandle());
 		//conout << " " << resolve_string_handle(regionmgr->type->name_handle);
 #endif
-		if (!did_console_to_overlay_transition)
-		{
-			did_console_to_overlay_transition = true;
-			if (!disable_overlay)
-			{
-				owfOverlay::init();
-			}
-#if !LOGGING
-			else if (!owfConfig::isConsoleEnabled()
-				&& owfConsole::active
-				)
-			{
-				owfConsole::deactivate();
-			}
-#endif
-		}
+		do_console_to_overlay_transition();
 	}
 	else if (hash == wf_hash(str_gFlashMgr.c_str()))
 	{
@@ -4987,6 +4992,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 					FreeLibrary(hWintrust);
 				}
 #endif
+
+				if (!lua_set_global_by_hash_hook.isCreated() && !lua_set_global_hook.isCreated())
+				{
+					Sleep(10000);
+					do_console_to_overlay_transition();
+				}
 			});
 			thrd.detach();
 		}
