@@ -1371,6 +1371,8 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 }
 
 
+static bool did_console_to_overlay_transition = false;
+
 static void handle_set_global(luau_State* L, uint32_t hash)
 {
 	ObfusString str_gRegion("gRegion");
@@ -1388,9 +1390,21 @@ static void handle_set_global(luau_State* L, uint32_t hash)
 		//conout << " " << resolve_string_handle(regionmgr->type->getPathHandle());
 		//conout << " " << resolve_string_handle(regionmgr->type->name_handle);
 #endif
-		if (!owfOverlay::isInited() && !disable_overlay)
+		if (!did_console_to_overlay_transition)
 		{
-			owfOverlay::init();
+			did_console_to_overlay_transition = true;
+			if (!disable_overlay)
+			{
+				owfOverlay::init();
+			}
+#if !LOGGING
+			else if (!owfConfig::isConsoleEnabled()
+				&& owfConsole::active
+				)
+			{
+				owfConsole::deactivate();
+			}
+#endif
 		}
 	}
 	else if (hash == wf_hash(str_gFlashMgr.c_str()))
