@@ -58,6 +58,8 @@ inline std::string dll_path_utf8;
 
 struct owfConfig
 {
+	static bool isConsoleEnabled() noexcept;
+
 	static void load();
 	static void save();
 

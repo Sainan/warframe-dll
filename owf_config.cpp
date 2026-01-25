@@ -27,6 +27,15 @@ using namespace soup;
 	return true;
 }
 
+bool owfConfig::isConsoleEnabled() noexcept
+{
+	return ee_log_in_console
+		|| write_all_metadata_reads_to_console
+		|| write_patched_metadata_reads_to_console
+		|| client_http_logging
+		;
+}
+
 void owfConfig::load()
 {
 	UniquePtr<JsonNode> config = json::decodeFile(ObfusString("OpenWF/Client Config.json").str());
