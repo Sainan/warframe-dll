@@ -2435,7 +2435,7 @@ bool owf_command(const std::string& in, JsonObject& out)
 		return true;
 
 	case joaat::compileTimeHash("save_config"):
-		save_config();
+		owfConfig::save();
 		return true;
 
 	case joaat::compileTimeHash("reload_hotkeys"):
@@ -4844,8 +4844,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				SOUP_RETHROW_FALSE(check_ec(ec));
 			}
 		}
-		load_config();
-		save_config();
+		owfConfig::load();
+		owfConfig::save();
 		{
 			std::vector<std::string> args{};
 			{
@@ -4884,7 +4884,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 				}
 				else if (arg.size() > 13 && arg.substr(0, 13) == ObfusString("-owfPassword:").str())
 				{
-					set_autologin_password(arg.substr(13));
+					owfConfig::setAutologinPassword(arg.substr(13));
 				}
 			}
 		}

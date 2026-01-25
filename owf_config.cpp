@@ -27,7 +27,7 @@ using namespace soup;
 	return true;
 }
 
-void load_config()
+void owfConfig::load()
 {
 	UniquePtr<JsonNode> config = json::decodeFile(ObfusString("OpenWF/Client Config.json").str());
 	if (!config || !config->isObj())
@@ -230,7 +230,7 @@ void load_config()
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin_password")); it != config->reinterpretAsObj().end() && it->second->isStr())
 	{
-		set_autologin_password(it->second->reinterpretAsStr().value);
+		setAutologinPassword(it->second->reinterpretAsStr().value);
 	}
 	else
 	{
@@ -363,7 +363,7 @@ void load_config()
 	}
 }
 
-void save_config()
+void owfConfig::save()
 {
 	JsonObject config;
 
@@ -412,7 +412,7 @@ void save_config()
 	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
 }
 
-void set_autologin_password(std::string str)
+void owfConfig::setAutologinPassword(std::string str)
 {
 	autologin_password = std::move(str);
 	if (!autologin_password.empty() && !is_valid_whirlpool_hex_digest(autologin_password))

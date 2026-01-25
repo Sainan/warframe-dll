@@ -372,7 +372,7 @@ void start_builtin_http_server()
 				if (auto name = urlenc::decode(arr.at(1)); std::find(auto_start_scripts.begin(), auto_start_scripts.end(), name) == auto_start_scripts.end())
 				{
 					auto_start_scripts.emplace_back(std::move(name));
-					save_config();
+					owfConfig::save();
 				}
 				{
 					JsonObject obj;
@@ -386,7 +386,7 @@ void start_builtin_http_server()
 				if (auto it = std::find(auto_start_scripts.begin(), auto_start_scripts.end(), urlenc::decode(arr.at(1))); it != auto_start_scripts.end())
 				{
 					auto_start_scripts.erase(it);
-					save_config();
+					owfConfig::save();
 				}
 				{
 					JsonObject obj;
