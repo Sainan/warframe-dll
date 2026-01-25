@@ -1506,7 +1506,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	raise_script_error_t og_raise;
 
 	luau_L = L;
-	if (game_version >= GV(37, 0, 0)) // These offsets are very likely wrong for 35.5.0 and below
+	if (game_version >= GV(36, 0, 0)) // These offsets are very likely wrong for 35.5.0 and below
 	{
 		L->global_state_error_longjump_data() = nullptr;
 		L->global_state_panic_func() = [](luau_State* L, int)
@@ -1590,7 +1590,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		L->outtop = luau_restorestack(L, og_outtop);
 		L->intop = luau_restorestack(L, og_intop);
@@ -3199,6 +3199,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 
+	if (game_version >= GV(37, 0, 0))
 	{
 		SIG_INST("48 C1 C8 ? 48 89 05 ? ? ? ? 48 33 C1 48 89 05 ? ? ? ? C3"); // Alternatively: CC 48 B9 ? ? ? ? ? ? ? ? 48 8D 05
 		auto device_id_insn = Module(nullptr).range.scan(sig_inst);
@@ -3487,7 +3488,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 F6 41 01 04 48 8B FA");
 		auto lua_set_global = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4403,7 +4404,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
 		auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
@@ -4432,7 +4433,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}*/
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		if (game_version >= GV(40, 0, 0))
 		{
@@ -4453,7 +4454,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
 		luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
@@ -4466,7 +4467,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
 		luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
@@ -4479,7 +4480,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B D9 49 63 F9 48 8B 49 18 49 8B F0");
 		luau_pushcclosurek = Module(nullptr).range.scan(sig_inst).as<luau_pushcclosurek_t>();
@@ -4492,7 +4493,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("BA 01 00 00 00 48 8B CB E8 ? ? ? ? 85 C0 74 0B B8 02 00 00 00"); // U37, U38, U40, U41
 		auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
@@ -4509,7 +4510,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 		auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
@@ -4526,7 +4527,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
 		luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
@@ -4539,7 +4540,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		SIG_INST("40 53 48 83 EC 20 4C 8B D1 85 D2 7E");
 		luau_settable = Module(nullptr).range.scan(sig_inst).as<luau_settable_t>();
@@ -4552,7 +4553,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		if (game_version >= GV(39, 0, 0))
 		{
@@ -4573,7 +4574,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0))
+	if (game_version >= GV(36, 0, 0))
 	{
 		Pointer res[20];
 		int nres;
@@ -4625,7 +4626,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(37, 0, 0) && game_version < GV(40, 0, 0))
+	if (game_version >= GV(36, 0, 0) && game_version < GV(40, 0, 0))
 	{
 		Pointer res[7]; // In U37 there's an 8th match that's not an enum so we need to ignore that one.
 		int nres;
