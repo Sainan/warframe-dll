@@ -370,6 +370,15 @@ void owfConfig::load()
 	{
 		disable_overlay = os::isWine();
 	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("overlay_compatibility_mode")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		overlay_compatibility_mode = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		overlay_compatibility_mode = os::isWine();
+	}
 }
 
 void owfConfig::save()
@@ -417,6 +426,7 @@ void owfConfig::save()
 	config.add(ObfusString("client_http_logging"), client_http_logging);
 	config.add(ObfusString("client_http_port"), client_http_port);
 	config.add(ObfusString("disable_overlay"), disable_overlay);
+	config.add(ObfusString("overlay_compatibility_mode"), overlay_compatibility_mode);
 
 	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
 }

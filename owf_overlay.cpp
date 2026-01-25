@@ -4,7 +4,6 @@
 
 #include <joaat.hpp>
 #include <ObfusString.hpp>
-#include <os.hpp>
 #include <RenderTarget.hpp>
 #include <Rgb.hpp>
 #include <Thread.hpp>
@@ -22,7 +21,6 @@ static HWND s_game_hwnd = 0;
 static Window w;
 static bool s_prelogin = true;
 static bool s_unreachable = false;
-static bool s_wine = false;
 static bool s_topmost = false;
 static int s_x = -1;
 static int s_y = -1;
@@ -80,8 +78,7 @@ void owfOverlay::init()
 			//conout << "Creating our window..." << std::endl;
 			const auto [width, height] = Window(s_game_hwnd).getSize();
 			w = Window::create(ObfusString("OpenWF Overlay"), width, height);
-			s_wine = os::isWine();
-			if (!s_wine)
+			if (!overlay_compatibility_mode)
 			{
 				SetParent(w.h, s_game_hwnd);
 				w.setPos(0, 0);
@@ -179,7 +176,7 @@ void owfOverlay::init()
 						const auto [width, height] = Window(s_game_hwnd).getSize();
 						const auto topmost = GetForegroundWindow() == s_game_hwnd;
 
-						if (s_wine)
+						if (overlay_compatibility_mode)
 						{
 							if (s_topmost != topmost)
 							{

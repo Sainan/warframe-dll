@@ -112,7 +112,8 @@
 		<li><code>write_patched_metadata_reads_to_ee_log</code> — If true, writes patched metadata reads to EE.log. May degrade performance.</li>
 		<li><code>client_http_logging</code> — If true, writes requests to builtin HTTP server to the console.</li>
 		<li><code>client_http_port</code> — Defines the port of the builtin HTTP server. Used for the HTTP Interface and Content Management, documented below.</li>
-		<li><code>disable_overlay</code> — Can be used to disable the overlay, e.g. used to show "OpenWF @ &lt;server&gt;" before login. Default is false on Windows but true on Linux due to poor emulation under Wine.</li>
+		<li><code>disable_overlay</code> — Can be used to disable the overlay, e.g. used to show "OpenWF @ &lt;server&gt;" before login. Default is false on Windows but true on Linux.</li>
+		<li><code>overlay_compatibility_mode</code> — If true, renders the overlay in a more crude way. Default is false on Windows but true on Linux.</li>
 	</ul>
 	<h2>HTTP Interface</h2>
 	<p>While the game is running, you can visit <a href="http://localhost:6155/" target="_blank">http://localhost:6155/</a> to modify some of the above options, access additional features like teleportation, and use scripts.</p>
