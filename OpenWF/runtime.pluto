@@ -3506,18 +3506,18 @@ ivkr_typename = function(idx)
 	return ivkr_pop_string()
 end
 
-function ivkr_push_t()
+function ivkr_push_global(name)
 	if compareversions(owf_get_build_version(), "2025.10.14.16.10") >= 0 then
-		ivkr_push_int_as_bool(ivkr_hash("_T"))
+		ivkr_push_int_as_bool(ivkr_hash(name))
 	else
-		ivkr_push_string("_T")
+		ivkr_push_string(name)
 	end
 	ivkr_gettable(-10002)
 end
 
 local t_functions = {
 	AddHudTracker = function(name, type)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string("AddHudTracker")
 		ivkr_gettable(-2)
 
@@ -3528,7 +3528,7 @@ local t_functions = {
 		ivkr_pop(1)
 	end,
 	RemoveHudTracker = function(name)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string("RemoveHudTracker")
 		ivkr_gettable(-2)
 
@@ -3538,7 +3538,7 @@ local t_functions = {
 		ivkr_pop(1)
 	end,
 	OpenScreen = function(name)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string("OpenScreen")
 		ivkr_gettable(-2)
 
@@ -3549,7 +3549,7 @@ local t_functions = {
 		return ret
 	end,
 	ShowNotification = function(...args)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string("ShowNotification")
 		ivkr_gettable(-2)
 
@@ -3563,7 +3563,7 @@ local t_functions = {
 }
 _T = setmetatable({}, {
 	function __index(name)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string(name)
 		if ivkr_gettable(-2) > 0 then
 			if func := t_functions[name] then
@@ -3576,7 +3576,7 @@ _T = setmetatable({}, {
 		return value
 	end,
 	function __newindex(name, value)
-		ivkr_push_t()
+		ivkr_push_global("_T")
 		ivkr_push_string(name)
 		ivkr_push_any(value)
 		ivkr_settable(-3)
@@ -3585,9 +3585,8 @@ _T = setmetatable({}, {
 })
 
 ivkr_find_builtin = function(name)
-	ivkr_push_string(name)
-	ivkr_gettable(-10002)
-	return ivkr_pop_c_function(1)
+	ivkr_push_global(name)
+	return ivkr_pop_c_function()
 end
 
 package.preload["EE.Interface.Utilities"] = || -> {
