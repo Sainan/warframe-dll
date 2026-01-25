@@ -120,6 +120,15 @@
 	<p>Developers can also use the HTTP interface to interact with the Bootstrapper. In addition to commands (documented below), the following routes are available: <code>/ping</code>, <code>/save_all_metadata</code>, <code>/write_all_metadata_reads_to_console</code>, <code>/write_all_metadata_reads_to_ee_log</code>, <code>/write_patched_metadata_reads_to_console</code>, <code>/write_patched_metadata_reads_to_ee_log</code>, <code>/pause_always_stops_time</code>, <code>/server_host</code>, <code>/status</code>, <code>/toggle_console</code>, <code>/scripts</code>, <code>/start_script</code>, <code>/start_script_inline</code>, <code>/autostart_scripts</code>, <code>/add_autostart_script</code>, <code>/remove_autostart_script</code>, <code>/apply_hotfix</code>, <code>/version</code>, <code>/game_version</code>, <code>/memory</code>, <code>/get_effective_metadata</code>, <code>/get_effective_metadata_as_json</code></p>
 	<h2>Command Line Arguments</h2>
 	<p>The Bootstrapper adds the following command line arguments, which can be used to override their respective config fields: <code>owfServerHost</code>, <code>owfServerHttpPort</code>, <code>owfServerHttpsPort</code>, <code>owfClientHttpPort</code>, <code>owfAutologin</code> (0 or 1), <code>owfEmail</code>,  <code>owfPassword</code></p>
+	<h2>Version Compatibility</h2>
+	<p>The Bootstapper generally works in all versions, but certain additional features only support specific versions (for now):</p>
+	<ul>
+		<li>Label Replacements: U23 and above</li>
+		<li>Metadata Patches: U35.5 and above</li>
+		<li>Scripting: U35.5 and above</li>
+		<li>High Damage Numbers Patch: U36 and above</li>
+		<li>Pause Always Stops Time: U37 and above</li>
+	</ul>
 	<h2>Tunables</h2>
 	<p>When connecting to a server, the Bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
