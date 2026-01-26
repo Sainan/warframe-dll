@@ -4648,7 +4648,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= GV(36, 0, 0) && game_version < GV(40, 0, 0))
+	if (game_version >= GV(35, 5, 0) && game_version < GV(40, 0, 0))
 	{
 		Pointer res[7]; // In U37 there's an 8th match that's not an enum so we need to ignore that one.
 		int nres;
