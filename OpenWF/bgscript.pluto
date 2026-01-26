@@ -257,7 +257,7 @@ local function check_for_updates()
 	end)
 end
 
-local ivkr_available <const> = compareversions(owf_get_build_version(), "2024.02.16.17.13") >= 0
+local ivkr_available <const> = compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0
 
 local last_status_update = 0
 local last_status_string

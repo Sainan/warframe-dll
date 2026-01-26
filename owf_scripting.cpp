@@ -103,6 +103,10 @@ void owfScript::init()
 		wf_hash = wf_fnv_1;
 	}
 	// Before this FNV-based hashing function, they used MurmurHash2 afaik.
+
+
+	luau_GlobalState::error_longjump_data_offset = g_repo.getVersionedU64(soup::joaat::compileTimeHash("OpenWF/vv/off/luau_GlobalState_error_longjump_data.json"), game_version);
+	luau_GlobalState::panic_func_offset = g_repo.getVersionedU64(soup::joaat::compileTimeHash("OpenWF/vv/off/luau_GlobalState_panic_func.json"), game_version);
 }
 
 static ObfusString runtime_script_name("OpenWF Script Runtime");

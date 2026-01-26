@@ -60,24 +60,50 @@ struct luau_TValue
 static_assert(sizeof(luau_TValue) == 0x10);
 #endif
 
-// 38.0.x
-struct luau_GlobalState_38_0_x
+using luau_panic_func_t = void(*)(luau_State* L, int status);
+
+/*struct luau_GlobalState_33_6
+{
+	PAD(0x000, 0x018) void* ud;
+	PAD(0x020, 0xC08) void* error_longjump_data;
+	PAD(0xC10, 0xC48) luau_panic_func_t panic_func;
+};
+
+// U35.1, U38
+struct luau_GlobalState_38_0
 {
 	PAD(0x000, 0x018) void* ud;
 	PAD(0x020, 0xC10) void* error_longjump_data;
-	PAD(0xC18, 0xC50) void(*panic_func)(luau_State* L, int status);
+	PAD(0xC18, 0xC50) luau_panic_func_t panic_func;
 	PAD(0xC58, 0x1168);
 };
 #if SOUP_BITS == 64
 static_assert(sizeof(luau_GlobalState_38_0_x) == 0x1168);
 #endif
 
-// 38.5.0
-struct luau_GlobalState_38_5_0
+struct luau_GlobalState_38_5
 {
 	PAD(0x000, 0x018) void* ud;
 	PAD(0x020, 0xCA8) void* error_longjump_data;
-	PAD(0xCA8 + 8, 0xCE8) void(*panic_func)(luau_State* L, int status);
+	PAD(0xCA8 + 8, 0xCE8) luau_panic_func_t panic_func;
+};*/
+
+struct luau_GlobalState
+{
+	PAD(0x000, 0x018) void* ud;
+
+	inline static unsigned int error_longjump_data_offset;
+	inline static unsigned int panic_func_offset;
+
+	[[nodiscard]] SOUP_PURE void*& error_longjump_data() noexcept
+	{
+		return *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(this) + error_longjump_data_offset);
+	}
+
+	[[nodiscard]] SOUP_PURE luau_panic_func_t& panic_func() noexcept
+	{
+		return *reinterpret_cast<luau_panic_func_t*>(reinterpret_cast<uintptr_t>(this) + panic_func_offset);
+	}
 };
 
 using luau_StkId = luau_TValue*;
@@ -96,29 +122,11 @@ struct luau_State
 {
 	PAD(0, 0x08) luau_TValue* outtop;
 	/* 0x10 */ luau_TValue* intop;
-	/* 0x18 */ void* global_state;
+	/* 0x18 */ luau_GlobalState* global_state;
 	/* 0x20 */ luau_CallInfo* ci;
 	/* 0x28 */ luau_TValue* stack_last;
 	/* 0x30 */ luau_TValue* stack;
 	PAD(0x38, 0x90);
-
-	[[nodiscard]] SOUP_PURE void*& global_state_error_longjump_data() noexcept
-	{
-		if (game_version >= GV(38, 5, 0))
-		{
-			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->error_longjump_data;
-		}
-		return reinterpret_cast<luau_GlobalState_38_0_x*>(global_state)->error_longjump_data;
-	}
-
-	[[nodiscard]] SOUP_PURE auto& global_state_panic_func() noexcept
-	{
-		if (game_version >= GV(38, 5, 0))
-		{
-			return reinterpret_cast<luau_GlobalState_38_5_0*>(global_state)->panic_func;
-		}
-		return reinterpret_cast<luau_GlobalState_38_0_x*>(global_state)->panic_func;
-	}
 
 	luau_TValue* getValue(int idx)
 	{

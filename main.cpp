@@ -1510,7 +1510,7 @@ void broadcast_running_scripts_locked()
 	owf_broadcast_message(obj.encode());
 }
 
-#define MIN_GV_FOR_SCRIPTING GV(35, 0, 0)
+#define MIN_GV_FOR_SCRIPTING GV(33, 6, 0)
 
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
 
@@ -1522,16 +1522,16 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 #if true
 	const auto og_outtop = luau_savestack(L, L->outtop);
 	const auto og_intop = luau_savestack(L, L->intop);
-	const auto og_lngjmp = L->global_state_error_longjump_data();
-	const auto og_panic = L->global_state_panic_func();
+	const auto og_lngjmp = L->global_state->error_longjump_data();
+	const auto og_panic = L->global_state->panic_func();
 	raise_script_error_t og_raise;
 
 	luau_L = L;
 	if (game_version >= MIN_GV_FOR_SCRIPTING)
 	{
 		// ivkr_call(ivkr_find_method("HumanPlayer", "IsFreeCameraActive"), 0)
-		L->global_state_error_longjump_data() = nullptr;
-		L->global_state_panic_func() = [](luau_State* L, int)
+		L->global_state->error_longjump_data() = nullptr;
+		L->global_state->panic_func() = [](luau_State* L, int)
 		{
 #if LOGGING
 			conout << "LuaU is panicking" << std::endl;
@@ -1618,8 +1618,8 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	{
 		L->outtop = luau_restorestack(L, og_outtop);
 		L->intop = luau_restorestack(L, og_intop);
-		L->global_state_error_longjump_data() = og_lngjmp;
-		L->global_state_panic_func() = og_panic;
+		L->global_state->error_longjump_data() = og_lngjmp;
+		L->global_state->panic_func() = og_panic;
 	}
 	if (raise_script_error_fp)
 	{
@@ -4601,9 +4601,14 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 			SIG_INST("40 53 57 48 83 EC 28 0F B7 41 50 48 8B D9 66 FF C0 49 63 F8");
 			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
 		}
+		else if (game_version >= GV(35, 0, 0))
+		{
+			SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0"); // U35.1
+			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
+		}
 		else
 		{
-			SIG_INST("48 89 5C 24 18 57 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0");
+			SIG_INST("40 53 48 83 EC 20 0F B7 41 50 48 8B D9 66 FF C0"); // U33.6
 			luauD_call = Module(nullptr).range.scan(sig_inst).as<luauD_call_t>();
 		}
 #if LOGGING
