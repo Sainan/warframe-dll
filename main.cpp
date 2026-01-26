@@ -10,7 +10,7 @@
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
-#define VERBOSE_CRC32 false // made for 2022.04.29.12.53
+#define VERBOSE_CRC32 false
 #define VERBOSE_CRC32C false
 #define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
@@ -26,6 +26,9 @@
 
 #include <CallsiteHook.hpp>
 #include <CompactDetourHook.hpp>
+#if VERBOSE_CRC32
+#include <crc32.hpp>
+#endif
 #include <DetourHook.hpp>
 #include <HttpRequest.hpp>
 #include <HttpRequestTask.hpp>
@@ -2174,11 +2177,11 @@ static int lua_HashCrc32_detour(luau_State* L)
 
 
 #if VERBOSE_CRC32
-static CompactDetourHook crc32_impl_hook;
+static ReplacementHook crc32_impl_hook;
 
 static uint32_t crc32_impl_detour(uint32_t initial, const char* data, size_t size)
 {
-	auto res = reinterpret_cast<decltype(&crc32_impl_detour)>(crc32_impl_hook.original)(initial, data, size);
+	auto res = soup::crc32::hash((const uint8_t*)data, size, initial);
 	conout << "CRC32: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
 	return res;
 }
@@ -3851,7 +3854,8 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 #if VERBOSE_CRC32
 	{
-		SIG_INST("48 89 5C 24 10 48 89 6C 24 18 57 48 8D 2D ? ? ? ? 49 8B F8");
+		//SIG_INST("48 89 5C 24 10 48 89 6C 24 18 57 48 8D 2D ? ? ? ? 49 8B F8"); // 2022.04.29.12.53
+		SIG_INST("40 57 48 8D 3D ? ? ? ? 4D 8B D8 4C 8B D2 F7 D1"); // 2019.10.31.22.42
 		auto crc32_impl = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		conout << "crc32_impl = " << crc32_impl << std::endl;
@@ -3860,11 +3864,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		{
 			crc32_impl_hook.detour = reinterpret_cast<void*>(&crc32_impl_detour);
 			crc32_impl_hook.target = crc32_impl;
-			crc32_impl_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
-#if LOGGING
-			conout << "crc32_impl_hook.code_cave = " << crc32_impl_hook.code_cave << std::endl;
-#endif
-			crc32_impl_hook.create();
+			//crc32_impl_hook.create();
 			crc32_impl_hook.enable();
 		}
 		else
