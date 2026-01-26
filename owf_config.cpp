@@ -368,8 +368,8 @@ void owfConfig::load()
 	}
 	else
 	{
-		// Overlay is not working greatly in U15, so disabling it by default for older versions.
-		disable_overlay = (game_version < GV(35, 5, 0)) || os::isWine();
+		// Overlay is not working greatly in U15, U22.13.4.
+		disable_overlay = (game_version < GV(33, 6, 0)) || os::isWine();
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("overlay_compatibility_mode")); it != config->reinterpretAsObj().end() && it->second->isBool())
