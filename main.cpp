@@ -1371,6 +1371,7 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 }
 
 
+static bool force_disable_overlay;
 static bool did_console_to_overlay_transition = false;
 
 static void do_console_to_overlay_transition()
@@ -1378,7 +1379,7 @@ static void do_console_to_overlay_transition()
 	if (!did_console_to_overlay_transition)
 	{
 		did_console_to_overlay_transition = true;
-		if (!disable_overlay)
+		if (!disable_overlay && !force_disable_overlay)
 		{
 			owfOverlay::init();
 		}
@@ -4947,6 +4948,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		// Handle version config (depends on core dict)
 		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
+		force_disable_overlay = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_overlay"));
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
 		{
 #if PRIVATE

@@ -1,5 +1,6 @@
 {
 	"min_gv_for_tls": { "$gv": "25.0.0" },
+	"min_gv_for_overlay": { "$gv": "33.6.0" }, // Overlay is not working greatly in U15, U22.13.4.
 	"toonew": { "$gv": "41.0.2" },
 	"nhkif": [
 		"/EE/Types/Input/MenuInputFilter", // Chat

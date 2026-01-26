@@ -112,7 +112,7 @@
 		<li><code>write_patched_metadata_reads_to_ee_log</code> — If true, writes patched metadata reads to EE.log. May degrade performance.</li>
 		<li><code>client_http_logging</code> — If true, writes requests to builtin HTTP server to the console.</li>
 		<li><code>client_http_port</code> — Defines the port of the builtin HTTP server. Used for the HTTP Interface and Content Management, documented below.</li>
-		<li><code>disable_overlay</code> — Can be used to disable the overlay, e.g. used to show "OpenWF @ &lt;server&gt;" before login.</li>
+		<li><code>disable_overlay</code> — Can be used to disable the overlay, e.g. used to show "OpenWF @ &lt;server&gt;" before login. Default is false on Windows but true on Linux.</li>
 		<li><code>overlay_compatibility_mode</code> — If true, renders the overlay in a more crude way. Default is false on Windows but true on Linux.</li>
 	</ul>
 	<h2>HTTP Interface</h2>
@@ -132,6 +132,7 @@
 		<li>Pause Always Stops Time: &gt;= U37</li>
 		<li>IRC Authentication: &lt;= U15 and &gt;= U33.6</li>
 		<li>Disable XP-based Level Cap: &gt;= U35.5</li>
+		<li>Overlay: &gt;= U33.6</li>
 	</ul>
 	<h2>Tunables</h2>
 	<p>When connecting to a server, the Bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
