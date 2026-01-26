@@ -69,7 +69,7 @@ using luau_panic_func_t = void(*)(luau_State* L, int status);
 	PAD(0xC10, 0xC48) luau_panic_func_t panic_func;
 };
 
-// U35.1, U38
+// U35, U38
 struct luau_GlobalState_38_0
 {
 	PAD(0x000, 0x018) void* ud;
