@@ -10,6 +10,7 @@
 
 // LOGGING should be true when using this
 #define VERBOSE_RNG false
+#define VERBOSE_CRC32 false // made for 2022.04.29.12.53
 #define VERBOSE_CRC32C false
 #define VERBOSE_MD5 false
 #define VERBOSE_SERPROPTXT false
@@ -2172,6 +2173,18 @@ static int lua_HashCrc32_detour(luau_State* L)
 #endif
 
 
+#if VERBOSE_CRC32
+static CompactDetourHook crc32_impl_hook;
+
+static uint32_t crc32_impl_detour(uint32_t initial, const char* data, size_t size)
+{
+	auto res = reinterpret_cast<decltype(&crc32_impl_detour)>(crc32_impl_hook.original)(initial, data, size);
+	conout << "CRC32: initial = " << initial << ", data = " << string::bin2hex(std::string(data, size)) << ", res = " << res << ", caller offset = " << Pointer(_ReturnAddress()).sub(Module(nullptr).range.base.as<uintptr_t>()).as<void*>() << std::endl;
+	return res;
+}
+#endif
+
+
 #if VERBOSE_CRC32C
 static DetourHook crc32c_impl_hook;
 
@@ -3828,6 +3841,31 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			lua_HashCrc32_og = *lua_HashCrc32_fp;
 			memGuard::setAllowedAccess(lua_HashCrc32_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 			*lua_HashCrc32_fp = lua_HashCrc32_detour;
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+#endif
+
+#if VERBOSE_CRC32
+	{
+		SIG_INST("48 89 5C 24 10 48 89 6C 24 18 57 48 8D 2D ? ? ? ? 49 8B F8");
+		auto crc32_impl = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		conout << "crc32_impl = " << crc32_impl << std::endl;
+#endif
+		if (crc32_impl)
+		{
+			crc32_impl_hook.detour = reinterpret_cast<void*>(&crc32_impl_detour);
+			crc32_impl_hook.target = crc32_impl;
+			crc32_impl_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+			conout << "crc32_impl_hook.code_cave = " << crc32_impl_hook.code_cave << std::endl;
+#endif
+			crc32_impl_hook.create();
+			crc32_impl_hook.enable();
 		}
 		else
 		{
