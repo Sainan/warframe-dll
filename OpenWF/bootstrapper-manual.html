@@ -160,6 +160,7 @@
 	<p>And the other way around:</p>
 	<ul>
 		<li>login.php responses can contain 2 JSON objects separated by a tab (<code>"\t"</code>) in which case the first one is the login response and the second one is tunables.</li>
+		<li>hub responses can start with <code>udp_proxy_upstream</code> instead of <code>hub</code> in which case the <code>udp_proxy_upstream</code> tunable will be updated and the client will connect to HUB via <code>127.0.0.1:6951</code>.</li>
 	</ul>
 	<h2>Label Replacements</h2>
 	<p>Label Replacements are loaded by instantiating the <code>OpenWF/Label Replacements.pluto</code> script. You can modify this script but by default it loads replacements from <code>OpenWF/Label Replacements.cat.txt</code>. As implied by the extension, it uses the <a href="https://github.com/calamity-inc/Soup/blob/senpai/docs/user/cat.md" target="_blank">CaT</a> format. Note that nested nodes are ignored.</p>

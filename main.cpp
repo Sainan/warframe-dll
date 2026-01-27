@@ -339,9 +339,16 @@ static bool can_use_server_host()
 	return true;
 }
 
+enum RequestType : uint8_t
+{
+	RT_NOT_CLASSIFIED = 0,
+	RT_LOGIN,
+	RT_HUB,
+};
+
 static bool strip_tls;
 
-static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login)
+static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, RequestType& rt)
 {
 #if REDIRECT_REQUESTS
 	if (secure_connections)
@@ -388,7 +395,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
-		is_login = true;
+		rt = RT_LOGIN;
 		if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 		{
 			if (autologin && !did_auto_login)
@@ -444,9 +451,31 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 		auth_query = uri.query;
 	}
 	else if (uri.path.find(ObfusString("/worldState.php").str()) != std::string::npos
-		|| uri.path.find(ObfusString("/api/hub").str()) != std::string::npos
+		|| uri.path == ObfusString("/api/hubInstances").str()
 		)
 	{
+		if constexpr (PROVIDE_VERSION_INFO)
+		{
+			if (build_version[0])
+			{
+				if (!uri.query.empty())
+				{
+					uri.query.push_back('&');
+				}
+				uri.query.append(ObfusString("buildLabel=").str());
+				uri.query.append(build_version, 16);
+				uri.query.push_back('/');
+				if (build_hash[0])
+				{
+					uri.query.append(build_hash, 22);
+				}
+			}
+		}
+	}
+	else if (uri.path == ObfusString("/api/hub").str())
+	{
+		rt = RT_HUB;
+
 		if constexpr (PROVIDE_VERSION_INFO)
 		{
 			if (build_version[0])
@@ -545,8 +574,8 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 	const char* body_data = request_body.getData();
 	size_t body_size = request_body.getSize();
 	std::string body_buf;
-	bool is_login = false;
-	process_game_http_request(uri, body_data, body_size, body_buf, is_login);
+	RequestType rt = RT_NOT_CLASSIFIED;
+	process_game_http_request(uri, body_data, body_size, body_buf, rt);
 	std::string url_buf = uri.toString();
 	request_url.setUnownedData(url_buf.data(), url_buf.size());
 	if (body_data != request_body.getData())
@@ -564,8 +593,12 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 	}*/
 #endif
 
-	if (is_login)
+	switch (rt)
 	{
+	case RT_NOT_CLASSIFIED:
+		break;
+
+	case RT_LOGIN:
 #if LOGGING
 		//conout << "login response: " << std::string(request_body.getData(), request_body.getSize()) << std::endl;
 #endif
@@ -580,6 +613,44 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 			}
 		}
 		process_login_response(request_body.getData(), request_body.getSize());
+		break;
+
+	case RT_HUB:
+#if LOGGING
+		//conout << "hub response: " << std::string(request_body.getData(), request_body.getSize()) << std::endl;
+#endif
+		if (
+			ObfusString prefix("\"udp_proxy_upstream ");
+				request_body.getSize() > prefix.size()
+				&& memcmp(request_body.getData(), prefix.data(), prefix.size()) == 0
+			)
+		{
+			for (size_t i = prefix.size(); i != request_body.getSize(); ++i)
+			{
+				if (request_body.getData()[i] == ' ' || request_body.getData()[i] == '\"')
+				{
+					set_udp_proxy_upstream(std::string(&request_body.getData()[prefix.size()], i - prefix.size()));
+
+					std::string replacement = ObfusString("\"hub 127.0.0.1:6951").str();
+					replacement.append(&request_body.getData()[i], request_body.getSize() - i);
+					//conout << "replacement: " << replacement << std::endl;
+					if ((replacement.size() + 1) <= request_body.getSize())
+					{
+						memcpy(request_body.getData(), replacement.c_str(), replacement.size() + 1);
+						request_body.shrink(replacement.size());
+					}
+					else
+					{
+#if LOGGING
+						conout << "CANNOT REPLACE HUB RESPONSE" << std::endl;
+#endif
+					}
+
+					break;
+				}
+			}
+		}
+		break;
 	}
 
 	return ret;	
@@ -788,26 +859,31 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 
 	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
 	{
-		if (SocketAddr newAddr; newAddr.fromString(e->second) && !newAddr.ip.isZero())
-		{
-			owfUdpProxy::setUpstreamAddr(newAddr);
-		}
-		else
-		{
-#if LOGGING
-			conout << "Got some garbage for udp_proxy_upstream: " << e->second << std::endl;
-#endif
-			if (const size_t sep = e->second.find_last_of(':'); sep != std::string::npos)
-			{
-				if (const auto opt = string::toIntOpt<uint16_t>(e->second.substr(sep + 1), string::TI_FULL); opt.has_value())
-				{
-					g_serv.add<owfResolveUdpProxyUpstreamAddressTask>(e->second.substr(0, sep), native_u16_t(*opt));
-				}
-			}
-		}
+		set_udp_proxy_upstream(e->second);
 	}
 
 	return ok;
+}
+
+void set_udp_proxy_upstream(const std::string& addr)
+{
+	if (SocketAddr newAddr; newAddr.fromString(addr) && !newAddr.ip.isZero())
+	{
+		owfUdpProxy::setUpstreamAddr(newAddr);
+	}
+	else
+	{
+#if LOGGING
+		conout << "Got some garbage for udp_proxy_upstream: " << addr << std::endl;
+#endif
+		if (const size_t sep = addr.find_last_of(':'); sep != std::string::npos)
+		{
+			if (const auto opt = string::toIntOpt<uint16_t>(addr.substr(sep + 1), string::TI_FULL); opt.has_value())
+			{
+				g_serv.add<owfResolveUdpProxyUpstreamAddressTask>(addr.substr(0, sep), native_u16_t(*opt));
+			}
+		}
+	}
 }
 
 #if ASK_SERVER_FOR_TUNABLES
