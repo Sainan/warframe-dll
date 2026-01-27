@@ -2095,6 +2095,16 @@ static bool ScriptMgr_startInstance_detour(void* _this, ScriptInstance* inst/*, 
 
 static DetourHook irc_send_raw_hook;
 
+static std::string create_token(const std::string& accountId, const std::string& nonce)
+{
+	soup::sha256::HmacState st(nonce);
+	st.append("accountId=", 10);
+	st.append(accountId.data(), accountId.size());
+	st.append("&ct=IRC", 7);
+	st.finalise();
+	return string::bin2hexLower(st.getDigest());
+}
+
 static std::string process_irc_send(const char* data, size_t size)
 {
 #if LOGGING
@@ -2107,7 +2117,16 @@ static std::string process_irc_send(const char* data, size_t size)
 		auto arr = string::explode(auth_query, '&');
 		if (arr.size() > 1)
 		{
-			replacement.append(arr[1]);
+			if (secure_connections)
+			{
+				const std::string accountId = arr[0].substr(10);
+				const std::string nonce = arr[1].substr(6);
+				replacement.append(ObfusString("token=").str() + create_token(accountId, nonce));
+			}
+			else
+			{
+				replacement.append(arr[1]);
+			}
 		}
 		return replacement;
 	}
