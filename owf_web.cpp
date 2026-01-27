@@ -45,21 +45,17 @@ struct owfContentTask : public Task
 	HttpRequestTask hrt;
 
 	owfContentTask(Socket& _s, HttpRequest&& hr)
-		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr), &Socket::certchain_validator_none)
+		: s(Scheduler::get()->getShared(_s)), hrt(
+			std::move(hr),
+			secure_connections ? &Socket::certchain_validator_default : &Socket::certchain_validator_none // Technically, insecure connections are fine for content, but we want keep-alive connections.
+		)
 	{
 		ServerWebService::setKeepAlive(_s, true);
 	}
 
 	void onTick()
 	{
-		if (static_cast<Socket*>(s.get())->isWorkDoneOrClosed())
-		{
-#if LOGGING
-			conout << "owfContentTask: client socket is gone, aborting" << std::endl;
-#endif
-			setWorkDone();
-		}
-		else if (hrt.tickUntilDone())
+		if (hrt.tickUntilDone())
 		{
 			if (hrt.result.has_value() && hrt.result->status_code == 200)
 			{
@@ -118,6 +114,34 @@ struct owfContentTask : public Task
 	}
 };
 
+struct owfHttpReverseProxyTask : public Task
+{
+	SharedPtr<Worker> s;
+	HttpRequestTask hrt;
+
+	owfHttpReverseProxyTask(Socket& _s, HttpRequest&& hr)
+		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr))
+	{
+		ServerWebService::setKeepAlive(_s, true);
+	}
+
+	void onTick()
+	{
+		if (hrt.tickUntilDone())
+		{
+			if (hrt.result.has_value())
+			{
+				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), std::move(*hrt.result));
+			}
+			else
+			{
+				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), "500 Internal Server Error", ObfusString("HttpSendRequest failed\r\nStatus: ").str() + hrt.getStatus());
+			}
+			setWorkDone();
+		}
+	}
+};
+
 void start_builtin_http_server()
 {
 	Thread thrd([](Capture&&)
@@ -135,10 +159,10 @@ void start_builtin_http_server()
 			if (req.path.size() > 2
 				&& ((req.path[1] == '0' && req.path[2] == '/')
 					|| (req.path[1] == '0' && req.path[2] == '_')
-					|| (req.path[1] == '7' && req.path[2] == '/') // Dx11 (pre-U40)
-					|| (req.path[1] == '8' && req.path[2] == '/') // Dx12 (pre-U40)
-					|| (req.path[1] == '9' && req.path[2] == '/') // Dx11 (post-U40)
-					|| (req.path[1] == 'A' && req.path[2] == '/') // Dx12 (post-U40)
+					|| (req.path[1] == '7' && req.path[2] == '/') // Dx11 (< U40)
+					|| (req.path[1] == '8' && req.path[2] == '/') // Dx12 (< U40)
+					|| (req.path[1] == '9' && req.path[2] == '/') // Dx11 (>= U40)
+					|| (req.path[1] == 'A' && req.path[2] == '/') // Dx12 (>= U40)
 					)
 				)
 			{
@@ -163,6 +187,21 @@ void start_builtin_http_server()
 			const auto route_hash = soup::joaat::hash(urlenc::decode(arr[0]));
 			switch (route_hash)
 			{
+			case soup::joaat::compileTimeHash("/tls_proxy"):
+				{
+					std::string host = server_host;
+					if (https_port != 443)
+					{
+						host.push_back(':');
+						host.append(std::to_string(https_port));
+					}
+					req.setHeader(ObfusString("Host"), std::move(host));
+				}
+				req.use_tls = true;
+				req.path.erase(0, 11);
+				Scheduler::get()->add<owfHttpReverseProxyTask>(s, std::move(req));
+				break;
+
 			case soup::joaat::compileTimeHash("/"):
 				if (arr.size() > 1 && soup::joaat::hash(arr[1].substr(0, 5)) == soup::joaat::compileTimeHash("lang="))
 				{

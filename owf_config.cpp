@@ -216,6 +216,15 @@ void owfConfig::load()
 		disable_firewall_prompt = true;
 	}
 
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("secure_connections")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		secure_connections = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		secure_connections = false;
+	}
+
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("autologin")); it != config->reinterpretAsObj().end() && it->second->isBool())
 	{
 		autologin = it->second->reinterpretAsBool().value;
@@ -394,6 +403,7 @@ void owfConfig::save()
 	config.add(ObfusString("server_host"), server_host);
 	config.add(ObfusString("http_port"), http_port);
 	config.add(ObfusString("https_port"), https_port);
+	config.add(ObfusString("secure_connections"), secure_connections);
 	config.add(ObfusString("autologin"), autologin);
 	config.add(ObfusString("autologin_email"), autologin_email);
 	config.add(ObfusString("autologin_password"), autologin_password);

@@ -344,37 +344,47 @@ static bool strip_tls;
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, bool& is_login)
 {
 #if REDIRECT_REQUESTS
-	uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
-	if (strip_tls)
+	if (secure_connections)
 	{
 		uri.scheme = ObfusString("http").str();
-		uri.port = http_port;
+		uri.host = ObfusString("127.0.0.1").str();
+		uri.port = can_use_server_host() ? client_http_port : http_port;
 	}
 	else
 	{
-		if (uri.scheme.size() == 4) // "http"
+		uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
+		if (strip_tls)
 		{
-			if (http_port != 80)
-			{
-				uri.port = http_port;
-			}
+			uri.scheme = ObfusString("http").str();
+			uri.port = http_port;
 		}
 		else
 		{
-			if (https_port != 443)
+			if (uri.scheme.size() == 4) // "http"
 			{
-				uri.port = https_port;
+				if (http_port != 80)
+				{
+					uri.port = http_port;
+				}
+			}
+			else
+			{
+				if (https_port != 443)
+				{
+					uri.port = https_port;
+				}
 			}
 		}
 	}
 	if (uri.path == ObfusString("/api/inventory.php").str() || uri.path == ObfusString("/api/missionInventoryUpdate.php").str())
 	{
-#if DISABLE_XP_BASED_LEVEL_CAPPING
-		if (disabled_xp_based_level_cap)
+		if constexpr (DISABLE_XP_BASED_LEVEL_CAPPING)
 		{
-			uri.query.append(ObfusString("&xpBasedLevelCapDisabled=1").str());
+			if (disabled_xp_based_level_cap)
+			{
+				uri.query.append(ObfusString("&xpBasedLevelCapDisabled=1").str());
+			}
 		}
-#endif
 	}
 	else if (uri.path == ObfusString("/api/login.php").str())
 	{
@@ -397,28 +407,29 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 				body_size = body_buf.size();
 			}
 		}
-#if PROVIDE_VERSION_INFO
-		if (build_version[0])
+		if constexpr (PROVIDE_VERSION_INFO)
 		{
-			if (!uri.query.empty())
+			if (build_version[0])
 			{
-				uri.query.push_back('&');
+				if (!uri.query.empty())
+				{
+					uri.query.push_back('&');
+				}
+				uri.query.append(ObfusString("buildLabel=").str());
+				uri.query.append(build_version, 16);
+				uri.query.push_back('/');
+				if (build_hash[0])
+				{
+					uri.query.append(build_hash, 22);
+				}
 			}
-			uri.query.append(ObfusString("buildLabel=").str());
-			uri.query.append(build_version, 16);
-			uri.query.push_back('/');
-			if (build_hash[0])
+			uri.query.append(ObfusString("&clientMod=").str());
+			uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
+			if (metadata_patches_in_use)
 			{
-				uri.query.append(build_hash, 22);
+				uri.query.append(ObfusString("&metadataPatchesInUse=1").str());
 			}
 		}
-		uri.query.append(ObfusString("&clientMod=").str());
-		uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
-		if (metadata_patches_in_use)
-		{
-			uri.query.append(ObfusString("&metadataPatchesInUse=1").str());
-		}
-#endif
 		{
 			std::lock_guard lock(g_server_tunables_mtx);
 			if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("token")); e != g_server_tunables.strings.end())
@@ -436,54 +447,60 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 		|| uri.path.find(ObfusString("/api/hub").str()) != std::string::npos
 		)
 	{
-#if PROVIDE_VERSION_INFO
-		if (build_version[0])
+		if constexpr (PROVIDE_VERSION_INFO)
 		{
-			if (!uri.query.empty())
+			if (build_version[0])
 			{
-				uri.query.push_back('&');
-			}
-			uri.query.append(ObfusString("buildLabel=").str());
-			uri.query.append(build_version, 16);
-			uri.query.push_back('/');
-			if (build_hash[0])
-			{
-				uri.query.append(build_hash, 22);
+				if (!uri.query.empty())
+				{
+					uri.query.push_back('&');
+				}
+				uri.query.append(ObfusString("buildLabel=").str());
+				uri.query.append(build_version, 16);
+				uri.query.push_back('/');
+				if (build_hash[0])
+				{
+					uri.query.append(build_hash, 22);
+				}
 			}
 		}
-#endif
 	}
 	else if (uri.path == ObfusString("/api/logout.php").str())
 	{
 		owfOverlay::onLoggedOut();
 		auth_query.clear();
 	}
-#if true // PS can be relatively sensitive data but is often shared alongside server logs.
-	if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
+	if constexpr (true) // PS can be relatively sensitive data but is often shared alongside server logs.
 	{
-		auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str());
-		if (it == jr->reinterpretAsObj().end())
+		if (auto jr = json::decode(body_data, body_size); jr && jr->isObj())
 		{
-			it = jr->reinterpretAsObj().findIt(ObfusString("processes").str());
-		}
-		if (it != jr->reinterpretAsObj().end() && it->second->isStr())
-		{
-			ObfusString msg("W0RFXVN0ZXZlIGxpa2VzIGJpZyBidXR0cw");
-			if (auto sep = it->second->reinterpretAsStr().value.find(';'); sep != std::string::npos && it->second->reinterpretAsStr().value.c_str()[0] == '0') // If PS indicates an anti-cheat detection it will look like "0x1;..." so keep the prefix.
+			auto it = jr->reinterpretAsObj().findIt(ObfusString("PS").str());
+			if (it == jr->reinterpretAsObj().end())
 			{
-				it->second->reinterpretAsStr().value.erase(sep + 1);
-				it->second->reinterpretAsStr().value.append(msg.str());
+				it = jr->reinterpretAsObj().findIt(ObfusString("processes").str());
 			}
-			else
+			if (it != jr->reinterpretAsObj().end() && it->second->isStr())
 			{
-				it->second->reinterpretAsStr().value = std::move(msg.str());
+				ObfusString msg("W0RFXVN0ZXZlIGxpa2VzIGJpZyBidXR0cw");
+				if (auto sep = it->second->reinterpretAsStr().value.find(';'); sep != std::string::npos && it->second->reinterpretAsStr().value.c_str()[0] == '0') // If PS indicates an anti-cheat detection it will look like "0x1;..." so keep the prefix.
+				{
+					it->second->reinterpretAsStr().value.erase(sep + 1);
+					it->second->reinterpretAsStr().value.append(msg.str());
+				}
+				else
+				{
+					it->second->reinterpretAsStr().value = std::move(msg.str());
+				}
+				body_buf = jr->encode();
+				body_data = body_buf.data();
+				body_size = body_buf.size();
 			}
-			body_buf = jr->encode();
-			body_data = body_buf.data();
-			body_size = body_buf.size();
 		}
 	}
-#endif
+	if (secure_connections)
+	{
+		uri.path = ObfusString("/tls_proxy?").str() + uri.path;
+	}
 #else
 	if (uri.path == "/api/heartbeat.php")
 	{
@@ -645,18 +662,18 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 	conout << "Curl_resolv for " << hostname << ", port " << port << std::endl;
 #endif
 
-	ObfusString localhost("127.0.0.1");
+	const auto localhost = ObfusString("127.0.0.1").str();
+
+	const std::string& expected_hostname = (!secure_connections && can_use_server_host()) ? server_host : localhost;
+
 #if !MINIMAL_HOOKS
-	if (can_use_server_host()
-		? server_host != hostname
-		: localhost.str() != hostname
-		)
+	if (expected_hostname != hostname)
 	{
 		MessageBoxA(0, "HOSTNAME MISMATCH", "HOSTNAME MISMATCH", 0);
 	}
 #endif
 
-	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, can_use_server_host() ? server_host.c_str() : localhost.c_str(), port, allowDOH, a5);
+	return reinterpret_cast<decltype(&Curl_resolv_detour)>(Curl_resolv_hook.original)(a1, expected_hostname.c_str(), port, allowDOH, a5);
 }
 #endif
 
@@ -799,10 +816,13 @@ struct owfTunablesTask : public soup::Task
 	HttpRequestTask hrt;
 
 	owfTunablesTask()
-		: hrt(HttpRequest(
-			server_host + ":" + std::to_string(strip_tls ? http_port : https_port),
-			ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE "&buildVersion=").str() + std::string(build_version, 16)
-		), &Socket::certchain_validator_none)
+		: hrt(
+			HttpRequest(
+				server_host + ":" + std::to_string(strip_tls ? http_port : https_port),
+				ObfusString("/custom/tunables.json?clientMod=" BOOTSTRAPPER_TITLE "&buildVersion=").str() + std::string(build_version, 16)
+			),
+			secure_connections ? &Socket::certchain_validator_default : &Socket::certchain_validator_none
+		)
 	{
 		hrt.hr.use_tls = !strip_tls;
 	}
@@ -920,7 +940,7 @@ void do_logout()
 	{
 		HttpRequest hr(server_host + ":" + std::to_string(https_port), ObfusString("/api/logout.php?").str() + auth_query);
 		hr.use_tls = true;
-		SOUP_UNUSED(hr.execute(&Socket::certchain_validator_none));
+		SOUP_UNUSED(hr.execute(secure_connections ? &Socket::certchain_validator_default : &Socket::certchain_validator_none));
 		auth_query.clear();
 
 		owfOverlay::onLoggedOut();

@@ -16,6 +16,7 @@ inline std::string fallback_cluster;
 inline std::string server_host;
 inline uint16_t http_port;
 inline uint16_t https_port;
+inline bool secure_connections;
 inline bool autologin;
 inline std::string autologin_email;
 inline std::string autologin_password;
