@@ -180,6 +180,7 @@ all_pack = ""
 changed_pack = ""
 
 add_folder_to_archive("OpenWF/", "OpenWF/", changelist)
+add_folder_to_archive("OpenWF/cert/", "OpenWF/cert/", changelist)
 add_folder_to_archive("OpenWF/helpers/", "OpenWF/helpers/", changelist)
 add_folder_to_archive("OpenWF/lib/", "OpenWF/lib/", changelist)
 add_file_to_archive("modules/warframe-cache-tools/lib/cachelib.pluto", "OpenWF/lib/cachelib.pluto", cachelib_changelist)

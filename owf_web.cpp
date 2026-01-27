@@ -1,5 +1,6 @@
 #include "owf_web.hpp"
 
+#include <CertStore.hpp>
 #include <DummyTask.hpp>
 #include <filesystem.hpp>
 #include <HttpRequestTask.hpp>
@@ -13,6 +14,7 @@
 #include <unicode.hpp>
 #include <urlenc.hpp>
 #include <WebSocketMessage.hpp>
+#include <X509Certchain.hpp>
 
 #include "modules/ee-notation-parser/EeNotationParser.hpp"
 
@@ -644,7 +646,24 @@ void start_builtin_http_server()
 				}
 			}
 		};
-		SOUP_IF_UNLIKELY (!g_serv.bind(client_http_port, &srv))
+
+		auto certstore = soup::make_shared<soup::CertStore>();
+		{
+			soup::X509Certchain certchain;
+			{
+				size_t size;
+				const char* data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/cert/cert.pem"), size);
+				certchain.fromPem(std::string(data, size));
+			}
+
+			size_t size;
+			const char* data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/cert/key.pem"), size);
+			auto private_key = soup::RsaPrivateKey::fromPem(std::string(data, size));
+
+			certstore->add(std::move(certchain), std::move(private_key));
+		}
+
+		SOUP_IF_UNLIKELY (!g_serv.bindOptCrypto(client_http_port, &srv, std::move(certstore)))
 		{
 			conout << ObfusString("Failed to bind TCP/").str();
 			conout << client_http_port;

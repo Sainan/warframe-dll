@@ -100,7 +100,7 @@
 		}
 
 		function openWebSocket() {
-			window.ws = new WebSocket("ws://" + location.hostname + ":" + location.port);
+			window.ws = new WebSocket((location.protocol == "https:" ? "wss" : "ws") + "://" + location.hostname + ":" + location.port);
 			let script_log_len = -1;
 			const script_broadcast_requested = {};
 			ws.onopen = function() {
