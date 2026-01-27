@@ -286,7 +286,7 @@ static bool resolve_addr_detour(sockaddr* sa, void* a2, void* a3)
 
 static DetourHook winhttp_connect_hook;
 
-static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
+static void* winhttp_connect_detour(void* a1, void* a2, int protocol, const char* host_1, uint16_t port, const char* host_2, const char* host_3)
 {
 #if LOGGING
 	conout << "winhttp_connect for " << host_1 << ", port " << port << std::endl;
@@ -300,11 +300,12 @@ static void* winhttp_connect_detour(void* a1, void* a2, int a3, const char* host
 	}
 #endif
 
+	protocol = 1; // 1 = HTTP, 2 = HTTPS
 	ObfusString localhost("127.0.0.1");
 	host_1 = localhost.c_str();
 	port = client_http_port;
 
-	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, a3, host_1, port, nullptr, nullptr);
+	return reinterpret_cast<decltype(&winhttp_connect_detour)>(winhttp_connect_hook.original)(a1, a2, protocol, host_1, port, nullptr, nullptr);
 }
 
 
