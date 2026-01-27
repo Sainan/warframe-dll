@@ -2730,7 +2730,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "legacy_parse_url = " << legacy_parse_url << std::endl;
 #endif
-		if (legacy_parse_url)
+		SOUP_IF_LIKELY (legacy_parse_url)
 		{
 			legacy_parse_url_hook.detour = reinterpret_cast<void*>(&legacy_parse_url_detour);
 			legacy_parse_url_hook.target = legacy_parse_url;
@@ -2746,7 +2746,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "internet_connect = " << internet_connect << std::endl;
 #endif
-		if (internet_connect)
+		SOUP_IF_LIKELY (internet_connect)
 		{
 			internet_connect_hook.detour = reinterpret_cast<void*>(&internet_connect_detour);
 			internet_connect_hook.target = internet_connect;
@@ -2764,7 +2764,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "resolve_addr = " << resolve_addr << std::endl;
 #endif
-		if (resolve_addr)
+		SOUP_IF_LIKELY (resolve_addr)
 		{
 			resolve_addr_hook.detour = reinterpret_cast<void*>(&resolve_addr_detour);
 			resolve_addr_hook.target = resolve_addr;
@@ -2800,7 +2800,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "winhttp_connect = " << winhttp_connect << std::endl;
 #endif
-		if (winhttp_connect)
+		SOUP_IF_LIKELY (winhttp_connect)
 		{
 			winhttp_connect_hook.detour = reinterpret_cast<void*>(&winhttp_connect_detour);
 			winhttp_connect_hook.target = winhttp_connect;
@@ -2868,7 +2868,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "game_http_request_caller = " << game_http_request_caller.as<void*>() << std::endl;
 #endif
-		if (!game_http_request_caller)
+		SOUP_IF_UNLIKELY (!game_http_request_caller)
 		{
 			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 		}
@@ -2903,7 +2903,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "WebGet_EncryptPost_cmp = " << WebGet_EncryptPost_cmp.as<void*>() << std::endl;
 #endif
-		if (WebGet_EncryptPost_cmp)
+		SOUP_IF_LIKELY (WebGet_EncryptPost_cmp)
 		{
 			auto WebGet_EncryptPost = WebGet_EncryptPost_cmp.add(5).rip().as<bool*>();
 			*WebGet_EncryptPost = false;
@@ -2924,7 +2924,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 			conout << "encstr_append = " << encstr_append << std::endl;
 #endif
-			if (encstr_append)
+			SOUP_IF_LIKELY (encstr_append)
 			{
 				encstr_append_hook.detour = reinterpret_cast<void*>(&encstr_append_detour);
 				encstr_append_hook.target = encstr_append;
@@ -2939,7 +2939,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 			conout << "encstr_discharge = " << encstr_discharge << std::endl;
 #endif
-			if (encstr_discharge)
+			SOUP_IF_LIKELY (encstr_discharge)
 			{
 				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
 				encstr_discharge_hook.target = encstr_discharge;
@@ -2955,7 +2955,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 			conout << "encstr_discharge = " << encstr_discharge << std::endl;
 #endif
-			if (encstr_discharge)
+			SOUP_IF_LIKELY (encstr_discharge)
 			{
 				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
 				encstr_discharge_hook.target = encstr_discharge;
@@ -2964,7 +2964,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			}
 		}
 
-		if (!encstr_append_hook.target || !encstr_discharge_hook.target)
+		SOUP_IF_UNLIKELY (!encstr_append_hook.target || !encstr_discharge_hook.target)
 		{
 			report_critical_failure(get_core_string(ObfusString("sigfailenc").str()));
 		}
@@ -2978,7 +2978,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "queue_http_request_internal = " << queue_http_request_internal << std::endl;
 #endif
-		if (queue_http_request_internal)
+		SOUP_IF_LIKELY (queue_http_request_internal)
 		{
 			queue_http_request_internal_hook.detour = reinterpret_cast<void*>(&queue_http_request_internal_detour);
 			queue_http_request_internal_hook.target = queue_http_request_internal;
@@ -3013,7 +3013,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "Curl_resolv = " << Curl_resolv << std::endl;
 #endif
-		if (Curl_resolv)
+		SOUP_IF_LIKELY (Curl_resolv)
 		{
 			Curl_resolv_hook.detour = reinterpret_cast<void*>(&Curl_resolv_detour);
 			Curl_resolv_hook.target = Curl_resolv;
@@ -3033,7 +3033,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "ssl_verify_internal_caller = " << ssl_verify_internal_caller.as<void*>() << std::endl;
 #endif
-		if (!ssl_verify_internal_caller)
+		SOUP_IF_UNLIKELY (!ssl_verify_internal_caller)
 		{
 			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 		}
@@ -3052,7 +3052,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	#if LOGGING
 			conout << "Curl_ossl_verifyhost = " << Curl_ossl_verifyhost << std::endl;
 	#endif
-			if (!Curl_ossl_verifyhost)
+			SOUP_IF_UNLIKELY (!Curl_ossl_verifyhost)
 			{
 				report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 			}
@@ -3071,7 +3071,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "verify_worldstate_integrity = " << verify_worldstate_integrity << std::endl;
 #endif
-		if (!verify_worldstate_integrity)
+		SOUP_IF_UNLIKELY (!verify_worldstate_integrity)
 		{
 			report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
 		}
@@ -3121,7 +3121,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "parse_arguments_callsite = " << parse_arguments_callsite.as<void*>() << std::endl;
 #endif
-		if (parse_arguments_callsite)
+		SOUP_IF_LIKELY (parse_arguments_callsite)
 		{
 			auto parse_arguments = parse_arguments_callsite.add(24).rip().as<void*>();
 
@@ -3163,7 +3163,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "worldstate_update_interval_insn = " << worldstate_update_interval_insn.as<void*>() << std::endl;
 #endif
-		if (worldstate_update_interval_insn)
+		SOUP_IF_LIKELY (worldstate_update_interval_insn)
 		{
 			*worldstate_update_interval_insn.add(3).rip().as<uint64_t*>() = 0; // default: 300
 		}
@@ -3179,7 +3179,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "init_cache_fetching_callsite = " << init_cache_fetching_callsite.as<void*>() << std::endl;
 #endif
-		if (init_cache_fetching_callsite)
+		SOUP_IF_LIKELY (init_cache_fetching_callsite)
 		{
 			auto init_cache_fetching = init_cache_fetching_callsite.add(5).rip().as<void*>();
 
@@ -3220,7 +3220,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
 #endif
-		if (legacy_dns_lookup)
+		SOUP_IF_LIKELY (legacy_dns_lookup)
 		{
 			if (game_version >= GV(19, 0, 0))
 			{
@@ -3247,7 +3247,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "device_id_insn = " << device_id_insn.as<void*>() << std::endl;
 #endif
-		if (device_id_insn)
+		SOUP_IF_LIKELY (device_id_insn)
 		{
 			//device_id_mask = device_id_insn.add(3).as<uint64_t&>();
 			device_id_ptr = device_id_insn.add(7).rip().as<uint64_t*>();
@@ -3265,7 +3265,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "xp_based_level_jnb = " << xp_based_level_jnb.as<void*>() << std::endl;
 #endif
-		if (xp_based_level_jnb)
+		SOUP_IF_LIKELY (xp_based_level_jnb)
 		{
 			memGuard::setAllowedAccess(xp_based_level_jnb.as<void*>(), 1, memGuard::ACC_RWX);
 			*xp_based_level_jnb.as<uint8_t*>() = 0xEB; // jnb -> jmp
@@ -3285,7 +3285,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "SquadSetCountdownTimer = " << SquadSetCountdownTimer << std::endl;
 #endif
-		if (SquadSetCountdownTimer)
+		SOUP_IF_LIKELY (SquadSetCountdownTimer)
 		{
 			SquadSetCountdownTimer_hook.detour = reinterpret_cast<void*>(&SquadSetCountdownTimer_detour);
 			SquadSetCountdownTimer_hook.target = SquadSetCountdownTimer;
@@ -3305,7 +3305,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_SquadSetCountdownTimer_hash = " << lua_SquadSetCountdownTimer_hash.as<void*>() << std::endl;
 #endif
-		if (lua_SquadSetCountdownTimer_hash)
+		SOUP_IF_LIKELY (lua_SquadSetCountdownTimer_hash)
 		{
 			auto lua_SquadSetCountdownTimer_fp = lua_SquadSetCountdownTimer_hash.add(8).as<luau_CFunction*>();
 			lua_SquadSetCountdownTimer_og = *lua_SquadSetCountdownTimer_fp;
@@ -3326,7 +3326,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 	conout << "get_total_damage = " << get_total_damage << std::endl;
 #endif
-		if (get_total_damage)
+		SOUP_IF_LIKELY (get_total_damage)
 		{
 			get_total_damage_hook.detour = reinterpret_cast<void*>(&get_total_damage_detour);
 			get_total_damage_hook.target = get_total_damage;
@@ -3342,7 +3342,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-		if (get_total_damage_hook.target && dmg_number_patch_addr)
+		SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
 		{
 			uint8_t detour_bytes[] = {
 				// prepare call
@@ -3391,7 +3391,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-		if (get_total_damage_hook.target && dmg_number_patch_addr)
+		SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
 		{
 			uint8_t detour_bytes[] = {
 				// prepare call
@@ -3443,7 +3443,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "pStrFirewall = " << pStrFirewall.as<void*>() << std::endl;
 #endif
-		if (pStrFirewall)
+		SOUP_IF_LIKELY (pStrFirewall)
 		{
 			memGuard::setAllowedAccess(pStrFirewall.as<void*>(), 8, memGuard::ACC_RWX);
 			ObfusString str("nominal");
@@ -3465,7 +3465,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "write_to_log_file_callsite = " << write_to_log_file_callsite.as<void*>() << std::endl;
 #endif
-		if (write_to_log_file_callsite)
+		SOUP_IF_LIKELY (write_to_log_file_callsite)
 		{
 			write_to_log_file_hook.detour = reinterpret_cast<void*>(&write_to_log_file_detour);
 			write_to_log_file_hook.target = write_to_log_file_callsite.add(26).rip().as<void*>();
@@ -3488,7 +3488,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_FlashMgr_GetConfigBool_hash = " << lua_FlashMgr_GetConfigBool_hash.as<void*>() << std::endl;
 #endif
-		if (lua_FlashMgr_GetConfigBool_hash)
+		SOUP_IF_LIKELY (lua_FlashMgr_GetConfigBool_hash)
 		{
 			auto lua_FlashMgr_GetConfigBool_fp = lua_FlashMgr_GetConfigBool_hash.add(8).as<luau_CFunction*>();
 			lua_FlashMgr_GetConfigBool_og = *lua_FlashMgr_GetConfigBool_fp;
@@ -3510,7 +3510,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_set_global_by_hash_callsite = " << lua_set_global_by_hash_callsite.as<void*>() << std::endl;
 #endif
-		if (lua_set_global_by_hash_callsite)
+		SOUP_IF_LIKELY (lua_set_global_by_hash_callsite)
 		{
 			auto lua_set_global_by_hash = lua_set_global_by_hash_callsite.add(10).rip().as<void*>();
 
@@ -3545,7 +3545,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_set_global = " << lua_set_global << std::endl;
 #endif
-		if (lua_set_global)
+		SOUP_IF_LIKELY (lua_set_global)
 		{
 			lua_set_global_hook.detour = reinterpret_cast<void*>(&lua_set_global_detour);
 			lua_set_global_hook.target = lua_set_global;
@@ -3566,7 +3566,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
 #endif
-		if (lua_LotusHudStatus_UpdateFlashMarkers_hash)
+		SOUP_IF_LIKELY (lua_LotusHudStatus_UpdateFlashMarkers_hash)
 		{
 			auto lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_hash.add(8).as<luau_CFunction*>();
 			lua_LotusHudStatus_UpdateFlashMarkers_og = *lua_LotusHudStatus_UpdateFlashMarkers_fp;
@@ -3588,7 +3588,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "register_enum_callsite = " << register_enum_callsite.as<void*>() << std::endl;
 #endif
-		if (register_enum_callsite)
+		SOUP_IF_LIKELY (register_enum_callsite)
 		{
 			auto register_enum = register_enum_callsite.add(9).rip().as<void*>();
 
@@ -3625,7 +3625,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "get_profile_dir = " << get_profile_dir.as<void*>() << std::endl;
 #endif
-		if (get_profile_dir)
+		SOUP_IF_LIKELY (get_profile_dir)
 		{
 			if (!forced_profile_dir.empty())
 			{
@@ -3653,7 +3653,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "excludedFromSimulacrum_hash = " << excludedFromSimulacrum_hash.as<void*>() << std::endl;
 #endif
-		if (excludedFromSimulacrum_hash)
+		SOUP_IF_LIKELY (excludedFromSimulacrum_hash)
 		{
 			auto lua_AvatarEntry_excludedFromSimulacrum_get = *excludedFromSimulacrum_hash.add(8).as<void**>();
 #if LOGGING
@@ -3682,7 +3682,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "is_pause_allowed = " << is_pause_allowed << std::endl;
 #endif
-		if (is_pause_allowed)
+		SOUP_IF_LIKELY (is_pause_allowed)
 		{
 			is_pause_allowed_hook.detour = reinterpret_cast<void*>(&is_pause_allowed_detour);
 			is_pause_allowed_hook.target = is_pause_allowed;
@@ -3704,7 +3704,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
 #endif
-		if (lua_FlashInstance_GetStringVariable_hash)
+		SOUP_IF_LIKELY (lua_FlashInstance_GetStringVariable_hash)
 		{
 			auto lua_FlashInstance_GetStringVariable_fp = lua_FlashInstance_GetStringVariable_hash.add(8).as<luau_CFunction*>();
 			lua_FlashInstance_GetStringVariable_og = *lua_FlashInstance_GetStringVariable_fp;
@@ -3725,7 +3725,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_OpenWebBrowser_hash = " << lua_OpenWebBrowser_hash.as<void*>() << std::endl;
 #endif
-		if (lua_OpenWebBrowser_hash)
+		SOUP_IF_LIKELY (lua_OpenWebBrowser_hash)
 		{
 			auto lua_OpenWebBrowser_fp = lua_OpenWebBrowser_hash.add(8).as<luau_CFunction*>();
 			lua_OpenWebBrowser_og = *lua_OpenWebBrowser_fp;
@@ -3746,7 +3746,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_seed_mov = " << lua_seed_mov.as<void*>() << std::endl;
 #endif
-		if (lua_seed_mov)
+		SOUP_IF_LIKELY (lua_seed_mov)
 		{
 			lua_seed = lua_seed_mov.add(3).rip().as<int64_t*>();
 		}
@@ -3762,7 +3762,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_SetSeed_hash = " << lua_SetSeed_hash.as<void*>() << std::endl;
 #endif
-		if (lua_SetSeed_hash)
+		SOUP_IF_LIKELY (lua_SetSeed_hash)
 		{
 			auto lua_SetSeed_fp = lua_SetSeed_hash.add(8).as<luau_CFunction*>();
 			lua_SetSeed_og = *lua_SetSeed_fp;
@@ -3781,7 +3781,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_ChurnSeed_hash = " << lua_ChurnSeed_hash.as<void*>() << std::endl;
 #endif
-		if (lua_ChurnSeed_hash)
+		SOUP_IF_LIKELY (lua_ChurnSeed_hash)
 		{
 			auto lua_ChurnSeed_fp = lua_ChurnSeed_hash.add(8).as<luau_CFunction*>();
 			lua_ChurnSeed_og = *lua_ChurnSeed_fp;
@@ -3800,7 +3800,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_SRandom_hash = " << lua_SRandom_hash.as<void*>() << std::endl;
 #endif
-		if (lua_SRandom_hash)
+		SOUP_IF_LIKELY (lua_SRandom_hash)
 		{
 			auto lua_SRandom_fp = lua_SRandom_hash.add(8).as<luau_CFunction*>();
 			lua_SRandom_og = *lua_SRandom_fp;
@@ -3819,7 +3819,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_SRandomInt_hash = " << lua_SRandomInt_hash.as<void*>() << std::endl;
 #endif
-		if (lua_SRandomInt_hash)
+		SOUP_IF_LIKELY (lua_SRandomInt_hash)
 		{
 			auto lua_SRandomInt_fp = lua_SRandomInt_hash.add(8).as<luau_CFunction*>();
 			lua_SRandomInt_og = *lua_SRandomInt_fp;
@@ -3838,7 +3838,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_HashCrc32_hash = " << lua_HashCrc32_hash.as<void*>() << std::endl;
 #endif
-		if (lua_HashCrc32_hash)
+		SOUP_IF_LIKELY (lua_HashCrc32_hash)
 		{
 			auto lua_HashCrc32_fp = lua_HashCrc32_hash.add(8).as<luau_CFunction*>();
 			lua_HashCrc32_og = *lua_HashCrc32_fp;
@@ -3860,7 +3860,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "crc32_impl = " << crc32_impl << std::endl;
 #endif
-		if (crc32_impl)
+		SOUP_IF_LIKELY (crc32_impl)
 		{
 			crc32_impl_hook.detour = reinterpret_cast<void*>(&crc32_impl_detour);
 			crc32_impl_hook.target = crc32_impl;
@@ -3881,7 +3881,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "crc32c_impl = " << crc32c_impl << std::endl;
 #endif
-		if (crc32c_impl)
+		SOUP_IF_LIKELY (crc32c_impl)
 		{
 			crc32c_impl_hook.detour = reinterpret_cast<void*>(&crc32c_impl_detour);
 			crc32c_impl_hook.target = crc32c_impl;
@@ -3902,7 +3902,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "MD5_append = " << MD5_append << std::endl;
 #endif
-		if (MD5_append != (void*)9)
+		SOUP_IF_LIKELY (MD5_append != (void*)9)
 		{
 			MD5_append_hook.detour = reinterpret_cast<void*>(&MD5_append_detour);
 			MD5_append_hook.target = MD5_append;
@@ -3923,7 +3923,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "check_string_substitutions = " << check_string_substitutions << std::endl;
 #endif
-		if (check_string_substitutions)
+		SOUP_IF_LIKELY (check_string_substitutions)
 		{
 			if (game_version >= GV(36, 0, 0))
 			{
@@ -3967,7 +3967,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "string_pool_insn = " << string_pool_insn.as<void*>() << std::endl;
 #endif
-		if (string_pool_insn)
+		SOUP_IF_LIKELY (string_pool_insn)
 		{
 			string_pool = string_pool_insn.add(3).rip().as<StringPoolBucket**>();
 		}
@@ -3984,7 +3984,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
-		if (object_type_serialise_propery_text_call && string_pool)
+		SOUP_IF_LIKELY (object_type_serialise_propery_text_call && string_pool)
 		{
 			uint8_t detour_bytes[] = {
 				0x49, 0x89, 0xF3, // mov r11, rsi
@@ -4019,7 +4019,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "serialise_propery_text = " << serialise_propery_text << std::endl;
 #endif
-		if (serialise_propery_text)
+		SOUP_IF_LIKELY (serialise_propery_text)
 		{
 			serialise_propery_text_hook.detour = reinterpret_cast<void*>(&serialise_propery_text_detour);
 			serialise_propery_text_hook.target = serialise_propery_text;
@@ -4041,7 +4041,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "ScriptMgr_startInstance = " << ScriptMgr_startInstance << std::endl;
 #endif
-		if (ScriptMgr_startInstance)
+		SOUP_IF_LIKELY (ScriptMgr_startInstance)
 		{
 			ScriptMgr_startInstance_hook.detour = reinterpret_cast<void*>(&ScriptMgr_startInstance_detour);
 			ScriptMgr_startInstance_hook.target = ScriptMgr_startInstance;
@@ -4062,7 +4062,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "irc_send_raw = " << irc_send_raw << std::endl;
 #endif
-		if (irc_send_raw)
+		SOUP_IF_LIKELY (irc_send_raw)
 		{
 			if (game_version >= GV(35, 5, 0))
 			{
@@ -4094,7 +4094,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "irc_log_in_cond = " << irc_log_in_cond.as<void*>() << std::endl;
 #endif
-		if (irc_log_in_cond)
+		SOUP_IF_LIKELY (irc_log_in_cond)
 		{
 			memGuard::setAllowedAccess(irc_log_in_cond.add(12).as<void*>(), 2, memGuard::ACC_RWX);
 			*irc_log_in_cond.add(12).as<uint8_t*>() = 0x90;
@@ -4130,7 +4130,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "operator_mount_fail = " << operator_mount_fail.as<void*>() << std::endl;
 #endif
-		if (operator_mount_fail)
+		SOUP_IF_LIKELY (operator_mount_fail)
 		{
 			memGuard::setAllowedAccess(operator_mount_fail.as<void*>(), 2, memGuard::ACC_RWX);
 			operator_mount_fail.as<uint8_t*>()[0] = 0xb0;
@@ -4151,7 +4151,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "RequestSlomo_cond = " << RequestSlomo_cond.as<void*>() << std::endl;
 #endif
-		if (RequestSlomo_cond)
+		SOUP_IF_LIKELY (RequestSlomo_cond)
 		{
 			memGuard::setAllowedAccess(RequestSlomo_cond.add(8).as<void*>(), 2, memGuard::ACC_RWX);
 			RequestSlomo_cond.as<uint8_t*>()[8] = 0x90;
@@ -4172,7 +4172,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_WebSubscribeToFailure_hash = " << lua_WebSubscribeToFailure_hash.as<void*>() << std::endl;
 #endif
-		if (lua_WebSubscribeToFailure_hash)
+		SOUP_IF_LIKELY (lua_WebSubscribeToFailure_hash)
 		{
 			if (!logout_on_request_failure)
 			{
@@ -4197,7 +4197,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "init_oodle_network_state = " << init_oodle_network_state << std::endl;
 #endif
-		if (init_oodle_network_state)
+		SOUP_IF_LIKELY (init_oodle_network_state)
 		{
 			init_oodle_network_state_hook.detour = reinterpret_cast<void*>(&init_oodle_network_state_detour);
 			init_oodle_network_state_hook.target = init_oodle_network_state;
@@ -4216,7 +4216,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "compress_packet_oodle_net = " << compress_packet_oodle_net << std::endl;
 #endif
-		if (compress_packet_oodle_net)
+		SOUP_IF_LIKELY (compress_packet_oodle_net)
 		{
 			compress_packet_oodle_net_hook.detour = reinterpret_cast<void*>(&compress_packet_oodle_net_detour);
 			compress_packet_oodle_net_hook.target = compress_packet_oodle_net;
@@ -4235,7 +4235,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "compress_packet_oodle_lz = " << compress_packet_oodle_lz << std::endl;
 #endif
-		if (compress_packet_oodle_lz)
+		SOUP_IF_LIKELY (compress_packet_oodle_lz)
 		{
 			compress_packet_oodle_lz_hook.detour = reinterpret_cast<void*>(&compress_packet_oodle_lz_detour);
 			compress_packet_oodle_lz_hook.target = compress_packet_oodle_lz;
@@ -4254,7 +4254,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "oodle_compress = " << oodle_compress << std::endl;
 #endif
-		if (oodle_compress)
+		SOUP_IF_LIKELY (oodle_compress)
 		{
 			oodle_compress_hook.detour = reinterpret_cast<void*>(&oodle_compress_detour);
 			oodle_compress_hook.target = oodle_compress;
@@ -4275,7 +4275,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "SendConnectionlessData = " << SendConnectionlessData << std::endl;
 #endif
-		if (SendConnectionlessData)
+		SOUP_IF_LIKELY (SendConnectionlessData)
 		{
 			SendConnectionlessData_hook.detour = reinterpret_cast<void*>(&SendConnectionlessData_detour);
 			SendConnectionlessData_hook.target = SendConnectionlessData;
@@ -4296,7 +4296,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lzf_compress = " << lzf_compress << std::endl;
 #endif
-		if (lzf_compress)
+		SOUP_IF_LIKELY (lzf_compress)
 		{
 			lzf_compress_hook.detour = reinterpret_cast<void*>(&lzf_compress_detour);
 			lzf_compress_hook.target = lzf_compress;
@@ -4315,7 +4315,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lzf_decompress = " << lzf_decompress << std::endl;
 #endif
-		if (lzf_decompress)
+		SOUP_IF_LIKELY (lzf_decompress)
 		{
 			lzf_decompress_hook.detour = reinterpret_cast<void*>(&lzf_decompress_detour);
 			lzf_decompress_hook.target = lzf_decompress;
@@ -4336,7 +4336,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "UncompressPacket = " << UncompressPacket << std::endl;
 #endif
-		if (UncompressPacket)
+		SOUP_IF_LIKELY (UncompressPacket)
 		{
 			UncompressPacket_hook.detour = reinterpret_cast<void*>(&UncompressPacket_detour);
 			UncompressPacket_hook.target = UncompressPacket;
@@ -4370,7 +4370,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
 #endif
-		if (content_retry_insn)
+		SOUP_IF_LIKELY (content_retry_insn)
 		{
 			memGuard::setAllowedAccess(content_retry_insn.as<void*>(), 4, memGuard::ACC_RWX);
 			// < 41.0.2: lea rcx, [rax+r15] -> xor rcx, rcx; nop; nop
@@ -4392,7 +4392,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "content_retry_insn = " << content_retry_insn << std::endl;
 #endif
-		if (content_retry_insn)
+		SOUP_IF_LIKELY (content_retry_insn)
 		{
 			memGuard::setAllowedAccess(content_retry_insn, 3, memGuard::ACC_RWX);
 			memset(content_retry_insn, 0x90, 3);
@@ -4420,7 +4420,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
 #endif
-		if (anticheat_sideloading_check)
+		SOUP_IF_LIKELY (anticheat_sideloading_check)
 		{
 			anticheat_sideloading_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
 			anticheat_sideloading_check_hook.target = anticheat_sideloading_check;
@@ -4440,7 +4440,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "anticheat_timer_check_callsite = " << anticheat_timer_check_callsite.as<void*>() << std::endl;
 #endif
-		if (anticheat_timer_check_callsite)
+		SOUP_IF_LIKELY (anticheat_timer_check_callsite)
 		{
 			auto anticheat_timer_check = anticheat_timer_check_callsite.add(7).rip().as<void*>();
 
@@ -4466,7 +4466,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
 #endif
-		if (string_resize_callsite)
+		SOUP_IF_LIKELY (string_resize_callsite)
 		{
 			string_resize = string_resize_callsite.add(7).rip().as<string_resize_t>();
 		}
@@ -4483,7 +4483,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "raise_script_error_fp_mov = " << raise_script_error_fp_mov.as<void*>() << std::endl;
 #endif
-		if (raise_script_error_fp_mov)
+		SOUP_IF_LIKELY (raise_script_error_fp_mov)
 		{
 			raise_script_error_fp = raise_script_error_fp_mov.add(3).rip().as<raise_script_error_t*>();
 		}
@@ -4499,7 +4499,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_newstate = " << (void*)luau_newstate << std::endl;
 #endif
-		if (!luau_newstate)
+		SOUP_IF_UNLIKELY (!luau_newstate)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4520,7 +4520,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_pushstring = " << (void*)luau_pushstring << std::endl;
 #endif
-		if (!luau_pushstring)
+		SOUP_IF_UNLIKELY (!luau_pushstring)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4533,7 +4533,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_pushpointer = " << (void*)luau_pushpointer << std::endl;
 #endif
-		if (!luau_pushpointer)
+		SOUP_IF_UNLIKELY (!luau_pushpointer)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4546,7 +4546,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_pushobject = " << (void*)luau_pushobject << std::endl;
 #endif
-		if (!luau_pushobject)
+		SOUP_IF_UNLIKELY (!luau_pushobject)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4559,7 +4559,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_pushcclosurek = " << (void*)luau_pushcclosurek << std::endl;
 #endif
-		if (!luau_pushcclosurek)
+		SOUP_IF_UNLIKELY (!luau_pushcclosurek)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4572,7 +4572,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
 #endif
-		if (lua_next_callsite)
+		SOUP_IF_LIKELY (lua_next_callsite)
 		{
 			luau_next = lua_next_callsite.add(9).rip().as<luau_next_t>();
 		}
@@ -4589,7 +4589,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_gettable_callsite = " << luau_gettable_callsite.as<void*>() << std::endl;
 #endif
-		if (luau_gettable_callsite)
+		SOUP_IF_LIKELY (luau_gettable_callsite)
 		{
 			luau_gettable = luau_gettable_callsite.add(9).rip().as<luau_gettable_t>();
 		}
@@ -4606,7 +4606,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_createtable = " << (void*)luau_createtable << std::endl;
 #endif
-		if (!luau_createtable)
+		SOUP_IF_UNLIKELY (!luau_createtable)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4627,7 +4627,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_settable = " << (void*)luau_settable << std::endl;
 #endif
-		if (!luau_settable)
+		SOUP_IF_UNLIKELY (!luau_settable)
 		{
 			log_optional_scan_failure(false);
 		}
@@ -4653,7 +4653,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luauD_call = " << (void*)luauD_call << std::endl;
 #endif
-		if (!luauD_call)
+		SOUP_IF_UNLIKELY (!luauD_call)
 		{
 			log_optional_scan_failure(false);
 		}
