@@ -6,3 +6,6 @@ int/
 *.pdb
 Hotfix.owf
 owf_archive_data.inc
+
+.vs/
+*.vcxproj.user
