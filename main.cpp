@@ -2189,22 +2189,23 @@ static std::string process_irc_send(const char* data, size_t size)
 #if REDIRECT_REQUESTS
 	if (size > 36 && soup::joaat::hashRange(data, 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
 	{
-		std::string replacement(data, size - 40); // Copy everything except the 'realname' part
 		auto arr = string::explode(auth_query, '&');
 		if (arr.size() > 1)
 		{
+			const std::string accountId = arr[0].substr(10);
+			const std::string nonce = arr[1].substr(6);
+			const size_t realname_length = (game_version >= GV(9, 0, 0)) ? 40 : nonce.size();
+			std::string replacement(data, size - realname_length);
 			if (secure_connections)
 			{
-				const std::string accountId = arr[0].substr(10);
-				const std::string nonce = arr[1].substr(6);
 				replacement.append(ObfusString("token=").str() + create_token(accountId, nonce));
 			}
 			else
 			{
 				replacement.append(arr[1]);
 			}
+			return replacement;
 		}
-		return replacement;
 	}
 #endif
 	if (size > 10 && soup::joaat::hashRange(data, 8) == soup::joaat::compileTimeHash("PRIVMSG "))
