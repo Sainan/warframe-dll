@@ -430,7 +430,12 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 					uri.query.append(build_hash, 22);
 				}
 			}
-			uri.query.append(ObfusString("&clientMod=").str());
+
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
+			uri.query.append(ObfusString("clientMod=").str());
 			uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
 			if (metadata_patches_in_use)
 			{
@@ -470,6 +475,13 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 					uri.query.append(build_hash, 22);
 				}
 			}
+
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
+			uri.query.append(ObfusString("clientMod=").str());
+			uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
 		}
 	}
 	else if (uri.path == ObfusString("/api/hub").str())
@@ -492,6 +504,13 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 					uri.query.append(build_hash, 22);
 				}
 			}
+
+			if (!uri.query.empty())
+			{
+				uri.query.push_back('&');
+			}
+			uri.query.append(ObfusString("clientMod=").str());
+			uri.query.append(urlenc::encode(ObfusString(BOOTSTRAPPER_TITLE).str()));
 		}
 	}
 	else if (uri.path == ObfusString("/api/logout.php").str())
