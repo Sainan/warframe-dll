@@ -1638,8 +1638,14 @@ static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
 using raise_script_error_t = bool(*)(const char** err);
 static raise_script_error_t* raise_script_error_fp = nullptr;
 
+#define PROFILE_SCRIPT_TICKING false
+
 static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 {
+#if PROFILE_SCRIPT_TICKING
+	auto t = soup::time::nanos();
+#endif
+
 #if true
 	const auto og_outtop = luau_savestack(L, L->outtop);
 	const auto og_intop = luau_savestack(L, L->intop);
@@ -1747,6 +1753,11 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		*raise_script_error_fp = og_raise;
 	}
 	luau_L = nullptr;
+#endif
+
+#if PROFILE_SCRIPT_TICKING
+	t = soup::time::nanos() - t;
+	conout << "Ticking scripts took " << (static_cast<double>(t) / 1000000.0) << " ms\n";
 #endif
 
 	return lua_LotusHudStatus_UpdateFlashMarkers_og(L);
