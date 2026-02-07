@@ -123,6 +123,7 @@ end
 class owfUserdata
 	function __construct()
 		if not ivkr_isuserdata(-1) then
+			ivkr_pop(1)
 			error($"attempt to construct {self.__name} from nil")
 		end
 		ivkr_push_string(tostring(self))
