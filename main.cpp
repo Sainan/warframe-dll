@@ -873,6 +873,7 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 	bool ok = g_server_tunables.load(data, size, delta);
 
 	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
+	prohibit_disable_profanity_filter = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_disable_profanity_filter"));
 	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
 	prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
 
@@ -1209,6 +1210,25 @@ static int lua_SquadSetCountdownTimer_detour(luau_State* L)
 		L->intop[1].value.as_float = 0.0f;
 	}
 	return lua_SquadSetCountdownTimer_og(L);
+}
+
+
+static luau_CFunction lua_SanitizeText_og;
+
+static int lua_SanitizeText_detour(luau_State* L)
+{
+	// L->intop[1] - string
+	// L->intop[2] - number (TextSanitizerCategory enum) - 0 (TSC_CHAT) or 1 (TSC_NAME)
+
+	if (disable_profanity_filter && !prohibit_disable_profanity_filter)
+	{
+		L->outtop = &L->intop[1];
+		return 1;
+	}
+	else
+	{
+		return lua_SanitizeText_og(L);
+	}
 }
 
 
@@ -2582,6 +2602,7 @@ void populate_full_status(JsonObject& obj)
 
 	obj.add(ObfusString("high_damage_numbers_patch"), high_damage_numbers_patch);
 	obj.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	obj.add(ObfusString("disable_profanity_filter"), disable_profanity_filter);
 	obj.add(ObfusString("simulacrum_blacklisted"), simulacrum_blacklisted);
 	obj.add(ObfusString("simulacrum_whitelisted"), simulacrum_whitelisted);
 	obj.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
@@ -2704,6 +2725,18 @@ bool owf_command(const std::string& in, JsonObject& out)
 		else
 		{
 			out.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+		}
+		return true;
+
+	case soup::joaat::compileTimeHash("disable_profanity_filter"):
+		if (args.size() > 1)
+		{
+			disable_profanity_filter = (args[1].size() == 4);
+			owf_broadcast_value(ObfusString("disable_profanity_filter"), disable_profanity_filter);
+		}
+		else
+		{
+			out.add(ObfusString("disable_profanity_filter"), disable_profanity_filter);
 		}
 		return true;
 
@@ -3462,6 +3495,27 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		else
 		{
 			conout << get_core_string(ObfusString("sigfailsmst").str()) << std::endl;
+		}
+	}
+#endif
+
+#if !MINIMAL_HOOKS
+	{
+		ObfusString str("SanitizeText");
+		auto lua_SanitizeText_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
+#if LOGGING
+		conout << "lua_SanitizeText_hash = " << lua_SanitizeText_hash.as<void*>() << std::endl;
+#endif
+		SOUP_IF_LIKELY (lua_SanitizeText_hash)
+		{
+			auto lua_SanitizeText_fp = lua_SanitizeText_hash.add(8).as<luau_CFunction*>();
+			lua_SanitizeText_og = *lua_SanitizeText_fp;
+			memGuard::setAllowedAccess(lua_SanitizeText_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
+			*lua_SanitizeText_fp = lua_SanitizeText_detour;
+		}
+		else
+		{
+			conout << get_core_string(ObfusString("sigfaildpf").str()) << std::endl;
 		}
 	}
 #endif

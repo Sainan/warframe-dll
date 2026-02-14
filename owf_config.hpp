@@ -31,6 +31,7 @@ inline bool disable_firewall_prompt;
 // Features
 inline bool ee_log_in_console;
 inline bool skip_mission_start_timer;
+static bool disable_profanity_filter;
 inline bool logout_on_request_failure;
 inline float fov_override;
 inline std::string forced_profile_dir;

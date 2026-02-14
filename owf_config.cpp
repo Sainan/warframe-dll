@@ -151,6 +151,15 @@ void owfConfig::load()
 		skip_mission_start_timer = false;
 	}
 
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("disable_profanity_filter")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		disable_profanity_filter = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		disable_profanity_filter = false;
+	}
+
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("logout_on_request_failure")); it != config->reinterpretAsObj().end() && it->second->isBool())
 	{
 		logout_on_request_failure = it->second->reinterpretAsBool().value;
@@ -416,6 +425,7 @@ void owfConfig::save()
 
 	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
+	config.add(ObfusString("disable_profanity_filter"), disable_profanity_filter);
 	config.add(ObfusString("logout_on_request_failure"), logout_on_request_failure);
 	config.add(ObfusString("fov_override"), fov_override);
 	config.add(ObfusString("forced_profile_dir"), forced_profile_dir);

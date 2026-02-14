@@ -1,5 +1,6 @@
 {
 	"prohibit_skip_mission_start_timer": "Skip Mission Start Timer",
+	"prohibit_disable_profanity_filter": "Disable Profanity Filter",
 	"prohibit_fov_override": "FOV Override",
 	"prohibit_freecam": "Freecam",
 	"prohibit_teleport": "Teleport",

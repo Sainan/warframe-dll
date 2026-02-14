@@ -101,6 +101,7 @@
 
 		<li><code>ee_log_in_console</code> — If true, writes everything that gets written to EE.log to the console as well.</li>
 		<li><code>skip_mission_start_timer</code> — If true, disables the 5 second wait before a mission starts.</li>
+		<li><code>disable_profanity_filter</code> — If true, allows you to use rude words when naming weapons, custom markers, etc.</li>
 		<li><code>logout_on_request_failure</code> — If false, the game will ignore HTTP request failures/timeouts instead of forcing a logout.</li>
 		<li><code>fov_override</code> — If not 0, overrides the game's FOV setting. You can use any value from 1 to 226.</li>
 		<li><code>forced_profile_dir</code> — An absolute path to a folder that will be used to read and write your game settings. Notably, this can be used to have the same settings regardless of username.</li>
@@ -139,6 +140,7 @@
 	<p>When connecting to a server, the Bootstrapper requests <code>/custom/tunables.json</code>. The resulting JSON object may provide the following fields:</p>
 	<ul>
 		<li><code>prohibit_skip_mission_start_timer</code> — If true, prohibits <code>skip_mission_start_timer</code>.</li>
+		<li><code>prohibit_disable_profanity_filter</code> — If true, prohibits <code>disable_profanity_filter</code>.</li>
 		<li><code>prohibit_fov_override</code> — If true, prohibits <code>fov_override</code>.</li>
 		<li><code>prohibit_freecam</code> — If true, prohibits <code>freecam</code>.</li>
 		<li><code>prohibit_teleport</code> — If true, prohibits <code>teleport</code>.</li>
