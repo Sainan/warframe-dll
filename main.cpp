@@ -2264,14 +2264,7 @@ static std::string process_irc_send(const char* data, size_t size)
 			const std::string nonce = arr[1].substr(6);
 			const size_t realname_length = (game_version >= GV(9, 0, 0)) ? 40 : nonce.size();
 			std::string replacement(data, size - realname_length);
-			if (secure_connections)
-			{
-				replacement.append(ObfusString("token=").str() + create_token(accountId, nonce));
-			}
-			else
-			{
-				replacement.append(arr[1]);
-			}
+			replacement.append(ObfusString("token=").str() + create_token(accountId, nonce));
 			return replacement;
 		}
 	}
