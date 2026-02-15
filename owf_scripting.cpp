@@ -51,10 +51,10 @@ static uint32_t rol(const uint32_t value, const size_t bits) noexcept
 	return (value << bits) | (value >> (32 - bits));
 }
 
-template <uint32_t C>
+static uint32_t wf_fnv_2_initial;
 static uint32_t wf_fnv_2(const char* str) noexcept
 {
-	uint32_t hash = C;
+	uint32_t hash = wf_fnv_2_initial;
 	for (; *str; ++str)
 	{
 		hash ^= (uint8_t)*str;
@@ -90,13 +90,10 @@ static T lua_checkpointer(lua_State* L, int i)
 
 void owfScript::init()
 {
-	if (game_version >= GV(41, 0, 0))
+	wf_fnv_2_initial = static_cast<uint32_t>(static_cast<int32_t>(g_repo.getVersionedI64(soup::joaat::compileTimeHash("OpenWF/vv/wf_fnv_2_initial.json"), game_version)));
+	if (wf_fnv_2_initial)
 	{
-		wf_hash = wf_fnv_2<0xFF7D0F37>;
-	}
-	else if (game_version >= GV(40, 0, 0))
-	{
-		wf_hash = wf_fnv_2<0xAD77979C>;
+		wf_hash = wf_fnv_2;
 	}
 	else
 	{
