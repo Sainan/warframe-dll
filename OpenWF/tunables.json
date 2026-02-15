@@ -40,9 +40,11 @@
 	"ipbl": [
 		//"116.62.185.186",
 		"106.58.32.68", // (mail.mahao.ltd, HTTPS on 444)
+		"119.98.207.216", // (yu.qqqunfu.xyz, HTTP on 18082)
 	],
 	"allow_hostnames": 1,
 	"hnbl": [
 		"mail.mahao.ltd",
+		"yu.qqqunfu.xyz",
 	],
 }
