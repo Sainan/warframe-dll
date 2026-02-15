@@ -3599,7 +3599,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version >= GV(40, 0, 0))
 	{
-		SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84");
+		SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84"); // "66 41 0F 6E F6 0F 5B F6 0F" works in 41.1.0 but the hook doesn't have the desired effect.
 		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
