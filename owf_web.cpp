@@ -150,7 +150,7 @@ void start_builtin_http_server()
 		{
 			if (client_http_logging)
 			{
-				conout << ObfusString("Request to builtin HTTP server: ").str() << req.path << std::endl;
+				conout << get_core_string(ObfusString("webonreq").str()) << ": " << req.path << std::endl;
 			}
 			if (joaat::hash(req.path.substr(0, 8)) == joaat::compileTimeHash("/origin/"))
 			{

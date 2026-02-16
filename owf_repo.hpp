@@ -32,4 +32,6 @@ protected:
 
 inline soup::Mutex g_repo_mtx;
 inline owfRepo g_repo;
+
 inline std::unordered_map<std::string, std::string> g_core_dict;
+extern std::string get_core_string(std::string key);

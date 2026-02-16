@@ -175,21 +175,6 @@ static std::string get_bootstrapper_title()
 	return title;
 }
 
-static std::string get_core_string(std::string key)
-{
-	if (auto e = g_core_dict.find(key); e != g_core_dict.end())
-	{
-		return e->second;
-	}
-#if PRIVATE
-	if (g_core_dict.empty())
-	{
-		key.append(" (could not be resolved because core dict is not initialised yet)");
-	}
-#endif
-	return key;
-}
-
 
 /*struct ParsedUrl
 {
