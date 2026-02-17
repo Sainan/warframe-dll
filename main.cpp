@@ -1636,7 +1636,7 @@ void broadcast_running_scripts_locked()
 	owf_broadcast_message(obj.encode());
 }
 
-#define MIN_GV_FOR_SCRIPTING GV(33, 6, 0)
+static bool have_scripting;
 
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
 
@@ -1659,7 +1659,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 	raise_script_error_t og_raise;
 
 	luau_L = L;
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		// ivkr_call(ivkr_find_method("HumanPlayer", "IsFreeCameraActive"), 0)
 		L->global_state->error_longjump_data() = nullptr;
@@ -1746,7 +1746,7 @@ static int lua_LotusHudStatus_UpdateFlashMarkers_detour(luau_State* L)
 		owfScript::logNl("Not all values were popped from LuaU stack");
 	}
 #endif
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		L->outtop = luau_restorestack(L, og_outtop);
 		L->intop = luau_restorestack(L, og_intop);
@@ -3715,7 +3715,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		void* lua_set_global;
 		if (game_version >= GV(35, 5, 0))
@@ -4662,7 +4662,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("48 8B 05 ? ? ? ? FF D0 85 C0 74 02 CD 2C");
 		auto raise_script_error_fp_mov = Module(nullptr).range.scan(sig_inst);
@@ -4691,7 +4691,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}*/
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		if (game_version >= GV(40, 0, 0))
 		{
@@ -4712,7 +4712,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B DA 48 8B F9 48 85 D2 75 0F");
 		luau_pushpointer = Module(nullptr).range.scan(sig_inst).as<luau_pushpointer_t>();
@@ -4725,7 +4725,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("48 89 74 24 18 57 48 83 EC 20 48 8B F2 48 8B F9 48 85 D2 75 0F 48 8B 74");
 		luau_pushobject = Module(nullptr).range.scan(sig_inst).as<luau_pushobject_t>();
@@ -4738,7 +4738,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 48 8B D9 49 63 F9 48 8B 49 18 49 8B F0");
 		luau_pushcclosurek = Module(nullptr).range.scan(sig_inst).as<luau_pushcclosurek_t>();
@@ -4751,7 +4751,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("BA 01 00 00 00 48 8B CB E8 ? ? ? ? 85 C0 74 0B B8 02 00 00 00"); // U37, U38, U40, U41
 		auto lua_next_callsite = Module(nullptr).range.scan(sig_inst);
@@ -4768,7 +4768,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("BA 03 00 00 00 48 8B CF E8 ? ? ? ? BA FF FF FF FF");
 		auto luau_gettable_callsite = Module(nullptr).range.scan(sig_inst);
@@ -4785,7 +4785,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 20 4C 8B 49 18 41 8B F0");
 		luau_createtable = Module(nullptr).range.scan(sig_inst).as<luau_createtable_t>();
@@ -4798,7 +4798,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		if (game_version >= GV(35, 5, 0))
 		{
@@ -4819,7 +4819,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		if (game_version >= GV(39, 0, 0))
 		{
@@ -4845,7 +4845,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING)
+	if (have_scripting)
 	{
 		Pointer res[20]; // 11 results in U35.1 & U38
 		int type_arr_end_offset;
@@ -4907,7 +4907,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 		}
 	}
 
-	if (game_version >= MIN_GV_FOR_SCRIPTING && game_version < GV(40, 0, 0))
+	if (have_scripting && game_version < GV(40, 0, 0))
 	{
 		Pointer res[7]; // In U37 there's an 8th match that's not an enum so we need to ignore that one.
 		int nres;
@@ -5173,6 +5173,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Handle version config (depends on core dict)
 		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
 		force_disable_overlay = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_overlay"));
+		have_scripting = game_version >= g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_scripting"));
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
 		{
 #if PRIVATE
