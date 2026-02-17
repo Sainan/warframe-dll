@@ -1636,8 +1636,6 @@ void broadcast_running_scripts_locked()
 	owf_broadcast_message(obj.encode());
 }
 
-static bool have_scripting;
-
 static luau_CFunction lua_LotusHudStatus_UpdateFlashMarkers_og;
 
 using raise_script_error_t = bool(*)(const char** err);
@@ -5108,7 +5106,12 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 			g_client_tunables.loadMsgpack(data, size);
 		}
 
-		// Load config (depends on repo)
+		// Load version config (depends on tunables)
+		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
+		force_disable_overlay = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_overlay"));
+		have_scripting = game_version >= g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_scripting"));
+
+		// Load config (depends on repo & version config)
 		if (!std::filesystem::exists(ObfusString("OpenWF/Client Config.json").str()))
 		{
 			if (std::filesystem::exists(ObfusString("OpenWF/client_config.json").str()))
@@ -5170,10 +5173,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Initialise core dict (depends on repo + config)
 		g_core_dict = g_repo.getCoreDict(fallback_language);
 
-		// Handle version config (depends on core dict)
-		strip_tls = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_tls"));
-		force_disable_overlay = game_version < g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_overlay"));
-		have_scripting = game_version >= g_client_tunables.getInt(joaat::compileTimeHash("min_gv_for_scripting"));
+		// Reject too new versions (depends on core dict)
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
 		{
 #if PRIVATE

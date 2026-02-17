@@ -31,7 +31,7 @@ inline bool disable_firewall_prompt;
 // Features
 inline bool ee_log_in_console;
 inline bool skip_mission_start_timer;
-static bool disable_profanity_filter;
+inline bool disable_profanity_filter;
 inline bool logout_on_request_failure;
 inline float fov_override;
 inline std::string forced_profile_dir;
@@ -45,7 +45,8 @@ inline bool write_patched_metadata_reads_to_ee_log;
 inline bool client_http_logging;
 inline uint16_t client_http_port;
 inline bool disable_overlay;
-static bool overlay_compatibility_mode;
+inline bool overlay_compatibility_mode;
+inline bool keep_console_open;
 
 
 // Effective arguments (not in Client Config.json)

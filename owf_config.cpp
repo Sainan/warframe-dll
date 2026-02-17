@@ -33,6 +33,7 @@ bool owfConfig::isConsoleEnabled() noexcept
 		|| write_all_metadata_reads_to_console
 		|| write_patched_metadata_reads_to_console
 		|| client_http_logging
+		|| keep_console_open
 		;
 }
 
@@ -397,6 +398,15 @@ void owfConfig::load()
 	{
 		overlay_compatibility_mode = os::isWine();
 	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("keep_console_open")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		keep_console_open = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		keep_console_open = !have_scripting;
+	}
 }
 
 void owfConfig::save()
@@ -447,6 +457,7 @@ void owfConfig::save()
 	config.add(ObfusString("client_http_port"), client_http_port);
 	config.add(ObfusString("disable_overlay"), disable_overlay);
 	config.add(ObfusString("overlay_compatibility_mode"), overlay_compatibility_mode);
+	config.add(ObfusString("keep_console_open"), keep_console_open);
 
 	string::toFile(ObfusString("OpenWF/Client Config.json").str(), config.encodePretty());
 }

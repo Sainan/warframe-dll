@@ -6,6 +6,7 @@ inline char build_version[16] = { 0 }; // e.g. "2024.12.14.10.37"
 
 #define GV(major, minor, patch) (major * 10000) + (minor * 100) + patch
 inline uint32_t game_version;
+inline bool have_scripting; // game_version >= MIN_GV_FOR_SCRIPTING
 
 inline char build_hash[22] = { 0 };
 
