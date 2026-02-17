@@ -365,16 +365,16 @@ void start_builtin_http_server()
 				if (!prohibit_scripts)
 				{
 					start_script_from_file(urlenc::decode(arr.at(1)));
-					ServerWebService::sendText(s, {});
 				}
+				ServerWebService::sendText(s, {});
 				break;
 
 			case soup::joaat::compileTimeHash("/start_script_inline"):
 				if (!prohibit_scripts)
 				{
 					start_script_from_string(urlenc::decode(arr.at(1)));
-					ServerWebService::sendText(s, {});
 				}
+				ServerWebService::sendText(s, {});
 				break;
 
 			case soup::joaat::compileTimeHash("/stop_bgscript"): // Undocumented
