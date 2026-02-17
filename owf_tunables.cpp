@@ -40,6 +40,29 @@ bool owfServerTunables::load(const char* data, size_t size, bool delta)
 	return true;
 }
 
+std::vector<std::string> owfServerTunables::getProhibitions() const
+{
+	std::vector<std::string> res;
+	g_repo_mtx.lock();
+	size_t size;
+	auto data = g_repo.find(soup::joaat::compileTimeHash("OpenWF/prohibition_names.json"), size);
+	g_repo_mtx.unlock();
+	if (data)
+	{
+		if (auto jr = soup::json::decode(std::string(data, size)))
+		{
+			for (const auto& e : jr->asObj().children)
+			{
+				if (this->getBool(soup::joaat::hash(e.first->asStr())))
+				{
+					res.emplace_back(e.first->reinterpretAsStr());
+				}
+			}
+		}
+	}
+	return res;
+}
+
 std::string owfServerTunables::getProhibitionName(uint32_t hash)
 {
 	g_repo_mtx.lock();

@@ -6,6 +6,8 @@
 	input[type=range]{height:10px}
 	hr{margin:15px 0}
 	ul:has(li){margin-top:2px;padding-inline-start:30px}
+	[id^=prohibit_]{color:#444}
+	[id^=prohibit_]:not([data-value=true]){display:none}
 </style>
 <body>
 	<p id="checking_updates"></p>
@@ -17,24 +19,25 @@
 	<hr>
 	<p><label for="server_host"></label> <input id="server_host" type="text" /> <button id="server_host_submit"></button> <button id="logout" onclick="fire_and_forget('logout')"></button></p>
 	<p><label for="high_damage_numbers_patch"></label> <input id="high_damage_numbers_patch" type="checkbox" /></p>
-	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /></p>
-	<p><label for="disable_profanity_filter"></label> <input id="disable_profanity_filter" type="checkbox" /></p>
+	<p><label for="skip_mission_start_timer"></label> <input id="skip_mission_start_timer" type="checkbox" /> <span id="prohibit_skip_mission_start_timer"></span></p>
+	<p><label for="disable_profanity_filter"></label> <input id="disable_profanity_filter" type="checkbox" /> <span id="prohibit_disable_profanity_filter"></span></p>
 	<p><label for="simulacrum_blacklisted"></label> <input id="simulacrum_blacklisted" type="checkbox" /></p>
 	<p><label for="simulacrum_whitelisted"></label> <input id="simulacrum_whitelisted" type="checkbox" /></p>
 	<p><label for="pause_always_stops_time"></label> <input id="pause_always_stops_time" type="checkbox" /></p>
 	<p><label for="alternative_loading"></label> <input id="alternative_loading" type="checkbox" /></p>
 	<p><label for="ee_log_in_console"></label> <input id="ee_log_in_console" type="checkbox" /></p>
-	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"></p>
+	<p><label for="fov_override"></label> <input id="fov_override" type="range" min="0" value="0" max="2260000" step="10000"> <span id="prohibit_fov_override"></span></p>
 	<p>
 		<button id="save_config" onclick="fire_and_forget('save_config')" style="margin-top:3px"></button>
 		<button id="reload_hotkeys" onclick="fire_and_forget('reload_hotkeys')"></button>
 		<button id="reload_label_replacements" onclick="fire_and_forget('reload_label_replacements')"></button>
 	</p>
 	<hr>
-	<p><label for="camtype"></label> <select id="camtype"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select></p>
+	<p><label for="camtype"></label> <select id="camtype" data-disabled-if="prohibit_freecam"><option value="gamecam"></option><option value="freecam"></option><option value="lockcam"></option></select> <span id="prohibit_freecam"></span></p>
 	<p><label for="pos"></label> <input id="pos" type="text" style="width:230px" onclick="this.select()" readonly /></p>
-	<form onsubmit="doTeleport();return false"><button type="submit" id="tp_submit"></button> <select id="tp-target"><option value="custom"></option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /></form>
+	<form onsubmit="doTeleport();return false"><button type="submit" id="tp_submit" data-disabled-if="prohibit_teleport"></button> <select id="tp-target"><option value="custom"></option></select> <input id="tp-pos" type="text" style="width:230px" onclick="this.select()" /> <span id="prohibit_teleport"></span></form>
 	<hr>
+	<p id="prohibit_scripts" style="margin-bottom:10px"></p>
 	<div id="scripts-container"></div>
 	<textarea id="script_log" style="width:100%;height:150px" readonly></textarea>
 	<p><button id="clear_script_log" onclick="fire_and_forget('clear_script_log')"></button></p>
@@ -44,7 +47,7 @@
 		document.querySelectorAll("label[for]").forEach(elm => {
 			elm.textContent = dict[elm.getAttribute("for")] + ": ";
 		});
-		document.querySelectorAll("button[id]").forEach(elm => {
+		document.querySelectorAll("button[id],span[id]").forEach(elm => {
 			elm.textContent = dict[elm.id];
 		});
 		document.querySelectorAll("option[value]").forEach(elm => {
@@ -99,6 +102,8 @@
 		function onMarkersChange() {
 			document.getElementById("tp-pos").style.display = document.getElementById("tp-target").value == "custom" ? "" : "none";
 		}
+
+		const prohibitions = [...document.querySelectorAll("[id^=prohibit_]")].map(x => x.id);
 
 		function openWebSocket() {
 			window.ws = new WebSocket((location.protocol == "https:" ? "wss" : "ws") + "://" + location.hostname + ":" + location.port);
@@ -304,6 +309,17 @@
 					}
 					else {
 						document.getElementById("checking_updates").style.display = "block";
+					}
+				}
+
+				if ("prohibitions" in obj) {
+					for (const key of prohibitions) {
+						const value = obj.prohibitions.indexOf(key) != -1;
+						document.getElementById(key).setAttribute("data-value", value);
+						const elm_to_disable = document.querySelector(`[data-disabled-if=${key}]`);
+						if (elm_to_disable) {
+							elm_to_disable.disabled = value;
+						}
 					}
 				}
 

@@ -852,6 +852,16 @@ struct owfResolveUdpProxyUpstreamAddressTask : public Task
 	}
 };
 
+static void populate_server_prohibitions_locked(JsonObject& obj)
+{
+	auto arr = soup::make_unique<JsonArray>();
+	for (auto& prohibition : g_server_tunables.getProhibitions())
+	{
+		arr->children.emplace_back(soup::make_unique<JsonString>(std::move(prohibition)));
+	}
+	obj.add(ObfusString("prohibitions"), std::move(arr));
+}
+
 bool set_server_tunables(const char* data, size_t size, bool delta)
 {
 	std::lock_guard lock(g_server_tunables_mtx);
@@ -865,6 +875,12 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
 	{
 		set_udp_proxy_upstream(e->second);
+	}
+
+	{
+		JsonObject obj;
+		populate_server_prohibitions_locked(obj);
+		owf_broadcast_message(obj.encode());
 	}
 
 	return ok;
@@ -2600,6 +2616,11 @@ void populate_full_status(JsonObject& obj)
 	populate_running_scripts(obj);
 	populate_autostart_scripts(obj);
 	populate_full_script_log(obj);
+
+	{
+		std::lock_guard lock(g_server_tunables_mtx);
+		populate_server_prohibitions_locked(obj);
+	}
 }
 
 template <typename T>
