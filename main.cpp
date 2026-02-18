@@ -1,6 +1,5 @@
 #include "main.hpp"
 
-#define REDIRECT_REQUESTS true
 #define VERIFY_EXE_SIG false
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
@@ -335,7 +334,6 @@ static bool strip_tls;
 
 static void process_game_http_request(soup::Uri& uri, const char*& body_data, size_t& body_size, std::string& body_buf, RequestType& rt)
 {
-#if REDIRECT_REQUESTS
 	if (secure_connections)
 	{
 		uri.scheme = ObfusString("http").str();
@@ -534,14 +532,6 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	{
 		uri.path = ObfusString("/tls_proxy?").str() + uri.path;
 	}
-#else
-	if (uri.path == "/api/heartbeat.php")
-	{
-		auto title = get_bootstrapper_title();
-		MessageBoxA(0, "Anti-cheat has been triggered. The game will be put down.", title.c_str(), 0);
-		exit(1);
-	}
-#endif
 }
 
 static void process_login_response(const char* data, size_t size)
@@ -678,7 +668,7 @@ static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 	return reinterpret_cast<decltype(&encstr_append_detour)>(encstr_append_hook.original)(a1, a2);
 }
 
-static DetourHook encstr_discharge_hook;
+static ReplacementHook encstr_discharge_hook;
 //static std::atomic<size_t> leaked_memory = 0;
 
 using string_resize_t = void(*)(GameString*, size_t);
@@ -687,7 +677,6 @@ static string_resize_t string_resize;
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
 	//conout << "encstr_discharge: " << (void*)a1->app << std::endl;
-#if REDIRECT_REQUESTS
 	if (string_resize)
 	{
 		string_resize(out, dec_buf.size());
@@ -704,9 +693,6 @@ static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 		//out->setUnownedData((const char*)data, dec_buf.size());
 		//leaked_memory += dec_buf.size();
 	}
-#else
-	reinterpret_cast<decltype(&encstr_discharge_detour)>(encstr_discharge_hook.original)(a1, out);
-#endif
 
 	dec_buf.clear();
 }
@@ -2235,7 +2221,6 @@ static std::string process_irc_send(const char* data, size_t size)
 #if LOGGING
 	conout << "irc_send_raw: " << std::string(data, size) << std::endl;
 #endif
-#if REDIRECT_REQUESTS
 	if (size > 36 && soup::joaat::hashRange(data, 4) == soup::joaat::compileTimeHash("NICK")) // NICK & USER are sent in the same message
 	{
 		auto arr = string::explode(auth_query, '&');
@@ -2256,7 +2241,6 @@ static std::string process_irc_send(const char* data, size_t size)
 			return replacement;
 		}
 	}
-#endif
 	if (size > 10 && soup::joaat::hashRange(data, 8) == soup::joaat::compileTimeHash("PRIVMSG "))
 	{
 		std::string_view sv(data, size);
@@ -3127,7 +3111,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			{
 				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
 				encstr_discharge_hook.target = encstr_discharge;
-				encstr_discharge_hook.create();
+				//encstr_discharge_hook.create();
 				encstr_discharge_hook.enable();
 			}
 		}
@@ -3143,7 +3127,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			{
 				encstr_discharge_hook.detour = reinterpret_cast<void*>(&encstr_discharge_detour);
 				encstr_discharge_hook.target = encstr_discharge;
-				encstr_discharge_hook.create();
+				//encstr_discharge_hook.create();
 				encstr_discharge_hook.enable();
 			}
 		}
