@@ -356,7 +356,11 @@ local wscoro = coroutine.create(function()
 				if sock?:wsUpgrade(owf_get_server_host(), "/custom/ws") then
 					--print("Connected to ws server")
 					local accountId, nonce = owf_get_auth_query():match("accountId=([%l%d]+)&nonce=([%d]+)")
-					sock:wsSend(json.encode({ auth_game = { accountId = accountId, nonce = nonce } }))
+					if owf_using_secure_connections() then
+						sock:wsSend(json.encode({ auth_game = { accountId = accountId, token = crypto.hmac("sha256", nonce, $"accountId={accountId}&ct=WS") } }))
+					else
+						sock:wsSend(json.encode({ auth_game = { accountId = accountId, nonce = nonce } }))
+					end
 					while data := sock:wsRecv() do
 						--print("Received: "..data)
 						data = json.decode(data)
