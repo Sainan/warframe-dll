@@ -293,6 +293,13 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushboolean(L, secure_connections);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "owf_using_secure_connections");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		lua_pushinteger(L, client_http_port);
 		return 1;
 	});
