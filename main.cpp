@@ -908,6 +908,10 @@ struct owfTunablesTask : public soup::Task
 		)
 	{
 		hrt.hr.use_tls = !strip_tls;
+		if (secure_connections)
+		{
+			hrt.require_ecdhe = true;
+		}
 	}
 
 	void onTick() final

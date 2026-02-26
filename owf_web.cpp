@@ -50,6 +50,10 @@ struct owfContentTask : public Task
 			secure_connections ? &Socket::certchain_validator_default : &Socket::certchain_validator_none // Technically, insecure connections are fine for content, but we want keep-alive connections.
 		)
 	{
+		if (secure_connections)
+		{
+			hrt.require_ecdhe = true;
+		}
 		ServerWebService::setKeepAlive(_s, true);
 	}
 
@@ -120,8 +124,12 @@ struct owfHttpReverseProxyTask : public Task
 	HttpRequestTask hrt;
 
 	owfHttpReverseProxyTask(Socket& _s, HttpRequest&& hr)
-		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr))
+		: s(Scheduler::get()->getShared(_s)), hrt(std::move(hr)/*, &Socket::certchain_validator_default */)
 	{
+		if (secure_connections)
+		{
+			hrt.require_ecdhe = true;
+		}
 		ServerWebService::setKeepAlive(_s, true);
 	}
 
