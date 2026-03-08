@@ -1,7 +1,6 @@
 #include "owf_web.hpp"
 
 #include <CertStore.hpp>
-#include <DummyTask.hpp>
 #include <filesystem.hpp>
 #include <HttpRequestTask.hpp>
 #include <JsonArray.hpp>
@@ -22,6 +21,7 @@
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_hotkeys.hpp"
+#include "owf_irc.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_metadata_patches.hpp"
 #include "owf_overlay.hpp"
@@ -714,6 +714,23 @@ void start_builtin_http_server()
 			certstore->add(std::move(certchain), std::move(private_key));
 		}
 
+		ServerService irc_srv([](Socket& s, ServerService&, Server&)
+		{
+#if LOGGING
+			conout << "IRC connection from " << s.peer.toString() << std::endl;
+#endif
+			g_irc_downstream = Scheduler::get()->getShared(s);
+			irc_downstream_recv(s);
+			if (!g_irc_upstream)
+			{
+				Scheduler::get()->add<owfConnectToIrcTask>();
+			}
+		});
+		g_irc_port = (game_version >= GV(15, 0, 0) ? g_serv.bindCrypto(0, &irc_srv, certstore) : g_serv.bind(0, &irc_srv));
+#if LOGGING
+		conout << "Bound IRC proxy on TCP/" << g_irc_port << std::endl;
+#endif
+
 		SOUP_IF_UNLIKELY (!g_serv.bindOptCrypto(client_http_port, &srv, std::move(certstore)))
 		{
 			conout << ObfusString("Failed to bind TCP/").str();
@@ -724,8 +741,8 @@ void start_builtin_http_server()
 				conout << ObfusString(" The game will fail to start.").str();
 			}
 			conout << std::endl;
-			g_serv.add<DummyTask>();
 		}
+
 		g_serv.run();
 		SOUP_ASSERT_UNREACHABLE;
 	});

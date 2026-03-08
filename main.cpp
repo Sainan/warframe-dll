@@ -70,6 +70,7 @@
 #include "owf_config.hpp"
 #include "owf_console.hpp"
 #include "owf_hotkeys.hpp"
+#include "owf_irc.hpp"
 #include "owf_label_replacements.hpp"
 #include "owf_luau.hpp"
 #include "owf_metadata_patches.hpp"
@@ -534,7 +535,7 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	}
 }
 
-static void process_login_response(const char* data, size_t size)
+static std::string process_login_response(const char* data, size_t size)
 {
 	if (auto jr = json::decode(data, size); jr && jr->isObj())
 	{
@@ -546,8 +547,20 @@ static void process_login_response(const char* data, size_t size)
 #if LOGGING
 			conout << "Constructed auth_query from login response: " << auth_query << std::endl;
 #endif
+			if (secure_connections)
+			{
+				const auto pjIRC = jr->reinterpretAsObj().find(ObfusString("IRC").str());
+				if (pjIRC && pjIRC->isArr() && pjIRC->reinterpretAsArr().children.size() == 1 && pjIRC->reinterpretAsArr().children[0]->isStr())
+				{
+					g_irc_upstream_host = std::move(pjIRC->reinterpretAsArr().children[0]->reinterpretAsStr().value);
+					pjIRC->reinterpretAsArr().children[0]->reinterpretAsStr().value = ObfusString("127.0.0.1:").str();
+					pjIRC->reinterpretAsArr().children[0]->reinterpretAsStr().value.append(std::to_string(g_irc_port));
+					return jr->encode();
+				}
+			}
 		}
 	}
+	return {};
 }
 
 using string_resize_t = void(*)(GameString*, size_t);
@@ -635,7 +648,11 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 				break;
 			}
 		}
-		process_login_response(request_body.getData(), request_body.getSize());
+		if (auto replacement = process_login_response(request_body.getData(), request_body.getSize()); !replacement.empty())
+		{
+			//conout << "login response replacement: " << replacement << std::endl;
+			replace_game_string(request_body, replacement);
+		}
 		break;
 
 	case RT_HUB:
@@ -852,6 +869,10 @@ static void populate_server_prohibitions_locked(JsonObject& obj)
 
 bool set_server_tunables(const char* data, size_t size, bool delta)
 {
+#if LOGGING
+	conout << "set_server_tunables: " << std::string(data, size) << std::endl;
+#endif
+
 	std::lock_guard lock(g_server_tunables_mtx);
 	bool ok = g_server_tunables.load(data, size, delta);
 
@@ -863,6 +884,11 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
 	{
 		set_udp_proxy_upstream(e->second);
+	}
+
+	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("irc")); e != g_server_tunables.strings.end())
+	{
+		g_irc_upstream_host = e->second;
 	}
 
 	{
@@ -1308,15 +1334,30 @@ static std::string process_name_lookup(const char* data, size_t size)
 		std::string override = server_host;
 		if (lookup_action == LA_USE_IRC_HOST)
 		{
-			std::lock_guard lock(g_server_tunables_mtx);
-			if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("irc")); e != g_server_tunables.strings.end())
+			if (secure_connections)
 			{
-				override = e->second;
+				override = ObfusString("127.0.0.1:").str();
+				override.append(std::to_string(g_irc_port));
+			}
+			else
+			{
+				std::lock_guard lock(g_server_tunables_mtx);
+				if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("irc")); e != g_server_tunables.strings.end())
+				{
+					override = e->second;
+				}
+				if (const char* sep = strchr(data, ':'))
+				{
+					override.append(sep);
+				}
 			}
 		}
-		if (const char* sep = strchr(data, ':'))
+		else
 		{
-			override.append(sep);
+			if (const char* sep = strchr(data, ':'))
+			{
+				override.append(sep);
+			}
 		}
 #if LOGGING
 	conout << " -> " << override << std::endl;
