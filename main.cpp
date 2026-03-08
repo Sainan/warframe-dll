@@ -1271,7 +1271,7 @@ static void init_cache_fetching_detour(void* a1, bool a2, bool is_stripped, bool
 }
 
 
-static DetourHook legacy_dns_lookup_hook;
+static DetourHook name_lookup_hook;
 
 enum LookupAction
 {
@@ -1280,10 +1280,10 @@ enum LookupAction
 	LA_USE_IRC_HOST,
 };
 
-static std::string process_legacy_dns_lookup(const char* data, size_t size)
+static std::string process_name_lookup(const char* data, size_t size)
 {
 #if LOGGING
-	conout << "legacy_dns_lookup: " << data;
+	conout << "name_lookup: " << data;
 #endif
 
 	LookupAction lookup_action;
@@ -1330,14 +1330,14 @@ static std::string process_legacy_dns_lookup(const char* data, size_t size)
 }
 
 template <typename T>
-static bool legacy_dns_lookup_detour(void* out, T* name, bool a3)
+static bool name_lookup_detour(void* out, T* name, bool a3)
 {
-	auto override = process_legacy_dns_lookup(name->getData(), name->getSize());
+	auto override = process_name_lookup(name->getData(), name->getSize());
 	if (!override.empty())
 	{
 		name->setUnownedData(override.data(), override.size());
 	}
-	return reinterpret_cast<decltype(&legacy_dns_lookup_detour<T>)>(legacy_dns_lookup_hook.original)(out, name, a3);
+	return reinterpret_cast<decltype(&name_lookup_detour<T>)>(name_lookup_hook.original)(out, name, a3);
 }
 
 
@@ -3370,43 +3370,52 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 	if (game_version < GV(33, 0, 0))
 	{
-		void* legacy_dns_lookup;
-		if (game_version >= GV(14, 0, 0))
+		void* name_lookup;
+		/*if (game_version >= GV(35, 5, 0))
+		{
+			SIG_INST("40 55 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F9"); // U38
+			name_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+		}
+		else*/ if (game_version >= GV(14, 0, 0))
 		{
 			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? C6 41 06 01"); // 2016.12.16.14.33, 2014.07.21.18.38
-			legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			name_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 		else if (game_version >= GV(13, 4, 0))
 		{
 			SIG_INST("40 55 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2014.05.23.12.12
-			legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			name_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 		else if (game_version >= GV(11, 0, 0))
 		{
 			SIG_INST("48 89 5C 24 20 55 56 41 54 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2013.11.29.16.33
-			legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			name_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 		else
 		{
 			SIG_INST("40 55 53 41 54 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 7A 08 00"); // 2013.11.12.14.03
-			legacy_dns_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
+			name_lookup = Module(nullptr).range.scan(sig_inst).as<void*>();
 		}
 #if LOGGING
-		conout << "legacy_dns_lookup = " << legacy_dns_lookup << std::endl;
+		conout << "name_lookup = " << name_lookup << std::endl;
 #endif
-		SOUP_IF_LIKELY (legacy_dns_lookup)
+		SOUP_IF_LIKELY (name_lookup)
 		{
-			if (game_version >= GV(19, 0, 0))
+			/*if (game_version >= GV(35, 5, 0))
 			{
-				legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameString>);
+				name_lookup_hook.detour = reinterpret_cast<void*>(&name_lookup_detour<GameString>);
+			}
+			else*/ if (game_version >= GV(19, 0, 0))
+			{
+				name_lookup_hook.detour = reinterpret_cast<void*>(&name_lookup_detour<LegacyGameString>);
 			}
 			else
 			{
-				legacy_dns_lookup_hook.detour = reinterpret_cast<void*>(&legacy_dns_lookup_detour<LegacyGameStringU18>);
+				name_lookup_hook.detour = reinterpret_cast<void*>(&name_lookup_detour<LegacyGameStringU18>);
 			}
-			legacy_dns_lookup_hook.target = legacy_dns_lookup;
-			legacy_dns_lookup_hook.create();
-			legacy_dns_lookup_hook.enable();
+			name_lookup_hook.target = name_lookup;
+			name_lookup_hook.create();
+			name_lookup_hook.enable();
 		}
 		else
 		{
