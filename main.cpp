@@ -550,6 +550,35 @@ static void process_login_response(const char* data, size_t size)
 	}
 }
 
+using string_resize_t = void(*)(GameString*, size_t);
+static string_resize_t string_resize = nullptr;
+
+template <typename Str>
+static void replace_game_string(Str& str, const std::string& replacement)
+{
+	if ((replacement.size() + 1) <= str.getSize())
+	{
+		memcpy(str.getData(), replacement.c_str(), replacement.size() + 1);
+		str.shrink(replacement.size());
+		return;
+	}
+
+	if constexpr (std::is_same_v<Str, GameString>)
+	{
+		if (string_resize)
+		{
+			string_resize(&str, replacement.size());
+			memcpy(str.getData(), replacement.data(), replacement.size());
+			return;
+		}
+	}
+
+	// Gotta grow the string but don't have string_resize...
+	std::lock_guard lock(label_replacements_mtx);
+	auto ps = fossilise_string(replacement.data(), replacement.size());
+	str.setUnownedData(ps->data, ps->size);
+}
+
 template <typename Str>
 static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 {
@@ -627,18 +656,8 @@ static void* game_http_request_detour(void* a1, uintptr_t request, void* a3)
 
 					std::string replacement = ObfusString("\"hub 127.0.0.1:6951").str();
 					replacement.append(&request_body.getData()[i], request_body.getSize() - i);
-					//conout << "replacement: " << replacement << std::endl;
-					if ((replacement.size() + 1) <= request_body.getSize())
-					{
-						memcpy(request_body.getData(), replacement.c_str(), replacement.size() + 1);
-						request_body.shrink(replacement.size());
-					}
-					else
-					{
-#if LOGGING
-						conout << "CANNOT REPLACE HUB RESPONSE" << std::endl;
-#endif
-					}
+					//conout << "hub response replacement: " << replacement << std::endl;
+					replace_game_string(request_body, replacement);
 
 					break;
 				}
@@ -669,30 +688,11 @@ static void encstr_append_detour(EncryptedString::AppendData* a1, int a2)
 }
 
 static ReplacementHook encstr_discharge_hook;
-//static std::atomic<size_t> leaked_memory = 0;
-
-using string_resize_t = void(*)(GameString*, size_t);
-static string_resize_t string_resize;
 
 static void encstr_discharge_detour(EncryptedString* a1, GameString* out)
 {
 	//conout << "encstr_discharge: " << (void*)a1->app << std::endl;
-	if (string_resize)
-	{
-		string_resize(out, dec_buf.size());
-		memcpy(out->getData(), dec_buf.data(), dec_buf.size());
-	}
-	else
-	{
-		// If we don't have string_resize, we'll need to be a bit more stupid.
-		std::lock_guard lock(label_replacements_mtx);
-		auto ps = fossilise_string(dec_buf.data(), dec_buf.size());
-		out->setUnownedData(ps->data, ps->size);
-		//auto data = soup::malloc(dec_buf.size());
-		//memcpy(data, dec_buf.data(), dec_buf.size());
-		//out->setUnownedData((const char*)data, dec_buf.size());
-		//leaked_memory += dec_buf.size();
-	}
+	replace_game_string(*out, dec_buf);
 
 	dec_buf.clear();
 }
