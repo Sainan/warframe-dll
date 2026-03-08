@@ -61,18 +61,22 @@ struct owfContentTask : public Task
 	{
 		if (hrt.tickUntilDone())
 		{
+#if LOGGING
+			if (hrt.result.has_value())
+			{
+				conout << "owfContentTask: " << hrt.result->status_code << std::endl;
+			}
+			else
+			{
+				conout << "owfContentTask: " << hrt.getStatus() << std::endl;
+			}
+#endif
 			if (hrt.result.has_value() && hrt.result->status_code == 200)
 			{
-#if LOGGING
-				conout << "owfContentTask: 200" << std::endl;
-#endif
 				ServerWebService::sendContent(*static_cast<Socket*>(s.get()), std::move(*hrt.result));
 			}
 			else
 			{
-#if LOGGING
-				conout << "owfContentTask: 404" << std::endl;
-#endif
 				if (!owfOverlay::isInited())
 				{
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Windows_").str()) != std::string::npos)
@@ -184,8 +188,8 @@ void start_builtin_http_server()
 				}
 
 				// Continue in task to ask SNS
-				HttpRequest hr(server_host + ":" + std::to_string(http_port), req.path);
-				hr.use_tls = false;
+				HttpRequest hr(server_host + ":" + std::to_string(secure_connections ? https_port : http_port), req.path);
+				hr.use_tls = secure_connections;
 				hr.path_is_encoded = true;
 				Scheduler::get()->add<owfContentTask>(s, std::move(hr));
 
