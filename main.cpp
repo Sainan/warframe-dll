@@ -741,9 +741,11 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 
 static ReplacementHook ssl_verify_internal_hook;
 
-static int64_t ssl_verify_internal_detour(void* a1, void* a2)
+static int ssl_verify_internal_detour(void* a1, void* a2)
 {
 	//conout << "ssl_verify_internal called" << std::endl;
+	/*auto ret = reinterpret_cast<decltype(&ssl_verify_internal_detour)>(ssl_verify_internal_hook.original)(a1, a2);
+	conout << "ssl_verify_internal returned " << ret << std::endl;*/
 	return 1; // "Verify success"
 }
 
