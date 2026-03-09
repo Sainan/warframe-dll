@@ -119,16 +119,32 @@ struct owfConnectToIrcTask : public soup::Task
 				}
 				else
 				{
+#if LOGGING
+					conout << "owfConnectToIrcTask: Failed to establish a TCP connection" << std::endl;
+#endif
+					if (g_irc_downstream)
+					{
+						g_irc_downstream->close();
+						g_irc_downstream.reset();
+					}
 					setWorkDone();
 				}
 			}
 		}
 		else
 		{
-			if (soup::time::unixSecondsSince(started_tls_handshake_at) > 30)
+			if (g_irc_upstream->isWorkDoneOrClosed() || soup::time::unixSecondsSince(started_tls_handshake_at) > 30)
 			{
+#if LOGGING
+				conout << "owfConnectToIrcTask: TLS handshake failed or timed out" << std::endl;
+#endif
 				g_irc_upstream->close();
 				g_irc_upstream.reset();
+				if (g_irc_downstream)
+				{
+					g_irc_downstream->close();
+					g_irc_downstream.reset();
+				}
 				setWorkDone();
 			}
 		}
