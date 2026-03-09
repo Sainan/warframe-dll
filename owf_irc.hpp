@@ -27,6 +27,7 @@ inline void irc_downstream_recv(soup::Socket& s)
 			{
 				g_irc_upstream->close();
 				g_irc_upstream.reset();
+				g_irc_downstream.reset();
 				return;
 			}
 			g_irc_upstream->send(std::move(data));
@@ -60,6 +61,7 @@ inline void irc_upstream_recv(soup::Socket& s)
 			{
 				g_irc_downstream->close();
 				g_irc_downstream.reset();
+				g_irc_upstream.reset();
 				return;
 			}
 			g_irc_downstream->send(std::move(data));
