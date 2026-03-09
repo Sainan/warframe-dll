@@ -743,6 +743,13 @@ void start_builtin_http_server()
 			conout << std::endl;
 		}
 
+#if LOGGING
+		g_serv.on_connection_lost = [](Socket& s, Scheduler&)
+		{
+			conout << "Lost connection: " << s.peer.toString() << std::endl;
+		};
+#endif
+
 		g_serv.run();
 		SOUP_ASSERT_UNREACHABLE;
 	});
