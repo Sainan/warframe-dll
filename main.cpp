@@ -4116,8 +4116,9 @@ static SOUP_FORCEINLINE void create_all_hooks()
 
 #if VERBOSE_CRC32
 	{
-		//SIG_INST("48 89 5C 24 10 48 89 6C 24 18 57 48 8D 2D ? ? ? ? 49 8B F8"); // 2022.04.29.12.53
-		SIG_INST("40 57 48 8D 3D ? ? ? ? 4D 8B D8 4C 8B D2 F7 D1"); // 2019.10.31.22.42
+		SIG_INST("48 89 5C 24 10 48 89 6C 24 18 57 48 8D 2D ? ? ? ? 49 8B F8"); // 2022.04.29.12.53
+		//SIG_INST("40 57 48 8D 3D ? ? ? ? 4D 8B D8 4C 8B D2 F7 D1"); // 2019.10.31.22.42
+		//SIG_INST("40 57 4D 8B D8 4C 8B D2 F7 D1 48 8D 3D"); // 2015.12.09.17.09
 		auto crc32_impl = Module(nullptr).range.scan(sig_inst).as<void*>();
 #if LOGGING
 		conout << "crc32_impl = " << crc32_impl << std::endl;
