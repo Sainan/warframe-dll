@@ -10,8 +10,10 @@
 	],
 	"dns": [
 		"hub.warframe.com",
-		"nrs.warframe.com",
 		"arbiter.warframe.com",
+	],
+	"dns_nrs": [
+		"nrs.warframe.com",
 		"nrs.warframe.com:4950", // U15
 		"nrs2.warframe.com:4950", // U15
 		"nrs.warframe.com:3960", // 2013.11.12.14.03

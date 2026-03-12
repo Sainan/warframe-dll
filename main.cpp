@@ -1303,6 +1303,7 @@ enum LookupAction
 {
 	LA_KEEP_AS_IS,
 	LA_USE_SERVER_HOST,
+	LA_USE_NRS_HOST,
 	LA_USE_IRC_HOST,
 };
 
@@ -1319,6 +1320,10 @@ static std::string process_name_lookup(const char* data, size_t size)
 		{
 			lookup_action = LA_USE_SERVER_HOST;
 		}
+		else if (g_client_tunables.isStringInArray(joaat::compileTimeHash("dns_nrs"), joaat::hashRange(data, size)))
+		{
+			lookup_action = LA_USE_NRS_HOST;
+		}
 		else if (g_client_tunables.isStringInArray(joaat::compileTimeHash("dns_irc"), joaat::hashRange(data, size)))
 		{
 			lookup_action = LA_USE_IRC_HOST;
@@ -1332,7 +1337,19 @@ static std::string process_name_lookup(const char* data, size_t size)
 	if (lookup_action != LA_KEEP_AS_IS)
 	{
 		std::string override = server_host;
-		if (lookup_action == LA_USE_IRC_HOST)
+		if (lookup_action == LA_USE_NRS_HOST)
+		{
+			std::lock_guard lock(g_server_tunables_mtx);
+			if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("nrs")); e != g_server_tunables.strings.end())
+			{
+				override = e->second;
+			}
+			if (const char* sep = strchr(data, ':'))
+			{
+				override.append(sep);
+			}
+		}
+		else if (lookup_action == LA_USE_IRC_HOST)
 		{
 			if (secure_connections)
 			{
