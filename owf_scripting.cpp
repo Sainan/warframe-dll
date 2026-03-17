@@ -316,6 +316,9 @@ void owfScript::openLibs(lua_State* L)
 	lua_setglobal(L, "OWF_PRIVATE_BUILD");
 #endif
 
+	lua_pushboolean(L, os::isWine());
+	OWF_SET_GLOBAL(L, "OWF_IS_WINE"); // undocumented
+
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
 		pluto_pushstring(L, lang_code);
