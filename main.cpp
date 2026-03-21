@@ -17,6 +17,7 @@
 #define VERBOSE_SENDCNXLESS false
 #define VERBOSE_LZF false
 #define VERBOSE_UNCOMPRESSPKT false
+#define VERBOSE_PKTCHKSUM false // made for U10
 
 // Writes all IRC traffic to EE.log
 #define VERBOSE_IRC false
@@ -2552,6 +2553,17 @@ static bool UncompressPacket_detour(PacketData* data, GameBuffer* buffer)
 #endif
 
 
+#if VERBOSE_PKTCHKSUM
+static CompactDetourHook verify_packet_sig_hook;
+
+static bool verify_packet_sig_detour(void* a1, GameRange<const char>* data, GameRange<const char>* salt)
+{
+	conout << "verify_packet_sig: data=" << string::bin2hex(data->begin, data->end - data->begin) << ", salt=" << string::bin2hex(salt->begin, salt->end - salt->begin) << std::endl;
+	return reinterpret_cast<decltype(&verify_packet_sig_detour)>(verify_packet_sig_hook.original)(a1, data, salt);
+}
+#endif
+
+
 static ReplacementHook anticheat_sideloading_check_hook;
 static ReplacementHook anticheat_timer_check_hook;
 
@@ -4605,6 +4617,31 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			UncompressPacket_hook.target = UncompressPacket;
 			UncompressPacket_hook.create();
 			UncompressPacket_hook.enable();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+#endif
+
+#if VERBOSE_PKTCHKSUM
+	{
+		SIG_INST("40 53 55 56 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 84 24 88 00 00 00 48 8B 32");
+		auto verify_packet_sig = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		conout << "verify_packet_sig = " << verify_packet_sig << std::endl;
+#endif
+		SOUP_IF_LIKELY (verify_packet_sig)
+		{
+			verify_packet_sig_hook.detour = reinterpret_cast<void*>(&verify_packet_sig_detour);
+			verify_packet_sig_hook.target = verify_packet_sig;
+			verify_packet_sig_hook.code_cave = Module(nullptr).range.scan(CompactDetourHook::getCodeCavePattern()).as<void*>();
+#if LOGGING
+			conout << "verify_packet_sig_hook.code_cave = " << verify_packet_sig_hook.code_cave << std::endl;
+#endif
+			verify_packet_sig_hook.create();
+			verify_packet_sig_hook.enable();
 		}
 		else
 		{
