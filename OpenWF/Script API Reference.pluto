@@ -1,273 +1,308 @@
 -- The scripting API uses Pluto, a fork of Lua.
 -- - Homepage: https://pluto-lang.org/
 -- - Syntax Highlighting: https://pluto-lang.org/docs/Editor%20Integration
+end
 
 -- Classes
 
 Vector = require "pluto:vector3"
+end
 
 class Rotation
-	function __construct(public heading = 0, public pitch = 0, public bank = 0)
-	function __tostring()
+	function __construct(public heading = 0, public pitch = 0, public bank = 0) end
+	function __tostring() end
+end
 
 class Symbol
-	function __construct(public name = "")
-	function __eq(b)
-	function __tostring()
-	function c_str()
+	function __construct(public name = "") end
+	function __eq(b) end
+	function __tostring() end
+	function c_str() end
+end
 
 class Color
-	function __construct(public red, public green, public blue, public alpha = 255)
-	function __tostring()
-	function GetUInt()
+	function __construct(public red, public green, public blue, public alpha = 255) end
+	function __tostring() end
+	function GetUInt() end
+end
 
 class ObjectType
-	function __eq(other)
-	function GetName()
-	function GetFullName()
-	function GetParent()
-	function getHierarchy()
+	function __eq(other) end
+	function GetName() end
+	function GetFullName() end
+	function GetParent() end
+	function getHierarchy() end
+end
 
 class Object
-	function __eq(other)
-	function GetType()
-	function GetName()
-	function GetFullName()
-	function IsA(type)
+	function __eq(other) end
+	function GetType() end
+	function GetName() end
+	function GetFullName() end
+	function IsA(type) end
+end
 
 class Player extends Object
-	function GetAvatar()
-	function GetPlayerName()
-	function GetClanName()
-	function GetPlayerAccountIDString()
-	function GetPlayerMatchMakingString()
-	function GetHudStatus()
-	function CameraControl()
+	function GetAvatar() end
+	function GetPlayerName() end
+	function GetClanName() end
+	function GetPlayerAccountIDString() end
+	function GetPlayerMatchMakingString() end
+	function GetHudStatus() end
+	function CameraControl() end
+end
 
 class HumanPlayer extends Player
-	function IsFreeCameraActive()
-	function ToggleFreeCamera()
-	function SetFreeCameraLocked(b)
-	function IsFreeCameraLockedActive()
-	function AssignAvatar(avatar, b1 = true, b2 = true)
-	function SendGiveItem(resource, amount)
+	function IsFreeCameraActive() end
+	function ToggleFreeCamera() end
+	function SetFreeCameraLocked(b) end
+	function IsFreeCameraLockedActive() end
+	function AssignAvatar(avatar, b1 = true, b2 = true) end
+	function SendGiveItem(resource, amount) end
+end
 
 class LotusHumanPlayer extends HumanPlayer
-	function GetLoadOut()
+	function GetLoadOut() end
+end
 
 class LoadOut
-	function GetStoredItemStruct(i1, i2)
+	function GetStoredItemStruct(i1, i2) end
+end
 
-class MongoId
+class MongoId end
 
 class LotusProfileTypes.StoredItem
 	mItem
 	mModSlot
 	mCustSlot
 	mAttachedUpgrades
+end
 
 class LotusProfileTypes.WeaponInfo
 	mItemId
 	mItemType
 	mModularParts
-	function GetCustomization()
+	function GetCustomization() end
+end
 
 class LotusProfileTypes.UpgradeInfo
 	mItemType
 	mUpgradeFingerprint
+end
 
-class BaseEntity extends Object
+class BaseEntity extends Object end
 
 class Entity extends BaseEntity
-	function GetPosition()
-	function SetPosition(pos)
-	function DistanceToEntity(b)
-	function GetRotation()
-	function GetSimRotation()
-	function SetRotation(rot)
-	function GetHealth()
-	function SetHealth(health)
-	function GetDrawOnTop()
-	function SetDrawOnTop(b)
-	function GetMeshScale()
-	function SetMeshScale(f)
-	function GetMesh()
-	function SetMesh(object, b1, b2)
-	function Attach(type, optionalBoneSymbol, optionalPosOffset)
-	function GetAttachment(type)
-	function GetAllAttachments(type)
-	function GetTag()
-	function SetTag(symbol)
-	function FirePort(port)
-	function SetVisibility(visible, delegateToAttachments = false)
-	function GetSpeed()
-	function Destroy()
-	function SetMaterialParam(symbol, f1, f2 = 3.4028235e38, f3 = 3.4028235e38, f4 = 3.4028235e38, b = false)
-	function RunScript(resource, funcSymbol, b)
+	function GetPosition() end
+	function SetPosition(pos) end
+	function DistanceToEntity(b) end
+	function GetRotation() end
+	function GetSimRotation() end
+	function SetRotation(rot) end
+	function GetHealth() end
+	function SetHealth(health) end
+	function GetDrawOnTop() end
+	function SetDrawOnTop(b) end
+	function GetMeshScale() end
+	function SetMeshScale(f) end
+	function GetMesh() end
+	function SetMesh(object, b1, b2) end
+	function Attach(type, optionalBoneSymbol, optionalPosOffset) end
+	function GetAttachment(type) end
+	function GetAllAttachments(type) end
+	function GetTag() end
+	function SetTag(symbol) end
+	function FirePort(port) end
+	function SetVisibility(visible, delegateToAttachments = false) end
+	function GetSpeed() end
+	function Destroy() end
+	function SetMaterialParam(symbol, f1, f2 = 3.4028235e38, f3 = 3.4028235e38, f4 = 3.4028235e38, b = false) end
+	function RunScript(resource, funcSymbol, b) end
+end
 
 class BaseAvatar extends Entity
-	function GetMaxHealth(scaled = true)
-	function SetMaxHealth(health, setBase = false)
-	function Suicide()
-	function DamageControl()
-	function InventoryControl()
-	function InputControl()
-	function GiveItem(type, b)
-	function MotionControl()
-	function GetView()
-	function SetView(rot)
-	function GetCameraView()
-	function SetCameraView(rot)
-	function SetEyePosition(pos)
-	function GetFaction()
-	function GetOriginalFaction()
-	function SetFaction(symbol)
-	function GetLocTag()
-	function ClearAgent()
-	function PushInputFilter(resource)
-	function SetCustomAnimController(type)
-	function GetAnimControllerType()
-	function SetCustomMotionController(type)
-	function SetCustomCameraController(type)
-	function EnableRagdollRecovery(b1, b2)
-	function DamageDD(damageData)
-	function GetRagdoll()
-	function SetPostureModifier(i, b)
-	function PlayAnimation(resource)
+	function GetMaxHealth(scaled = true) end
+	function SetMaxHealth(health, setBase = false) end
+	function Suicide() end
+	function DamageControl() end
+	function InventoryControl() end
+	function InputControl() end
+	function GiveItem(type, b) end
+	function MotionControl() end
+	function GetView() end
+	function SetView(rot) end
+	function GetCameraView() end
+	function SetCameraView(rot) end
+	function SetEyePosition(pos) end
+	function GetFaction() end
+	function GetOriginalFaction() end
+	function SetFaction(symbol) end
+	function GetLocTag() end
+	function ClearAgent() end
+	function PushInputFilter(resource) end
+	function SetCustomAnimController(type) end
+	function GetAnimControllerType() end
+	function SetCustomMotionController(type) end
+	function SetCustomCameraController(type) end
+	function EnableRagdollRecovery(b1, b2) end
+	function DamageDD(damageData) end
+	function GetRagdoll() end
+	function SetPostureModifier(i, b) end
+	function PlayAnimation(resource) end
 
 class Avatar extends BaseAvatar
-	function ControlCamera(b)
-	function isFollowedByCamera()
+	function ControlCamera(b) end
+	function isFollowedByCamera() end
+end
 
 class LotusAvatar extends Avatar
-	function IsAvatarFriendly(other)
-	function PlayEmote(resource)
-	function GetUIName()
-	function SetUIName(str)
-	function HasDynamicUIName()
-	function SetDynamicUIName(b)
-	function SetCollisionEnabled(b)
-	function SetCinematicID(symbol)
+	function IsAvatarFriendly(other) end
+	function PlayEmote(resource) end
+	function GetUIName() end
+	function SetUIName(str) end
+	function HasDynamicUIName() end
+	function SetDynamicUIName(b) end
+	function SetCollisionEnabled(b) end
+	function SetCinematicID(symbol) end
+end
 
 class DamageControllerBase extends Object
-	function GiveTemporaryImmunity(a, b)
-	function HasTemporaryImmunity()
-	function RemoveTemporaryImmunity()
-	function GetShield()
-	function SetShield(i)
-	function GetMaxShield()
-	function SetMaxShield(i)
-	function GetOverguardAmount()
-	function SetOverguardAmount(i)
-	function GetOverguardMax()
-	function SetOverguardMax(i)
+	function GiveTemporaryImmunity(a, b) end
+	function HasTemporaryImmunity() end
+	function RemoveTemporaryImmunity() end
+	function GetShield() end
+	function SetShield(i) end
+	function GetMaxShield() end
+	function SetMaxShield(i) end
+	function GetOverguardAmount() end
+	function SetOverguardAmount(i) end
+	function GetOverguardMax() end
+	function SetOverguardMax(i) end
+end
 
 class DamageController extends DamageControllerBase
+end
 
 class LotusDamageController extends DamageController
-	function GetArmourRating()
-	function SetArmourRating(i)
+	function GetArmourRating() end
+	function SetArmourRating(i) end
+end
 
 class InventoryControllerBase extends Object
-	function RemoveItem(slot, b)
-	function GetWeaponInHand(hand)
-	function AddUpgrade(upgradeType, operationType, value, _reserved = nil, _reserved = nil, damageType = DamageType.DT_ANY)
+	function RemoveItem(slot, b) end
+	function GetWeaponInHand(hand) end
+	function AddUpgrade(upgradeType, operationType, value, _reserved = nil, _reserved = nil, damageType = DamageType.DT_ANY) end
+end
 
 class LotusInventoryController extends InventoryControllerBase
-	function GetActivePowerSuit()
-	function DoItemDrop()
-	function GetConsumableItem(idx)
-	function UseConsumableItem(idx)
+	function GetActivePowerSuit() end
+	function DoItemDrop() end
+	function GetConsumableItem(idx) end
+	function UseConsumableItem(idx) end
+end
 
-class ResourceBase extends Object
+class ResourceBase extends Object end
 
-class Mesh extends ResourceBase
+class Mesh extends ResourceBase end
 
 class Item extends Object
-	function GetAttachmentEntity(category, hand = 4)
-	function GetEnergyColor(outColor, secondary = false)
+	function GetAttachmentEntity(category, hand = 4) end
+	function GetEnergyColor(outColor, secondary = false) end
 
 class WeaponBase extends Item
+end
 
 class WeaponEx extends WeaponBase
-	function GetActiveImpactBehavior()
-	function AddUpgrade(obj)
+	function GetActiveImpactBehavior() end
+	function AddUpgrade(obj) end
 
 class LotusWeapon extends WeaponEx
-	function GetXP()
-	function SetXP(xp)
-	function GetCustomization()
-	function SetCustomization(cust)
-	function SetModularParts(parts, gilded)
+	function GetXP() end
+	function SetXP(xp) end
+	function GetCustomization() end
+	function SetCustomization(cust) end
+	function SetModularParts(parts, gilded) end
 
-class WeaponUpgrade extends Item
+class WeaponUpgrade extends Item end
 
 class LotusWeaponUpgradeBase extends WeaponUpgrade
-	function InitializeFromFingerprint(str)
+	function InitializeFromFingerprint(str) end
+end
 
-class LotusArtifactUpgrade extends LotusWeaponUpgradeBase
+class LotusArtifactUpgrade extends LotusWeaponUpgradeBase end
 
 class WeaponImpactBehavior extends Object
 	criticalHitChance
 	criticalHitDamageMultiplier
 	instantImpulse
+end
 
 class PowerSuit extends LotusWeapon
-	function SetEnergy(value)
-	function SetMaxEnergy(value)
-	function GetUnmodifiedMaxEnergy()
-	function GetCurEnergy()
-	function GetMaxEnergy()
-	function GetAbilityByIndex(i)
-	function AddAbilityByType(type, idx)
+	function SetEnergy(value) end
+	function SetMaxEnergy(value) end
+	function GetUnmodifiedMaxEnergy() end
+	function GetCurEnergy() end
+	function GetMaxEnergy() end
+	function GetAbilityByIndex(i) end
+	function AddAbilityByType(type, idx) end
+end
 
 class PowerSuitAbility extends Item
-	function GetCooldownDuration()
-	function SetCooldownDuration(val)
-	function GetCooldownTime()
-	function SetCooldownTime(val)
-	function AllowReactivate(b)
+	function GetCooldownDuration() end
+	function SetCooldownDuration(val) end
+	function GetCooldownTime() end
+	function SetCooldownTime(val) end
+	function AllowReactivate(b) end
+end
 
 class InputControllerBase extends Object
+end
 
 class InputController extends InputControllerBase
-	function SetStopMovement(b)
+	function SetStopMovement(b) end
+end
 
 class GameRules extends Object
-	function IsPauseMenuShowing()
-	function RequestPause()
-	function RequestUnpause()
-	function RequestResource(name, callback)
-	function RequestSlomo(f)
-	function CancelSlomo()
-	function IsSlomo()
-	function getSlomoltiplier()
-	function setSlomoltiplier(f)
+	function IsPauseMenuShowing() end
+	function RequestPause() end
+	function RequestUnpause() end
+	function RequestResource(name, callback) end
+	function RequestSlomo(f) end
+	function CancelSlomo() end
+	function IsSlomo() end
+	function getSlomoltiplier() end
+	function setSlomoltiplier(f) end
+end
 
 class GameRulesImpl extends GameRules
-	function SetPauseDisabled(b)
-	function CanUnstick()
-	function UnstickLocalPlayer()
+	function SetPauseDisabled(b) end
+	function CanUnstick() end
+	function UnstickLocalPlayer() end
+end
 
 class LotusBaseGameRules extends GameRulesImpl
-	function GetCurrentStarChart()
-	function GetStoreManifest()
-	function AddActiveLevelAuraUpgrade(type)
-	function RemoveActiveLevelAuraUpgrade(type)
-	function GetMission()
-	function IsPlayingHardGameModeMission()
+	function GetCurrentStarChart() end
+	function GetStoreManifest() end
+	function AddActiveLevelAuraUpgrade(type) end
+	function RemoveActiveLevelAuraUpgrade(type) end
+	function GetMission() end
+	function IsPlayingHardGameModeMission() end
+end
 
 class LotusGameRules extends LotusBaseGameRules
-	function OpenMissionContinueDialog()
+	function OpenMissionContinueDialog() end
+end
 
 class LotusAttractModeGameRules extends GameRulesImpl
-	function GetStarChart()
-	function GetStoreManifest()
+	function GetStarChart() end
+	function GetStoreManifest() end
+end
 
 class RadialSolarMap extends Object
-	function GetRegions()
-	function BuildMissionForLocation(symbol)
-	function SetLevelStreamingArgs(locationSymbol, openLevelArgs)
+	function GetRegions() end
+	function BuildMissionForLocation(symbol) end
+	function SetLevelStreamingArgs(locationSymbol, openLevelArgs) end
+end
 
 class RadialRegion
 	name
@@ -275,6 +310,7 @@ class RadialRegion
 	droneDamage
 	damageChance
 	resources
+end
 
 class RadialSector
 	name
@@ -284,6 +320,7 @@ class RadialSector
 	mission
 	challenges
 	tileset
+end
 
 class LotusMissionInfo
 	missionType
@@ -302,13 +339,14 @@ class LotusMissionInfo
 	missionRewardExtra
 	buddyAgents
 	miscItemFee
-	function EncodeAsString()
-	function GetEnemies()
-	function GetExtraEnemies()
-	function GetMissionEventResources()
-	function GetExtraMissionEventResources()
-	function GetAdvancedAiDirectorSpawns()
-	function GetCustomAdvancedAiDirectorSpawns()
+	function EncodeAsString() end
+	function GetEnemies() end
+	function GetExtraEnemies() end
+	function GetMissionEventResources() end
+	function GetExtraMissionEventResources() end
+	function GetAdvancedAiDirectorSpawns() end
+	function GetCustomAdvancedAiDirectorSpawns() end
+end
 
 class MissionReward
 	credits
@@ -317,52 +355,63 @@ class MissionReward
 	countedItems
 	countedStoreItems
 	randomizedItems
+end
 
 class MissionRewardItemManifest extends ResourceBase
-	function GetMaxAvailableTier()
-	function PickRandomItemIndex(tier, f)
-	function GetTieredItem(tier, i)
+	function GetMaxAvailableTier() end
+	function PickRandomItemIndex(tier, f) end
+	function GetTieredItem(tier, i) end
+end
 
 class MissionRewardItem
-	function GetStoreItem()
+	function GetStoreItem() end
+end
 
 class MissionAI
 	agent
+end
 
-class ChallengeBase extends Object
+class ChallengeBase extends Object end
 
-class GenericChallenge extends ChallengeBase
+class GenericChallenge extends ChallengeBase end
 
-class ChallengeBase extends Object
+class ChallengeBase extends Object end
 
 class StoreManifest extends Object
-	function GetStoreItemsOfType(objectType)
-	function GetGiftBonusItems()
+	function GetStoreItemsOfType(objectType) end
+	function GetGiftBonusItems() end
+end
 
 class StoreItem extends Object
-	function GetProductCategory()
-	function ExcludeFromCodex()
-	function ShowInMarket()
+	function GetProductCategory() end
+	function ExcludeFromCodex() end
+	function ShowInMarket() end
+end
 
 class GiftBonusItem
 	gift
 	reward
+end
 
 class CountedItem
 	mItemType
 	mItemCount
+end
 
 class CountedStoreItem
 	mStoreItem
 	mItemCount
+end
 
 class PickUpTypeRarity
 	mStoreItem
 	mItemType
 	mRarity
+end
 
 class CodexManifest
-	function GetEnvironmentEntries()
+	function GetEnvironmentEntries() end
+end
 
 class CodexTypes.Entry
 	locName
@@ -370,80 +419,93 @@ class CodexTypes.Entry
 	reqScans
 	secret
 	type
+end
 
-class Texture extends ResourceBase
+class Texture extends ResourceBase end
 
 class MotionControllerBase
-	function GetSpeedMultiplier()
-	function SetSpeedMultiplier(f)
+	function GetSpeedMultiplier() end
+	function SetSpeedMultiplier(f) end
+end
 
-class LotusMotionController extends MotionControllerBase
+class LotusMotionController extends MotionControllerBase end
 
 class LotusSpaceFlightMotionController extends LotusMotionController
-	function EnableFlight(b)
+	function EnableFlight(b) end
+end
 
 class CameraControllerBase extends Object
-	function setFovMultiplier(fMul)
-	function getFovMultiplier()
-	function SetBaseFovOverride(fov)
-	function GetBaseFovOverride()
-	function GetViewOffset()
-	function SetViewOffset(vec)
-	function GetAimViewOffset()
-	function SetAimViewOffset(vec)
-	function GetRunViewOffset()
-	function SetRunViewOffset(vec)
-	function GetDodgeOffset()
-	function SetDodgeOffset(vec)
-	function GetInAirViewOffset()
-	function SetInAirViewOffset(vec)
-	function SetInAirAimViewOffset(vec)
-	function SetMeleeOffset(vec)
-	function SetCoverLeftViewOffset(vec)
-	function SetCoverRightViewOffset(vec)
-	function SetCrouchCoverAimLeftViewOffset(vec)
-	function SetCrouchCoverAimRightViewOffset(vec)
-	function SetWallRunLeftViewOffset(vec)
-	function SetWallRunRightViewOffset(vec)
-	function SetWallRunLeftAimViewOffset(vec)
-	function SetWallRunRightAimViewOffset(vec)
+	function setFovMultiplier(fMul) end
+	function getFovMultiplier() end
+	function SetBaseFovOverride(fov) end
+	function GetBaseFovOverride() end
+	function GetViewOffset() end
+	function SetViewOffset(vec) end
+	function GetAimViewOffset() end
+	function SetAimViewOffset(vec) end
+	function GetRunViewOffset() end
+	function SetRunViewOffset(vec) end
+	function GetDodgeOffset() end
+	function SetDodgeOffset(vec) end
+	function GetInAirViewOffset() end
+	function SetInAirViewOffset(vec) end
+	function SetInAirAimViewOffset(vec) end
+	function SetMeleeOffset(vec) end
+	function SetCoverLeftViewOffset(vec) end
+	function SetCoverRightViewOffset(vec) end
+	function SetCrouchCoverAimLeftViewOffset(vec) end
+	function SetCrouchCoverAimRightViewOffset(vec) end
+	function SetWallRunLeftViewOffset(vec) end
+	function SetWallRunRightViewOffset(vec) end
+	function SetWallRunLeftAimViewOffset(vec) end
+	function SetWallRunRightAimViewOffset(vec) end
+end
 
 class EngineNpcMgr extends Object
-	function GetAiDirector()
+	function GetAiDirector() end
+end
 
 class EngineAiDirector extends Object
-	function SetMaxPopulationSpawnCount(i)
-	function SetMaxAI(i)
-	function SetDifficulty(i)
-	function ClearEncounters()
-	function AddEncounter(type)
-	function SelectEncounterHintsWithType(type, minDist, maxDist)
-	function ActivateSpecificEncounterAtSpecificHint(hint, type)
-	function AddGlobalEncounterTag(symbol)
-	function RemoveGlobalEncounterTag(symbol)
+	function SetMaxPopulationSpawnCount(i) end
+	function SetMaxAI(i) end
+	function SetDifficulty(i) end
+	function ClearEncounters() end
+	function AddEncounter(type) end
+	function SelectEncounterHintsWithType(type, minDist, maxDist) end
+	function ActivateSpecificEncounterAtSpecificHint(hint, type) end
+	function AddGlobalEncounterTag(symbol) end
+	function RemoveGlobalEncounterTag(symbol) end
+end
 
 class NpcManager extends EngineNpcMgr
-	function PauseAllAgents()
-	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel)
+	function PauseAllAgents() end
+	function CreateAgentAtPosition(type, pos, rot, optionalSymbol, optionalLevel) end
+end
 
 class EngineNpcAgent extends Object
-	function GetAvatar()
+	function GetAvatar() end
+end
 
 class LotusNpcAvatar extends LotusAvatar
-	function GetEnhancementCount()
-	function GetEnhancementLocTag()
+	function GetEnhancementCount() end
+	function GetEnhancementLocTag() end
+end
 
 class LotusVehicleAvatar extends LotusNpcAvatar
-	function GetRider()
-	function GetTrickController()
+	function GetRider() end
+	function GetTrickController() end
+end
 
 class TrickController extends Object
-	function SetMaxPointsPerCombo(pts)
+	function SetMaxPointsPerCombo(pts) end
+end
 
 class HudStatus extends Object
+end
 
 class LotusHudStatus extends HudStatus
-	function GetFlashMarkers()
+	function GetFlashMarkers() end
+end
 
 class FlashMarker
 	garbage
@@ -451,32 +513,39 @@ class FlashMarker
 	distanceToEye
 	pos
 	baseMarkerInfo
-	function ScreenX()
-	function ScreenY()
-	function ScreenZ()
+	function ScreenX() end
+	function ScreenY() end
+	function ScreenZ() end
+end
 
 class BaseMarkerInfo extends Entity
-	function SetMarkerType(i)
-	function SetDisplayRange(range)
+	function SetMarkerType(i) end
+	function SetDisplayRange(range) end
+end
 
 class Effect extends Entity
-	function SetTint(color)
+	function SetTint(color) end
+end
 
 class LensFlare extends Entity
-	function SetTint(color)
+	function SetTint(color) end
+end
 
 class Decoration extends Entity
-	function TriggerAnimation()
-	function IsTriggeredAnimationDone()
+	function TriggerAnimation() end
+	function IsTriggeredAnimationDone() end
+end
 
 class Ragdoll extends Entity
-	function ApplyGlobalForce(vec, forceType)
+	function ApplyGlobalForce(vec, forceType) end
+end
 
 class WeaponCustomization
-	function GetSkin(iSlot)
-	function SetSkin(objectType, iSlot)
-	function GetColors(i)
-	function SetColors(i, v)
+	function GetSkin(iSlot) end
+	function SetSkin(objectType, iSlot) end
+	function GetColors(i) end
+	function SetColors(i, v) end
+end
 
 class CustomizationColorPalette
 	mTintColor0
@@ -487,26 +556,31 @@ class CustomizationColorPalette
 	mEmissiveColor1
 	mEnergyColor
 	mEnergyColor1
-	function GetColor(i)
-	function SetColor(i, c)
-	function Initialized(i)
-	function SetInitialized(i, b)
+	function GetColor(i) end
+	function SetColor(i, c) end
+	function Initialized(i) end
+	function SetInitialized(i, b) end
+end
 
 class OverlayBase extends Object
+end
 
 class FlashInstance extends OverlayBase
-	function AttachToEntity(ent, off, rot, vecScale)
-	function Execute(func, str)
-	function Close()
+	function AttachToEntity(ent, off, rot, vecScale) end
+	function Execute(func, str) end
+	function Close() end
 
 class OverlayMgr
-	function SetSelectedStyle(resource)
+	function SetSelectedStyle(resource) end
+end
 
 class PlayerProfile
-	function GetAccountIDString()
+	function GetAccountIDString() end
+end
 
 class LevelInfo
 	postProcess
+end
 
 class PostProcess
 	blur
@@ -551,131 +625,135 @@ class PostProcess
 	sunShaftsMultiplier
 	sunShaftsFogAttenuation
 	sunShafts
+end
 
 class Engine.OpenLevelArgs
-	function SetLevel(level)
-	function SetGameRules(gamerules)
-	function AddContextTag(tag)
-	function AddContextObject(objectType)
+	function SetLevel(level) end
+	function SetGameRules(gamerules) end
+	function AddContextTag(tag) end
+	function AddContextObject(objectType) end
+end
 
 class Engine.DamageData
 	baseAmount
 	criticalChance
 	criticalMultiplier
 	injuryType
+end
 
 class UISys.ScriptResLoader
-	function IsDone()
-	function SpotLoad()
-	function Abort()
+	function IsDone() end
+	function SpotLoad() end
+	function Abort() end
+end
 
--- Global functions
+-- Global functions end
 
-function IsNull(val)
-function Sleep(ms)
+function IsNull(val) end
+function Sleep(ms) end
 
-function Type(name)
-function Resource(name) -- constructs an Object instance
-function WeakResource(name) -- constructs an ObjectType instance
-function Range(minValue, maxValue)
+function Type(name) end
+function Resource(name) -- constructs an Object instance end
+function WeakResource(name) -- constructs an ObjectType instance end
+function Range(minValue, maxValue) end
 
-function Localize(loctag, subs = {})
-function AngleToDirection(rot)
+function Localize(loctag, subs = {}) end
+function AngleToDirection(rot) end
 
-function Engine.OpenLevel(args)
+function Engine.OpenLevel(args) end
 
-function UISys.ScriptResLoader_Create(names)
+function UISys.ScriptResLoader_Create(names) end
 
--- OpenWF global functions
+-- OpenWF global functions end
 
-function yield()
-function owf_get_stop_requested()
-function owf_create_thread(f)
-function get_lang_code()
-function get_core_dict(lang = get_lang_code())
-function get_webui_dict(lang = get_lang_code())
-function owf_get_build_label()
-function owf_get_build_version()
-function owf_get_build_hash()
-function owf_get_server_host()
-function owf_get_http_port()
-function owf_get_https_port()
-function owf_get_auth_query()
-function owf_using_secure_connections()
-function owf_get_client_http_port()
-function mem_scan_exe(sig)
-function mem_read_i8(addr)
-function mem_read_i16(addr)
-function mem_read_i32(addr)
-function mem_read_i64(addr)
-function mem_read_f32(addr)
-function mem_write_f32(addr, val)
-function chat_subscribe_prefix(prefix, block)
-function chat_unsubscribe_prefix(prefix)
-function chat_subscribe_outgoing_prefix(prefix)
-function chat_unsubscribe_outgoing_prefix(prefix)
-function chat_system_reply(text)
-function chat_add_to_sent_history(text)
-function chat_get_sent_history()
-function chat_get_sent_history_index()
-function chat_set_sent_history_index(idx)
-function owf_register_custom_route(path, mime, content)
-function owf_unregister_custom_route(path)
-function owf_register_dynamic_custom_route(path)
-function owf_unregister_dynamic_custom_route(path)
-function owf_dynamic_custom_route_response(inst, mime, content)
-function owf_script_add_toggle(name, value = false)
-function owf_script_get_name()
-function owf_script_get_instance_id()
-function owf_get_available_scripts()
-function owf_get_running_scripts()
-function owf_get_running_scripts_ex()
-function owf_start_script(name)
-function owf_start_script_inline(code)
-function owf_stop_script(name)
-function owf_toggle_script(name)
-function owf_logout()
-function make_screenshot_bmp(x, y, width, height)
+function yield() end
+function owf_get_stop_requested() end
+function owf_create_thread(f) end
+function get_lang_code() end
+function get_core_dict(lang = get_lang_code()) end
+function get_webui_dict(lang = get_lang_code()) end
+function owf_get_build_label() end
+function owf_get_build_version() end
+function owf_get_build_hash() end
+function owf_get_server_host() end
+function owf_get_http_port() end
+function owf_get_https_port() end
+function owf_get_auth_query() end
+function owf_using_secure_connections() end
+function owf_get_client_http_port() end
+function mem_scan_exe(sig) end
+function mem_read_i8(addr) end
+function mem_read_i16(addr) end
+function mem_read_i32(addr) end
+function mem_read_i64(addr) end
+function mem_read_f32(addr) end
+function mem_write_f32(addr, val) end
+function chat_subscribe_prefix(prefix, block) end
+function chat_unsubscribe_prefix(prefix) end
+function chat_subscribe_outgoing_prefix(prefix) end
+function chat_unsubscribe_outgoing_prefix(prefix) end
+function chat_system_reply(text) end
+function chat_add_to_sent_history(text) end
+function chat_get_sent_history() end
+function chat_get_sent_history_index() end
+function chat_set_sent_history_index(idx) end
+function owf_register_custom_route(path, mime, content) end
+function owf_unregister_custom_route(path) end
+function owf_register_dynamic_custom_route(path) end
+function owf_unregister_dynamic_custom_route(path) end
+function owf_dynamic_custom_route_response(inst, mime, content) end
+function owf_script_add_toggle(name, value = false) end
+function owf_script_get_name() end
+function owf_script_get_instance_id() end
+function owf_get_available_scripts() end
+function owf_get_running_scripts() end
+function owf_get_running_scripts_ex() end
+function owf_start_script(name) end
+function owf_start_script_inline(code) end
+function owf_stop_script(name) end
+function owf_toggle_script(name) end
+function owf_logout() end
+function make_screenshot_bmp(x, y, width, height) end
 
-function owf_reload_label_replacements()
+function owf_reload_label_replacements() end
 
-function owf_save_config()
-function get_high_damage_numbers_patch()
-function set_high_damage_numbers_patch(b)
-function get_skip_mission_start_timer()
-function set_skip_mission_start_timer(b)
-function get_disable_profanity_filter()
-function set_disable_profanity_filter(b)
-function get_simulacrum_blacklisted()
-function set_simulacrum_blacklisted(b)
-function get_simulacrum_whitelisted()
-function set_simulacrum_whitelisted(b)
-function get_alternative_loading()
-function set_alternative_loading(b)
-function get_ee_log_in_console()
-function set_ee_log_in_console(b)
-function get_fov_override()
-function set_fov_override(f)
+function owf_save_config() end
+function get_high_damage_numbers_patch() end
+function set_high_damage_numbers_patch(b) end
+function get_skip_mission_start_timer() end
+function set_skip_mission_start_timer(b) end
+function get_disable_profanity_filter() end
+function set_disable_profanity_filter(b) end
+function get_simulacrum_blacklisted() end
+function set_simulacrum_blacklisted(b) end
+function get_simulacrum_whitelisted() end
+function set_simulacrum_whitelisted(b) end
+function get_alternative_loading() end
+function set_alternative_loading(b) end
+function get_ee_log_in_console() end
+function set_ee_log_in_console(b) end
+function get_fov_override() end
+function set_fov_override(f) end
 
-function owf_is_key_down(vk)
-function get_active_input_filter()
-function get_active_input_filter_allows_hotkeys()
-function owf_reload_hotkeys()
+function owf_is_key_down(vk) end
+function get_active_input_filter() end
+function get_active_input_filter_allows_hotkeys() end
+function owf_reload_hotkeys() end
 
-function register_websocket_message_prefix(prefix)
-function unregister_websocket_message_prefix(prefix)
-function owf_broadcast_message(message, optionalRecipient)
+function register_websocket_message_prefix(prefix) end
+function unregister_websocket_message_prefix(prefix) end
+function owf_broadcast_message(message, optionalRecipient) end
 
-function owf_script_register_channel(name)
-function owf_script_unregister_channel(name)
-function owf_script_send_message(channel, text)
-function owf_script_send_reply(inst, text)
-function owf_script_is_reply_pending(inst)
-function owf_script_get_reply(inst)
+function owf_script_register_channel(name) end
+function owf_script_unregister_channel(name) end
+function owf_script_send_message(channel, text) end
+function owf_script_send_reply(inst, text) end
+function owf_script_is_reply_pending(inst) end
+function owf_script_get_reply(inst) end
 
-function owf_command(cmd)
-function owf_register_command(cmd, cb)
-function owf_unregister_command(cmd)
+function owf_command(cmd) end
+function owf_register_command(cmd, cb) end
+function owf_unregister_command(cmd) end
 
 -- OpenWF events
 
@@ -687,59 +765,59 @@ OWF_EVT_CALLBACK = 5
 OWF_EVT_WEBSOCKET_MESSAGE = 6
 OWF_EVT_SCRIPT_MESSAGE = 7
 
-function owf_next_event()
+function owf_next_event() end
 
 -- OpenWF Overlay. Any pixel with RGB=255,0,255 will show the game window underneath.
 
 OWF_FONT_SIMPLE8
 OWF_FONT_SIMPLE5
 
-function owf_overlay_get_size()
-function owf_overlay_add_rect(x, y, w, h, r, g, b)
-function owf_overlay_add_text(x, y, text, font, r, g, b, scale = 1)
-function owf_overlay_set_visibility(id, visible)
-function owf_overlay_set_colour(id, r, g, b)
-function owf_overlay_set_text(id, text)
-function owf_overlay_remove(id)
-function owf_overlay_update()
-function owf_measure_text(font, text)
+function owf_overlay_get_size() end
+function owf_overlay_add_rect(x, y, w, h, r, g, b) end
+function owf_overlay_add_text(x, y, text, font, r, g, b, scale = 1) end
+function owf_overlay_set_visibility(id, visible) end
+function owf_overlay_set_colour(id, r, g, b) end
+function owf_overlay_set_text(id, text) end
+function owf_overlay_remove(id) end
+function owf_overlay_update() end
+function owf_measure_text(font, text) end
 
 -- Global variables
 
 gRegion
-	function GetLocalPlayer()
-	function GetLocalPlayerAvatar()
-	function GetGameCamera()
-	function GetGameRules()
-	function GetAvatars()
-	function FindTagged(symbol)
-	function FindAll(type)
-	function CreateObject(type)
-	function CreateEntity(type, pos, rot)
-	function GetNpcMgr()
-	function Raycast(fromPos, toPos, avatar, _reserved_please_set_to_nil, outPos)
-	function GetLevelInfo()
+	function GetLocalPlayer() end
+	function GetLocalPlayerAvatar() end
+	function GetGameCamera() end
+	function GetGameRules() end
+	function GetAvatars() end
+	function FindTagged(symbol) end
+	function FindAll(type) end
+	function CreateObject(type) end
+	function CreateEntity(type, pos, rot) end
+	function GetNpcMgr() end
+	function Raycast(fromPos, toPos, avatar, _reserved_please_set_to_nil, outPos) end
+	function GetLevelInfo() end
 
 gGameRules
 gStarChart
 
 gFlashMgr
-	function ExecuteToolMenuCommand(resource)
-	function GotoMovie(resource)
+	function ExecuteToolMenuCommand(resource) end
+	function GotoMovie(resource) end
 
 gGameData
-	function SyncInventoryFromDB(callback)
-	function SyncWorldStateFromDB(callback)
+	function SyncInventoryFromDB(callback) end
+	function SyncWorldStateFromDB(callback) end
 
 gPlayerProfileMgr
-	function IsLoggedIn()
-	function GetPlayerProfile(i)
+	function IsLoggedIn() end
+	function GetPlayerProfile(i) end
 
 gClient
-	function GetOverlayMgr()
+	function GetOverlayMgr() end
 
 gMatchingService
-	function SendRelayP2P(target, msg)
+	function SendRelayP2P(target, msg) end
 
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
@@ -804,10 +882,10 @@ _T.ShowNotification -- function(text, optIcon, ...) or nil
 -- Preloaded modules
 
 "EE.Interface.Utilities"
-	ShowMessage = function(str)
+	ShowMessage = function(str) end
 
 "Lotus.Interface.LotusNetworkUtilities"
-	Host_LoadMission = function(node, missionInfo)
+	Host_LoadMission = function(node, missionInfo) end
 
 "Lotus.Interface.LotusUtilities"
 	SLIDER
@@ -824,9 +902,9 @@ _T.ShowNotification -- function(text, optIcon, ...) or nil
 	IMAGE
 
 "Lotus.Scripts.Libs.ObjectiveText"
-	SetPrimaryObjText = function(text)
-	ClearPrimaryObjText = function()
+	SetPrimaryObjText = function(text) end
+	ClearPrimaryObjText = function() end
 
 "Lotus.Scripts.Libs.DuviriActivityLib"
-	ModifyEncounterLimit = function(type, delta)
-	IsEncounterLimitReached = function(type)
+	ModifyEncounterLimit = function(type, delta) end
+	IsEncounterLimitReached = function(type) end
