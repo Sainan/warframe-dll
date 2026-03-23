@@ -543,6 +543,7 @@ function ivkr_pop_entity()
 				case "/Lotus/Types/Game/LotusAvatar": return new LotusAvatar()
 				case "/Lotus/Types/Game/LotusNpcAvatar": return new LotusNpcAvatar()
 				case "/Lotus/Types/Game/LotusVehicleAvatar": return new LotusVehicleAvatar()
+				case "/EE/Types/Effects/DynamicSky": return new DynamicSky()
 			end
 			type = type:GetParent()
 		until not type
@@ -2767,6 +2768,20 @@ class PostProcess extends owfProxy
 	__name = "PostProcess"
 end
 
+class DynamicSky extends owfUserdata
+	function GetTimeOfDay()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("DynamicSky", "GetTimeOfDay"), 1)
+		return ivkr_pop_number()
+	end
+
+	function GetTimeOfDayRate()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("DynamicSky", "GetTimeOfDayRate"), 1)
+		return ivkr_pop_number()
+	end
+end
+
 Engine = {}
 
 class Engine.OpenLevelArgs extends owfUserdata
@@ -3172,6 +3187,7 @@ gLotusGameRulesType = Type("/Lotus/Types/Game/LotusGameRules")
 gLotusBasePvpGameRulesType = Type("/Lotus/Types/Game/LotusBasePvpGameRules")
 gLotusHubGameRulesType = Type("/Lotus/Types/Game/LotusHubGameRules")
 gLotusDuelGameRulesType = Type("/Lotus/Types/Game/LotusDuelGameRules")
+gDynamicSkyType = Type("/EE/Types/Effects/DynamicSky")
 
 ZERO_VECTOR = Vector()
 ZERO_ROTATION = Rotation()
