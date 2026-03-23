@@ -738,6 +738,9 @@ gPlayerProfileMgr
 gClient
 	function GetOverlayMgr()
 
+gMatchingService
+	function SendRelayP2P(target, msg)
+
 gEntityType = Type("/EE/Types/Engine/Entity")
 gBaseAvatarType = Type("/EE/Types/Engine/BaseAvatar")
 gLotusNpcAvatarType = Type("/Lotus/Types/Game/LotusNpcAvatar")

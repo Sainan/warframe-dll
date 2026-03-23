@@ -3154,7 +3154,6 @@ gClient = {
 	end
 }
 
--- undocumented
 gMatchingService = {
 	function SendRelayP2P(target, msg)
 		ivkr_push_pointer(get_matchingservice())
