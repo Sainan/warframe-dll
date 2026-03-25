@@ -4759,9 +4759,7 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 {
 	if (game_version >= GV(38, 5, 0))
 	{
-		//SIG_INST("48 89 5C 24 08 57 48 83 EC 20 48 8B FA 48 8B D9 E8 ? ? ? ? 80 7B 0F FF 75 1D");
-		//string_resize = Module(nullptr).range.scan(sig_inst).as<string_resize_t>();
-		SIG_INST("48 8D 4B 18 33 D2 E8 ? ? ? ? 33 D2 48 8D 4B 38 E8 ? ? ? ? 48 8B 4C 24 30");
+		SIG_INST("48 8D 4B 18 33 D2 E8 ? ? ? ? 33 D2 48 8D 4B 38 E8 ? ? ? ? 48 8B ? 24");
 		auto string_resize_callsite = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
 		conout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
