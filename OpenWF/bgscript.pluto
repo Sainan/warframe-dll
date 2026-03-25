@@ -6,7 +6,16 @@ end
 
 owf_register_custom_route("/favicon.ico", "image/png", owf_repo_find("OpenWF/favicon.png"))
 
-io.contents("OpenWF/Download Latest DLL.ps1", owf_repo_find("OpenWF/Download Latest DLL.ps1"))
+local function is_wine()
+	local ntdll = require"ffi".open("ntdll.dll")
+	return (pcall(ntdll.wrap, ntdll, "void", "wine_get_version"))
+end
+
+if is_wine() then
+	io.contents("OpenWF/Download Latest DLL.sh", owf_repo_find("OpenWF/Download Latest DLL.sh"))
+else
+	io.contents("OpenWF/Download Latest DLL.ps1", owf_repo_find("OpenWF/Download Latest DLL.ps1"))
+end
 io.contents("OpenWF/Reference Manual.html", owf_repo_find("OpenWF/Reference Manual.html"))
 io.contents("OpenWF/Script API Reference.pluto", owf_repo_find("OpenWF/Script API Reference.pluto"))
 if true then
