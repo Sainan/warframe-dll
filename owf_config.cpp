@@ -223,7 +223,7 @@ void owfConfig::load()
 	}
 	else
 	{
-		disable_firewall_prompt = true;
+		disable_firewall_prompt = (game_version <= GV(15, 14, 0));
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("secure_connections")); it != config->reinterpretAsObj().end() && it->second->isBool())
