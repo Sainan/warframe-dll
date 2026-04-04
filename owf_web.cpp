@@ -83,7 +83,7 @@ struct owfContentTask : public Task
 					{
 						if (hrt.hr.path.substr(19, 2) == ObfusString("xx").str())
 						{
-							auto msg = ObfusString("The Windows_xx cache is missing or outdated.").str();
+							auto msg = ObfusString("The Windows_xx manifest is missing or outdated. This indicates that the game was partially updated.").str();
 							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
 							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());*/
 							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
