@@ -1158,11 +1158,7 @@ static std::string process_args_str(const char* str)
 		}
 		else
 		{
-			arguments_to_inject.append(ObfusString("-webserver:http://").str());
-			arguments_to_inject.append(server_host);
-			arguments_to_inject.push_back(':');
-			arguments_to_inject.append(std::to_string(http_port));
-			arguments_to_inject.append(ObfusString("/api/ ").str());
+			arguments_to_inject.append(ObfusString("-webserver:http://dummy.openwf.io/api/ ").str());
 		}
 
 		// This prevents the game from modifying H.Misc.cache by pre-populating the "device id".

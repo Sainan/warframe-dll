@@ -20,6 +20,7 @@
 		"nrs2.warframe.com:3960", // 2013.11.12.14.03
 		"nrs.playwarframe.com:3960", // U8
 		"nrs2.playwarframe.com:3960", // U8
+		"dummy.openwf.io:3960", // U7
 	],
 	"dns_irc": [
 		"irc.warframe.com:6695", // U15
