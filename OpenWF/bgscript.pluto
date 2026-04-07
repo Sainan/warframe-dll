@@ -376,6 +376,11 @@ local wscoro = coroutine.create(function()
 						if data.tunables_delta then
 							owf_tunables_load(json.encode(data.tunables_delta), true)
 						end
+						if data.ports then
+							owf_set_http_port(data.ports.http)
+							owf_set_https_port(data.ports.https)
+							break
+						end
 					end
 					--print("Got nil from wsRecv")
 				else

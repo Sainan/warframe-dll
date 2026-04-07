@@ -2239,6 +2239,20 @@ void owfScript::openBgscriptLibs()
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "mem_set_rwx");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		http_port = (uint16_t)luaL_checkinteger(L, 1);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_set_http_port");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		https_port = (uint16_t)luaL_checkinteger(L, 1);
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_set_https_port");
 }
 
 bool owfScript::loadFile(std::string&& path)
