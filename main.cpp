@@ -5286,18 +5286,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Reject too new versions (depends on core dict)
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
 		{
-#if PRIVATE
-			auto title = get_bootstrapper_title();
-			if (MessageBoxA(0, "Public build would terminate here because the version is too new. Continue?", title.c_str(), MB_YESNO) != IDYES)
-			{
-				return exit(1), FALSE;
-			}
-#else
 			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
 			auto title = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
 			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
 			return exit(1), FALSE;
-#endif
 		}
 
 		if (!ee_log_in_console || game_version >= GV(23, 10, 0))
