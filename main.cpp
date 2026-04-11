@@ -3590,117 +3590,120 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if !MINIMAL_HOOKS
+	if (game_version >= GV(36, 0, 0) && game_version < GV(41, 1, 0))
 	{
-		SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? FE FF FF 48 81 EC ? 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 98 68 FF FF FF 44 0F 29 A0 58 FF FF FF 44 0F 29 A8 48 FF FF FF 44 0F 29 B0 38 FF FF FF 44 0F 29 B8 28 FF FF FF");
-		auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
-#if LOGGING
-	conout << "get_total_damage = " << get_total_damage << std::endl;
-#endif
-		SOUP_IF_LIKELY (get_total_damage)
 		{
-			get_total_damage_hook.detour = reinterpret_cast<void*>(&get_total_damage_detour);
-			get_total_damage_hook.target = get_total_damage;
-			get_total_damage_hook.create();
-			get_total_damage_hook.enable();
+			SIG_INST("48 8B C4 48 89 58 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? FE FF FF 48 81 EC ? 02 00 00 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 98 68 FF FF FF 44 0F 29 A0 58 FF FF FF 44 0F 29 A8 48 FF FF FF 44 0F 29 B0 38 FF FF FF 44 0F 29 B8 28 FF FF FF");
+			auto get_total_damage = Module(nullptr).range.scan(sig_inst).as<void*>();
+#if LOGGING
+		conout << "get_total_damage = " << get_total_damage << std::endl;
+#endif
+			SOUP_IF_LIKELY (get_total_damage)
+			{
+				get_total_damage_hook.detour = reinterpret_cast<void*>(&get_total_damage_detour);
+				get_total_damage_hook.target = get_total_damage;
+				get_total_damage_hook.create();
+				get_total_damage_hook.enable();
+			}
 		}
-	}
 
-	if (game_version >= GV(40, 0, 0))
-	{
-		SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84"); // "66 41 0F 6E F6 0F 5B F6 0F" works in 41.1.0 but the hook doesn't have the desired effect.
-		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
-#if LOGGING
-		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
-#endif
-		SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
+		if (game_version >= GV(40, 0, 0))
 		{
-			uint8_t detour_bytes[] = {
-				// prepare call
-				/*  0 */ 0x44, 0x89, 0xF1, // mov ecx, r14d
-				/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+			SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84"); // "66 41 0F 6E F6 0F 5B F6 0F" works in 41.1.0 but the hook doesn't have the desired effect.
+			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+			conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
+#endif
+			SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
+			{
+				uint8_t detour_bytes[] = {
+					// prepare call
+					/*  0 */ 0x44, 0x89, 0xF1, // mov ecx, r14d
+					/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
 
-				/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
+					/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
 
-				// compact numbers on
-				/* 15 */ 0x41, 0xFF, 0xD2, // call r10
-				/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
-				/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
+					// compact numbers on
+					/* 15 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
 
-				// compact numbers off
-				/* 34 */ 0x41, 0xFF, 0xD2, // call r10
-				/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
-				/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
-			};
-			static_assert(sizeof(detour_bytes) == 50 + 3);
-			*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
-			*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
-			*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
+					// compact numbers off
+					/* 34 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
+				};
+				static_assert(sizeof(detour_bytes) == 50 + 3);
+				*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
+				*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
+				*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
 
-			void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
-			memcpy(detour, detour_bytes, sizeof(detour_bytes));
+				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
+				memcpy(detour, detour_bytes, sizeof(detour_bytes));
 
-			uint8_t trampoline[] = {
-				0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				0x41, 0xff, 0xe2, // jmp r10
-			};
-			*(void**)(trampoline + 2) = detour;
-			memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
-			memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
+				uint8_t trampoline[] = {
+					0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					0x41, 0xff, 0xe2, // jmp r10
+				};
+				*(void**)(trampoline + 2) = detour;
+				memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
+				memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
+			}
+			else
+			{
+				conout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.").str() << std::endl;
+			}
 		}
 		else
 		{
-			conout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.").str() << std::endl;
-		}
-	}
-	else
-	{
-		SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
-		auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
+			SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
+			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
 #if LOGGING
-		conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
+			conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
-		{
-			uint8_t detour_bytes[] = {
-				// prepare call
-				/*  0 */ 0x44, 0x89, 0xE1, // mov ecx, r12d
-				/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+			SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
+			{
+				uint8_t detour_bytes[] = {
+					// prepare call
+					/*  0 */ 0x44, 0x89, 0xE1, // mov ecx, r12d
+					/*  3 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
 
-				/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
+					/* 13 */ 0x74, (34 - 15), // if compact numbers are off, jump to the appropriate branch
 
-				// compact numbers on
-				/* 15 */ 0x41, 0xFF, 0xD2, // call r10
-				/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
-				/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
+					// compact numbers on
+					/* 15 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 18 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 21 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 31 */ 0x41, 0xFF, 0xE2, // jmp r10
 
-				// compact numbers off
-				/* 34 */ 0x41, 0xFF, 0xD2, // call r10
-				/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
-				/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
-			};
-			static_assert(sizeof(detour_bytes) == 50 + 3);
-			*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
-			*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
-			*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
+					// compact numbers off
+					/* 34 */ 0x41, 0xFF, 0xD2, // call r10
+					/* 37 */ 0x0F, 0x28, 0xF0, // movaps xmm6, xmm0
+					/* 40 */ 0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					/* 50 */ 0x41, 0xFF, 0xE2, // jmp r10
+				};
+				static_assert(sizeof(detour_bytes) == 50 + 3);
+				*(void**)(detour_bytes + 3 + 2) = reinterpret_cast<void*>(&get_dmg_to_display);
+				*(void**)(detour_bytes + 21 + 2) = dmg_number_patch_addr.add(17).as<void*>(); // no jump at jz = compact numbers on -> go to `call log10f`
+				*(void**)(detour_bytes + 40 + 2) = dmg_number_patch_addr.add(10).rip().as<void*>(); // jumped at jz = compact numbers off -> go to branch
 
-			void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
-			memcpy(detour, detour_bytes, sizeof(detour_bytes));
+				void* detour = memGuard::alloc(sizeof(detour_bytes), memGuard::ACC_RWX);
+				memcpy(detour, detour_bytes, sizeof(detour_bytes));
 
-			uint8_t trampoline[] = {
-				0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
-				0x41, 0xff, 0xe2, // jmp r10
-			};
-			*(void**)(trampoline + 2) = detour;
-			memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
-			memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
-		}
-		else
-		{
-			conout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
+				uint8_t trampoline[] = {
+					0x49, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // movabs r10, (8 bytes)
+					0x41, 0xff, 0xe2, // jmp r10
+				};
+				*(void**)(trampoline + 2) = detour;
+				memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
+				memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
+			}
+			else
+			{
+				conout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
+			}
 		}
 	}
 #endif
