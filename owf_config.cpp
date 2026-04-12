@@ -223,7 +223,7 @@ void owfConfig::load()
 	}
 	else
 	{
-		disable_firewall_prompt = (game_version <= GV(15, 14, 0));
+		disable_firewall_prompt = (game_version < GV(29, 0, 0)); // Starting with U29, an empty NRS array will not cause a popup.
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("secure_connections")); it != config->reinterpretAsObj().end() && it->second->isBool())
