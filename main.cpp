@@ -1129,7 +1129,7 @@ static std::string process_args_str(const char* str)
 				arguments_to_inject.push_back(fallback_graphicsDriver == ObfusString("dx11").str() ? '1' : '0');
 				arguments_to_inject.push_back(' ');
 
-				if (game_version >= GV(9, 0, 0)) // U8 does not seem to recognise this argument, unsure when it was added.
+				if (game_version >= GV(15, 0, 0))
 				{
 					arguments_to_inject.append(ObfusString("-dx10:").str());
 					arguments_to_inject.push_back(fallback_graphicsDriver == ObfusString("dx10").str() ? '1' : '0');
