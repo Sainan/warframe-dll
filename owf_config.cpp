@@ -100,7 +100,16 @@ void owfConfig::load()
 	}
 	else
 	{
-		fallback_graphicsDriver = ObfusString("dx11").str();
+		if (!std::filesystem::exists(ObfusString("Cache.Windows/B.ShaderDx11.cache").str())
+			&& std::filesystem::exists(ObfusString("Cache.Windows/B.ShaderDx9.cache").str())
+			)
+		{
+			fallback_graphicsDriver = ObfusString("dx9").str();
+		}
+		else
+		{
+			fallback_graphicsDriver = ObfusString("dx11").str();
+		}
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_windowMode")); it != config->reinterpretAsObj().end())
