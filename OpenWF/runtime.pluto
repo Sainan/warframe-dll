@@ -2404,7 +2404,7 @@ class LotusHudStatus extends HudStatus
 		local t = {}
 		local i = 1
 		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
-			t:insert(new FlashMarker())
+			t:insert(new LotusHudStatusTypes.FlashMarker())
 			++i
 		end
 		ivkr_pop(2)
@@ -2412,8 +2412,10 @@ class LotusHudStatus extends HudStatus
 	end
 end
 
-class FlashMarker extends owfUserdata
-	__name = "LotusHudStatusTypes::FlashMarker"
+LotusHudStatusTypes = {}
+
+class LotusHudStatusTypes.FlashMarker extends owfUserdata
+	__name = "LotusHudStatusTypes.FlashMarker"
 
 	function ScreenX()
 		self:pushToIvkr()
@@ -2434,8 +2436,8 @@ class FlashMarker extends owfUserdata
 	end
 
 	function __index(name)
-		if FlashMarker[name] then
-			return FlashMarker[name]
+		if LotusHudStatusTypes.FlashMarker[name] then
+			return LotusHudStatusTypes.FlashMarker[name]
 		end
 		switch name do
 			case "garbage":

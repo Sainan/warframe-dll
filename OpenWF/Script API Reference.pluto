@@ -507,7 +507,7 @@ class LotusHudStatus extends HudStatus
 	function GetFlashMarkers() end
 end
 
-class FlashMarker
+class LotusHudStatusTypes.FlashMarker
 	garbage
 	markerType
 	distanceToEye
