@@ -421,18 +421,20 @@ class LotusHumanPlayer extends HumanPlayer
 	function GetLoadOut()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("LotusHumanPlayer", "GetLoadOut"), 1)
-		return new LoadOut()
+		return new LotusProfileTypes.LoadOut()
 	end
 end
 
-class LoadOut extends owfUserdata
+LotusProfileTypes = {}
+
+class LotusProfileTypes.LoadOut extends owfUserdata
 	__name = "LoadOut"
 
 	function GetStoredItemStruct(i1, i2)
 		self:pushToIvkr()
 		ivkr_push_int(i1)
 		ivkr_push_int(i2)
-		ivkr_call(ivkr_find_method("LoadOut", "GetStoredItemStruct"), 3)
+		ivkr_call(ivkr_find_method("LotusProfileTypes::LoadOut", "GetStoredItemStruct"), 3)
 		return new LotusProfileTypes.StoredItem()
 	end
 end
@@ -449,8 +451,6 @@ class MongoId extends owfUserdata
 	end
 end
 
-LotusProfileTypes = {}
-
 class LotusProfileTypes.StoredItem extends owfUserdata
 	__name = "LotusProfileTypes.StoredItem"
 
@@ -458,19 +458,19 @@ class LotusProfileTypes.StoredItem extends owfUserdata
 		parent:__construct()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("StoredItem", "mItem"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::StoredItem", "mItem"), 1)
 		self.mItem = new LotusProfileTypes.WeaponInfo()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("StoredItem", "mModSlot"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::StoredItem", "mModSlot"), 1)
 		self.mModSlot = math.tointeger(ivkr_pop_number())
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("StoredItem", "mCustSlot"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::StoredItem", "mCustSlot"), 1)
 		self.mCustSlot = math.tointeger(ivkr_pop_number())
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("StoredItem", "mAttachedUpgrades"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::StoredItem", "mAttachedUpgrades"), 1)
 		self.mAttachedUpgrades = ivkr_pop_array(LotusProfileTypes.UpgradeInfo)
 	end
 end
@@ -482,11 +482,11 @@ class LotusProfileTypes.WeaponInfo extends owfUserdata
 		parent:__construct()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("WeaponInfo", "mItemId"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::WeaponInfo", "mItemId"), 1)
 		self.mItemId = new MongoId()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("WeaponInfo", "mItemType"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::WeaponInfo", "mItemType"), 1)
 		if ivkr_type(-1) > 0 then
 			self.mItemType = new ObjectType()
 		else
@@ -494,13 +494,13 @@ class LotusProfileTypes.WeaponInfo extends owfUserdata
 		end
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("WeaponInfo", "mModularParts"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::WeaponInfo", "mModularParts"), 1)
 		self.mModularParts = ivkr_pop_array(ObjectType)
 	end
 
 	function GetCustomization()
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_method("WeaponInfo", "GetCustomization"), 1)
+		ivkr_call(ivkr_find_method("LotusProfileTypes::WeaponInfo", "GetCustomization"), 1)
 		return new WeaponCustomization()
 	end
 end
@@ -512,7 +512,7 @@ class LotusProfileTypes.UpgradeInfo extends owfUserdata
 		parent:__construct()
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("UpgradeInfo", "mItemType"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::UpgradeInfo", "mItemType"), 1)
 		if ivkr_type(-1) > 0 then
 			self.mItemType = new ObjectType()
 		else
@@ -520,7 +520,7 @@ class LotusProfileTypes.UpgradeInfo extends owfUserdata
 		end
 
 		self:pushToIvkr()
-		ivkr_call(ivkr_find_getter("UpgradeInfo", "mUpgradeFingerprint"), 1)
+		ivkr_call(ivkr_find_getter("LotusProfileTypes::UpgradeInfo", "mUpgradeFingerprint"), 1)
 		self.mUpgradeFingerprint = ivkr_pop_string()
 	end
 end

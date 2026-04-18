@@ -65,7 +65,7 @@ class LotusHumanPlayer extends HumanPlayer
 	function GetLoadOut() end
 end
 
-class LoadOut
+class LotusProfileTypes.LoadOut
 	function GetStoredItemStruct(i1, i2) end
 end
 
