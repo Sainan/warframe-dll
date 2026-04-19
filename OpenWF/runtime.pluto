@@ -2043,6 +2043,19 @@ end
 class CodexManifest extends owfUserdata
 	__name = "CodexManifest"
 
+	function GetAllEntries()
+		self:pushToIvkr()
+		ivkr_call(ivkr_find_method("CodexManifest", "GetAllEntries"), 1)
+		local t = {}
+		local i = 1
+		while (ivkr_push_int(i) and nil) or (ivkr_gettable(-2) > 0) do
+			t:insert(new CodexTypes.Entry())
+			++i
+		end
+		ivkr_pop(2)
+		return t
+	end
+
 	function GetEnvironmentEntries()
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_method("CodexManifest", "GetEnvironmentEntries"), 1)
@@ -2071,7 +2084,11 @@ class CodexTypes.Entry extends owfUserdata
 
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "icon"), 1)
-		self.icon = new Texture()
+		if ivkr_type(-1) > 0 then
+			self.icon = new Texture()
+		else
+			ivkr_pop(1)
+		end
 
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "reqScans"), 1)
@@ -2083,7 +2100,11 @@ class CodexTypes.Entry extends owfUserdata
 
 		self:pushToIvkr()
 		ivkr_call(ivkr_find_getter("CodexTypes::Entry", "type"), 1)
-		self.type = new ObjectType()
+		if ivkr_type(-1) > 0 then
+			self.type = new ObjectType()
+		else
+			ivkr_pop(1)
+		end
 	end
 end
 
