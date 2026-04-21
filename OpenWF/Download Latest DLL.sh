@@ -22,6 +22,7 @@ if [[ -f "Hotfix.owf" ]]; then
 	hotfix_sha256=$(sha256sum "Hotfix.owf" | awk '{print $1}')
 fi
 
+should_sleep=false
 if [[ "$sha256" != "$latest_sha256" || "$hotfix_sha256" != "$latest_hotfix_sha256" ]]; then
 	if [[ -n "$latest_hotfix" ]]; then
 		echo "Downloading OpenWF Bootstrapper v$latest_version $latest_hotfix..."
@@ -42,6 +43,7 @@ if [[ "$sha256" != "$latest_sha256" || "$hotfix_sha256" != "$latest_hotfix_sha25
 	fi
 else
 	echo "Your OpenWF Bootstrapper is up-to-date."
+	should_sleep=true
 fi
 
 if [[ "$dll_path" == "../wtsapi32.dll" ]]; then
@@ -49,4 +51,8 @@ if [[ "$dll_path" == "../wtsapi32.dll" ]]; then
 		echo "WINEDLLOVERRIDES=\"wtsapi32.dll=n,b\" wine Warframe.x64.exe" > "../Launch with OpenWF.sh"
 		chmod +x "../Launch with OpenWF.sh"
 	fi
+fi
+
+if [[ $should_sleep = true ]]; then
+	sleep 2
 fi
