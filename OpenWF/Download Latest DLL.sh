@@ -11,9 +11,6 @@ if [[ -f "../dwmapi.dll" ]]; then
 	dll_path="../dwmapi.dll"
 elif [[ -f "../version.dll" ]]; then
 	dll_path="../version.dll"
-elif [[ ! -f "../Launch with OpenWF.sh" ]]; then
-	echo "WINEDLLOVERRIDES=\"wtsapi32.dll=n,b\" wine Warframe.x64.exe" > "../Launch with OpenWF.sh"
-	chmod +x "../Launch with OpenWF.sh"
 fi
 
 sha256=""
@@ -45,4 +42,11 @@ if [[ "$sha256" != "$latest_sha256" || "$hotfix_sha256" != "$latest_hotfix_sha25
 	fi
 else
 	echo "Your OpenWF Bootstrapper is up-to-date."
+fi
+
+if [[ "$dll_path" == "../wtsapi32.dll" ]]; then
+	if [[ ! -f "../Launch with OpenWF.sh" ]]; then
+		echo "WINEDLLOVERRIDES=\"wtsapi32.dll=n,b\" wine Warframe.x64.exe" > "../Launch with OpenWF.sh"
+		chmod +x "../Launch with OpenWF.sh"
+	fi
 fi
