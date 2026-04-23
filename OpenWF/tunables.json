@@ -35,9 +35,14 @@
 		"irc.warframe.com:6669", // 2013.11.12.14.03
 		"irc.playwarframe.com:6665", // U8
 		"irc.playwarframe.com:6666", // U8
-		"irc.playwarframe.com:6667",
+		"irc.playwarframe.com:6667", // U8
 		"irc.playwarframe.com:6668", // U8
 		"irc.playwarframe.com:6669", // U8
+		"dummy.openwf.io:6665", // U7
+		"dummy.openwf.io:6666", // U7
+		"dummy.openwf.io:6667", // U7
+		"dummy.openwf.io:6668", // U7
+		"dummy.openwf.io:6669", // U7
 	],
 	"invipbl": 0, // If non-zero, disallows connections to public instances, such as these: https://www.shodan.io/search?query=http.title%3A%22OpenWF+WebUI%22
 	"remote_allowed_days": 42,
