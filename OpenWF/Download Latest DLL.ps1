@@ -54,7 +54,11 @@ else {
 }
 
 if (-not (Test-Path "../Launch with OpenWF.bat")) {
-	[System.IO.File]::WriteAllText("../Launch with OpenWF.bat", "start Warframe.x64.exe", (New-Object System.Text.UTF8Encoding($false)))
+	[System.IO.File]::WriteAllText(
+		(Join-Path $PSScriptRoot "../Launch with OpenWF.bat"),
+		"start Warframe.x64.exe",
+		(New-Object System.Text.UTF8Encoding($false))
+	)
 }
 
 Rename-Item -Path "sideloadify-cli.cache" -NewName "sideloadify-cli.exe"
