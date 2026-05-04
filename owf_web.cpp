@@ -349,7 +349,7 @@ void start_builtin_http_server()
 				{
 					JsonObject obj;
 					populate_full_status(obj);
-					ServerWebService::sendText(s, obj.encodePretty());
+					ServerWebService::sendData(s, "application/json", obj.encodePretty());
 				}
 				break;
 
@@ -370,7 +370,7 @@ void start_builtin_http_server()
 				break;
 
 			case soup::joaat::compileTimeHash("/scripts"):
-				ServerWebService::sendText(s, get_available_scripts().encodePretty());
+				ServerWebService::sendData(s, "application/json", get_available_scripts().encodePretty());
 				break;
 
 			case soup::joaat::compileTimeHash("/start_script"):
@@ -417,7 +417,7 @@ void start_builtin_http_server()
 					{
 						arr.children.emplace_back(soup::make_unique<JsonString>(name));
 					}
-					ServerWebService::sendText(s, arr.encodePretty());
+					ServerWebService::sendData(s, "application/json", arr.encodePretty());
 				}
 				break;
 
@@ -546,7 +546,7 @@ void start_builtin_http_server()
 					JsonObject obj;
 					obj.add(ObfusString("build_version"), std::string(build_version, 16));
 					obj.add(ObfusString("build_hash"), build_hash[0] ? std::string(build_hash, 22) : std::string());
-					ServerWebService::sendText(s, obj.encodePretty());
+					ServerWebService::sendData(s, "application/json", obj.encodePretty());
 				}
 				break;
 
@@ -557,7 +557,7 @@ void start_builtin_http_server()
 //#if LABEL_REPLACEMENTS
 					obj.add(ObfusString("fossilised"), static_cast<int64_t>(fossilised_memory.load()));
 //#endif
-					ServerWebService::sendText(s, obj.encodePretty());
+					ServerWebService::sendData(s, "application/json", obj.encodePretty());
 				}
 				break;
 
@@ -592,7 +592,7 @@ void start_builtin_http_server()
 						{
 							EeNotationParser par;
 							auto json = par.parse(e->second.final_data);
-							ServerWebService::sendText(s, json->encodePretty());
+							ServerWebService::sendData(s, "application/json", json->encodePretty());
 						}
 						else
 						{
@@ -614,7 +614,7 @@ void start_builtin_http_server()
 					{
 						if (JsonObject out; owf_command(urlenc::decode(req.path.begin() + 1, req.path.end()), out))
 						{
-							ServerWebService::sendText(s, out.encodePretty());
+							ServerWebService::sendData(s, "application/json", out.encodePretty());
 							break;
 						}
 					}
