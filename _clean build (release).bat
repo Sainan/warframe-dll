@@ -9,4 +9,5 @@ del dwmapi.exp
 del dwmapi.lib
 del version.res
 
-tools\pluto tools\embed_checksum.pluto
+REM tools\pluto tools\embed_checksum.pluto
+tools\upx -9 dwmapi.dll

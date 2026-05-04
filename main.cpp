@@ -1,6 +1,7 @@
 #include "main.hpp"
 
 #define VERIFY_EXE_SIG false
+#define VERIFY_DLL_CHECKSUM false
 #define ASK_SERVER_FOR_TUNABLES true
 #define DISABLE_XP_BASED_LEVEL_CAPPING true
 #define PROVIDE_VERSION_INFO true
@@ -762,7 +763,7 @@ static volatile const uint8_t expected_dll_sha256[0x20] = { 0x6D, 0xF7, 0xA9, 0x
 
 static int verify_dll_integrity()
 {
-#if PRIVATE
+#if PRIVATE || !VERIFY_DLL_CHECKSUM
 	return 0;
 #else
 	auto dll = string::fromFile(dll_path_utf8);
