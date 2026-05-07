@@ -106,7 +106,7 @@ void owfScript::init()
 	luau_GlobalState::panic_func_offset = g_repo.getVersionedU64(soup::joaat::compileTimeHash("OpenWF/vv/off/luau_GlobalState_panic_func.json"), game_version);
 }
 
-static ObfusString runtime_script_name("OpenWF Script Runtime");
+static ObfusString runtime_script_name("Script Runtime");
 
 static std::unordered_map<uint32_t, uintptr_t> lua_exe_scan_cache;
 
