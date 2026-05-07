@@ -92,12 +92,18 @@ function parse_metadata_patches(str, filename)
 				malformed_line(filename, linenum, line)
 			end
 		elseif line:startswith("$") then
-			if "clear" in line then
-				if is_in_patch_scope(linenum, line) then
-					patch.discard_original = true
+			if is_in_patch_scope(linenum, line) then
+				for line:sub(2):split(";") as flag do
+					if flag == "clear" then
+						patch.discard_original = true
+					elseif flag == "debug" then
+						patch.debug = true
+					else
+						print_to_console("[Metadata Patches] Ignoring unknown flag: "..flag)
+						print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
+						print_to_console("[Metadata Patches] - What: "..line)
+					end
 				end
-			else
-				malformed_line(filename, linenum, line)
 			end
 		elseif #line ~= 0 and line[1] ~= "#" then
 			if is_in_patch_scope(linenum, line) then
@@ -119,7 +125,7 @@ function load_metadata_patches(str, filename)
 				print_to_console("[Metadata Patches] - Note: > and & are used to start new patches and therefore need to be followed by valid paths to patch.")
 				continue
 			end
-			new_patch(key, patch.prefix, patch.discard_original)
+			new_patch(key, patch.prefix, patch.discard_original, patch.debug)
 			for k, v in patch.replacements do
 				add_replacement(k, v)
 			end

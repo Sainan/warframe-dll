@@ -1983,6 +1983,7 @@ static void load_metadata_patches()
 		}
 		current_patch->prefix.append(pluto_checkstring(L, 2));
 		current_patch->discard_original = (current_patch->discard_original || lua_toboolean(L, 3));
+		current_patch->debug = (current_patch->debug || lua_toboolean(L, 4));
 		metadata_patches_in_use = true;
 		return 0;
 	});
@@ -2097,12 +2098,29 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 							}
 							else if (n->isInt())
 							{
-								n->reinterpretAsInt().value = soup::string::toIntOpt<int64_t>(qa.second).value();
+								if (!soup::string::toIntOpt<int64_t>(qa.second, soup::string::TI_FULL).consume(n->reinterpretAsInt().value))
+								{
+									if (!soup::string::toIntOpt<int64_t>(qa.second).consume(n->reinterpretAsInt().value))
+									{
+										conout << ObfusString("[Metadata Patches] Invalid integer value: ").str() << qa.second << std::endl;
+										conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
+									}
+									else if (patch.debug)
+									{
+										conout << ObfusString("[Metadata Patches] Truncated to integer: ").str() << qa.second << std::endl;
+										conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
+									}
+								}
 							}
 							else
 							{
 								n->asFloat().value = std::stod(qa.second);
 							}
+						}
+						else if (patch.debug)
+						{
+							conout << ObfusString("[Metadata Patches] ").str() << qa.first << ObfusString(" did not resolve in ").str() << path << name << std::endl;
+							conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
 						}
 					}
 					text = EeNotationParser::unparse(*jr);
@@ -2110,6 +2128,7 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 				catch (const std::exception& e)
 				{
 					conout << ObfusString("[Metadata Patches] Error applying query assignment: ").str() << e.what() << std::endl;
+					conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
 				}
 			}
 			buf.append(text);

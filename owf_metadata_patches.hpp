@@ -17,6 +17,7 @@ struct MetadataPatch
 
 	std::string final_data;
 	bool discard_original = false;
+	bool debug = false;
 	bool is_implicit = false;
 	bool applied = false;
 };
