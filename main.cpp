@@ -2574,6 +2574,20 @@ static void report_critical_failure(std::string msg)
 	MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 }
 
+static bool should_setup_optional_conditional_feature(void* ptr)
+{
+#if PRIVATE
+	return ptr != nullptr;
+#else
+	if (!ptr)
+	{
+		// Pattern scan has failed, but it was conditional; this shouldn't happen in a public build.
+		report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
+	}
+	return true;
+#endif
+}
+
 void start_bgscript()
 {
 	std::string code;
@@ -3460,14 +3474,10 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "device_id_insn = " << device_id_insn.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (device_id_insn)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(device_id_insn.as<void*>()))
 		{
 			//device_id_mask = device_id_insn.add(3).as<uint64_t&>();
 			device_id_ptr = device_id_insn.add(7).rip().as<uint64_t*>();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
@@ -3786,37 +3796,30 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_set_global = " << lua_set_global << std::endl;
 #endif
-		SOUP_IF_LIKELY (lua_set_global)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(lua_set_global))
 		{
 			lua_set_global_hook.detour = reinterpret_cast<void*>(&lua_set_global_detour);
 			lua_set_global_hook.target = lua_set_global;
 			lua_set_global_hook.create();
 			lua_set_global_hook.enable();
 		}
-		else
-		{
-			log_optional_scan_failure(false);
-		}
 	}
 #endif
 
 #if !MINIMAL_HOOKS
+	if (have_scripting)
 	{
 		ObfusString str("UpdateFlashMarkers");
 		auto lua_LotusHudStatus_UpdateFlashMarkers_hash = Module(nullptr).range.scan(hash_to_pattern(wf_hash(str.c_str())));
 #if LOGGING
 		conout << "lua_LotusHudStatus_UpdateFlashMarkers_hash = " << lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (lua_LotusHudStatus_UpdateFlashMarkers_hash)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(lua_LotusHudStatus_UpdateFlashMarkers_hash.as<void*>()))
 		{
 			auto lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_hash.add(8).as<luau_CFunction*>();
 			lua_LotusHudStatus_UpdateFlashMarkers_og = *lua_LotusHudStatus_UpdateFlashMarkers_fp;
 			memGuard::setAllowedAccess(lua_LotusHudStatus_UpdateFlashMarkers_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 			*lua_LotusHudStatus_UpdateFlashMarkers_fp = lua_LotusHudStatus_UpdateFlashMarkers_detour;
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 #endif
@@ -3829,7 +3832,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "register_enum_callsite = " << register_enum_callsite.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (register_enum_callsite)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(register_enum_callsite.as<void*>()))
 		{
 			auto register_enum = register_enum_callsite.add(9).rip().as<void*>();
 
@@ -3837,10 +3840,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			register_enum_hook.target = register_enum;
 			register_enum_hook.create();
 			register_enum_hook.enable();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 #endif
 	}
@@ -3948,16 +3947,12 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "lua_FlashInstance_GetStringVariable_hash = " << lua_FlashInstance_GetStringVariable_hash.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (lua_FlashInstance_GetStringVariable_hash)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(lua_FlashInstance_GetStringVariable_hash.as<void*>()))
 		{
 			auto lua_FlashInstance_GetStringVariable_fp = lua_FlashInstance_GetStringVariable_hash.add(8).as<luau_CFunction*>();
 			lua_FlashInstance_GetStringVariable_og = *lua_FlashInstance_GetStringVariable_fp;
 			memGuard::setAllowedAccess(lua_FlashInstance_GetStringVariable_fp, sizeof(void*), memGuard::ACC_READ | memGuard::ACC_WRITE);
 			*lua_FlashInstance_GetStringVariable_fp = lua_FlashInstance_GetStringVariable_detour;
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 #endif
@@ -4308,7 +4303,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "irc_send_raw = " << irc_send_raw << std::endl;
 #endif
-		SOUP_IF_LIKELY (irc_send_raw)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(irc_send_raw))
 		{
 			if (game_version >= GV(35, 5, 0))
 			{
@@ -4325,10 +4320,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			irc_send_raw_hook.target = irc_send_raw;
 			irc_send_raw_hook.create();
 			irc_send_raw_hook.enable();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 #endif
@@ -4642,7 +4633,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "content_retry_insn = " << content_retry_insn.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (content_retry_insn)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(content_retry_insn.as<void*>()))
 		{
 			memGuard::setAllowedAccess(content_retry_insn.as<void*>(), 4, memGuard::ACC_RWX);
 			// < 41.0.2: lea rcx, [rax+r15] -> xor rcx, rcx; nop; nop
@@ -4651,10 +4642,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			content_retry_insn.as<uint8_t*>()[1] = 0xC9;
 			content_retry_insn.as<uint8_t*>()[2] = 0x90;
 			content_retry_insn.as<uint8_t*>()[3] = 0x90;
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 	else
@@ -4692,15 +4679,11 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "anticheat_sideloading_check = " << anticheat_sideloading_check << std::endl;
 #endif
-		SOUP_IF_LIKELY (anticheat_sideloading_check)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(anticheat_sideloading_check))
 		{
 			anticheat_sideloading_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
 			anticheat_sideloading_check_hook.target = anticheat_sideloading_check;
 			anticheat_sideloading_check_hook.enable();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
@@ -4712,17 +4695,13 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "anticheat_timer_check_callsite = " << anticheat_timer_check_callsite.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (anticheat_timer_check_callsite)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(anticheat_timer_check_callsite.as<void*>()))
 		{
 			auto anticheat_timer_check = anticheat_timer_check_callsite.add(7).rip().as<void*>();
 
 			anticheat_timer_check_hook.detour = reinterpret_cast<void*>(&do_nothing);
 			anticheat_timer_check_hook.target = anticheat_timer_check;
 			anticheat_timer_check_hook.enable();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 }
@@ -4736,13 +4715,9 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "string_resize_callsite = " << string_resize_callsite.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (string_resize_callsite)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(string_resize_callsite.as<void*>()))
 		{
 			string_resize = string_resize_callsite.add(7).rip().as<string_resize_t>();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
@@ -4753,13 +4728,9 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "raise_script_error_fp_mov = " << raise_script_error_fp_mov.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (raise_script_error_fp_mov)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(raise_script_error_fp_mov.as<void*>()))
 		{
 			raise_script_error_fp = raise_script_error_fp_mov.add(3).rip().as<raise_script_error_t*>();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
@@ -4842,13 +4813,9 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "lua_next_callsite = " << lua_next_callsite.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (lua_next_callsite)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(lua_next_callsite.as<void*>()))
 		{
 			luau_next = lua_next_callsite.add(9).rip().as<luau_next_t>();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
@@ -4859,13 +4826,9 @@ static SOUP_FORCEINLINE void do_pointer_scans()
 #if LOGGING
 		conout << "luau_gettable_callsite = " << luau_gettable_callsite.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (luau_gettable_callsite)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(luau_gettable_callsite.as<void*>()))
 		{
 			luau_gettable = luau_gettable_callsite.add(9).rip().as<luau_gettable_t>();
-		}
-		else
-		{
-			log_optional_scan_failure(false);
 		}
 	}
 
