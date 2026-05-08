@@ -3077,7 +3077,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 		else if (game_version >= GV(18, 0, 0))
 		{
-			SIG_INST("48 8D 53 18 48 8B CF 40 88 6A 30 E8"); // 2015.12.05.18.07
+			SIG_INST("48 8D 53 18 48 8B CF 40 88 6A 30 E8"); // 2015.12.05.18.07, 2015.11.19.16.03
 			game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 			offset = 12;
 		}
