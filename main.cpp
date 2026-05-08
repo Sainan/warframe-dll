@@ -4345,9 +4345,10 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
-#if !MINIMAL_HOOKS
+#if METADATA_PATCHES && !MINIMAL_HOOKS
 	// Allow GetOnVehicle with an operator avatar
 	// This is honestly such a stupid restriction for them to even have in code, I don't think it even needs a config to disable
+	if (object_type_serialise_propery_text_hook.target)
 	{
 		// "an operator is trying to ride "
 		Pointer operator_mount_fail;
