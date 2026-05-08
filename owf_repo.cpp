@@ -13,24 +13,40 @@
 
 using namespace soup;
 
-void owfRepo::loadArchive(const char* data, size_t size)
+template <typename T>
+static T modpow(T base, T exp, T modulus)
 {
-	uint64_t decompressed_size = 0;
+	base %= modulus;
+	T result = 1;
+	while (exp > 0)
 	{
-		MemoryRefReader r(data, size);
-		r.u64_dyn_bp(this->timestamp);
-		r.u64_dyn_bp(decompressed_size);
-		const auto off = r.getPosition();
-		data += off;
-		size -= off;
+		if (exp & 1) result = (result * base) % modulus;
+		base = (base * base) % modulus;
+		exp >>= 1;
 	}
-	std::string tar = deflate::decompress(data, size, decompressed_size).decompressed;
-	MemoryRefReader r(tar);
-	while (r.hasMore())
+	return result;
+}
+
+bool owfRepo::loadArchive(const char* data, size_t size)
+{
+	MemoryRefReader r(data, size);
+	r.u64_dyn_bp(this->timestamp);
+	uint64_t decompressed_size = 0;
+	r.u64_dyn_bp(decompressed_size);
+	const auto result = deflate::decompress(data + r.getPosition(), size - r.getPosition(), decompressed_size);
+	r.skip(result.compressed_size);
+	uint32_t sig;
+	r.u32_le(sig);
+	constexpr uint32_t n = 560318839;
+	constexpr uint32_t e = 65537;
+	SOUP_RETHROW_FALSE((joaat::hash(result.decompressed) % n) != modpow(sig, e, n));
+
+	MemoryRefReader tar_r(result.decompressed);
+	while (tar_r.hasMore())
 	{
-		uint32_t key; r.u32_le(key);
-		uint64_t len; r.u64_dyn_bp(len);
-		std::string val = tar.substr(r.getPosition(), len);
+		uint32_t key; tar_r.u32_le(key);
+		uint64_t len; tar_r.u64_dyn_bp(len);
+		std::string val = result.decompressed.substr(tar_r.getPosition(), len);
 		if (auto e = this->data.find(key); e != this->data.end())
 		{
 			e->second = std::move(val);
@@ -39,8 +55,10 @@ void owfRepo::loadArchive(const char* data, size_t size)
 		{
 			this->data.emplace(key, std::move(val));
 		}
-		r.skip(len);
+		tar_r.skip(len);
 	}
+
+	return true;
 }
 
 bool owfRepo::readHotfixHeader(const char* data, size_t size, uint64_t& timestamp)
@@ -64,8 +82,11 @@ bool owfRepo::loadHotfix(const char* data, size_t size)
 	{
 		r.u8(hotfix);
 		const auto off = r.getPosition();
-		this->loadArchive(data + off, size - off);
-		return true;
+		if (this->loadArchive(data + off, size - off))
+		{
+			return true;
+		}
+		hotfix = 0;
 	}
 	return false;
 }

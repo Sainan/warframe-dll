@@ -10,7 +10,7 @@
 class owfRepo
 {
 protected:
-	void loadArchive(const char* data, size_t size);
+	bool loadArchive(const char* data, size_t size);
 public:
 	void loadBuiltinArchive();
 	static bool readHotfixHeader(const char* data, size_t size, uint64_t& timestamp);

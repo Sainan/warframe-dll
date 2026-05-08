@@ -5,5 +5,5 @@
 void owfRepo::loadBuiltinArchive()
 {
 	hotfix = 0;
-	return loadArchive(compressed_archive_data, sizeof(compressed_archive_data));
+	SOUP_UNUSED(loadArchive(compressed_archive_data, sizeof(compressed_archive_data)));
 }
