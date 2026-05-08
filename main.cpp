@@ -3472,6 +3472,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 
 #if DISABLE_XP_BASED_LEVEL_CAPPING
+	if (game_version >= GV(35, 5, 0))
 	{
 		SIG_INST("73 43 B2 05");
 		auto xp_based_level_jnb = Module(nullptr).range.scan(sig_inst);
@@ -3571,7 +3572,10 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			}
 		}
 
-		if (game_version >= GV(40, 0, 0))
+		if (game_version >= GV(41, 1, 0))
+		{
+		}
+		else if (game_version >= GV(40, 0, 0))
 		{
 			SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84"); // "66 41 0F 6E F6 0F 5B F6 0F" works in 41.1.0 but the hook doesn't have the desired effect.
 			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
@@ -3620,7 +3624,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 				conout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.").str() << std::endl;
 			}
 		}
-		else
+		else if (game_version >= GV(36, 0, 0))
 		{
 			SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
 			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
@@ -3842,7 +3846,9 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 
 #if !MINIMAL_HOOKS
-	if (!forced_profile_dir.empty() || PRIVATE)
+	if ((!forced_profile_dir.empty() || PRIVATE)
+		&& game_version >= GV(35, 5, 0)
+		)
 	{
 		// "Using profile dir "
 		Pointer get_profile_dir;
@@ -3913,6 +3919,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 
 #if !MINIMAL_HOOKS
+	if (game_version >= GV(37, 0, 0))
 	{
 		SIG_INST("48 89 5C 24 10 48 89 74 24 18 57 48 81 EC 80 00 00 00 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 48 8B D9 E8 ? ? ? ? 48 8B C8"); // U37, U38, U41
 		auto is_pause_allowed = Module(nullptr).range.scan(sig_inst).as<void*>();
@@ -4216,6 +4223,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 
 #if METADATA_PATCHES && SOUP_BITS == 64
+	if (game_version >= GV(35, 5, 0))
 	{
 		SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
 		auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
