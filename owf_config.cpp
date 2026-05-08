@@ -78,9 +78,20 @@ void owfConfig::load()
 	}
 	else
 	{
+		if (std::filesystem::exists(ObfusString("Cache.Windows/B.Misc_en.cache").str()))
+		{
 #if !CONFIG_LOADED_ONLY_ONCE
-		fallback_language.clear();
+			fallback_language.clear();
 #endif
+		}
+		else if (std::filesystem::exists(ObfusString("Cache.Windows/B.Misc_zh.cache").str()))
+		{
+			fallback_language = ObfusString("zh").str();
+		}
+		else if (std::filesystem::exists(ObfusString("Cache.Windows/B.Misc_ru.cache").str()))
+		{
+			fallback_language = ObfusString("ru").str();
+		}
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_languageVO")); it != config->reinterpretAsObj().end() && it->second->isStr())
