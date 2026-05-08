@@ -3489,15 +3489,11 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "xp_based_level_jnb = " << xp_based_level_jnb.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (xp_based_level_jnb)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(xp_based_level_jnb.as<void*>()))
 		{
 			memGuard::setAllowedAccess(xp_based_level_jnb.as<void*>(), 1, memGuard::ACC_RWX);
 			*xp_based_level_jnb.as<uint8_t*>() = 0xEB; // jnb -> jmp
 			disabled_xp_based_level_cap = true;
-		}
-		else
-		{
-			conout << get_core_string(ObfusString("sigfailxp").str()) << std::endl;
 		}
 	}
 #endif
@@ -3588,11 +3584,11 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		else if (game_version >= GV(40, 0, 0))
 		{
 			SIG_INST("66 41 0F 6E F6 0F 5B F6 0F 84"); // "66 41 0F 6E F6 0F 5B F6 0F" works in 41.1.0 but the hook doesn't have the desired effect.
-			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
+			const Pointer dmg_number_patch_addr = get_total_damage_hook.target ? Module(nullptr).range.scan(sig_inst) : nullptr;
 #if LOGGING
 			conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-			SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
+			SOUP_IF_LIKELY (should_setup_optional_conditional_feature(dmg_number_patch_addr.as<void*>()))
 			{
 				uint8_t detour_bytes[] = {
 					// prepare call
@@ -3629,19 +3625,15 @@ static SOUP_FORCEINLINE void create_all_hooks()
 				memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
 				memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
 			}
-			else
-			{
-				conout << ObfusString("Failed to bring up \"high damager numbers patch\". This option will be non-functional.").str() << std::endl;
-			}
 		}
 		else if (game_version >= GV(36, 0, 0))
 		{
 			SIG_INST("66 41 0F 6E F4 0F 5B F6 0F 84");
-			auto dmg_number_patch_addr = Module(nullptr).range.scan(sig_inst);
+			const Pointer dmg_number_patch_addr = get_total_damage_hook.target ? Module(nullptr).range.scan(sig_inst) : nullptr;
 #if LOGGING
 			conout << "dmg_number_patch_addr = " << dmg_number_patch_addr.as<void*>() << std::endl;
 #endif
-			SOUP_IF_LIKELY (get_total_damage_hook.target && dmg_number_patch_addr)
+			SOUP_IF_LIKELY (should_setup_optional_conditional_feature(dmg_number_patch_addr.as<void*>()))
 			{
 				uint8_t detour_bytes[] = {
 					// prepare call
@@ -3677,10 +3669,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 				*(void**)(trampoline + 2) = detour;
 				memGuard::setAllowedAccess(dmg_number_patch_addr.as<void*>(), sizeof(trampoline), memGuard::ACC_RWX);
 				memcpy(dmg_number_patch_addr.as<void*>(), trampoline, sizeof(trampoline));
-			}
-			else
-			{
-				conout << get_core_string(ObfusString("sigfailhdnp").str()) << std::endl;
 			}
 		}
 	}
@@ -3925,16 +3913,12 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "is_pause_allowed = " << is_pause_allowed << std::endl;
 #endif
-		SOUP_IF_LIKELY (is_pause_allowed)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(is_pause_allowed))
 		{
 			is_pause_allowed_hook.detour = reinterpret_cast<void*>(&is_pause_allowed_detour);
 			is_pause_allowed_hook.target = is_pause_allowed;
 			is_pause_allowed_hook.create();
 			is_pause_allowed_hook.enable();
-		}
-		else
-		{
-			conout << get_core_string(ObfusString("sigfailpast").str()) << std::endl;
 		}
 	}
 #endif
@@ -4163,7 +4147,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #if LOGGING
 		conout << "check_string_substitutions = " << check_string_substitutions << std::endl;
 #endif
-		SOUP_IF_LIKELY (check_string_substitutions)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(check_string_substitutions))
 		{
 			if (game_version >= GV(36, 0, 0))
 			{
@@ -4184,10 +4168,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 			check_string_substitutions_hook.create();
 			check_string_substitutions_hook.enable();
-		}
-		else
-		{
-			conout << get_core_string(ObfusString("sigfaillr").str()) << std::endl;
 		}
 	}
 #endif
@@ -4221,11 +4201,11 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	if (game_version >= GV(35, 5, 0))
 	{
 		SIG_INST("41 B1 03 48 8D 55 ? 45 33 C0 48 8D 8D ? ? ? ? E8");
-		auto object_type_serialise_propery_text_call = Module(nullptr).range.scan(sig_inst);
+		const Pointer object_type_serialise_propery_text_call = string_pool ? Module(nullptr).range.scan(sig_inst) : nullptr;
 #if LOGGING
 		conout << "object_type_serialise_propery_text_call = " << object_type_serialise_propery_text_call.as<void*>() << std::endl;
 #endif
-		SOUP_IF_LIKELY (object_type_serialise_propery_text_call && string_pool)
+		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(object_type_serialise_propery_text_call.as<void*>()))
 		{
 			uint8_t detour_bytes[] = {
 				0x49, 0x89, 0xF3, // mov r11, rsi
@@ -4245,10 +4225,6 @@ static SOUP_FORCEINLINE void create_all_hooks()
 #endif
 			object_type_serialise_propery_text_hook.create();
 			object_type_serialise_propery_text_hook.enable();
-		}
-		else
-		{
-			conout << get_core_string(ObfusString("sigfailmp").str()) << std::endl;
 		}
 	}
 #endif
