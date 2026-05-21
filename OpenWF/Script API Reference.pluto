@@ -318,6 +318,7 @@ class RadialSector
 	nodeType
 	missionTag
 	mission
+	founders
 	challenges
 	tileset
 end

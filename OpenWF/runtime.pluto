@@ -1688,6 +1688,11 @@ class RadialSector extends owfUserdata
 				ivkr_call(ivkr_find_getter("RadialSector", "mission"), 1)
 				return new LotusMissionInfo()
 
+			case "founders":
+				self:pushToIvkr()
+				ivkr_call(ivkr_find_getter("RadialSector", "founders"), 1)
+				return ivkr_pop_string()
+
 			case "challenges":
 				self:pushToIvkr()
 				ivkr_call(ivkr_find_getter("RadialSector", "challenges"), 1)
