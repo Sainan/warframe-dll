@@ -112,7 +112,10 @@ then
 
 	local manifest_typeid = compareversions(owf_get_build_version(), "2025.09.25.17.01") >= 0 ? "E" : "D"
 
-	io.mkdirs("OpenWF/Content/0")
+	local first_run = not io.exists("OpenWF/Content/0")
+	if first_run then
+		io.mkdirs("OpenWF/Content/0")
+	end
 	if compressed, decompressed_size := owf_cache_find("H.Misc", "/H.Cache.bin") then
 		if compressed:byte(1) == 0x80 then
 			io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak", shcc_pack_H(compressed, decompressed_size))
@@ -204,6 +207,9 @@ then
 
 	if not any_mods and not io.exists("OpenWF/Content/0/UNMANAGED") then
 		io.copy("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak", "OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w")
+		if first_run then
+			io.contents("OpenWF/Content/0/UNMANAGED", "")
+		end
 	end
 end
 
