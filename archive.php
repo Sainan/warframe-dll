@@ -52,5 +52,5 @@ while (in_array($code_version."-hotfix-".$hotfix, $all_tags))
 {
 	++$hotfix;
 }
-echo ">>> Hotfix.owf automatically versioned to $code_version hotfix $hotfix\n";
+echo ">>> Hotfix.owf automatically versioned to $code_version hotfix $hotfix ($code_version-hotfix-$hotfix)\n";
 file_put_contents("Hotfix.owf", pack("VC", joaat($target_version), $hotfix).$bin_str);
