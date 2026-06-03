@@ -2576,16 +2576,16 @@ static void report_critical_failure(std::string msg)
 
 static bool should_setup_optional_conditional_feature(void* ptr)
 {
-#if PRIVATE
-	return ptr != nullptr;
-#else
 	if (!ptr)
 	{
-		// Pattern scan has failed, but it was conditional; this shouldn't happen in a public build.
+#if PRIVATE
+		conout << "A conditional pattern scan has failed. This would be fatal in a public build." << std::endl;
+		return false;
+#else
 		report_critical_failure(get_core_string(ObfusString("sigfailbad").str()));
+#endif
 	}
 	return true;
-#endif
 }
 
 void start_bgscript()
