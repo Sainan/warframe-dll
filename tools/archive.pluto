@@ -6,7 +6,7 @@ require "vv"
 
 local function pack_pattern(ida_str)
 	ida_str = ida_str:upper()
-	local arr = ida_str:split(" ")
+	local arr = ida_str ~= "" ? (ida_str:split(" ")) : {}
 
 	local bin = pack_u64_dyn_bp(#arr)
 
