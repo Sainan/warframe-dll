@@ -123,83 +123,79 @@ then
 	end
 
 	local any_mods = false
-	if io.isdir("OpenWF/content (managed)") then
-		if not io.isdir("OpenWF/Content Replacements") then
-			io.rename("OpenWF/content (managed)", "OpenWF/Content Replacements")
-		end
-	else
+	if manifest_typeid == "D" then
 		io.mkdir("OpenWF/Content Replacements")
-	end
-	if io.isdir("OpenWF/Content Replacements/0") then
-		local t = os.millis()
+		if io.isdir("OpenWF/Content Replacements/0") then
+			local t = os.millis()
 
-		do
-			local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
-			if compressed:byte(1) == 0x80 then
-				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_H(compressed, decompressed_size))
+			do
+				local compressed, decompressed_size = owf_cache_find("H.Misc", "/B.Cache.Windows.bin")
+				if compressed:byte(1) == 0x80 then
+					io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_H(compressed, decompressed_size))
+				end
 			end
-		end
 
-		local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H)
-		local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
-		if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..og_cache_manifest_hash) then
-			local main_manifest = new CacheManifest(shcc_unpack(cont).H)
+			local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H)
+			local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
+			if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..og_cache_manifest_hash) then
+				local main_manifest = new CacheManifest(shcc_unpack(cont).H)
 
-			local paths = {}
-			for io.listdir("OpenWF/Content Replacements/0", true) as file do
-				if io.isfile(file) then
-					file = file:sub(30):replace("\\", "/")
-					any_mods = true
+				local paths = {}
+				for io.listdir("OpenWF/Content Replacements/0", true) as file do
+					if io.isfile(file) then
+						file = file:sub(30):replace("\\", "/")
+						any_mods = true
 
-					io.mkdirs(io.part("OpenWF/Content/0"..file, "parent"))
-					io.copy("OpenWF/Content Replacements/0"..file, "OpenWF/Content/0"..file)
+						io.mkdirs(io.part("OpenWF/Content/0"..file, "parent"))
+						io.copy("OpenWF/Content Replacements/0"..file, "OpenWF/Content/0"..file)
 
-					local path = file:split("!")[1]
-					if hash := paths[path] then
-						print_to_console("Ignoring "..file.." in favor of "..hash)
-						continue
-					end
-					local hash = file:split("!")[2]:split("_")[2]
-					paths[path] = hash
-					main_manifest:setHash(path, b64m_decode(hash))
-
-					local compressed, decompressed_size = owf_cache_find("H.Misc", path)
-					local B_cache = "B.Misc"
-					if not compressed then
-						compressed, decompressed_size = owf_cache_find("H.Texture", path)
-						B_cache = "B.Texture"
-					end
-					if compressed then
-						if compressed:byte(1) == 0x80 then
-							local B_compressed, B_decompressed_size = owf_cache_find(B_cache, path)
-							io.contents("OpenWF/Content/0"..path.."!"..file:split("!")[2]:split("_")[1].."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_HB(compressed, decompressed_size, B_compressed, B_decompressed_size))
+						local path = file:split("!")[1]
+						if hash := paths[path] then
+							print_to_console("Ignoring "..file.." in favor of "..hash)
+							continue
 						end
-					else
-						print_to_console("Could not create backup for "..path)
+						local hash = file:split("!")[2]:split("_")[2]
+						paths[path] = hash
+						main_manifest:setHash(path, b64m_decode(hash))
+
+						local compressed, decompressed_size = owf_cache_find("H.Misc", path)
+						local B_cache = "B.Misc"
+						if not compressed then
+							compressed, decompressed_size = owf_cache_find("H.Texture", path)
+							B_cache = "B.Texture"
+						end
+						if compressed then
+							if compressed:byte(1) == 0x80 then
+								local B_compressed, B_decompressed_size = owf_cache_find(B_cache, path)
+								io.contents("OpenWF/Content/0"..path.."!"..file:split("!")[2]:split("_")[1].."_"..b64m_encode(shcc_decompress_chunk_oodle(compressed, 1, decompressed_size):sub(1, 16)), shcc_pack_HB(compressed, decompressed_size, B_compressed, B_decompressed_size))
+							end
+						else
+							print_to_console("Could not create backup for "..path)
+						end
 					end
 				end
-			end
 
-			if any_mods then
-				local bin, hash = shcc_pack_H_mod(main_manifest:pack())
-				meta_manifest:setHash("/B.Cache.Windows.bin", hash)
-				hash = b64m_encode(hash)
-				io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..hash, bin)
-				io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
+				if any_mods then
+					local bin, hash = shcc_pack_H_mod(main_manifest:pack())
+					meta_manifest:setHash("/B.Cache.Windows.bin", hash)
+					hash = b64m_encode(hash)
+					io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..hash, bin)
+					io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w", (shcc_pack_H_mod(meta_manifest:pack())))
 
-				for io.listdir("OpenWF/Content/0") as path do
-					local file = path:sub(18)
-					if #file == 44 and file:sub(1, 22) == "B.Cache.Windows.bin!"..manifest_typeid.."_"
-						and file:sub(23) ~= hash and file:sub(23) ~= og_cache_manifest_hash
-					then
-						os.remove(path)
+					for io.listdir("OpenWF/Content/0") as path do
+						local file = path:sub(18)
+						if #file == 44 and file:sub(1, 22) == "B.Cache.Windows.bin!"..manifest_typeid.."_"
+							and file:sub(23) ~= hash and file:sub(23) ~= og_cache_manifest_hash
+						then
+							os.remove(path)
+						end
 					end
 				end
-			end
 
-			print_to_console("Managed content in "..(os.millis() - t).." ms")
-		else
-			print_to_console("Unable to manage content: Original cache manifest not found")
+				print_to_console("Managed content in "..(os.millis() - t).." ms")
+			else
+				print_to_console("Unable to manage content: Original cache manifest not found")
+			end
 		end
 	end
 
