@@ -10,13 +10,11 @@
 #include <JsonObject.hpp>
 #include <Key.hpp> // char_to_virtual_key
 #include <memGuard.hpp>
-#include <MemoryRefReader.hpp>
 #include <Module.hpp>
 #include <ObfusString.hpp>
 #include <os.hpp>
 #include <Pattern.hpp>
-#include <SharedLibrary.hpp>
-#include <StringWriter.hpp>
+//#include <SharedLibrary.hpp>
 #include <unicode.hpp>
 #include <WeakRef.hpp>
 
@@ -1928,115 +1926,6 @@ owfScript::owfScript()
 		return 0;
 	});
 	OWF_SET_GLOBAL(L, "owf_cache_close");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		size_t size;
-		const char* data = luaL_checklstring(L, 1, &size);
-		auto cm = new (lua_newuserdata(L, sizeof(CacheManifest))) CacheManifest{};
-		{
-			lua_newtable(L);
-			{
-				pluto_pushstring(L, ObfusString("__gc").str());
-				lua_pushcfunction(L, [](lua_State* L) -> int
-				{
-					std::destroy_at<>((CacheManifest*)lua_touserdata(L, 1));
-					return 0;
-				});
-				lua_settable(L, -3);
-			}
-			lua_setmetatable(L, -2);
-		}
-		MemoryRefReader mr(data, size);
-		mr.skip(20);
-		uint32_t num_entries;
-		mr.u32_le(num_entries);
-		cm->entries.reserve(num_entries);
-		for (uint32_t i = 0; i != num_entries; ++i)
-		{
-			std::string path;
-			mr.str_lp<u32_le_t>(path);
-			CacheManifest::Entry& e = cm->entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
-			mr.str(sizeof(e.hash), e.hash);
-			mr.str(sizeof(e.unk), e.unk);
-		}
-		mr.u32_le(num_entries);
-		cm->stripped_entries.reserve(num_entries);
-		for (uint32_t i = 0; i != num_entries; ++i)
-		{
-			std::string path;
-			mr.str_lp<u32_le_t>(path);
-			CacheManifest::Entry& e = cm->stripped_entries.emplace(std::move(path), CacheManifest::Entry{}).first->second;
-			mr.str(sizeof(e.hash), e.hash);
-			mr.str(sizeof(e.unk), e.unk);
-		}
-		return 1;
-	});
-	OWF_SET_GLOBAL(L, "owf_cachemanifest_new");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		const auto path = pluto_checkstring(L, 2);
-		if (auto e = cm->entries.find(path); e != cm->entries.end())
-		{
-			lua_pushlstring(L, e->second.hash, sizeof(e->second.hash));
-			return 1;
-		}
-		if (auto e = cm->stripped_entries.find(path); e != cm->stripped_entries.end())
-		{
-			lua_pushlstring(L, e->second.hash, sizeof(e->second.hash));
-			return 1;
-		}
-		return 0;
-	});
-	OWF_SET_GLOBAL(L, "owf_cachemanifest_get_hash");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		const auto path = pluto_checkstring(L, 2);
-		size_t size;
-		const auto data = luaL_checklstring(L, 3, &size);
-		if (size == 16)
-		{
-			if (auto e = cm->entries.find(path); e != cm->entries.end())
-			{
-				memcpy(e->second.hash, data, size);
-			}
-			else if (auto e = cm->stripped_entries.find(path); e != cm->stripped_entries.end())
-			{
-				memcpy(e->second.hash, data, size);
-			}
-		}
-		return 0;
-	});
-	OWF_SET_GLOBAL(L, "owf_cachemanifest_set_hash");
-
-	lua_pushcfunction(L, [](lua_State* L) -> int
-	{
-		auto cm = (CacheManifest*)lua_touserdata(L, 1);
-		StringWriter sw;
-		uint32_t num_entries = cm->entries.size();
-		sw.u32_le(num_entries);
-		for (auto& e : cm->entries)
-		{
-			sw.str_lp<u32_le_t>(e.first);
-			sw.str(sizeof(e.second.hash), e.second.hash);
-			sw.str(sizeof(e.second.unk), e.second.unk);
-		}
-		num_entries = cm->stripped_entries.size();
-		sw.u32_le(num_entries);
-		for (auto& e : cm->stripped_entries)
-		{
-			sw.str_lp<u32_le_t>(e.first);
-			sw.str(sizeof(e.second.hash), e.second.hash);
-			sw.str(sizeof(e.second.unk), e.second.unk);
-		}
-		pluto_pushstring(L, sw.data);
-		return 1;
-	});
-	OWF_SET_GLOBAL(L, "owf_cachemanifest_pack_entries");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{

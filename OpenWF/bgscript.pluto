@@ -60,24 +60,6 @@ load(owf_repo_find("OpenWF/lib/websocket.pluto"))()
 if owf_script_get_instance_id() == 0 -- Heuristic to avoid managing content again after applying hotfix
 	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
 then
-	local class CacheManifest
-		function __construct(bin)
-			self.inst = owf_cachemanifest_new(bin)
-		end
-
-		function getHash(path)
-			return owf_cachemanifest_get_hash(self.inst, path)
-		end
-
-		function setHash(path, hash)
-			owf_cachemanifest_set_hash(self.inst, path, hash)
-		end
-
-		function pack()
-			return "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".."\x0D\x00\x00\x00"..owf_cachemanifest_pack_entries(self.inst)
-		end
-	end
-
 	local function shcc_pack_H(compressed, decompressed_size)
 		local bin = "SHCC\x1f\x00\x00\x00"
 		bin ..= string.pack("<I1I4s4", 2, decompressed_size, compressed)
@@ -135,10 +117,10 @@ then
 				end
 			end
 
-			local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H)
+			local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H, true)
 			local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
 			if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..og_cache_manifest_hash) then
-				local main_manifest = new CacheManifest(shcc_unpack(cont).H)
+				local main_manifest = new CacheManifest(shcc_unpack(cont).H, true)
 
 				local paths = {}
 				for io.listdir("OpenWF/Content Replacements/0", true) as file do
