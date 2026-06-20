@@ -719,6 +719,7 @@ function owf_start_script_inline(code) end
 function owf_stop_script(name) end
 function owf_toggle_script(name) end
 function owf_logout() end
+function utf8_to_utf16(str) end
 function make_screenshot_bmp(x, y, width, height) end
 
 function owf_reload_label_replacements() end

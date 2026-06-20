@@ -17,6 +17,7 @@
 #include <Pattern.hpp>
 #include <SharedLibrary.hpp>
 #include <StringWriter.hpp>
+#include <unicode.hpp>
 #include <WeakRef.hpp>
 
 #include <lualib.h>
@@ -325,6 +326,17 @@ void owfScript::openLibs(lua_State* L)
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "get_lang_code");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		size_t size;
+		const char* data = luaL_checklstring(L, 1, &size);
+		std::string utf8((const char*)data, size / sizeof(char)); // byte length -> character length
+		auto utf16 = soup::unicode::utf8_to_utf16(utf8);
+		lua_pushlstring(L, (const char*)utf16.data(), utf16.size() * sizeof(wchar_t)); // character length -> byte length
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "utf8_to_utf16");
 }
 
 owfScript* get_script_by_instance_id(size_t instance_id)
