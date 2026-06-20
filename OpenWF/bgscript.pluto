@@ -60,8 +60,6 @@ load(owf_repo_find("OpenWF/lib/websocket.pluto"))()
 if owf_script_get_instance_id() == 0 -- Heuristic to avoid managing content again after applying hotfix
 	and compareversions(owf_get_build_version(), "2023.07.26.16.38") >= 0 -- This cache stuff is for echoes of duviri and up
 then
-	load(owf_repo_find("OpenWF/lib/cachelib.pluto"))()
-
 	local class CacheManifest
 		function __construct(bin)
 			self.inst = owf_cachemanifest_new(bin)
@@ -123,7 +121,9 @@ then
 	end
 
 	local any_mods = false
-	if manifest_typeid == "D" then
+	if oodle_available() then
+		load(owf_repo_find("OpenWF/lib/cachelib.pluto"))()
+
 		io.mkdir("OpenWF/Content Replacements")
 		if io.isdir("OpenWF/Content Replacements/0") then
 			local t = os.millis()

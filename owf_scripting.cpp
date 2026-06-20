@@ -2040,6 +2040,13 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		lua_pushboolean(L, std::filesystem::is_regular_file(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll").str()));
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "oodle_available");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		size_t compressed_len;
 		const char* compressed = luaL_checklstring(L, 1, &compressed_len);
 		const size_t decompressed_size = luaL_checkinteger(L, 2);
