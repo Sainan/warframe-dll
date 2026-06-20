@@ -4503,6 +4503,23 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
+	if (game_version >= GV(33, 6, 0)) // Oodle is only needed by bgscript in echoes of duviri and up right now.
+	{
+		SIG_INST("C7 44 24 68 03 00 00 00 48 89 44 24 60 48 89 44 24 58 48 89 44 24 50 48 89 44 24 48 48 89 44 24 40 48 89 44 24 38 89 44 24 30 89 44 24 28 89 44 24 20 E8");
+		auto OodleLZ_Decompress_callsite = Module(nullptr).range.scan(sig_inst);
+#if LOGGING
+		conout << "OodleLZ_Decompress_callsite = " << OodleLZ_Decompress_callsite.as<void*>() << std::endl;
+#endif
+		if (OodleLZ_Decompress_callsite)
+		{
+			OodleLZ_Decompress = OodleLZ_Decompress_callsite.add(51).rip().as<OodleLZ_Decompress_t>();
+		}
+		else
+		{
+			log_optional_scan_failure(false);
+		}
+	}
+
 #if VERBOSE_LZF
 	{
 		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 20 4C 89 44 24 18 57 41 54 41 55 41 56 41 57 B8 00 00 04 00 E8 ? ? ? ? 48 2B E0");

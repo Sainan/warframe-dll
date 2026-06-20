@@ -18,6 +18,9 @@ inline uintptr_t ChatRedux_table = 0;
 inline std::string active_input_filter;
 inline bool active_input_filter_allows_hotkeys;
 
+using OodleLZ_Decompress_t = int(*)(const char* inputData, size_t inputLen, void* outputData, size_t outputLen, int a5, int a6, int a7, size_t a8, size_t a9, size_t a10, size_t a11, size_t a12, size_t a13, int a14);
+inline OodleLZ_Decompress_t OodleLZ_Decompress = nullptr;
+
 #define OWF_SET_GLOBAL(L, name) { ObfusString os(name); lua_setglobal(L, os.c_str()); }
 #define OWF_SET_GLOBAL_INT(L, name, value) lua_pushinteger(L, value); OWF_SET_GLOBAL(L, name);
 #define OWF_EXPOSE_INT_CONSTANT(L, e) OWF_SET_GLOBAL_INT(L, #e, e);

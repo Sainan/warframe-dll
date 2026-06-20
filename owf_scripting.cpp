@@ -2040,7 +2040,8 @@ owfScript::owfScript()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		lua_pushboolean(L, std::filesystem::is_regular_file(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll").str()));
+		//lua_pushboolean(L, std::filesystem::is_regular_file(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll").str()));
+		lua_pushboolean(L, OodleLZ_Decompress != nullptr);
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "oodle_available");
@@ -2051,9 +2052,10 @@ owfScript::owfScript()
 		const char* compressed = luaL_checklstring(L, 1, &compressed_len);
 		const size_t decompressed_size = luaL_checkinteger(L, 2);
 
-		SharedLibrary lib(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll"));
+		/*SharedLibrary lib(ObfusString("Tools/Oodle/x64/final/oo2core_9_win64.dll"));
 		using OodleLZ_Decompress_t = int(*)(const char* inputData, size_t inputLen, void* outputData, size_t outputLen, int a5, int a6, int a7, size_t a8, size_t a9, size_t a10, size_t a11, size_t a12, size_t a13, int a14);
-		SOUP_IF_LIKELY (auto OodleLZ_Decompress = (OodleLZ_Decompress_t)lib.getAddress(ObfusString("OodleLZ_Decompress")))
+		SOUP_IF_LIKELY (auto OodleLZ_Decompress = (OodleLZ_Decompress_t)lib.getAddress(ObfusString("OodleLZ_Decompress")))*/
+		SOUP_IF_LIKELY (OodleLZ_Decompress != nullptr)
 		{
 			char shrtbuf[LUAI_MAXSHORTLEN];
 			auto decompressed = plutoS_prealloc(L, shrtbuf, decompressed_size);
