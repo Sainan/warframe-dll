@@ -1366,27 +1366,7 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 				case soup::joaat::compileTimeHash("Cache mani"): // "Cache manifest hash "
 					if (size == 43)
 					{
-						memcpy(build_hash, message + 20, 22);
-
-						{
-							std::lock_guard mtx(g_repo_mtx);
-							if (auto expected_ver = g_repo.getExpectedCodeVersionForManifestHash(build_hash);
-								expected_ver != nullptr && memcmp(expected_ver, build_version, 16) != 0
-								)
-							{
-								auto msg = get_core_string(ObfusString("badbldlbl"));
-								soup::string::replaceAll(msg, ObfusString("|EXPECTED_VER|").str(), std::string(expected_ver, 16));
-								soup::string::replaceAll(msg, ObfusString("|FOUND_VER|").str(), std::string(build_version, 16));
-								soup::string::replaceAll(msg, ObfusString("|HASH|").str(), std::string(build_hash, 22));
-
-								const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
-								const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
-								if (MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
-								{
-									exit(1);
-								}
-							}
-						}
+						owf_set_build_hash(message + 20/*, 22*/);
 					}
 					break;
 
@@ -1462,6 +1442,35 @@ static void write_to_ee_log(const char* data, size_t size)
 static void write_to_ee_log(const char* str)
 {
 	return write_to_ee_log(str, strlen(str));
+}
+
+
+void owf_set_build_hash(const char _build_hash[22])
+{
+	if (memcmp(build_hash, _build_hash, 22) != 0)
+	{
+		memcpy(build_hash, _build_hash, 22);
+
+		{
+			std::lock_guard mtx(g_repo_mtx);
+			if (auto expected_ver = g_repo.getExpectedCodeVersionForManifestHash(build_hash);
+				expected_ver != nullptr && memcmp(expected_ver, build_version, 16) != 0
+				)
+			{
+				auto msg = get_core_string(ObfusString("badbldlbl"));
+				soup::string::replaceAll(msg, ObfusString("|EXPECTED_VER|").str(), std::string(expected_ver, 16));
+				soup::string::replaceAll(msg, ObfusString("|FOUND_VER|").str(), std::string(build_version, 16));
+				soup::string::replaceAll(msg, ObfusString("|HASH|").str(), std::string(build_hash, 22));
+
+				const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
+				const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
+				if (MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
+				{
+					exit(1);
+				}
+			}
+		}
+	}
 }
 
 

@@ -106,6 +106,8 @@ then
 	if oodle_available() then
 		load(owf_repo_find("OpenWF/lib/cachelib.pluto"))()
 
+		local og_cache_manifest_hash
+
 		io.mkdir("OpenWF/Content Replacements")
 		if io.isdir("OpenWF/Content Replacements/0") then
 			local t = os.millis()
@@ -118,7 +120,7 @@ then
 			end
 
 			local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H, true)
-			local og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
+			og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
 			if cont := io.contents("OpenWF/Content/0/B.Cache.Windows.bin!"..manifest_typeid.."_"..og_cache_manifest_hash) then
 				local main_manifest = new CacheManifest(shcc_unpack(cont).H, true)
 
@@ -178,6 +180,19 @@ then
 			else
 				print_to_console("Unable to manage content: Original cache manifest not found")
 			end
+		end
+
+		if not any_mods then
+			if io.exists("OpenWF/Content/0/UNMANAGED") then
+				local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w")).H, true)
+				og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
+			else
+				if not og_cache_manifest_hash then
+					local meta_manifest = new CacheManifest(shcc_unpack(io.contents("OpenWF/Content/0/H.Cache.bin!"..manifest_typeid.."_---------------------w.bak")).H, true)
+					og_cache_manifest_hash = b64m_encode(meta_manifest:getHash("/B.Cache.Windows.bin"))
+				end
+			end
+			owf_set_build_hash(og_cache_manifest_hash)
 		end
 	end
 

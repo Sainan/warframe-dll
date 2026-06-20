@@ -2143,6 +2143,18 @@ void owfScript::openBgscriptLibs()
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
+		size_t size;
+		const char* data = luaL_checklstring(L, 1, &size);
+		if (size == 22)
+		{
+			owf_set_build_hash(data);
+		}
+		return 0;
+	});
+	OWF_SET_GLOBAL(L, "owf_set_build_hash");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
 		const auto addr = lua_checkpointer(L, 1);
 		const auto size = luaL_checkinteger(L, 2);
 		memGuard::setAllowedAccess(addr, size, memGuard::ACC_RWX);
