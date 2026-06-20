@@ -2099,8 +2099,9 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 					auto jr = par.parse(text);
 					for (const auto& qa : patch.query_assignments)
 					{
-						if (auto n = jr->query(qa.first.c_str()))
+						if (UniquePtr<JsonNode>* upN = jr->queryUp(qa.first.c_str()))
 						{
+							JsonNode* n = *upN;
 							if (n->isStr())
 							{
 								n->reinterpretAsStr().value = qa.second;
@@ -2114,10 +2115,9 @@ static void handle_metadata_read(ObjectType* objectType, GameString* str)
 										conout << ObfusString("[Metadata Patches] Invalid integer value: ").str() << qa.second << std::endl;
 										conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
 									}
-									else if (patch.debug)
+									else
 									{
-										conout << ObfusString("[Metadata Patches] Truncated to integer: ").str() << qa.second << std::endl;
-										conout << ObfusString("[Metadata Patches] - Object Type: ").str() << path << name << std::endl;
+										*upN = soup::make_unique<JsonFloat>(std::stod(qa.second));
 									}
 								}
 							}
