@@ -12,6 +12,7 @@ inline bool prohibit_disable_profanity_filter = false;
 inline bool prohibit_freecam = false;
 inline bool prohibit_scripts = false;
 
+extern std::string get_bootstrapper_title();
 extern void owf_set_build_hash(const char build_hash[22]);
 extern bool set_server_tunables(const char* data, size_t size, bool delta = false);
 extern void set_udp_proxy_upstream(const std::string& addr);

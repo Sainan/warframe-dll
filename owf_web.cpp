@@ -83,34 +83,44 @@ struct owfContentTask : public Task
 					{
 						if (hrt.hr.path.substr(19, 2) == ObfusString("xx").str())
 						{
-							auto msg = ObfusString("The Windows_xx manifest is missing or outdated. This indicates that the game was partially updated.").str();
-							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-							msg.append(ObfusString("\r\n- Verify game files. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());*/
-							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+							auto msg = get_core_string(ObfusString("manfail"));
+							soup::string::replaceAll(msg, ObfusString("|NAME|").str(), hrt.hr.path.substr(11, 10));
+							msg.append("\r\n");
+							msg.append("\r\n").append(get_core_string(ObfusString("blame")));
+							msg.append("\r\n").append(get_core_string(ObfusString("blamedl"))); // The game download did not finish as expected.
+							msg.append("\r\n").append(get_core_string(ObfusString("blameupd"))); // The game ran without a client patch and partially updated itself.
+
+							const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
+							const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
+							MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 						}
 						else
 						{
-							auto msg = ObfusString("The language that the game was supposed to launch with (").str();
-							msg.append(hrt.hr.path.substr(19, 2));
-							msg.append(ObfusString(") is missing or outdated.").str());
-							/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-							msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-							msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
-							msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
-							MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+							auto msg = get_core_string(ObfusString("manfail"));
+							soup::string::replaceAll(msg, ObfusString("|NAME|").str(), hrt.hr.path.substr(11, 10));
+							msg.append("\r\n");
+							msg.append("\r\n").append(get_core_string(ObfusString("blame")));
+							msg.append("\r\n").append(get_core_string(ObfusString("blamelcfg"))); // This installation simply does not have this content. (Try another language?)
+							msg.append("\r\n").append(get_core_string(ObfusString("blameupd"))); // The game ran without a client patch and partially updated itself.
+
+							const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
+							const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
+							MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 						}
 						exit(1);
 					}
 					if (hrt.hr.path.find(ObfusString("/0/B.Cache.Dx").str()) != std::string::npos)
 					{
-						auto msg = ObfusString("The graphicsDriver that the game was supposed to launch with (dx").str();
-						msg.append(hrt.hr.path.substr(13, 2));
-						msg.append(ObfusString(") is missing or outdated.").str());
-						/*msg.append(ObfusString("\r\n\r\nTroubleshooting:").str());
-						msg.append(ObfusString("\r\n- Verify client config. It can be found in the OpenWF folder.").str());
-						msg.append(ObfusString("\r\n- Verify launcher settings. It is expected that the launcher deletes the Bootstrapper DLL so run the Download Latest DLL script afterwards.").str());
-						msg.append(ObfusString("\r\n- Verify command line arguments. If in use, they may overwrite the client config.").str());*/
-						MessageBoxA(0, msg.c_str(), BOOTSTRAPPER_TITLE, MB_OK | MB_ICONERROR);
+						auto msg = get_core_string(ObfusString("manfail"));
+						soup::string::replaceAll(msg, ObfusString("|NAME|").str(), hrt.hr.path.substr(11, 4));
+						msg.append("\r\n");
+						msg.append("\r\n").append(get_core_string(ObfusString("blame")));
+						msg.append("\r\n").append(get_core_string(ObfusString("blamegcfg"))); // This installation simply does not have this content. (Try another graphics driver?)
+						msg.append("\r\n").append(get_core_string(ObfusString("blameupd"))); // The game ran without a client patch and partially updated itself.
+
+						const auto msg_utf16 = soup::unicode::utf8_to_utf16(msg);
+						const auto title_utf16 = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
+						MessageBoxW(0, msg_utf16.c_str(), title_utf16.c_str(), MB_OK | MB_ICONERROR);
 
 						exit(1);
 					}

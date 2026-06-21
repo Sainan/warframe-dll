@@ -166,7 +166,7 @@ extern "C" __declspec(dllexport) BOOL VerQueryValueA(LPCVOID pBlock, LPCSTR lpSu
 extern "C" __declspec(dllexport) BOOL VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) { return og_VerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen); }
 
 
-static std::string get_bootstrapper_title()
+std::string get_bootstrapper_title()
 {
 	auto title = ObfusString(BOOTSTRAPPER_TITLE).str();
 	if (const auto hotfix = g_repo.hotfix)
