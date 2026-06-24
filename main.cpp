@@ -4622,7 +4622,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	{
 		// "increasing delay to"
 		Pointer content_retry_insn;
-		if (game_version >= GV(41, 0, 2))
+		if (game_version >= GV(41, 0, 1))
 		{
 			SIG_INST("4A 8D 0C 30 48 8B 46 08 48 89 08");
 			content_retry_insn = Module(nullptr).range.scan(sig_inst);
@@ -4638,8 +4638,8 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		SOUP_IF_LIKELY (should_setup_optional_conditional_feature(content_retry_insn.as<void*>()))
 		{
 			memGuard::setAllowedAccess(content_retry_insn.as<void*>(), 4, memGuard::ACC_RWX);
-			// < 41.0.2: lea rcx, [rax+r15] -> xor rcx, rcx; nop; nop
-			// >=41.0.2: lea rcx, [rax+r14] -> xor rcx, rcx; nop; nop
+			// < 41.0.1: lea rcx, [rax+r15] -> xor rcx, rcx; nop; nop
+			// >=41.0.1: lea rcx, [rax+r14] -> xor rcx, rcx; nop; nop
 			content_retry_insn.as<uint8_t*>()[0] = 0x31;
 			content_retry_insn.as<uint8_t*>()[1] = 0xC9;
 			content_retry_insn.as<uint8_t*>()[2] = 0x90;
