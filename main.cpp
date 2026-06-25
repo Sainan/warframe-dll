@@ -4512,7 +4512,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 	}
 #endif
 
-	if (game_version >= GV(33, 6, 0)) // Oodle is only needed by bgscript in echoes of duviri and up right now.
+	if (game_version >= GV(41, 0, 0))
 	{
 		SIG_INST("C7 44 24 68 03 00 00 00 48 89 44 24 60 48 89 44 24 58 48 89 44 24 50 48 89 44 24 48 48 89 44 24 40 48 89 44 24 38 89 44 24 30 89 44 24 28 89 44 24 20 E8");
 		auto OodleLZ_Decompress_callsite = Module(nullptr).range.scan(sig_inst);

@@ -1,19 +1,5 @@
 local { cat, http, json, scheduler, url, vector3 } = require "*"
 
-if compareversions(owf_get_build_version(), "2025.12.09.14.18") < 0 then
-	oodle_available = || -> io.exists("Tools/Oodle/x64/final/oo2core_9_win64.dll")
-	oodle_decompress = |compressed, decompressed_size| -> do
-		local ffi = require "ffi"
-		local oodle = ffi.open("Tools/Oodle/x64/final/oo2core_9_win64.dll")
-		oodle:cdef[[
-		int OodleLZ_Decompress(const char* inputData, size_t inputLen, void* outputData, size_t outputLen, int a5, int a6, int a7, size_t a8, size_t a9, size_t a10, size_t a11, size_t a12, size_t a13, int a14);
-		]]
-		local decompressed = ffi.alloc(decompressed_size)
-		oodle.OodleLZ_Decompress(compressed, #compressed, decompressed, decompressed_size, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3)
-		return ffi.read(decompressed)
-	end
-end
-
 Vector = vector3
 Vector3 = vector3 -- compatibility
 
