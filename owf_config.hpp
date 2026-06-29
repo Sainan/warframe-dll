@@ -12,6 +12,9 @@ inline std::string fallback_graphicsDriver;
 inline int fallback_windowMode;
 inline std::string fallback_cluster;
 
+// General
+inline std::string language;
+
 // Server connection
 inline std::string server_host;
 inline uint16_t http_port;
@@ -50,7 +53,7 @@ inline bool keep_console_open;
 
 
 // Effective arguments (not in Client Config.json)
-inline std::string lang_code;
+inline std::string game_lang_code;
 inline std::string webui_lang_code;
 
 inline std::string auth_query; // e.g. "accountId=6633b81e9dba0b714f28ff02&nonce=8300464181160923&ct=MSI"

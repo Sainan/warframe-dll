@@ -1373,14 +1373,14 @@ static void write_to_log_file_detour(void* const a1, char* const data, size_t _s
 				case soup::joaat::compileTimeHash("Cache lang"): // "Cache languages enabled: _xx"
 					if (size == 28)
 					{
-						lang_code = std::string(message + 26, 2);
+						game_lang_code = std::string(message + 26, 2);
 					}
 					break;
 
 				case soup::joaat::compileTimeHash("Using lang"): // "Using language: _xx"
 					if (size == 19)
 					{
-						lang_code = std::string(message + 17, 2);
+						game_lang_code = std::string(message + 17, 2);
 					}
 					break;
 
@@ -5222,7 +5222,7 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// Initialise core dict (depends on repo + config)
-		g_core_dict = g_repo.getCoreDict(fallback_language);
+		g_core_dict = g_repo.getCoreDict(language);
 
 		// Reject too new versions (depends on core dict)
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))

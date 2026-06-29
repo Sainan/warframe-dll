@@ -231,7 +231,7 @@ void start_builtin_http_server()
 				}
 				else
 				{
-					webui_lang_code = lang_code;
+					webui_lang_code = language;
 				}
 #if PRIVATE
 				if (std::string html = string::fromFile("OpenWF/index.html"); !html.empty())

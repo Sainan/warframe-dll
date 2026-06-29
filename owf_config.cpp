@@ -45,36 +45,10 @@ void owfConfig::load()
 		config = soup::make_unique<JsonObject>();
 	}
 
-	if (auto it = config->reinterpretAsObj().findIt(ObfusString("server_host")); it != config->reinterpretAsObj().end() && it->second->isStr())
-	{
-		server_host = it->second->reinterpretAsStr().value;
-	}
-	else
-	{
-		server_host = ObfusString("127.0.0.1").str();
-	}
-
-	if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
-	{
-		http_port = it->second->reinterpretAsInt().value;
-	}
-	else
-	{
-		http_port = 80;
-	}
-
-	if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
-	{
-		https_port = it->second->reinterpretAsInt().value;
-	}
-	else
-	{
-		https_port = 443;
-	}
-
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_language")); it != config->reinterpretAsObj().end() && it->second->isStr())
 	{
 		fallback_language = it->second->reinterpretAsStr().value;
+		string::lower(fallback_language);
 	}
 	else
 	{
@@ -97,6 +71,7 @@ void owfConfig::load()
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("fallback_languageVO")); it != config->reinterpretAsObj().end() && it->second->isStr())
 	{
 		fallback_languageVO = it->second->reinterpretAsStr().value;
+		string::lower(fallback_languageVO);
 	}
 	else
 	{
@@ -152,6 +127,43 @@ void owfConfig::load()
 	if (fallback_cluster.empty())
 	{
 		fallback_cluster = ObfusString("public").str();
+	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("language")); it != config->reinterpretAsObj().end() && it->second->isStr())
+	{
+		language = it->second->reinterpretAsStr().value;
+		string::lower(language);
+	}
+	else
+	{
+		language = fallback_language;
+	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("server_host")); it != config->reinterpretAsObj().end() && it->second->isStr())
+	{
+		server_host = it->second->reinterpretAsStr().value;
+	}
+	else
+	{
+		server_host = ObfusString("127.0.0.1").str();
+	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("http_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
+	{
+		http_port = it->second->reinterpretAsInt().value;
+	}
+	else
+	{
+		http_port = 80;
+	}
+
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("https_port")); it != config->reinterpretAsObj().end() && it->second->isInt())
+	{
+		https_port = it->second->reinterpretAsInt().value;
+	}
+	else
+	{
+		https_port = 443;
 	}
 
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("high_damage_numbers_patch")); it != config->reinterpretAsObj().end() && it->second->isBool())
@@ -438,6 +450,8 @@ void owfConfig::save()
 	config.add(ObfusString("fallback_graphicsDriver"), fallback_graphicsDriver);
 	config.add(ObfusString("fallback_windowMode"), fallback_windowMode);
 	config.add(ObfusString("fallback_cluster"), fallback_cluster);
+
+	config.add(ObfusString("language"), language);
 
 	config.add(ObfusString("server_host"), server_host);
 	config.add(ObfusString("http_port"), http_port);

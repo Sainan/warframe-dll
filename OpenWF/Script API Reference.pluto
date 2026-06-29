@@ -676,6 +676,7 @@ function yield() end
 function owf_get_stop_requested() end
 function owf_create_thread(f) end
 function get_lang_code() end
+function get_game_lang_code() end
 function get_core_dict(lang = get_lang_code()) end
 function get_webui_dict(lang = get_lang_code()) end
 function owf_get_build_label() end

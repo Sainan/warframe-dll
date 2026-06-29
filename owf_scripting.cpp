@@ -320,10 +320,17 @@ void owfScript::openLibs(lua_State* L)
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
-		pluto_pushstring(L, lang_code);
+		pluto_pushstring(L, language);
 		return 1;
 	});
 	OWF_SET_GLOBAL(L, "get_lang_code");
+
+	lua_pushcfunction(L, [](lua_State* L) -> int
+	{
+		pluto_pushstring(L, game_lang_code);
+		return 1;
+	});
+	OWF_SET_GLOBAL(L, "get_game_lang_code");
 
 	lua_pushcfunction(L, [](lua_State* L) -> int
 	{
