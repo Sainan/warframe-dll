@@ -3056,7 +3056,7 @@ static SOUP_FORCEINLINE void create_all_hooks()
 			game_http_request_caller = Module(nullptr).range.scan(sig_inst);
 			offset = 8;
 		}
-		else if (game_version >= GV(18, 5, 0))
+		else if (game_version >= GV(18, 4, 0))
 		{
 			SIG_INST("48 8D 53 18 48 8B CF E8 ? ? ? ? 48 8B 4F 48"); // 2016.03.31.15.16, 2016.03.04.10.06, 2016.02.22.15.37
 			game_http_request_caller = Module(nullptr).range.scan(sig_inst);
