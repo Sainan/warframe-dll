@@ -299,6 +299,15 @@ void owfConfig::load()
 #endif
 	}
 
+	if (auto it = config->reinterpretAsObj().findIt(ObfusString("cn_login_bypass")); it != config->reinterpretAsObj().end() && it->second->isBool())
+	{
+		cn_login_bypass = it->second->reinterpretAsBool().value;
+	}
+	else
+	{
+		cn_login_bypass = true;
+	}
+
 	if (auto it = config->reinterpretAsObj().findIt(ObfusString("ee_log_in_console")); it != config->reinterpretAsObj().end() && it->second->isBool())
 	{
 		ee_log_in_console = it->second->reinterpretAsBool().value;
@@ -433,6 +442,7 @@ void owfConfig::save()
 	config.add(ObfusString("pause_always_stops_time"), pause_always_stops_time);
 	config.add(ObfusString("disable_firewall_prompt"), disable_firewall_prompt);
 
+	config.add(ObfusString("cn_login_bypass"), cn_login_bypass);
 	config.add(ObfusString("ee_log_in_console"), ee_log_in_console);
 	config.add(ObfusString("skip_mission_start_timer"), skip_mission_start_timer);
 	config.add(ObfusString("disable_profanity_filter"), disable_profanity_filter);

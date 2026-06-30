@@ -88,9 +88,160 @@ static T lua_checkpointer(lua_State* L, int i)
 	return ptr;
 }
 
+static uint32_t owf_fnv2_with_seed(uint32_t seed, const char* str) noexcept
+{
+	uint32_t hash = seed;
+	for (; *str; ++str)
+	{
+		hash ^= (uint8_t)*str;
+		hash *= 16777619u;
+	}
+	hash = ~hash;
+	return rol(hash, 17);
+}
+
+// Returns true if the little-endian 4-byte value occurs anywhere in the main module image.
+static bool owf_module_contains_dword(uint32_t value) noexcept
+{
+	__try
+	{
+		auto hmod = reinterpret_cast<const uint8_t*>(GetModuleHandleW(nullptr));
+		auto dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(hmod);
+		auto nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(hmod + dos->e_lfanew);
+		const size_t size = nt->OptionalHeader.SizeOfImage;
+		const uint8_t b0 = (uint8_t)value, b1 = (uint8_t)(value >> 8), b2 = (uint8_t)(value >> 16), b3 = (uint8_t)(value >> 24);
+		for (size_t i = 0; i + 4 <= size; ++i)
+		{
+			if (hmod[i] == b0 && hmod[i + 1] == b1 && hmod[i + 2] == b2 && hmod[i + 3] == b3)
+			{
+				return true;
+			}
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+	return false;
+}
+
+// Warframe's Lua name hash is an FNV variant whose initial value (seed) DE changes every few builds.
+// OpenWF historically tracked it in a versioned JSON, but that data goes stale on every reseed, and
+// CN (Tencent) builds ship with the same game_version as the international build so the JSON cannot
+// tell them apart. Instead, recover the seed directly from the running executable's hash routine:
+//     mov  <reg>, <SEED>
+//   loop:
+//     xor  eax, <reg>
+//     imul <reg>, eax, 0x01000193   ; FNV prime
+//     ...                            ; loop over the string bytes
+//     not  <reg>
+//     rol  <reg>, 0x11
+// We anchor on the prime-imul that is followed by `rol r32, 0x11`, then read back to the immediate
+// that initialises the accumulator register. Returns 0 if the routine could not be located.
+static uint32_t try_extract_wf_fnv_2_seed() noexcept
+{
+	__try
+	{
+		auto hmod = reinterpret_cast<const uint8_t*>(GetModuleHandleW(nullptr));
+		auto dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(hmod);
+		auto nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(hmod + dos->e_lfanew);
+		auto sec = IMAGE_FIRST_SECTION(nt);
+		for (unsigned s = 0; s < nt->FileHeader.NumberOfSections; ++s, ++sec)
+		{
+			if (memcmp(sec->Name, ".text", 5) != 0)
+			{
+				continue;
+			}
+			const uint8_t* base = hmod + sec->VirtualAddress;
+			const size_t size = sec->Misc.VirtualSize;
+			for (size_t i = 0x80; i + 8 < size; ++i)
+			{
+				// imul r32, r/m32, 0x01000193  ->  [REX] 69 modrm 93 01 00 01
+				if (base[i] != 0x69 || base[i + 2] != 0x93 || base[i + 3] != 0x01 || base[i + 4] != 0x00 || base[i + 5] != 0x01)
+				{
+					continue;
+				}
+				const uint8_t modrm = base[i + 1];
+				if ((modrm & 0xC0) != 0xC0) // require mod=11 (register operands)
+				{
+					continue;
+				}
+				const uint8_t rex = ((base[i - 1] & 0xF0) == 0x40) ? base[i - 1] : 0;
+				const uint8_t dest = (uint8_t)(((modrm >> 3) & 7) | ((rex & 0x04) ? 8 : 0));
+				// confirm the FNV-2 finaliser `rol r32, 0x11` follows within a short window
+				bool is_fnv2 = false;
+				for (size_t j = i + 6; j + 2 < i + 6 + 0x24 && j + 2 < size; ++j)
+				{
+					if (base[j] == 0xC1 && (base[j + 1] & 0xF8) == 0xC0 && base[j + 2] == 0x11)
+					{
+						is_fnv2 = true;
+						break;
+					}
+				}
+				if (!is_fnv2)
+				{
+					continue;
+				}
+				// read back to the seed: [REX.B?] (B8 + dest&7) imm32
+				const uint8_t mov_op = (uint8_t)(0xB8 + (dest & 7));
+				for (size_t back = 1; back <= 0x48 && i >= back + 6; ++back)
+				{
+					const size_t p = i - back;
+					if (base[p] != mov_op)
+					{
+						continue;
+					}
+					const bool prev_rex = (base[p - 1] & 0xF0) == 0x40;
+					if (dest >= 8)
+					{
+						if (!prev_rex || !(base[p - 1] & 0x01) || (base[p - 1] & 0x08))
+						{
+							continue; // need REX.B set and REX.W clear to target r8d-r15d with a 32-bit immediate
+						}
+					}
+					else if (prev_rex)
+					{
+						continue; // a REX prefix here would retarget the register
+					}
+					const uint32_t imm = (uint32_t)base[p + 1] | ((uint32_t)base[p + 2] << 8) | ((uint32_t)base[p + 3] << 16) | ((uint32_t)base[p + 4] << 24);
+					if (imm == 0x01000193u || imm == 0)
+					{
+						continue;
+					}
+					return imm;
+				}
+			}
+			break;
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+	return 0;
+}
+
 void owfScript::init()
 {
 	wf_fnv_2_initial = static_cast<uint32_t>(static_cast<int32_t>(g_repo.getVersionedI64(soup::joaat::compileTimeHash("OpenWF/vv/wf_fnv_2_initial.json"), game_version)));
+	{
+		const uint32_t extracted = try_extract_wf_fnv_2_seed();
+#if LOGGING
+		conout << "wf_fnv_2_initial (json) = " << reinterpret_cast<void*>(static_cast<uintptr_t>(wf_fnv_2_initial))
+			<< ", extracted = " << reinterpret_cast<void*>(static_cast<uintptr_t>(extracted)) << std::endl;
+#endif
+		if (extracted)
+		{
+			ObfusString probe("GetConfigBool");
+			if (owf_module_contains_dword(owf_fnv2_with_seed(extracted, probe.c_str())))
+			{
+				wf_fnv_2_initial = extracted;
+#if LOGGING
+				conout << "Using wf_fnv_2_initial seed extracted from the executable." << std::endl;
+#endif
+			}
+#if LOGGING
+			else
+			{
+				conout << "Extracted wf_fnv_2 seed failed validation; keeping JSON value." << std::endl;
+			}
+#endif
+		}
+	}
 	if (wf_fnv_2_initial)
 	{
 		wf_hash = wf_fnv_2;

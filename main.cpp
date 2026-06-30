@@ -1256,6 +1256,310 @@ static float get_total_damage_detour(__int64 *a1, __int64 a2, float a3, unsigned
 }
 
 
+// === BaseAvatar::GetMaxHealth scaler dumper (investigation) ===
+static DetourHook GetMaxHealth_hook;
+static bool g_scaler_dumped = false;
+
+// File logger so results are captured regardless of console state.
+static void hpscale_log(const char* msg)
+{
+	HANDLE h = CreateFileA("D:\\xh\\warframe-dll\\hpscale.log", FILE_APPEND_DATA,
+		FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		DWORD w;
+		WriteFile(h, msg, static_cast<DWORD>(strlen(msg)), &w, nullptr);
+		WriteFile(h, "\r\n", 2, &w, nullptr);
+		CloseHandle(h);
+	}
+}
+
+// SEH-only helper (no C++ unwinding objects allowed in the same scope as __try)
+static bool resolve_hp_scaler(void* avatar, uintptr_t& outScaler, uintptr_t& outSvt, uintptr_t& outGetS, uintptr_t& outS, uintptr_t& outM)
+{
+	__try
+	{
+		uintptr_t a = reinterpret_cast<uintptr_t>(avatar);
+		// engine does: rax = *(avatar+0x8e8); rax = *rax;  (two dereferences) => M
+		uintptr_t Xp = *reinterpret_cast<uintptr_t*>(a + 0x8e8);
+		if (Xp <= 0x10000) return false;
+		uintptr_t M = *reinterpret_cast<uintptr_t*>(Xp);
+		if (M <= 0x10000) return false;
+		uintptr_t Mvt = *reinterpret_cast<uintptr_t*>(M);
+		auto getS = *reinterpret_cast<uintptr_t(**)(uintptr_t)>(Mvt + 0x408);
+		uintptr_t S = getS(M);
+		if (S <= 0x10000) return false;
+		uintptr_t Svt = *reinterpret_cast<uintptr_t*>(S);
+		outM = M;
+		outS = S;
+		outSvt = Svt;
+		outGetS = reinterpret_cast<uintptr_t>(getS);
+		outScaler = *reinterpret_cast<uintptr_t*>(Svt + 0xd8);
+		return true;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		return false;
+	}
+}
+
+static bool g_seen_level[4096] = {};
+static int g_sample_count = 0;
+static int g_dump_count = 0;
+
+// Walk the health-stat (index 0x4f) modifier vector on the stats object S and log every entry.
+// Layout recovered from the scaler at RVA 0x60ddb0:
+//   vector for stat s lives at  S + 0x68 + s*0x10   (begin ptr @ +0, byte-count @ +8)
+//   each modifier entry is 0x58 bytes:  key@+0x08, type@+0x11, value(float)@+0x18,
+//                                       ptrs @+0x20/+0x28, dword@+0x38, key2@+0x3c
+static void dump_modifiers(uintptr_t S, int level, int base, int scaled)
+{
+	__try
+	{
+		const uintptr_t HEALTH_STAT = 0x4f;
+		uintptr_t vec = S + 0x68 + HEALTH_STAT * 0x10;
+		uintptr_t begin = *reinterpret_cast<uintptr_t*>(vec);
+		unsigned int bytes = *reinterpret_cast<unsigned int*>(vec + 0x8);
+		unsigned int count = bytes / 0x58;
+		char hdr[160];
+		snprintf(hdr, sizeof(hdr), "[MODS] level=%d base=%d scaled=%d count=%u begin=%p", level, base, scaled, count, reinterpret_cast<void*>(begin));
+		hpscale_log(hdr);
+		if (begin <= 0x10000 || count > 64) return;
+		for (unsigned int i = 0; i < count; ++i)
+		{
+			uintptr_t e = begin + static_cast<uintptr_t>(i) * 0x58;
+			int key8 = *reinterpret_cast<int*>(e + 0x08);
+			unsigned char type = *reinterpret_cast<unsigned char*>(e + 0x11);
+			float val = *reinterpret_cast<float*>(e + 0x18);
+			float val30 = *reinterpret_cast<float*>(e + 0x30);
+			int key3c = *reinterpret_cast<int*>(e + 0x3c);
+			uintptr_t p20 = *reinterpret_cast<uintptr_t*>(e + 0x20);
+			uintptr_t p28 = *reinterpret_cast<uintptr_t*>(e + 0x28);
+			char buf[256];
+			snprintf(buf, sizeof(buf),
+				"  mod#%u type=%u key08=%d key3c=%d val=%.6f val30=%.6f p20=%p p28=%p",
+				i, type, key8, key3c, val, val30,
+				reinterpret_cast<void*>(p20), reinterpret_cast<void*>(p28));
+			hpscale_log(buf);
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		hpscale_log("[MODS] exception while walking modifier vector");
+	}
+}
+
+static int GetMaxHealth_detour(void* avatar, unsigned __int8 scaled)
+{
+	int ret = reinterpret_cast<decltype(&GetMaxHealth_detour)>(GetMaxHealth_hook.original)(avatar, scaled);
+	// Sampler: for every distinct enemy level, record (level, base, scaled) so we can derive the
+	// exact level->multiplier scaling curve straight from this client. We only act when the caller
+	// asked for the scaled value (scaled != 0) and the avatar actually has a level (!= -1).
+	if (scaled && g_sample_count < 200)
+	{
+		int level = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(avatar) + 0x18);
+		if (level >= 0 && level < 4096 && !g_seen_level[level])
+		{
+			g_seen_level[level] = true;
+			++g_sample_count;
+			// scaled==0 takes the early "return base" branch in GetMaxHealth, so this is the
+			// unscaled base value and is cheap/safe (no modifier-stack walk).
+			int base = reinterpret_cast<decltype(&GetMaxHealth_detour)>(GetMaxHealth_hook.original)(avatar, 0);
+			double ratio = base != 0 ? static_cast<double>(ret) / static_cast<double>(base) : 0.0;
+			char buf[160];
+			snprintf(buf, sizeof(buf), "SAMPLE levelfield=%d base=%d scaled=%d ratio=%.6f", level, base, ret, ratio);
+			hpscale_log(buf);
+		}
+
+		// For the first few distinct levels, also resolve S and dump the full health modifier
+		// vector so we can see exactly how level scaling is represented in code structures.
+		if (level != -1 && g_dump_count < 8)
+		{
+			static bool dumped_level[4096] = {};
+			if (level >= 0 && level < 4096 && !dumped_level[level])
+			{
+				uintptr_t scaler = 0, Svt = 0, getS = 0, S = 0, M = 0;
+				if (resolve_hp_scaler(avatar, scaler, Svt, getS, S, M))
+				{
+					dumped_level[level] = true;
+					++g_dump_count;
+					if (!g_scaler_dumped)
+					{
+						g_scaler_dumped = true;
+						uintptr_t modbase = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+						char buf[256];
+						snprintf(buf, sizeof(buf),
+							"[HPSCALE] getS_RVA=0x%llx Svt_RVA=0x%llx scaler_RVA=0x%llx",
+							static_cast<unsigned long long>(getS - modbase),
+							static_cast<unsigned long long>(Svt - modbase),
+							static_cast<unsigned long long>(scaler - modbase));
+						hpscale_log(buf);
+					}
+					int base = reinterpret_cast<decltype(&GetMaxHealth_detour)>(GetMaxHealth_hook.original)(avatar, 0);
+					dump_modifiers(S, level, base, ret);
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+
+// === Low-level SetMaxHealth field writer (RVA 0x4c55c0) backtrace tracer ===
+// Every path that sets an avatar's base max health goes through this writer. We capture a stack
+// backtrace so we can see the function that computed base*levelMultiplier, regardless of how many
+// thin wrappers sit in between.
+using RtlCaptureStackBackTrace_t = unsigned short(__stdcall*)(unsigned long, unsigned long, void**, unsigned long*);
+static RtlCaptureStackBackTrace_t g_RtlCaptureStackBackTrace = nullptr;
+
+static DetourHook SetMaxHealth_hook;
+static unsigned long g_smh_seen_hash[64] = {};
+static int g_smh_ra_count = 0;
+
+// --- Arbitration shield-drone concurrency tracker ---
+// CorpusEliteShieldDroneAvatar has base MaxHealth 35, so SetMaxHealth fires one
+// write of value==35 per drone at spawn. The drone's vtable RVA was confirmed at
+// runtime (both observed 35-HP spawns shared it), so we identify drones by vtable
+// (faction @ +0x18 proved unstable). We keep a live set: on each spawn we prune
+// entries whose object no longer carries the drone vtable (SEH-guarded per-ptr
+// read — never crashes, at worst imprecise on memory reuse) and record alive/max.
+// No new hooks; everything stays in the existing SEH-guarded SetMaxHealth detour.
+static const uintptr_t DRONE_VT_RVA = 0x238b7a8; // build 2026.06.25.12.49
+static int g_drone_seq = 0;
+static void* g_drone_alive[64] = {};
+static int g_drone_alive_n = 0;
+static int g_drone_alive_max = 0;
+
+// SEH-guarded vtable check used to prune dead/freed drone pointers.
+static bool drone_vtable_matches(void* p, uintptr_t modbase)
+{
+	__try
+	{
+		uintptr_t vt = *reinterpret_cast<uintptr_t*>(p);
+		return vt >= modbase && (vt - modbase) == DRONE_VT_RVA;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
+static char SetMaxHealth_detour(void* avatar, int value)
+{
+	__try
+	{
+		// Shield-drone concurrency tracker: handle every base-health write of 35
+		// (drone base) independently of the call-stack dedup below.
+		if (value == 35)
+		{
+			uintptr_t modbase = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+			uintptr_t vt = *reinterpret_cast<uintptr_t*>(avatar);
+			uintptr_t vtrva = vt >= modbase ? vt - modbase : vt;
+			int faction = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(avatar) + 0x18);
+			char dbuf[176];
+			if (vtrva == DRONE_VT_RVA)
+			{
+				// Prune entries that are no longer live drones, dropping any stale
+				// copy of the current avatar so we never double-count it.
+				int k = 0;
+				for (int i = 0; i < g_drone_alive_n; ++i)
+					if (g_drone_alive[i] != avatar && drone_vtable_matches(g_drone_alive[i], modbase))
+						g_drone_alive[k++] = g_drone_alive[i];
+				g_drone_alive_n = k;
+				if (g_drone_alive_n < 64)
+					g_drone_alive[g_drone_alive_n++] = avatar;
+				if (g_drone_alive_n > g_drone_alive_max)
+					g_drone_alive_max = g_drone_alive_n;
+				snprintf(dbuf, sizeof(dbuf),
+					"[DRONE] seq=%d t=%llu alive=%d max=%d avatar=%p faction=%d",
+					++g_drone_seq, static_cast<unsigned long long>(GetTickCount64()),
+					g_drone_alive_n, g_drone_alive_max, avatar, faction);
+			}
+			else
+			{
+				// Another 35-HP type (or vtable shifted after a game update).
+				snprintf(dbuf, sizeof(dbuf),
+					"[HP35] t=%llu avatar=%p vtRVA=0x%llx faction=%d (not drone vt)",
+					static_cast<unsigned long long>(GetTickCount64()), avatar,
+					static_cast<unsigned long long>(vtrva), faction);
+			}
+			hpscale_log(dbuf);
+		}
+
+		void* frames[12] = {};
+		unsigned long hash = 0;
+		unsigned short n = g_RtlCaptureStackBackTrace ? g_RtlCaptureStackBackTrace(1, 12, frames, &hash) : 0;
+		bool seen = false;
+		for (int i = 0; i < g_smh_ra_count; ++i)
+			if (g_smh_seen_hash[i] == hash) { seen = true; break; }
+		if (!seen && g_smh_ra_count < 64)
+		{
+			g_smh_seen_hash[g_smh_ra_count++] = hash;
+			uintptr_t modbase = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+			int faction = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(avatar) + 0x18);
+			char buf[256];
+			snprintf(buf, sizeof(buf), "[SMH] value=%d faction=%d avatar=%p frames=%d", value, faction, avatar, (int)n);
+			hpscale_log(buf);
+			for (int i = 0; i < n; ++i)
+			{
+				uintptr_t f = reinterpret_cast<uintptr_t>(frames[i]);
+				char line[80];
+				if (f >= modbase && f < modbase + 0x8000000)
+					snprintf(line, sizeof(line), "    f%d RVA=0x%llx", i, static_cast<unsigned long long>(f - modbase));
+				else
+					snprintf(line, sizeof(line), "    f%d ext=%p", i, frames[i]);
+				hpscale_log(line);
+			}
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+	return reinterpret_cast<decltype(&SetMaxHealth_detour)>(SetMaxHealth_hook.original)(avatar, value);
+}
+
+
+// === AttenuationCurve::Evaluate confirmation probe ============================
+// SAFE: a plain inline DetourHook + SEH (no hardware breakpoints, no thread
+// context fiddling — that is what crashed the game before). DISABLED by default:
+// it only installs when CURVE_EVAL_SIG below is non-empty. Workflow:
+//   1) Find the evaluator in Ghidra/IDA (see _re guide).
+//   2) Confirm its signature with me, then paste its byte-pattern AOB here.
+//   3) Build; play a mission; read [EVAL] lines in hpscale.log.
+// Assumed signature: float Evaluate(AttenuationCurve* curve /*rcx*/, float d /*xmm1*/).
+// AttenuationCurve (0x20 bytes): +0 Exponent f32, +4 Multiplier f32,
+//   +8 BlendCurves i32, +0xc BlendedExponent f32, +0x10 BlendedMultiplier f32,
+//   +0x14 BlendRange[0] f32, +0x18 BlendRange[1] f32, +0x1c IgnoreBaseLevel i32.
+// To enable: uncomment the next line and paste the evaluator's byte pattern.
+// #define CURVE_EVAL_SIG "48 89 5C 24 08 57 48 83 EC 20 ..."
+
+#ifdef CURVE_EVAL_SIG
+static DetourHook curve_eval_hook;
+static unsigned long g_eval_seen[128] = {};
+static int g_eval_n = 0;
+
+static float curve_eval_detour(void* curve, float d)
+{
+	float r = reinterpret_cast<decltype(&curve_eval_detour)>(curve_eval_hook.original)(curve, d);
+	__try
+	{
+		const float* c = reinterpret_cast<const float*>(curve);
+		const int* ci = reinterpret_cast<const int*>(curve);
+		unsigned long h = static_cast<unsigned long>(static_cast<int>(d)) ^ (static_cast<unsigned long>(ci[0]) * 2654435761u);
+		bool seen = false;
+		for (int i = 0; i < g_eval_n; ++i)
+			if (g_eval_seen[i] == h) { seen = true; break; }
+		if (!seen && g_eval_n < 128)
+		{
+			g_eval_seen[g_eval_n++] = h;
+			char buf[256];
+			snprintf(buf, sizeof(buf),
+				"[EVAL] d=%.3f -> %.6f | Exp=%.4f Mult=%.5f Blend=%d BExp=%.4f BMult=%.5f Range=[%.2f,%.2f] IgnoreBase=%d",
+				d, r, c[0], c[1], ci[2], c[3], c[4], c[5], c[6], ci[7]);
+			hpscale_log(buf);
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+	return r;
+}
+#endif // CURVE_EVAL_SIG
+
+
 static DetourHook init_cache_fetching_hook;
 
 static void init_cache_fetching_detour(void* a1, bool a2, bool is_stripped, bool a4, bool a5, bool a6, uint8_t a7)
@@ -1342,6 +1646,45 @@ static ObfusString log_sep("]: ");
 static void write_to_log_file_detour(void* const a1, char* const data, size_t _size)
 {
 	write_to_log_file_a1 = a1;
+	// [guofu] DIAGNOSTIC: when the CN "railId is invalid" error is logged, dump the native
+	// call stack so we can locate the WeGame login gate (strings are encrypted, no xref).
+	{
+		static bool guofu_dumped_railid = false;
+		if (!guofu_dumped_railid && data != nullptr && _size >= 6)
+		{
+			bool has_railid = false;
+			for (size_t i = 0; i + 6 <= _size; ++i)
+			{
+				if (data[i] == 'r' && data[i + 1] == 'a' && data[i + 2] == 'i'
+					&& data[i + 3] == 'l' && data[i + 4] == 'I' && data[i + 5] == 'd')
+				{
+					has_railid = true;
+					break;
+				}
+			}
+			if (has_railid)
+			{
+				guofu_dumped_railid = true;
+				void* frames[32];
+				const USHORT n = RtlCaptureStackBackTrace(0, 32, frames, nullptr);
+				const uintptr_t base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+				conout << "[guofu] railId stack (file addrs, base=" << reinterpret_cast<void*>(base) << "):" << std::endl;
+				for (USHORT i = 0; i < n; ++i)
+				{
+					const uintptr_t r = reinterpret_cast<uintptr_t>(frames[i]);
+					const uintptr_t rva = r - base;
+					if (r >= base && rva < 0x2800000)
+					{
+						conout << "  #" << (int)i << " " << reinterpret_cast<void*>(0x140000000ull + rva) << std::endl;
+					}
+					else
+					{
+						conout << "  #" << (int)i << " [ext] " << frames[i] << std::endl;
+					}
+				}
+			}
+		}
+	}
 	SOUP_IF_LIKELY (_size > 15)
 	{
 		SOUP_IF_LIKELY (auto message = strstr(data + 15, log_sep.c_str()))
@@ -1493,6 +1836,19 @@ static int lua_FlashMgr_GetConfigBool_detour(luau_State* L)
 			}
 		}
 	}
+
+#if LOGGING
+	// [guofu diag] Trace every config-bool query so we can see which switches the
+	// CN "Start" flow consults (e.g. a platform / login-mode toggle we could flip).
+	if (L->intop[1].type == LUAU_STRING)
+	{
+		const char* key = L->intop[1].getString();
+		const int r = lua_FlashMgr_GetConfigBool_og(L);
+		const bool v = (L->outtop[-1].type == LUAU_BOOL) && L->outtop[-1].value.as_bool;
+		conout << "GetConfigBool(" << key << ") = " << (v ? "true" : "false") << std::endl;
+		return r;
+	}
+#endif
 
 	return lua_FlashMgr_GetConfigBool_og(L);
 }
@@ -2889,6 +3245,21 @@ static soup::Pattern hash_to_pattern(uint32_t hash1, uint32_t hash2)
 	return Pattern(data, sizeof(data));
 }
 
+// [guofu] CN login bypass: the Chinese client's DispatchLogin() drives the WeGame/Rail
+// login path (PlayerProfileMgr::LogIn variant @ "WeGame LogIn"), which asks rail_api64.dll
+// for a railId. When launched outside the full WeGame environment the Rail SDK fails to
+// initialize ("RailNeedRestartAppForCheckingEnvironment") and the railId is invalid, so the
+// login is aborted *before* any /api/login.php request is ever sent. The standard
+// email/password LogIn variant still exists in the binary and dispatches the normal
+// /api/login.php request (which OpenWF already redirects to 127.0.0.1 and rewrites with the
+// autologin credentials). We detour the WeGame LogIn entry to forward into the email LogIn.
+//
+//   WeGame LogIn (rcx=this, rdx=token String*, r8=callback)
+//   Email  LogIn (rcx=this, rdx=email String*, r8=password String*, r9=callback)
+//
+// The token String* is reused as the email/password placeholder; the network-layer
+// interceptor in build_http_request() overwrites both with the configured autologin creds.
+
 static SOUP_FORCEINLINE void create_all_hooks()
 {
 	// 2018.02.22.14.34 (M:8004325165498360760)
@@ -3507,6 +3878,98 @@ static SOUP_FORCEINLINE void create_all_hooks()
 		}
 	}
 #endif
+
+	// GetMaxHealth scaler dumper (investigation) — kept outside MINIMAL_HOOKS so it
+	// can run alongside a minimal build that avoids the deep hooks crashing on new versions.
+	{
+		SIG_INST("48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 56 48 83 EC 50 8B 99 D4 04 00 00 48 8D B1 D4 04 00 00 C1 C3 13");
+		auto GetMaxHealth = Module(nullptr).range.scan(sig_inst).as<void*>();
+		conout << "GetMaxHealth = " << GetMaxHealth << std::endl;
+		{
+			char buf[64];
+			snprintf(buf, sizeof(buf), "GetMaxHealth scan = %p", GetMaxHealth);
+			hpscale_log(buf);
+		}
+		SOUP_IF_LIKELY (GetMaxHealth)
+		{
+			GetMaxHealth_hook.detour = reinterpret_cast<void*>(&GetMaxHealth_detour);
+			GetMaxHealth_hook.target = GetMaxHealth;
+			GetMaxHealth_hook.create();
+			GetMaxHealth_hook.enable();
+		}
+	}
+
+	// [guofu] CN login bypass: neutralize the WeGame/Rail login gate inside the email LogIn
+	// function (0x14087E870). After "Logging in as", the WeGame branch fetches the rail ticket
+	// and, because RailInitialize failed (railId invalid), logs "railId is invalid" and fails
+	// the login (LoginDone=false) instead of sending login.php. The gate is the conditional
+	//   test al,al ; je <plain_send_path> ; mov rax,[r14]   @ 0x14087ECE6
+	// where al = "is WeGame platform". Forcing that je to an unconditional jmp makes the client
+	// always take the plain email/password send path (-> login.php -> 127.0.0.1 SNS), exactly
+	// like the international client. We recompute the jmp target from the original je's rel32 so
+	// this stays correct across game builds.
+	if (cn_login_bypass)
+	{
+		SIG_INST("84 C0 0F 84 ? ? ? ? 49 8B 06 48 8D 54 24 40 49 8B CE C6 44 24 40 00");
+		auto cn_gate = Module(nullptr).range.scan(sig_inst);
+		conout << "cn_login_gate = " << cn_gate.as<void*>() << std::endl;
+		SOUP_IF_LIKELY (cn_gate)
+		{
+			uint8_t* const je = cn_gate.add(2).as<uint8_t*>(); // -> 0F 84 (je rel32)
+			const int32_t rel = *reinterpret_cast<int32_t*>(je + 2);
+			const uintptr_t target = reinterpret_cast<uintptr_t>(je) + 6 + rel;
+			const int32_t newrel = static_cast<int32_t>(target - (reinterpret_cast<uintptr_t>(je) + 5));
+			memGuard::setAllowedAccess(je, 6, memGuard::ACC_RWX);
+			je[0] = 0xE9; // jmp rel32 (unconditional)
+			*reinterpret_cast<int32_t*>(je + 1) = newrel;
+			je[5] = 0x90; // nop pad
+			conout << "[guofu] CN login gate patched -> jmp " << reinterpret_cast<void*>(target) << " (plain login.php path)." << std::endl;
+		}
+		else
+		{
+			conout << "[guofu] CN login gate: scan failed, login bypass NOT active." << std::endl;
+		}
+	}
+
+	// SetMaxHealth(this, value, flag) caller tracer (investigation): the level-scaled value is
+	// computed by the (virtual) caller, so logging its return address points us at the formula.
+	{
+		if (HMODULE ntdll = GetModuleHandleW(L"ntdll.dll"))
+			g_RtlCaptureStackBackTrace = reinterpret_cast<RtlCaptureStackBackTrace_t>(
+				reinterpret_cast<void*>(GetProcAddress(ntdll, "RtlCaptureStackBackTrace")));
+		SIG_INST("B8 01 00 00 00 4C 8D 89 D4 04 00 00 3B D0 4C 8B D1 0F 4C D0 8B 81 D4 04 00 00 C1 C0 13");
+		auto SetMaxHealth = Module(nullptr).range.scan(sig_inst).as<void*>();
+		{
+			char buf[64];
+			snprintf(buf, sizeof(buf), "SetMaxHealth scan = %p", SetMaxHealth);
+			hpscale_log(buf);
+		}
+		SOUP_IF_LIKELY (SetMaxHealth)
+		{
+			SetMaxHealth_hook.detour = reinterpret_cast<void*>(&SetMaxHealth_detour);
+			SetMaxHealth_hook.target = SetMaxHealth;
+			SetMaxHealth_hook.create();
+			SetMaxHealth_hook.enable();
+		}
+	}
+
+	// AttenuationCurve::Evaluate probe — only compiled when CURVE_EVAL_SIG is defined.
+#ifdef CURVE_EVAL_SIG
+	{
+		SIG_INST(CURVE_EVAL_SIG);
+		auto curve_eval = Module(nullptr).range.scan(sig_inst).as<void*>();
+		char buf[64];
+		snprintf(buf, sizeof(buf), "curve_eval scan = %p", curve_eval);
+		hpscale_log(buf);
+		SOUP_IF_LIKELY (curve_eval)
+		{
+			curve_eval_hook.detour = reinterpret_cast<void*>(&curve_eval_detour);
+			curve_eval_hook.target = curve_eval;
+			curve_eval_hook.create();
+			curve_eval_hook.enable();
+		}
+	}
+#endif // CURVE_EVAL_SIG
 
 #if !MINIMAL_HOOKS
 	{
@@ -4970,6 +5433,14 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 
 		owfConsole::setTitle(BOOTSTRAPPER_TITLE);
 		owfConsole::activate();
+		// [guofu] Keep the diagnostic console window hidden so it never pops up for the player.
+		// All console output is still tee'd to OpenWF\console.log, and /toggle_console can still
+		// bring up a fresh visible console on demand. This is needed because this private build
+		// defines LOGGING, which disables the usual auto-close paths (guarded by #if !LOGGING).
+		if (const HWND con_wnd = GetConsoleWindow())
+		{
+			ShowWindow(con_wnd, SW_HIDE);
+		}
 
 #if LOGGING
 		conout << "base address = " << soup::Process::current()->open()->range.base.as<void*>() << std::endl;
@@ -5178,29 +5649,10 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		// Initialise core dict (depends on repo + config)
 		g_core_dict = g_repo.getCoreDict(fallback_language);
 
-		// Reject too new versions (depends on core dict)
-		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))
-		{
-#if PRIVATE
-			auto title = get_bootstrapper_title();
-			if (MessageBoxA(0, "Public build would terminate here because the version is too new. Continue?", title.c_str(), MB_YESNO) != IDYES)
-			{
-				return exit(1), FALSE;
-			}
-#else
-			auto msg = soup::unicode::utf8_to_utf16(get_core_string(ObfusString("toonew").str()));
-			auto title = soup::unicode::utf8_to_utf16(get_bootstrapper_title());
-			MessageBoxW(0, msg.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
-			return exit(1), FALSE;
-#endif
-		}
-
 		if (!ee_log_in_console || game_version >= GV(23, 10, 0))
 		{
 			owfConsole::setExclusiveOutput();
 		}
-
-		conout << get_core_string(ObfusString("freenote").str()) << std::endl;
 
 		owfScript::init();
 

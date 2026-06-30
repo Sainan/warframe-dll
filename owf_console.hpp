@@ -80,9 +80,24 @@ struct owfConsole
 
 struct owfConOut
 {
+	// [guofu diag] Tee every console write to OpenWF/console.log so the full
+	// startup hook map can be captured even when the game exit(1)s early.
+	inline static HANDLE log_file = INVALID_HANDLE_VALUE;
+
 	void write(const char* data, size_t size)
 	{
 		WriteFile(owfConsole::handle, data, size, nullptr, nullptr);
+
+		if (log_file == INVALID_HANDLE_VALUE)
+		{
+			log_file = CreateFileA("OpenWF\\console.log", FILE_APPEND_DATA,
+				FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
+				FILE_ATTRIBUTE_NORMAL, nullptr);
+		}
+		if (log_file != INVALID_HANDLE_VALUE)
+		{
+			WriteFile(log_file, data, static_cast<DWORD>(size), nullptr, nullptr);
+		}
 	}
 
 	owfConOut& operator << (const char* msg)
