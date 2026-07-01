@@ -18,9 +18,6 @@ struct owfServerTunables
 	{
 		return std::find(bools.begin(), bools.end(), hash) != bools.end();
 	}
-	std::vector<std::string> getProhibitions() const;
-	//static bool isProhibition(uint32_t hash) { return !getProhibitionName(hash).empty(); }
-	static std::string getProhibitionName(uint32_t hash);
 };
 
 struct owfClientTunables

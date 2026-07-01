@@ -189,6 +189,7 @@ add_folder_to_archive("OpenWF/vv/", "OpenWF/vv/", changelist)
 add_folder_to_archive("OpenWF/vv/off/", "OpenWF/vv/off/", changelist)
 add_folder_to_archive("OpenWF/vv/sig/", "OpenWF/vv/sig/", changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-core/", "OpenWF/translations/core/", trans_changelist)
+add_folder_to_archive("modules/owf-translations/bootstrapper-overlay/", "OpenWF/translations/overlay/", trans_changelist)
 add_folder_to_archive("modules/owf-translations/bootstrapper-webui/", "OpenWF/translations/webui/", trans_changelist)
 
 io.contents("archive_all.tmp", all_pack)

@@ -9,7 +9,9 @@
 // Cache tunables for faster access
 inline bool prohibit_skip_mission_start_timer = false;
 inline bool prohibit_disable_profanity_filter = false;
+inline bool prohibit_fov_override = false;
 inline bool prohibit_freecam = false;
+inline bool prohibit_teleport = false;
 inline bool prohibit_scripts = false;
 
 extern std::string get_bootstrapper_title();

@@ -11,10 +11,12 @@
 
 using namespace soup;
 
+#include "main.hpp" // cached prohibition tunables
 #include "owf_config.hpp"
 #if !LOGGING
 #include "owf_console.hpp"
 #endif
+#include "owf_repo.hpp" // get_overlay_string
 #include "owf_tunables.hpp"
 
 static HWND s_game_hwnd = 0;
@@ -104,21 +106,19 @@ void owfOverlay::init()
 						std::string subtext;
 						if (s_unreachable)
 						{
-							subtext = ObfusString("This server may be offline.").str();
+							subtext = get_overlay_string(ObfusString("unreachable").str());
 						}
 						else
 						{
-							std::lock_guard lock(g_server_tunables_mtx);
-							for (const auto& hash : g_server_tunables.bools)
-							{
-								if (auto name = owfServerTunables::getProhibitionName(hash); !name.empty())
-								{
-									soup::string::listAppend(subtext, std::move(name));
-								}
-							}
+							if (prohibit_skip_mission_start_timer) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_skip_mission_start_timer").str())); }
+							if (prohibit_disable_profanity_filter) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_disable_profanity_filter").str())); }
+							if (prohibit_fov_override) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_fov_override").str())); }
+							if (prohibit_freecam) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_freecam").str())); }
+							if (prohibit_teleport) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_teleport").str())); }
+							if (prohibit_scripts) { soup::string::listAppend(subtext, get_overlay_string(ObfusString("prohibit_scripts").str())); }
 							if (!subtext.empty())
 							{
-								subtext.insert(0, ObfusString("This server prohibits: ").str());
+								subtext.insert(0, get_overlay_string(ObfusString("prohibit")));
 							}
 							else if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("motd")); e != g_server_tunables.strings.end())
 							{

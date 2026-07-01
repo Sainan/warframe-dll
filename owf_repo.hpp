@@ -20,8 +20,7 @@ public:
 	uint64_t getVersionedU64(uint32_t path, uint64_t ver) const;
 	int64_t getVersionedI64(uint32_t path, uint64_t ver) const;
 	soup::Pattern getVersionedPattern(uint32_t path, uint64_t ver) const;
-	std::unordered_map<std::string, std::string> getCoreDict(const std::string& lang) const;
-	std::unordered_map<std::string, std::string> getWebuiDict(const std::string& lang) const;
+	std::unordered_map<std::string, std::string> getDict(const std::string& type, const std::string& lang) const;
 	const char* /*[16]*/ getExpectedCodeVersionForManifestHash(const char manifest_hash[22]) const;
 
 	uint8_t hotfix;
@@ -34,4 +33,7 @@ inline soup::Mutex g_repo_mtx;
 inline owfRepo g_repo;
 
 inline std::unordered_map<std::string, std::string> g_core_dict;
-extern std::string get_core_string(std::string key);
+inline std::unordered_map<std::string, std::string> g_overlay_dict;
+extern std::string get_string(const std::unordered_map<std::string, std::string>& dict, std::string key);
+inline std::string get_core_string(std::string key) { return get_string(g_core_dict, std::move(key)); }
+inline std::string get_overlay_string(std::string key) { return get_string(g_overlay_dict, std::move(key)); }

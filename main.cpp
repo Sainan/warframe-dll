@@ -851,10 +851,12 @@ struct owfResolveUdpProxyUpstreamAddressTask : public Task
 static void populate_server_prohibitions_locked(JsonObject& obj)
 {
 	auto arr = soup::make_unique<JsonArray>();
-	for (auto& prohibition : g_server_tunables.getProhibitions())
-	{
-		arr->children.emplace_back(soup::make_unique<JsonString>(std::move(prohibition)));
-	}
+	if (prohibit_skip_mission_start_timer) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_skip_mission_start_timer").str())); }
+	if (prohibit_disable_profanity_filter) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_disable_profanity_filter").str())); }
+	if (prohibit_fov_override) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_fov_override").str())); }
+	if (prohibit_freecam) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_freecam").str())); }
+	if (prohibit_teleport) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_teleport").str())); }
+	if (prohibit_scripts) { arr->children.emplace_back(soup::make_unique<JsonString>(ObfusString("prohibit_scripts").str())); }
 	obj.add(ObfusString("prohibitions"), std::move(arr));
 }
 
@@ -869,7 +871,9 @@ bool set_server_tunables(const char* data, size_t size, bool delta)
 
 	prohibit_skip_mission_start_timer = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_skip_mission_start_timer"));
 	prohibit_disable_profanity_filter = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_disable_profanity_filter"));
+	prohibit_fov_override = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_fov_override"));
 	prohibit_freecam = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_freecam"));
+	prohibit_teleport = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_teleport"));
 	prohibit_scripts = g_server_tunables.getBool(joaat::compileTimeHash("prohibit_scripts"));
 
 	if (auto e = g_server_tunables.strings.find(soup::joaat::compileTimeHash("udp_proxy_upstream")); e != g_server_tunables.strings.end())
@@ -5215,7 +5219,8 @@ BOOL APIENTRY DllMain(HMODULE hmod, DWORD reason, PVOID)
 		}
 
 		// Initialise core dict (depends on repo + config)
-		g_core_dict = g_repo.getCoreDict(language);
+		g_core_dict = g_repo.getDict(ObfusString("core").str(), language);
+		g_overlay_dict = g_repo.getDict(ObfusString("overlay").str(), language);
 
 		// Reject too new versions (depends on core dict)
 		if (game_version >= g_client_tunables.getInt(joaat::compileTimeHash("toonew")))

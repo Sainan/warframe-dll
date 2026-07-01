@@ -250,7 +250,7 @@ void start_builtin_http_server()
 			case soup::joaat::compileTimeHash("/dict.js"):
 				{
 					JsonObject obj;
-					auto dict = g_repo.getWebuiDict(webui_lang_code);
+					auto dict = g_repo.getDict(ObfusString("webui").str(), webui_lang_code);
 					for (const auto& e : dict)
 					{
 						obj.add(std::move(e.first), std::move(e.second));
