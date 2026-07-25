@@ -29,8 +29,8 @@ function parse_metadata_patches(str, filename)
 				ampersand = false
 			else
 				if #patch.prefix:split("{") ~= #patch.prefix:split("}") then
-					print_to_console("[Metadata Patches] Started a new patch via / in the middle of an array.")
-					print_to_console("[Metadata Patches] - Note: The number of { doesn't match the number of } in the patch that was just delimited.")
+					print_to_console("[Metadata Patches] The number of { doesn't match the number of } in the patch that was just delimited.")
+					print_to_console("[Metadata Patches] - Note: Use indentation if you did not mean for / to start a new patch.")
 					print_to_console("[Metadata Patches] - Where: "..(filename ?? "?")..":"..linenum)
 					print_to_console("[Metadata Patches] - What: "..line)
 				end
