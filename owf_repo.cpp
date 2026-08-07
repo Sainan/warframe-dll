@@ -13,20 +13,6 @@
 
 using namespace soup;
 
-template <typename T>
-static T modpow(T base, T exp, T modulus)
-{
-	base %= modulus;
-	T result = 1;
-	while (exp > 0)
-	{
-		if (exp & 1) result = (result * base) % modulus;
-		base = (base * base) % modulus;
-		exp >>= 1;
-	}
-	return result;
-}
-
 bool owfRepo::loadArchive(const char* data, size_t size)
 {
 	MemoryRefReader r(data, size);
@@ -35,11 +21,9 @@ bool owfRepo::loadArchive(const char* data, size_t size)
 	r.u64_dyn_bp(decompressed_size);
 	const auto result = deflate::decompress(data + r.getPosition(), size - r.getPosition(), decompressed_size);
 	r.skip(result.compressed_size);
-	uint32_t sig;
-	r.u32_le(sig);
-	constexpr uint32_t n = 560318839;
-	constexpr uint32_t e = 65537;
-	SOUP_RETHROW_FALSE((joaat::hash(result.decompressed) % n) != modpow(sig, e, n));
+	uint32_t chksum;
+	r.u32_le(chksum);
+	SOUP_RETHROW_FALSE(joaat::hash(result.decompressed) != chksum);
 
 	MemoryRefReader tar_r(result.decompressed);
 	while (tar_r.hasMore())

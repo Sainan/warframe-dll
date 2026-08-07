@@ -17,19 +17,6 @@ function get_bootstrapper_title(): string
 	}
 }
 
-function modpow($base, $exp, $modulus)
-{
-	$base %= $modulus;
-	$result = 1;
-	while ($exp > 0)
-	{
-		if ($exp & 1) $result = ($result * $base) % $modulus;
-		$base = ($base * $base) % $modulus;
-		$exp >>= 1;
-	}
-	return $result;
-}
-
 $target_version = get_bootstrapper_title();
 $code_version = substr($target_version, strlen("OpenWF Bootstrapper v"));
 $all_tags = explode("\n", shell_exec("git tag --list"));
@@ -44,7 +31,7 @@ function wrap_archive($uncompressed)
 	$bin_str = pack_u64_dyn_bp(time());
 	$bin_str .= pack_u64_dyn_bp(strlen($uncompressed));
 	$bin_str .= gzdeflate($uncompressed, 9);
-	$bin_str .= pack("V", modpow(joaat($uncompressed), /*d=*/219502113, /*n=*/560318839)); // 30-bit RSA signature of JOAAT hash
+	$bin_str .= joaat($uncompressed);
 	return $bin_str;
 }
 
