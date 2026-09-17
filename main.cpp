@@ -85,7 +85,6 @@
 
 using namespace soup;
 
-static uint32_t server_remote_ip_hash = 0;
 static bool disabled_xp_based_level_cap = false;
 static bool did_auto_login = false;
 static bool metadata_patches_in_use = false;
@@ -299,22 +298,6 @@ static void* winhttp_connect_detour(void* a1, void* a2, int protocol, const char
 static CompactDetourHook game_http_request_hook;
 static unsigned int GameHttpRequest_body_offset;
 
-static bool can_use_server_host()
-{
-	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
-	{
-		std::lock_guard lock(g_client_tunables_mtx);
-		if (
-			auth_query.empty() // Not currently logged in?
-			&& g_repo.timestamp + g_client_tunables.getInt(joaat::compileTimeHash("remote_allowed_days")) * 86400 < time::unixSeconds() // Current build is too old?
-			)
-		{
-			return false; // To prevent downgrade attacks, disallow this remote connection.
-		}
-	}
-	return true;
-}
-
 enum RequestType : uint8_t
 {
 	RT_NOT_CLASSIFIED = 0,
@@ -330,11 +313,11 @@ static void process_game_http_request(soup::Uri& uri, const char*& body_data, si
 	{
 		uri.scheme = ObfusString("http").str();
 		uri.host = ObfusString("127.0.0.1").str();
-		uri.port = can_use_server_host() ? client_http_port : http_port;
+		uri.port = client_http_port;
 	}
 	else
 	{
-		uri.host = can_use_server_host() ? server_host : ObfusString("127.0.0.1").str();
+		uri.host = server_host;
 		if (strip_tls)
 		{
 			uri.scheme = ObfusString("http").str();
@@ -733,7 +716,7 @@ static void* Curl_resolv_detour(void* a1, const char* hostname, int port, bool a
 
 	const auto localhost = ObfusString("127.0.0.1").str();
 
-	const std::string& expected_hostname = (!secure_connections && can_use_server_host()) ? server_host : localhost;
+	const std::string& expected_hostname = secure_connections ? localhost : server_host;
 
 #if !MINIMAL_HOOKS
 	if (expected_hostname != hostname)
@@ -944,17 +927,6 @@ struct owfTunablesTask : public soup::Task
 			bool ok = false;
 			if (hrt.result)
 			{
-				if (hrt.sock)
-				{
-					//server_host = hrt.sock->peer.ip.toString(); // This breaks demo.openwf.io
-					server_remote_ip_hash = hrt.sock->peer.ip.isLocalnet() ? 0 : soup::joaat::hash(server_host);
-#if false
-					conout << "server_host = " << server_host << std::endl;
-					conout << "server_remote_ip_hash = " << server_remote_ip_hash << std::endl;
-					conout << "can_use_server_host = " << can_use_server_host() << std::endl;
-#endif
-				}
-
 				if (hrt.result->status_code == 200)
 				{
 					ok = set_server_tunables(hrt.result->body.data(), hrt.result->body.size());

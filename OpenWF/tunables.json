@@ -44,6 +44,4 @@
 		"dummy.openwf.io:6668", // U7
 		"dummy.openwf.io:6669", // U7
 	],
-	"invipbl": 0, // If non-zero, disallows connections to public instances, such as these: https://www.shodan.io/search?query=http.title%3A%22OpenWF+WebUI%22
-	"remote_allowed_days": 42,
 }
