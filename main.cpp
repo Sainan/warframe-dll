@@ -301,7 +301,8 @@ static unsigned int GameHttpRequest_body_offset;
 
 static bool can_use_server_host()
 {
-	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
+// Disable the expiration check for remote server connections.
+/*	if (server_remote_ip_hash) // Connecting to a server outside of the localnet?
 	{
 		std::lock_guard lock(g_client_tunables_mtx);
 		if (
@@ -311,7 +312,7 @@ static bool can_use_server_host()
 		{
 			return false; // To prevent downgrade attacks, disallow this remote connection.
 		}
-	}
+	}*/
 	return true;
 }
 
